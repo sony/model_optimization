@@ -20,8 +20,8 @@ from torch import add, sub, mul, div, divide, flatten, reshape, split, unsqueeze
     chunk, unbind, topk, gather, equal, transpose, permute, argmax, squeeze, multiply, subtract, minimum, \
     maximum, softmax
 from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d, BatchNorm2d, Dropout, Flatten, Hardtanh, ReLU, ReLU6, \
-    PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid, LeakyReLU, GELU, LogSoftmax, Softmax, ELU
-from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid, leaky_relu, gelu
+    PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid, LeakyReLU, GELU, LogSoftmax, Softmax, ELU, AvgPool2d
+from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid, leaky_relu, gelu, fold
 import torch.nn.functional as F
 
 from model_compression_toolkit import DefaultDict
@@ -31,7 +31,6 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams, Eq
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
     AttachTpcToFramework
-from model_compression_toolkit.verify_packages import FOUND_SONY_CUSTOM_LAYERS
 
 
 class AttachTpcToPytorch(AttachTpcToFramework):
@@ -76,7 +75,11 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.OPSET_DROPOUT.value: [Dropout, dropout],
             OperatorSetNames.OPSET_SPLIT_CHUNK.value: [split, chunk],
             OperatorSetNames.OPSET_MAXPOOL.value: [MaxPool2d, F.max_pool2d],
+            OperatorSetNames.OPSET_AVGPOOL.value: [AvgPool2d, F.avg_pool2d],
             OperatorSetNames.OPSET_SIZE.value: [torch.Tensor.size],
+            OperatorSetNames.OPSET_RESIZE.value: [torch.Tensor.resize],
+            OperatorSetNames.OPSET_PAD.value: [F.pad],
+            OperatorSetNames.OPSET_FOLD.value: [fold, F.fold],
             OperatorSetNames.OPSET_SHAPE.value: [torch.Tensor.shape],
             OperatorSetNames.OPSET_EQUAL.value: [equal],
             OperatorSetNames.OPSET_ARGMAX.value: [argmax],

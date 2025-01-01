@@ -23,11 +23,11 @@ if FOUND_SONY_CUSTOM_LAYERS:
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Identity, Concatenate, BatchNormalization, Minimum, Maximum, Softmax
+        MaxPooling2D, AveragePooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
+        Conv2DTranspose, Concatenate, BatchNormalization, Minimum, Maximum, Softmax
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
+        MaxPooling2D, AveragePooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
         Conv2DTranspose, Concatenate, BatchNormalization, Minimum, Maximum, Softmax
 
 from model_compression_toolkit import DefaultDict
@@ -81,8 +81,12 @@ class AttachTpcToKeras(AttachTpcToFramework):
             OperatorSetNames.OPSET_SQUEEZE.value: [tf.squeeze],
             OperatorSetNames.OPSET_DROPOUT.value: [Dropout],
             OperatorSetNames.OPSET_SPLIT_CHUNK.value: [tf.split],
-            OperatorSetNames.OPSET_MAXPOOL.value: [MaxPooling2D],
+            OperatorSetNames.OPSET_MAXPOOL.value: [MaxPooling2D, tf.nn.avg_pool2d],
+            OperatorSetNames.OPSET_AVGPOOL.value: [AveragePooling2D],
             OperatorSetNames.OPSET_SIZE.value: [tf.size],
+            OperatorSetNames.OPSET_RESIZE.value: [tf.image.resize],
+            OperatorSetNames.OPSET_PAD.value: [tf.pad],
+            OperatorSetNames.OPSET_FOLD.value: [tf.space_to_batch_nd],
             OperatorSetNames.OPSET_SHAPE.value: [tf.shape, tf.compat.v1.shape],
             OperatorSetNames.OPSET_EQUAL.value: [tf.math.equal],
             OperatorSetNames.OPSET_ARGMAX.value: [tf.math.argmax],

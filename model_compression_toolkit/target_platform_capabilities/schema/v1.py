@@ -66,6 +66,7 @@ class OperatorSetNames(Enum):
     OPSET_DROPOUT = "Dropout"
     OPSET_SPLIT_CHUNK = "SplitChunk"
     OPSET_MAXPOOL = "MaxPool"
+    OPSET_AVGPOOL = "AvgPool"
     OPSET_SIZE = "Size"
     OPSET_SHAPE = "Shape"
     OPSET_EQUAL = "Equal"
@@ -76,6 +77,9 @@ class OperatorSetNames(Enum):
     OPSET_CROPPING2D = "Cropping2D"
     OPSET_ZERO_PADDING2d = "ZeroPadding2D"
     OPSET_CAST = "Cast"
+    OPSET_RESIZE = "Resize"
+    OPSET_PAD = "Pad"
+    OPSET_FOLD = "Fold"
     OPSET_STRIDED_SLICE = "StridedSlice"
     OPSET_SSD_POST_PROCESS = "SSDPostProcess"
 

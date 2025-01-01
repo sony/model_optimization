@@ -155,12 +155,6 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
     relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
 
-    # TODO: missing this operator from relu in attach2fw which is part of the old Keras TPC.
-    #                                            tp.LayerFilterParams(ReLU, negative_slope=0.0),
-    #  need to figure out how to allow to retrive out built-int fw TPCs with a custom layer mapping
-    #  (preferably without changing the existing API for any user who used them).
-    #  consider adding a test for qnnpack and tflite tpcs
-
     hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARD_TANH.value)
     linear = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value)
 
