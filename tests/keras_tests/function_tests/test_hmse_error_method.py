@@ -77,7 +77,15 @@ def get_tpc(quant_method, per_channel):
 
 class TestParamSelectionWithHMSE(unittest.TestCase):
     def _setup_with_args(self, quant_method, per_channel, running_gptq=True, tpc_fn=get_tpc, model_gen_fn=model_gen):
-        self.qc = QuantizationConfig(weights_error_method=mct.core.QuantizationErrorMethod.HMSE)
+        self.qc = QuantizationConfig(weights_error_method=mct.core.QuantizationErrorMethod.HMSE,
+                                     custom_tpc_opset_to_layer={"Linear": ([layers.Conv2D, layers.Dense],
+                                                                           {KERNEL_ATTR: DefaultDict(
+                                                                               default_value=KERAS_KERNEL),
+                                                                            BIAS_ATTR: DefaultDict(
+                                                                                default_value=BIAS)}),
+                                                                "BN": ([layers.BatchNormalization],
+                                                                       {GAMMA: DefaultDict(default_value=GAMMA)})})
+
         self.float_model = model_gen_fn()
         self.keras_impl = KerasImplementation()
         self.fw_info = DEFAULT_KERAS_INFO
@@ -184,27 +192,12 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                   tpc_minor_version=None,
                                                   tpc_patch_version=None,
                                                   tpc_platform_type=None,
-                                                  operator_set=tuple([schema.OperatorsSet(name="Linear", qc_options=conv_qco),
-                                                                schema.OperatorsSet(name="BN", qc_options=bn_qco)]),
+                                                  operator_set=tuple(
+                                                      [schema.OperatorsSet(name="Linear", qc_options=conv_qco),
+                                                       schema.OperatorsSet(name="BN", qc_options=bn_qco)]),
                                                   add_metadata=False)
 
-            tpc = tp.TargetPlatformCapabilities(tp_model)
-
-            with tpc:
-                tp.OperationsSetToLayers(
-                    "Linear",
-                    [layers.Conv2D, layers.Dense],
-                    attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                                  BIAS_ATTR: DefaultDict(default_value=BIAS)}
-                )
-
-                tp.OperationsSetToLayers(
-                    "BN",
-                    [layers.BatchNormalization],
-                    attr_mapping={GAMMA: DefaultDict(default_value=GAMMA)}
-                )
-
-            return tpc
+            return tp_model
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True,
                               tpc_fn=_generate_bn_quantization_tpc, model_gen_fn=no_bn_fusion_model_gen)

@@ -194,8 +194,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     fusing_patterns = []
     # May suit for operations like: Dropout, Reshape, etc.
 
-    no_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False)
-                              .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+    no_quantization_config = default_configuration_options.clone_and_edit(
+        enable_activation_quantization=False,
+        supported_input_activation_n_bits=(8, 16)).clone_and_edit_weight_attribute(enable_weights_quantization=False)
 
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSTACK.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DROPOUT.value, qc_options=no_quantization_config))

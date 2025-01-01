@@ -153,7 +153,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV_TRANSPOSE.value)
     batchnorm = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM.value)
     relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
-    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
+    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU6.value)
 
     hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARD_TANH.value)
     linear = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value)

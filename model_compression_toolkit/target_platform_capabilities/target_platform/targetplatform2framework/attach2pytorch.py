@@ -57,6 +57,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.OPSET_SUB.value: [operator.sub, sub, subtract],
             OperatorSetNames.OPSET_MUL.value: [operator.mul, mul, multiply],
             OperatorSetNames.OPSET_DIV.value: [operator.truediv, div, divide],
+            OperatorSetNames.OPSET_ADD_BIAS.value: [],  # no specific operator for bias_add in pytorch
             OperatorSetNames.OPSET_MIN.value: [minimum],
             OperatorSetNames.OPSET_MAX.value: [maximum],
             OperatorSetNames.OPSET_PRELU.value: [PReLU, prelu],
@@ -80,7 +81,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.OPSET_SIZE.value: [torch.Tensor.size],
             OperatorSetNames.OPSET_RESIZE.value: [torch.Tensor.resize],
             OperatorSetNames.OPSET_PAD.value: [F.pad],
-            OperatorSetNames.OPSET_FOLD.value: [fold, F.fold],
+            OperatorSetNames.OPSET_FOLD.value: [fold],
             OperatorSetNames.OPSET_SHAPE.value: [torch.Tensor.shape],
             OperatorSetNames.OPSET_EQUAL.value: [equal],
             OperatorSetNames.OPSET_ARGMAX.value: [argmax],

@@ -66,12 +66,13 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
 
     def get_max_resources_for_model(self, model):
         tpc = self.get_tpc()
+        cc = self.get_core_config()
         attach2keras = AttachTpcToKeras()
-        tpc = attach2keras.attach(tpc)
+        tpc = attach2keras.attach(tpc, cc.quantization_config.custom_tpc_opset_to_layer)
 
         return compute_resource_utilization_data(in_model=model,
                                                  representative_data_gen=self.representative_data_gen(),
-                                                 core_config=self.get_core_config(),
+                                                 core_config=cc,
                                                  tpc=tpc,
                                                  fw_info=DEFAULT_KERAS_INFO,
                                                  fw_impl=KerasImplementation(),
@@ -84,7 +85,8 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
                                            relu_bound_to_power_of_2=True,
                                            weights_bias_correction=True,
                                            input_scaling=False,
-                                           activation_channel_equalization=True)
+                                           activation_channel_equalization=True,
+                                           custom_tpc_opset_to_layer={"Input": ([InputLayer],)})
 
     def get_resource_utilization(self):
         ru_data = self.get_max_resources_for_model(self.create_networks())

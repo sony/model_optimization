@@ -21,3 +21,5 @@ if FOUND_TF:
         get_tpc_model as generate_keras_tpc, get_tpc_model as generate_pytorch_tpc
 if FOUND_TORCH:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model as get_pytorch_tpc_latest
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import \
+        get_tpc_model as generate_pytorch_tpc, get_tpc_model as generate_pytorch_tpc

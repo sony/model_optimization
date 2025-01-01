@@ -18,7 +18,10 @@ import numpy as np
 
 from keras import Input
 from keras.layers import Conv2D
+from keras_core.src.layers import InputLayer
+
 from mct_quantizers import KerasActivationQuantizationHolder
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
@@ -54,6 +57,8 @@ def setup_test(get_tpc_fn):
                                                        representative_dataset, get_tpc_fn,
                                                        input_shape=(1, 8, 8, 3),
                                                        attach2fw=AttachTpcToKeras(),
+                                                       qc=QuantizationConfig(
+                                                               custom_tpc_opset_to_layer={"Input": ([InputLayer],)}),
                                                        mixed_precision_enabled=True)
 
     layer = model.layers[1]

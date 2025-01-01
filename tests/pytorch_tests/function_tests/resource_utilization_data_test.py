@@ -19,6 +19,8 @@ import numpy as np
 import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU
 
+from model_compression_toolkit.core import QuantizationConfig
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from model_compression_toolkit.core.pytorch.constants import KERNEL
@@ -115,7 +117,10 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
 
     ru_data = mct.core.pytorch_resource_utilization_data(in_model=model,
                                                          representative_data_gen=random_datagen,
-                                                         core_config=mct.core.CoreConfig(),
+                                                         core_config=mct.core.CoreConfig(
+                                                             quantization_config=QuantizationConfig(
+                                                                 custom_tpc_opset_to_layer={
+                                                                     "Input": ([DummyPlaceHolder],)})),
                                                          target_platform_capabilities=tpc_dict['ru_data_test'])
 
     return ru_data

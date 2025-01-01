@@ -19,8 +19,9 @@ import unittest
 
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
 import numpy as np
+from keras_core.src.layers import InputLayer
 
-from model_compression_toolkit.core import DEFAULTCONFIG, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualSplitWeightsNode
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -78,11 +79,11 @@ def get_tpc(mixed_precision_candidates_list):
 
 
 def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
-    qc = DEFAULTCONFIG
     graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
-                                       lambda name, _tp: get_tpc(mixed_precision_candidates_list), qc=qc,
+                                       lambda name, _tp: get_tpc(mixed_precision_candidates_list),
                                        mixed_precision_enabled=True,
-                                       attach2fw=AttachTpcToKeras())
+                                       attach2fw=AttachTpcToKeras(),
+                                       qc=QuantizationConfig(custom_tpc_opset_to_layer={"Input": ([InputLayer],)}))
 
     # Split graph substitution
     split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])

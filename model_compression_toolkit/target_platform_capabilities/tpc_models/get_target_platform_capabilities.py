@@ -71,4 +71,4 @@ def get_tpc_model(name: str, tp_model: TargetPlatformModel):
 
     """
 
-    return get_tp_model_imx500_v1
+    return tp_model

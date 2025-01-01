@@ -764,13 +764,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_torch_tpcs(self):
         TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v4', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 

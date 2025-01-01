@@ -162,13 +162,13 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PAD.value, qc_options=quant_preserving))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FOLD.value, qc_options=quant_preserving))
 
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_L2NORM,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_L2NORM.value,
                                             qc_options=default_configuration_options.clone_and_edit(
                                                 fixed_zero_point=0, fixed_scale=1 / 128)))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_LOG_SOFTMAX,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_LOG_SOFTMAX.value,
                                             qc_options=default_configuration_options.clone_and_edit(
                                                 fixed_zero_point=127, fixed_scale=16 / 256)))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SOFTMAX,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SOFTMAX.value,
                                             qc_options=default_configuration_options.clone_and_edit(
                                                 fixed_zero_point=-128, fixed_scale=1 / 256)))
 
@@ -181,7 +181,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     fc = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value,
                              qc_options=default_configuration_options.clone_and_edit_weight_attribute(
                                  weights_per_channel_threshold=False))
-    squeeze = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SQUEEZE,
+    squeeze = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SQUEEZE.value,
                                   qc_options=default_configuration_options.clone_and_edit(
                                       quantization_preserving=True))
 

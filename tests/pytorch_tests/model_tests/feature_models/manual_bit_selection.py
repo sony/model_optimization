@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from operator import mul
 
 import inspect
 
-from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from mct_quantizers import PytorchActivationQuantizationHolder
 import model_compression_toolkit as mct
 import torch

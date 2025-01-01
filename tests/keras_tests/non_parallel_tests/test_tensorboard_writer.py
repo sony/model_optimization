@@ -135,7 +135,7 @@ class TestFileLogger(unittest.TestCase):
         nodes_in_graph = len(g.node)
         self.assertTrue(nodes_in_graph == nodes_in_model)
 
-    def plot_tensor_sizes(self):
+    def plot_tensor_sizes(self, core_config):
         model = SingleOutputNet()
         base_config, _, default_config = get_op_quantization_configs()
         tpc_model = generate_tp_model_with_activation_mp(
@@ -145,7 +145,7 @@ class TestFileLogger(unittest.TestCase):
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
-        tpc =AttachTpcToKeras().attach(tpc)
+        tpc =AttachTpcToKeras().attach(tpc, core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = mct.core.DEFAULTCONFIG
@@ -225,7 +225,7 @@ class TestFileLogger(unittest.TestCase):
                                                                       target_platform_capabilities=self.get_tpc())
 
         # Test tensor size plotting
-        self.plot_tensor_sizes()
+        self.plot_tensor_sizes(core_config)
 
         # Disable Logger
         Logger.LOG_PATH = None
