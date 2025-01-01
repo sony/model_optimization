@@ -33,33 +33,6 @@ def get_weights_quantization_disabled_pytorch_tpc(name):
     return get_pytorch_test_tpc_dict(tp, name, name)
 
 
-def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name, custom_opsets_to_layer={}):
-    # TODO: this is a light implementation of the get_mp_activation_pytorch_tpc_dict function.
-    #   the full implementation needs to be adjusted and reactivated once implementing custom layer opset support in TPC.
-    #   it still should return a TP Model (!) but use custom opset to operators mapping to allow MCT construct the desired TPC.
-
+def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name):
+    # This is a legacy helper function that is kept for maintaining tests usability
     return {test_name: tpc_model}
-
-# def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name, custom_opsets_to_layer={}):
-#     op_sets_to_layer_add = {
-#         "Input": [DummyPlaceHolder],
-#     }
-#
-#     op_sets_to_layer_add.update(custom_opsets_to_layer)
-#
-#     # we assume a standard tp model with standard operator sets names,
-#     # otherwise - need to generate the tpc per test and not with this generic function
-#     attr_mapping = {'Conv': {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
-#                              BIAS_ATTR: DefaultDict(default_value=BIAS)},
-#                     'FullyConnected': {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
-#                                        BIAS_ATTR: DefaultDict(default_value=BIAS)}}
-#
-#     attach2pytorch = AttachTpcToPytorch()
-#     tpc = attach2pytorch.attach(tpc_model)
-#     return {
-#         test_name: generate_test_tpc(name=tpc_name,
-#                                      tp_model=tpc_model,
-#                                      base_tpc=tpc,
-#                                      op_sets_to_layer_add=op_sets_to_layer_add,
-#                                      attr_mapping=attr_mapping),
-#     }

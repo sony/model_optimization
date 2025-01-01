@@ -18,8 +18,7 @@ import numpy as np
 import tests.keras_tests.exporter_tests.constants as constants
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from tests.common_tests.helpers.tpcs_for_tests.v1_pot.tp_model import get_tp_model as get_tp_model_pot
-from tests.common_tests.helpers.tpcs_for_tests.v1.tp_model import get_tp_model as get_tp_model_symmetric
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_int8_tpc
 from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test import TFLiteINT8ExporterBaseTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
@@ -35,7 +34,7 @@ class TestConv2DSymmetricTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
         return self.get_one_layer_model(layers.Conv2D(6, 5))
 
     def get_tpc(self):
-        return get_tp_model_symmetric()
+        return get_int8_tpc(edit_weights_params_dict={'weights_quantization_method': QuantizationMethod.SYMMETRIC})
 
     def run_checks(self):
         # Fetch quantized weights from int8 model tensors
@@ -69,7 +68,7 @@ class TestConv2DPOTTFLiteINT8Exporter(TestConv2DSymmetricTFLiteINT8Exporter):
         self.weights_diff_tolerance = 0
 
     def get_tpc(self):
-        return get_tp_model_pot()
+        return get_int8_tpc(edit_weights_params_dict={'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
 
     def run_checks(self):
         super(TestConv2DPOTTFLiteINT8Exporter, self).run_checks()

@@ -316,7 +316,8 @@ class QuantizationAwareTrainingMixedPrecisionRUCfgTest(QuantizationAwareTraining
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
-        config = mct.core.CoreConfig(mct.core.QuantizationConfig(shift_negative_activation_correction=False))
+        config = mct.core.CoreConfig(mct.core.QuantizationConfig(shift_negative_activation_correction=False,
+                                                                 custom_tpc_opset_to_layer={"Input": ([DummyPlaceHolder],)}))
         ru = mct.core.ResourceUtilization(weights_memory=50, activation_memory=40)
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,

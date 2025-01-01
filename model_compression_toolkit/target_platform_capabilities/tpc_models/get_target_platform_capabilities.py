@@ -45,7 +45,7 @@ def get_target_platform_capabilities(fw_name: str,
     if target_platform_name == DEFAULT_TP_MODEL:
         return get_tp_model_imx500_v1()
 
-    assert target_platform_version == 'v1', \
+    assert target_platform_version == 'v1' or target_platform_version is None, \
         "The usage of get_target_platform_capabilities API is supported only with the default TPC ('v1')."
 
     if target_platform_name == IMX500_TP_MODEL:

@@ -153,7 +153,7 @@ class MixedPrecisionActivationMultipleInputs(MixedPrecisionActivationBaseTest):
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                              (4, 8), (4, 4), (4, 2),
                                              (2, 8), (2, 4), (2, 2)],
-            custom_opsets=['Concat']),
+                custom_opsets=['Concat']),
             test_name='mixed_precision_activation_model',
             tpc_name='mixed_precision_activation_pytorch_test')
 
