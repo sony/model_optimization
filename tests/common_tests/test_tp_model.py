@@ -15,13 +15,11 @@
 import os
 
 import unittest
-from pydantic_core import from_json
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set, is_opset_in_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
@@ -51,7 +49,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
                                            tpc_patch_version=0,
                                            tpc_platform_type="dump_to_json",
                                            add_metadata=False)
-        json_str = model.model_dump_json()
+        json_str = model.json()
         # Define the output file path
         file_path = "target_platform_model.json"
         # Register cleanup to delete the file if it exists
@@ -64,7 +62,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
         with open(file_path, "r") as f:
             json_content = f.read()
 
-        loaded_target_model = schema.TargetPlatformModel.model_validate_json(json_content)
+        loaded_target_model = schema.TargetPlatformModel.parse_raw(json_content)
         self.assertEqual(model, loaded_target_model)
 
 
@@ -78,7 +76,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
                                                tpc_platform_type=None,
                                                add_metadata=False)
             model.operator_set = tuple()
-        self.assertEqual("1 validation error for TargetPlatformModel\noperator_set\n  Instance is frozen", str(e.exception)[:76])
+        self.assertEqual('"TargetPlatformModel" is immutable and does not support item assignment', str(e.exception))
 
     def test_default_options_more_than_single_qc(self):
         test_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC, TEST_QC]), base_config=TEST_QC)
@@ -167,7 +165,7 @@ class QCOptionsTest(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC, 3]), base_config=TEST_QC)
         self.assertTrue(
-            '1 validation error for QuantizationConfigOptions\nquantization_configurations.1\n  Input should be a valid dictionary or instance of OpQuantizationConfig [type=model_type, input_value=3, input_type=int]\n' in str(
+            "1 validation error for QuantizationConfigOptions\nquantization_configurations -> 1\n  value is not a valid dict (type=type_error.dict)" in str(
                 e.exception))
 
     def test_clone_and_edit_options(self):

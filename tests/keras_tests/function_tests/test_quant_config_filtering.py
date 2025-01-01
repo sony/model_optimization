@@ -13,9 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import unittest
-import model_compression_toolkit as mct
-from model_compression_toolkit.constants import THRESHOLD, TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.keras.constants import FUNCTION
 

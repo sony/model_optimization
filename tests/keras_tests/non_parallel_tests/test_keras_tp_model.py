@@ -225,6 +225,23 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(tanh_qco, sevenbit_qco)
         self.assertEqual(relu_qco, default_qco)
 
+    # TODO: need to test as part of attach to fw
+    def test_opset_not_in_tp(self):
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
+        hm = schema.TargetPlatformModel(default_qco=default_qco,
+                                        tpc_minor_version=None,
+                                        tpc_patch_version=None,
+                                        tpc_platform_type=None,
+                                        operator_set=tuple([schema.OperatorsSet(name="opA")]),
+                                        add_metadata=False)
+        hm_keras = tp.TargetPlatformCapabilities(hm)
+        with self.assertRaises(Exception) as e:
+            with hm_keras:
+                tp.OperationsSetToLayers("conv", [Conv2D])
+        self.assertEqual(
+            'conv is not defined in the target platform model that is associated with the target platform capabilities.',
+            str(e.exception))
+
     def test_keras_fusing_patterns(self):
         default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
         a = schema.OperatorsSet(name="opA")
@@ -306,35 +323,16 @@ class TestGetKerasTPC(unittest.TestCase):
 
     def test_get_keras_supported_version(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_pot')
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_lut')
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1')
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v2_lut')
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v2')
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_lut")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2_lut")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
-
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_pot")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TP_MODEL, "v1")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, QNNPACK_TP_MODEL, "v1")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
     def test_get_keras_not_supported_platform(self):
         with self.assertRaises(Exception) as e:

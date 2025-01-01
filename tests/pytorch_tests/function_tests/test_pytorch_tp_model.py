@@ -219,22 +219,22 @@ class TestPytorchTPModel(unittest.TestCase):
                 tp.OperationsSetToLayers('opsetB', [LayerFilterParams(torch.nn.Softmax, dim=2)])
         self.assertEqual('Found layer Softmax(dim=2) in more than one OperatorsSet', str(e.exception))
 
-    # TODO: bring back the test if we decide that this needs to be enforced by the TPC during initialization
-    # def test_opset_not_in_tp(self):
-    #     default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
-    #     hm = schema.TargetPlatformModel(default_qco=default_qco,
-    #                                     tpc_minor_version=None,
-    #                                     tpc_patch_version=None,
-    #                                     tpc_platform_type=None,
-    #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
-    #                                     add_metadata=False)
-    #     hm_pytorch = tp.TargetPlatformCapabilities(hm)
-    #     with self.assertRaises(Exception) as e:
-    #         with hm_pytorch:
-    #             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
-    #     self.assertEqual(
-    #         'conv is not defined in the target platform model that is associated with the target platform capabilities.',
-    #         str(e.exception))
+    # TODO: need to test as part of attach to fw
+    def test_opset_not_in_tp(self):
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
+        hm = schema.TargetPlatformModel(default_qco=default_qco,
+                                        tpc_minor_version=None,
+                                        tpc_patch_version=None,
+                                        tpc_platform_type=None,
+                                        operator_set=tuple([schema.OperatorsSet(name="opA")]),
+                                        add_metadata=False)
+        hm_pytorch = tp.TargetPlatformCapabilities(hm)
+        with self.assertRaises(Exception) as e:
+            with hm_pytorch:
+                tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
+        self.assertEqual(
+            'conv is not defined in the target platform model that is associated with the target platform capabilities.',
+            str(e.exception))
 
     def test_pytorch_fusing_patterns(self):
         default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple(
@@ -299,21 +299,16 @@ class TestGetPytorchTPC(unittest.TestCase):
 
     def test_get_pytorch_supported_version(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)  # Latest
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-
-        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v1')
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
-        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v2')
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v1")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, QNNPACK_TP_MODEL, "v1")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
+        self.assertTrue(tpc.tpc_minor_version == 1)
 
     def test_get_pytorch_not_supported_platform(self):
         with self.assertRaises(Exception) as e:
