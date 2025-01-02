@@ -14,6 +14,8 @@
 # ==============================================================================
 import torch
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 """
 This test checks the MatMul substitution function.
@@ -27,48 +29,65 @@ class MatMulFNet(torch.nn.Module):
     def __init__(self):
         super(MatMulFNet, self).__init__()
 
-    def forward(self, x):
-        x_t = torch.transpose(x, -1, -2)
-        x = torch.matmul(x, x_t)
-        return x
+    def forward(self, x, y):
+        out = torch.matmul(x, y)
+        return out
+
 
 class MatMulOpNet(MatMulFNet):
     """
     Model for testing MatMul operator
     """
-    def forward(self, x):
-        x_t = torch.transpose(x, -1, -2)
-        x = x @ x_t
-        return x
+    def forward(self, x, y):
+        out = x @ y
+        return out
 
 
 class MatMulNetBaseTest(BasePytorchTest):
     """
     Base test for testing MatMul decomposition
     """
-    def __init__(self, unit_test, input_shape):
+    def __init__(self, unit_test, input_shape, other_shape):
         super().__init__(unit_test)
         self.input_shape = input_shape
+        self.other_shape = other_shape
 
     def create_inputs_shape(self):
-        return [self.input_shape]
+        return [self.input_shape, self.other_shape]
+
+    def get_tpc(self):
+        return {
+            'no_quantization': generate_pytorch_tpc(
+                name="no_quant_pytorch_test",
+                tp_model=generate_test_tp_model(
+                    {
+                        'weights_n_bits': 32,
+                        'activation_n_bits': 32,
+                        'enable_weights_quantization': False,
+                        'enable_activation_quantization': False
+                    }
+                )
+            )
+        }
+
 
 class MatMulFNetTest(MatMulNetBaseTest):
     """
     This test uses the MatMul function
     """
-    def __init__(self, unit_test, input_shape):
-        super().__init__(unit_test, input_shape)
+    def __init__(self, unit_test, input_shape, other_shape):
+        super().__init__(unit_test, input_shape, other_shape)
 
     def create_feature_network(self, input_shape):
         return MatMulFNet()
+
 
 class MatMulOpNetTest(MatMulNetBaseTest):
     """
     This test uses the MatMul operator - @
     """
-    def __init__(self, unit_test, input_shape):
-        super().__init__(unit_test, input_shape)
+    def __init__(self, unit_test, input_shape, other_shape):
+        super().__init__(unit_test, input_shape, other_shape)
 
     def create_feature_network(self, input_shape):
         return MatMulOpNet()
