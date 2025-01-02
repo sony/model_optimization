@@ -55,8 +55,12 @@ class AttachTpcToFramework:
                     elif opset.name in self._opset2layer:
                         # Note that if the user provided a custom operator set with a name that exists in our
                         # pre-defined set of operator sets, we prioritize the user's custom opset definition
-                        attr_mapping = self._opset2attr_mapping.get(opset.name)
-                        OperationsSetToLayers(opset.name, self._opset2layer[opset.name], attr_mapping=attr_mapping)
+                        layers = self._opset2layer[opset.name]
+                        if len(layers) > 0:
+                            # If the framework does not define any matching operators to a given operator set name that
+                            # appears in the TPC, then we just skip it
+                            attr_mapping = self._opset2attr_mapping.get(opset.name)
+                            OperationsSetToLayers(opset.name, layers, attr_mapping=attr_mapping)
                     else:
                         Logger.critical(f'{opset.name} is defined in TargetPlatformModel, '
                                         f'but is not defined in the framework set of operators or in the provided '
