@@ -180,6 +180,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSQUEEZE.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SIZE.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PERMUTE.value, qc_options=no_quantization_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TRANSPOSE.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_EQUAL.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ARGMAX.value, qc_options=no_quantization_config))
