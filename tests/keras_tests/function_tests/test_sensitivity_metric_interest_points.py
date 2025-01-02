@@ -17,7 +17,11 @@ import unittest
 import numpy as np
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
-from keras.src.engine.input_layer import InputLayer
+
+if tf.__version__ >= "2.13":
+    from keras.src.engine.input_layer import InputLayer
+else:
+    from keras.engine.input_layer import InputLayer
 
 from packaging import version
 

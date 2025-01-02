@@ -13,13 +13,18 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-
+import tensorflow as tf
 import keras
 import unittest
 
-from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
+if tf.__version__ >= "2.13":
+    from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
+    from keras.src.engine.input_layer import InputLayer
+else:
+    from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
+    from keras.engine.input_layer import InputLayer
+
 import numpy as np
-from keras.src.engine.input_layer import InputLayer
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
