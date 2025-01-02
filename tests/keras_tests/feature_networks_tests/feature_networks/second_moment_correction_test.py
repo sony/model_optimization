@@ -38,6 +38,8 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -280,6 +282,9 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = KerasImplementation()
+
+        attach2keras = AttachTpcToKeras()
+        target_platform_capabilities = attach2keras.attach(target_platform_capabilities)
 
         # Ignore initialized hessian service as it is not used here
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,

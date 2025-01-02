@@ -17,6 +17,7 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
+from tests.common_tests.helpers.tpcs_for_tests.v2.tp_model import get_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from mct_quantizers.keras.metadata import add_metadata, get_metadata
 
@@ -31,7 +32,7 @@ tp = mct.target_platform
 class MetadataTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2")
+        return get_tp_model()
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

@@ -34,6 +34,7 @@ else:
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OpQuantizationConfig
+from tests.common_tests.helpers.tpcs_for_tests.v1.tp_model import generate_tp_model
 
 tp = mct.target_platform
 
@@ -62,60 +63,9 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     return eight_bits, mixed_precision_cfg_list, default_config
 
 
-def generate_tp_model(default_config: OpQuantizationConfig,
-                      base_config: OpQuantizationConfig,
-                      mixed_precision_cfg_list: List[OpQuantizationConfig],
-                      name: str) -> TargetPlatformModel:
-    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(
-        [default_config]))
-
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
-                                                                             base_config=base_config)
-
-    operator_set, fusing_patterns = [], []
-
-    operator_set.append(schema.OperatorsSet(name="NoQuantization",
-                                            qc_options=default_configuration_options
-                                            .clone_and_edit(enable_activation_quantization=False)
-                                            .clone_and_edit_weight_attribute(enable_weights_quantization=False)))
-
-    conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
-    fc = schema.OperatorsSet(name="FullyConnected", qc_options=mixed_precision_configuration_options)
-
-    any_relu = schema.OperatorsSet(name="AnyReLU")
-    add = schema.OperatorsSet(name="Add")
-    sub = schema.OperatorsSet(name="Sub")
-    mul = schema.OperatorsSet(name="Mul")
-    div = schema.OperatorsSet(name="Div")
-    prelu = schema.OperatorsSet(name="PReLU")
-    swish = schema.OperatorsSet(name="Swish")
-    sigmoid = schema.OperatorsSet(name="Sigmoid")
-    tanh = schema.OperatorsSet(name="Tanh")
-
-    operator_set.extend([conv, fc, any_relu, add, sub, mul, div, prelu, swish, sigmoid, tanh])
-
-    activations_after_conv_to_fuse = schema.OperatorSetConcat(operators_set=(any_relu, swish, prelu, sigmoid, tanh))
-    activations_after_fc_to_fuse = schema.OperatorSetConcat(operators_set=(any_relu, swish, sigmoid))
-    any_binary = schema.OperatorSetConcat(operators_set=(add, sub, mul, div))
-
-    fusing_patterns.append(schema.Fusing(operator_groups=(conv, activations_after_conv_to_fuse)))
-    fusing_patterns.append(schema.Fusing(operator_groups=(fc, activations_after_fc_to_fuse)))
-    fusing_patterns.append(schema.Fusing(operator_groups=(any_binary, any_relu)))
-
-    generated_tpc = schema.TargetPlatformModel(
-        default_qco=default_configuration_options,
-        tpc_minor_version=None,
-        tpc_patch_version=None,
-        tpc_platform_type=None,
-        operator_set=tuple(operator_set),
-        fusing_patterns=tuple(fusing_patterns),
-        add_metadata=False, name=name)
-    return generated_tpc
-
-
-def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.TargetPlatformCapabilities:
+def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.TargetPlatformModel:
     default_tp_model = get_tp_model(edit_weights_params_dict, edit_act_params_dict)
-    return generate_keras_tpc(name='int8_tpc', tp_model=default_tp_model)
+    return default_tp_model
 
 
 def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):

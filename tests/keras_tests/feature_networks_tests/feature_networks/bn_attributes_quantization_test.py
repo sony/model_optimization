@@ -93,23 +93,6 @@ def _generate_bn_quantized_tpm(quantize_linear):
     return generated_tpm
 
 
-def _generate_bn_quantized_tpc(tp_model):
-    tpc = tp.TargetPlatformCapabilities(tp_model)
-
-    with tpc:
-        tp.OperationsSetToLayers("Conv", [layers.Conv2D],
-                                 attr_mapping={
-                                     KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                                     BIAS_ATTR: DefaultDict(default_value=BIAS)})
-
-        tp.OperationsSetToLayers("BN", [layers.BatchNormalization],
-                                 attr_mapping={
-                                     GAMMA: DefaultDict(default_value=GAMMA),
-                                     BETA: DefaultDict(default_value=BETA)})
-
-    return tpc
-
-
 class BNAttributesQuantization(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, quantize_linear, input_shape=(8, 8, 3)):
@@ -119,10 +102,13 @@ class BNAttributesQuantization(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         tpm = _generate_bn_quantized_tpm(self.quantize_linear)
-        return _generate_bn_quantized_tpc(tpm)
+        return tpm
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(weights_bias_correction=True)
+        return mct.core.QuantizationConfig(weights_bias_correction=True,
+                                           custom_tpc_opset_to_layer={'BN': ([layers.BatchNormalization], {
+                                     GAMMA: DefaultDict(default_value=GAMMA),
+                                     BETA: DefaultDict(default_value=BETA)})})
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

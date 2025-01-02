@@ -156,7 +156,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         if exc_value is not None:
             print(exc_value, exc_value.args)
             raise exc_value
-        self.raise_warnings()
         self.layer2qco, self.filterlayer2qco = self._get_config_options_mapping()
         _current_tpc.reset()
         self.initialized_done()
@@ -225,15 +224,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         if opset_to_remove in self.__tp_model_opsets_not_used:
             self.__tp_model_opsets_not_used.remove(opset_to_remove)
-
-    def raise_warnings(self):
-        """
-
-        Log warnings regards unused opsets.
-
-        """
-        for op in self.__tp_model_opsets_not_used:
-            Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
 
     @property
     def is_simd_padding(self) -> bool:

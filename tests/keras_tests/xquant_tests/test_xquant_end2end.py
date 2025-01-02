@@ -42,6 +42,7 @@ from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_
     INTERMEDIATE_SIMILARITY_METRICS_VAL, XQUANT_REPR, XQUANT_VAL, CUT_MEMORY_ELEMENTS, CUT_TOTAL_SIZE
 
 from model_compression_toolkit.xquant.keras.facade_xquant_report import xquant_report_keras_experimental
+from tests.common_tests.helpers.tpcs_for_tests.v2.tp_model import get_tp_model
 
 
 def random_data_gen(shape=(8, 8, 3), use_labels=False, num_inputs=1, batch_size=2, num_iter=2):
@@ -74,7 +75,7 @@ class BaseTestEnd2EndKerasXQuant(unittest.TestCase):
         return mct.core.CoreConfig(debug_config=mct.core.DebugConfig(simulate_scheduler=True))
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2")
+        return get_tp_model()
 
     def get_model_to_test(self):
         inputs = keras.layers.Input(shape=self.get_input_shape())

@@ -11,6 +11,8 @@ from model_compression_toolkit.core.common.mixed_precision.bit_width_setter impo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.keras.gptq_keras_implementation import GPTQKerasImplemantation
 from model_compression_toolkit.gptq.keras.gptq_training import KerasGPTQTrainer
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 
@@ -77,6 +79,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
                                                            representative_dataset,
                                                            generate_keras_tpc,
                                                            (1,) + input_shape,
+                                                           attach2fw=AttachTpcToKeras(),
                                                            mixed_precision_enabled=False)
         graph = set_bit_widths(mixed_precision_enable=False,
                                graph=graph)

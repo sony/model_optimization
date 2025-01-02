@@ -592,10 +592,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionActivationSearch4BitFunctional(self).run_test()
 
     def test_mixed_precision_multiple_inputs(self):
-        """
-        This test checks the activation Mixed Precision search with multiple inputs to model.
-        """
-        MixedPrecisionActivationMultipleInputs(self).run_test()
+       """
+       This test checks the activation Mixed Precision search with multiple inputs to model.
+      """
+       MixedPrecisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_bops_utilization(self):
         """
@@ -613,11 +613,11 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_mixed_precision_distance_functions(self):
-        """
-        This test checks the Mixed Precision search with layers that use different distance functions during
-        the computation.
-        """
-        MixedPrecisionDistanceFunctions(self).run_test()
+       """
+       This test checks the Mixed Precision search with layers that use different distance functions during
+       the computation.
+       """
+       MixedPrecisionDistanceFunctions(self).run_test()
 
     def test_mha_layer_test(self):
         """
@@ -764,13 +764,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_torch_tpcs(self):
         TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v4', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 

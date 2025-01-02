@@ -19,6 +19,7 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import QuantizationMethod, PytorchQuantizationWrapper
 from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, \
     BIAS_ATTR
@@ -92,23 +93,6 @@ def _generate_bn_quantized_tpm(quantize_linear):
     return generated_tpm
 
 
-def _generate_bn_quantized_tpc(tp_model):
-    tpc = tp.TargetPlatformCapabilities(tp_model)
-
-    with tpc:
-        tp.OperationsSetToLayers("Conv", [nn.Conv2d],
-                                 attr_mapping={
-                                     KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
-                                     BIAS_ATTR: DefaultDict(default_value=BIAS)})
-
-        tp.OperationsSetToLayers("BN", [nn.BatchNorm2d],
-                                 attr_mapping={
-                                     GAMMA: DefaultDict(default_value=GAMMA),
-                                     BETA: DefaultDict(default_value=BETA)})
-
-    return tpc
-
-
 class BNAttributesQuantization(BasePytorchTest):
 
     def __init__(self, unit_test, quantize_linear):
@@ -119,10 +103,18 @@ class BNAttributesQuantization(BasePytorchTest):
 
     def get_tpc(self):
         tpm = _generate_bn_quantized_tpm(self.quantize_linear)
-        return {self.test_name: _generate_bn_quantized_tpc(tpm)}
+        return {self.test_name: tpm}
 
     def get_core_configs(self):
-        return {self.test_name: mct.core.CoreConfig()}
+        return {self.test_name: CoreConfig(
+            quantization_config=QuantizationConfig(
+                custom_tpc_opset_to_layer={
+                    "Conv": ([nn.Conv2d],
+                             {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}),
+                    "BN": ([nn.BatchNorm2d], {GAMMA: DefaultDict(default_value=GAMMA),
+                                              BETA: DefaultDict(default_value=BETA)})
+                }))}
 
     def create_feature_network(self, input_shape):
         class BNAttributesNet(nn.Module):

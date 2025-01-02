@@ -15,13 +15,13 @@
 import random
 from torch.fx import symbolic_trace
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.utils import set_model, to_torch_tensor, \
     torch_tensor_to_numpy
 import model_compression_toolkit as mct
 import torch
 import numpy as np
+
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
@@ -44,24 +44,21 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
     def get_tpc(self):
         return {
-            'no_quantization': generate_pytorch_tpc(name="no_quant_pytorch_test",
-                                                    tp_model=generate_test_tp_model({'weights_n_bits': 32,
-                                                                                     'activation_n_bits': 32,
-                                                                                     'enable_weights_quantization': False,
-                                                                                     'enable_activation_quantization': False
-                                                                                     })),
-            'all_32bit': generate_pytorch_tpc(name="32_quant_pytorch_test",
-                                              tp_model=generate_test_tp_model({'weights_n_bits': 32,
-                                                                               'activation_n_bits': 32,
-                                                                               'enable_weights_quantization': True,
-                                                                               'enable_activation_quantization': True
-                                                                               })),
-            'all_4bit': generate_pytorch_tpc(name="4_quant_pytorch_test",
-                                             tp_model=generate_test_tp_model({'weights_n_bits': 4,
-                                                                              'activation_n_bits': 4,
-                                                                              'enable_weights_quantization': True,
-                                                                              'enable_activation_quantization': True
-                                                                              })),
+            'no_quantization': generate_test_tp_model({'weights_n_bits': 32,
+                                                       'activation_n_bits': 32,
+                                                       'enable_weights_quantization': False,
+                                                       'enable_activation_quantization': False
+                                                       }),
+            'all_32bit': generate_test_tp_model({'weights_n_bits': 32,
+                                                 'activation_n_bits': 32,
+                                                 'enable_weights_quantization': True,
+                                                 'enable_activation_quantization': True
+                                                 }),
+            'all_4bit': generate_test_tp_model({'weights_n_bits': 4,
+                                                'activation_n_bits': 4,
+                                                'enable_weights_quantization': True,
+                                                'enable_activation_quantization': True
+                                                }),
         }
 
     def get_core_configs(self):
@@ -139,7 +136,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                            "mapping the test model name to a TPC object."
         for model_name in tpc_dict.keys():
             tpc = tpc_dict[model_name]
-            assert isinstance(tpc, TargetPlatformCapabilities)
+            assert isinstance(tpc, TargetPlatformModel)
 
             core_config = core_config_dict.get(model_name)
             assert core_config is not None, f"Model name {model_name} does not exists in the test's " \

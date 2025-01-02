@@ -28,7 +28,7 @@ from mct_quantizers.keras.quantizers import ActivationLutPOTInferableQuantizer
 from mct_quantizers.common.constants import THRESHOLD, LUT_VALUES
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc, \
     generate_test_tp_model
-from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 

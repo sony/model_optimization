@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 import pprint
-
 from enum import Enum
 from typing import Dict, Any, Union, Tuple, List, Optional, Literal, Annotated
+
+from pydantic import BaseModel, Field, root_validator, validator, PositiveInt
+
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.logger import Logger
-from pydantic import BaseModel, Field, root_validator, validator, PositiveInt, PrivateAttr
 
 
 class OperatorSetNames(Enum):
@@ -33,9 +34,11 @@ class OperatorSetNames(Enum):
     OPSET_GATHER = "Gather"
     OPSET_EXPAND = "Expend"
     OPSET_BATCH_NORM = "BatchNorm"
+    OPSET_L2NORM = "L2Norm"
     OPSET_RELU = "ReLU"
     OPSET_RELU6 = "ReLU6"
     OPSET_LEAKY_RELU = "LEAKYReLU"
+    OPSET_ELU = "Elu"
     OPSET_HARD_TANH = "HardTanh"
     OPSET_ADD = "Add"
     OPSET_SUB = "Sub"
@@ -44,8 +47,11 @@ class OperatorSetNames(Enum):
     OPSET_MIN = "Min"
     OPSET_MAX = "Max"
     OPSET_PRELU = "PReLU"
+    OPSET_ADD_BIAS = "AddBias"
     OPSET_SWISH = "Swish"
     OPSET_SIGMOID = "Sigmoid"
+    OPSET_SOFTMAX = "Softmax"
+    OPSET_LOG_SOFTMAX = "LogSoftmax"
     OPSET_TANH = "Tanh"
     OPSET_GELU = "Gelu"
     OPSET_HARDSIGMOID = "HardSigmoid"
@@ -58,19 +64,21 @@ class OperatorSetNames(Enum):
     OPSET_PERMUTE = "Permute"
     OPSET_TRANSPOSE = "Transpose"
     OPSET_DROPOUT = "Dropout"
-    OPSET_SPLIT = "Split"
-    OPSET_CHUNK = "Chunk"
+    OPSET_SPLIT_CHUNK = "SplitChunk"
     OPSET_MAXPOOL = "MaxPool"
+    OPSET_AVGPOOL = "AvgPool"
     OPSET_SIZE = "Size"
     OPSET_SHAPE = "Shape"
     OPSET_EQUAL = "Equal"
     OPSET_ARGMAX = "ArgMax"
     OPSET_TOPK = "TopK"
-    OPSET_FAKE_QUANT_WITH_MIN_MAX_VARS = "FakeQuantWithMinMaxVars"
+    OPSET_FAKE_QUANT = "FakeQuant"
     OPSET_COMBINED_NON_MAX_SUPPRESSION = "CombinedNonMaxSuppression"
-    OPSET_CROPPING2D = "Cropping2D"
     OPSET_ZERO_PADDING2d = "ZeroPadding2D"
     OPSET_CAST = "Cast"
+    OPSET_RESIZE = "Resize"
+    OPSET_PAD = "Pad"
+    OPSET_FOLD = "Fold"
     OPSET_STRIDED_SLICE = "StridedSlice"
     OPSET_SSD_POST_PROCESS = "SSDPostProcess"
 

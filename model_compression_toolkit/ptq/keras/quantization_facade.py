@@ -22,6 +22,7 @@ from model_compression_toolkit.core.common.quantization.quantize_graph_weights i
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -41,6 +42,9 @@ if FOUND_TF:
 
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.keras.metadata import add_metadata
+    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+        AttachTpcToKeras
+
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
@@ -48,7 +52,7 @@ if FOUND_TF:
                                          representative_data_gen: Callable,
                                          target_resource_utilization: ResourceUtilization = None,
                                          core_config: CoreConfig = CoreConfig(),
-                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                         target_platform_capabilities: TargetPlatformModel = DEFAULT_KERAS_TPC):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -133,6 +137,11 @@ if FOUND_TF:
         tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = KerasImplementation()
+
+        attach2keras = AttachTpcToKeras()
+        target_platform_capabilities = attach2keras.attach(
+            target_platform_capabilities,
+            custom_opset2layer=core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore returned hessian service as PTQ does not use it
         tg, bit_widths_config, _, scheduling_info = core_runner(in_model=in_model,
