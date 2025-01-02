@@ -51,6 +51,7 @@ class MatMulNetBaseTest(BasePytorchTest):
         super().__init__(unit_test)
         self.input_shape = input_shape
         self.other_shape = other_shape
+        self.use_is_close_validation = True  # There is a small difference between float operations
 
     def create_inputs_shape(self):
         return [self.input_shape, self.other_shape]
