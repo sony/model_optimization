@@ -32,15 +32,15 @@ def get_target_platform_capabilities(fw_name: str,
     existing TPC API.
 
     Args:
-        fw_name: Framework name of the TargetPlatformCapabilities (not used in this function).
-        target_platform_name: Target platform model name the model will use for inference (not used in this function).
-        target_platform_version: Target platform capabilities version (not used in this function).
+        fw_name: Framework name of the TargetPlatformCapabilities.
+        target_platform_name: Target platform model name the model will use for inference.
+        target_platform_version: Target platform capabilities version.
 
     Returns:
         A default TargetPlatformModel object.
     """
 
-    assert fw_name == TENSORFLOW or fw_name == PYTORCH, f"Unsupported framework {fw_name}."
+    assert fw_name in [TENSORFLOW, PYTORCH], f"Unsupported framework {fw_name}."
 
     if target_platform_name == DEFAULT_TP_MODEL:
         return get_tp_model_imx500_v1()

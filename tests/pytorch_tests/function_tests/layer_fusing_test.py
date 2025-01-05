@@ -241,11 +241,11 @@ class LayerFusingTest4(BaseLayerFusingTest):
         mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                                  base_config=base_config)
         default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
-        conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV, qc_options=mixed_precision_configuration_options)
-        fc = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED, qc_options=mixed_precision_configuration_options)
-        relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU)
-        add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD)
-        swish = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SWISH)
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV, qc_options=mixed_precision_configuration_options)
+        fc = schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED, qc_options=mixed_precision_configuration_options)
+        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+        add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD)
+        swish = schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)
         operator_set = [conv, fc, relu, add, swish]
         activations_to_fuse = schema.OperatorSetConcat(operators_set=[relu, swish])
         # Define fusions

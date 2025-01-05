@@ -43,7 +43,7 @@ class KerasReportUtils(FrameworkReportUtils):
         fw_info = DEFAULT_KERAS_INFO
         fw_impl = KerasImplementation()
 
-        # Set the default Target Platform Capabilities (TPC) for PyTorch.
+        # Set the default Target Platform Capabilities (TPC) for Keras.
         default_tpc = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
         attach2pytorch = AttachTpcToKeras()
         target_platform_capabilities = attach2pytorch.attach(default_tpc)

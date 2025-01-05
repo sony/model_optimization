@@ -36,7 +36,7 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
     def get_tpc_default_16bit():
         tpc = get_tp_model()
         base_cfg_16 = [c for c in get_config_options_by_operators_set(tpc,
-                                                                      OperatorSetNames.OPSET_MUL).quantization_configurations
+                                                                      OperatorSetNames.MUL).quantization_configurations
                        if c.activation_n_bits == 16][0].clone_and_edit()
         qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
                                            quantization_configurations=(tpc.default_qco.base_config,
@@ -46,9 +46,9 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
             base_cfg=tpc.default_qco.base_config,
             base_tp_model=tpc,
             operator_sets_dict={
-                OperatorSetNames.OPSET_MUL: qco_16,
-                OperatorSetNames.OPSET_GELU: qco_16,
-                OperatorSetNames.OPSET_TANH: qco_16,
+                OperatorSetNames.MUL: qco_16,
+                OperatorSetNames.GELU: qco_16,
+                OperatorSetNames.TANH: qco_16,
             })
 
         return tpc

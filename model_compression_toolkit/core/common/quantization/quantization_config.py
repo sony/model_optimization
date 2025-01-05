@@ -20,6 +20,8 @@ from typing import Optional, Dict, Any, Tuple, List
 
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import MIN_THRESHOLD
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 
 
 class QuantizationErrorMethod(Enum):
@@ -88,7 +90,7 @@ class QuantizationConfig:
     concat_threshold_update: bool = False
     activation_bias_correction: bool = False
     activation_bias_correction_threshold: float = 0.0
-    custom_tpc_opset_to_layer: Optional[Dict[str, Tuple[List[Any], Optional[Dict[str, DefaultDict]]]]] = None
+    custom_tpc_opset_to_layer: Optional[Dict[str, CustomOpsetLayers]] = None
 
 
 # Default quantization configuration the library use.

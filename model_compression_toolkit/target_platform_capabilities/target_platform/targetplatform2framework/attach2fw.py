@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List, Any, Optional
+from typing import Dict, NamedTuple, List, Any, Optional
 
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.logger import Logger
@@ -6,6 +6,20 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
     OperationsSetToLayers
+
+
+class CustomOpsetLayers(NamedTuple):
+    """
+    This struct is used to define a set of operators to map to a custom operator set defined in the TPC.
+
+    Args:
+        operators: a list of framework operators to map to a certain custom opset name.
+        attr_mapping: a mapping between an opset name to a mapping between its attributes' general names and names in
+            the framework.
+    """
+
+    operators: List
+    attr_mapping: Optional[Dict[str, DefaultDict]]
 
 
 class AttachTpcToFramework:
@@ -19,7 +33,7 @@ class AttachTpcToFramework:
         self._opset2attr_mapping = None  # Mapping of operation sets to their corresponding framework-specific layers
 
     def attach(self, tpc_model: TargetPlatformModel,
-               custom_opset2layer: Optional[Dict[str, Tuple[List[Any], Optional[Dict[str, DefaultDict]]]]] = None
+               custom_opset2layer: Optional[Dict[str, CustomOpsetLayers]] = None
                ) -> TargetPlatformCapabilities:
         """
         Attaching a TargetPlatformModel which includes a platform capabilities description to specific

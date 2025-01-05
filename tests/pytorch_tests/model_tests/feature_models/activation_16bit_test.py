@@ -92,7 +92,7 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
         tpc = get_tp_model()
-        base_cfg_16 = [c for c in get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL).quantization_configurations
+        base_cfg_16 = [c for c in get_config_options_by_operators_set(tpc, OperatorSetNames.MUL).quantization_configurations
                        if c.activation_n_bits == 16][0].clone_and_edit()
         qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
                                            quantization_configurations=(tpc.default_qco.base_config,
@@ -102,9 +102,9 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
             base_cfg=tpc.default_qco.base_config,
             base_tp_model=tpc,
             operator_sets_dict={
-                OperatorSetNames.OPSET_MUL: qco_16,
-                OperatorSetNames.OPSET_GELU: qco_16,
-                OperatorSetNames.OPSET_TANH: qco_16,
+                OperatorSetNames.MUL: qco_16,
+                OperatorSetNames.GELU: qco_16,
+                OperatorSetNames.TANH: qco_16,
             })
 
         return tpc
@@ -137,7 +137,7 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
     def get_tpc(self):
         tpc = get_tp_model()
 
-        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL)
+        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.MUL)
         base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
         quantization_configurations = list(mul_qco.quantization_configurations)
         quantization_configurations.extend([
@@ -152,7 +152,7 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
             base_cfg=tpc.default_qco.base_config,
             base_tp_model=tpc,
             operator_sets_dict={
-                OperatorSetNames.OPSET_MUL: qco_16,
+                OperatorSetNames.MUL: qco_16,
             })
 
         return tpc

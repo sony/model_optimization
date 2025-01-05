@@ -54,12 +54,12 @@ def create_const_quant_tpc(qmethod):
     const_merge_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_merge_config]))
 
     operator_sets_dict = {}
-    operator_sets_dict[schema.OperatorSetNames.OPSET_ADD] = const_configuration_options
-    operator_sets_dict[schema.OperatorSetNames.OPSET_SUB] = const_configuration_options
-    operator_sets_dict[schema.OperatorSetNames.OPSET_MUL] = const_configuration_options
-    operator_sets_dict[schema.OperatorSetNames.OPSET_DIV] = const_configuration_options
-    operator_sets_dict[schema.OperatorSetNames.OPSET_STACK] = const_merge_configuration_options
-    operator_sets_dict[schema.OperatorSetNames.OPSET_CONCATENATE] = const_merge_configuration_options
+    operator_sets_dict[schema.OperatorSetNames.ADD] = const_configuration_options
+    operator_sets_dict[schema.OperatorSetNames.SUB] = const_configuration_options
+    operator_sets_dict[schema.OperatorSetNames.MUL] = const_configuration_options
+    operator_sets_dict[schema.OperatorSetNames.DIV] = const_configuration_options
+    operator_sets_dict[schema.OperatorSetNames.STACK] = const_merge_configuration_options
+    operator_sets_dict[schema.OperatorSetNames.CONCATENATE] = const_merge_configuration_options
 
     tp_model = generate_custom_test_tp_model(name=name,
                                              base_cfg=base_cfg,

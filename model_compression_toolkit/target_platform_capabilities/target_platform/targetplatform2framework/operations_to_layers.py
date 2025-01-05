@@ -139,7 +139,7 @@ class OperationsToLayers:
                                                       f'is of type {type(ops2layers)}'
 
             # Assert that opset has a unique name.
-            assert not (ops2layers.name in existing_opset_names), f'OperationsSetToLayers names should be unique, but {ops2layers.name} appears to violate it.'
+            assert ops2layers.name not in existing_opset_names, f'OperationsSetToLayers names should be unique, but {ops2layers.name} appears to violate it.'
             existing_opset_names.append(ops2layers.name)
 
             # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformModel.
