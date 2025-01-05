@@ -265,8 +265,8 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
-                MatMulDecomposition(),
                 ScaledDotProductDecomposition(),
+                MatMulDecomposition(),
                 TransformFunctionCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
