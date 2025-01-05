@@ -68,3 +68,6 @@ class Cut:
 
     def __hash__(self):
         return hash((frozenset(self.op_order), frozenset(self.op_record), self.mem_elements))
+
+    def __repr__(self):
+        return f"<Cut: Nodes={[e.node_name for e in self.mem_elements.elements]}, size={self.memory_size()}>"

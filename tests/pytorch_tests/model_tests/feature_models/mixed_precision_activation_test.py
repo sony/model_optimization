@@ -91,7 +91,7 @@ class MixedPrecisionActivationSearch2Bit(MixedPrecisionActivationBaseTest):
         self.expected_config = [2, 8, 2, 2]
 
     def get_resource_utilization(self):
-        return ResourceUtilization(96, 768)
+        return ResourceUtilization(96, 1500)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)

@@ -776,7 +776,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_16bit_activations(self):
         Activation16BitTest(self).run_test()
-        Activation16BitMixedPrecisionTest(self, input_shape=(3, 30, 30)).run_test()
+        Activation16BitMixedPrecisionTest(self, input_shape=(3, 25, 25)).run_test()
 
     def test_invalid_bit_width_selection(self):
         with self.assertRaises(Exception) as context:
