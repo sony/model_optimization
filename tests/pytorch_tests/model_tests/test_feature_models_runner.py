@@ -261,9 +261,9 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MatMulOpNetTest(self, [3, 1, 5, 10], [3, 8, 10, 3]).run_test()
         MatMulFNetTest(self, [3, 1, 4, 5, 10], [3, 8, 1, 10, 10]).run_test()
         MatMulOpNetTest(self, [3, 1, 4, 5, 10], [3, 8, 1, 10, 10]).run_test()
+        MatMulFNetTest(self, [3, 10, 6, 5, 50, 100], [3, 10, 1, 1, 100, 80]).run_test()
         MatMulOpNetTest(self, [3, 10, 6, 5, 50, 100], [3, 10, 1, 1, 100, 80]).run_test()
-        MatMulOpNetTest(self, [3, 10, 6, 5, 50, 100], [3, 10, 1, 1, 100, 80]).run_test()
-        MatMulOpNetTest(self, [3, 1, 7, 1, 50, 100], [3, 10, 7, 5, 100, 80]).run_test()
+        MatMulFNetTest(self, [3, 1, 7, 1, 50, 100], [3, 10, 7, 5, 100, 80]).run_test()
         MatMulOpNetTest(self, [3, 1, 7, 1, 50, 100], [3, 10, 7, 5, 100, 80]).run_test()
 
     def test_broken_net(self):
