@@ -188,7 +188,7 @@ class MatMulDecomposition(BaseSubstitution):
         # Stack and reshape all results - reshape if needed
         # [(B, m, n)] * (D_1*...*D_N) --> (B, (D_1*...*D_N), m, n)
         # (B, (D_1*...*D_N), m, n) --> (B, D_1, ..., D_N, m, n)
-        output_node = self._cat_matmul_outputs(
+        output_node = self._stack_matmul_outputs(
             graph,
             matmul_node,
             split_matmul_nodes,
@@ -325,26 +325,26 @@ class MatMulDecomposition(BaseSubstitution):
         """
         input_split_node = FunctionalNode(
             name=f'{matmul_node.name}_input_split',
-            framework_attr={DIM: 1},
+            framework_attr={},
             input_shape=params.input_reshape_shape,
             output_shape=params.input_split_shape,
             weights={},
-            layer_class=torch.split,
+            layer_class=torch.unbind,
             op_call_args=[1],
-            op_call_kwargs={DIM: 1},
-            functional_op=torch.split
+            op_call_kwargs={},
+            functional_op=torch.unbind
         )
 
         other_split_node = FunctionalNode(
             name=f'{matmul_node.name}_other_split',
-            framework_attr={DIM: 1},
+            framework_attr={},
             input_shape=params.other_reshape_shape,
             output_shape=params.other_split_shape,
             weights={},
-            layer_class=torch.split,
-            op_call_args=[1],  # Should this be in kwargs or args
-            op_call_kwargs={DIM: 1},
-            functional_op=torch.split
+            layer_class=torch.unbind,
+            op_call_args=[1],
+            op_call_kwargs={},
+            functional_op=torch.unbind
         )
 
         if params.prev_input_node:
@@ -422,10 +422,10 @@ class MatMulDecomposition(BaseSubstitution):
         return matmul_node
 
     @staticmethod
-    def _cat_matmul_outputs(graph: Graph,
-                            matmul_node: FunctionalNode,
-                            split_matmul_nodes: List[FunctionalNode],
-                            params: MatMulParams) -> FunctionalNode:
+    def _stack_matmul_outputs(graph: Graph,
+                              matmul_node: FunctionalNode,
+                              split_matmul_nodes: List[FunctionalNode],
+                              params: MatMulParams) -> FunctionalNode:
         """
         This method creates the node that concats all single matmuls together and then reshapes to the original output
         shape.
@@ -441,15 +441,15 @@ class MatMulDecomposition(BaseSubstitution):
         """
         # [(B, m, n)] * (D_1*...*D_N) --> (B, (D_1*...*D_N), m, n)
         cat_node = FunctionalNode(
-            name=f'{matmul_node.name}_cat',
+            name=f'{matmul_node.name}_stack',
             framework_attr={DIM: 1},
             input_shape=[params.single_matmul_shape] * params.matmul_stack_shape[1],
             output_shape=params.matmul_stack_shape,
             weights={},
-            layer_class=torch.cat,
+            layer_class=torch.stack,
             op_call_args=[],
             op_call_kwargs={DIM: 1},
-            functional_op=torch.cat,
+            functional_op=torch.stack,
             inputs_as_list=True
         )
         graph.add_node_with_in_edges(cat_node, split_matmul_nodes)
