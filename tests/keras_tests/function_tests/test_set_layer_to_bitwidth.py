@@ -20,6 +20,9 @@ import numpy as np
 from keras import Input
 from keras.layers import Conv2D
 
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
+
 if tf.__version__ >= "2.13":
     from keras.src.engine.input_layer import InputLayer
 else:
@@ -63,7 +66,7 @@ def setup_test(get_tpc_fn):
                                                        input_shape=(1, 8, 8, 3),
                                                        attach2fw=AttachTpcToKeras(),
                                                        qc=QuantizationConfig(
-                                                               custom_tpc_opset_to_layer={"Input": ([InputLayer],)}),
+                                                               custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])}),
                                                        mixed_precision_enabled=True)
 
     layer = model.layers[1]

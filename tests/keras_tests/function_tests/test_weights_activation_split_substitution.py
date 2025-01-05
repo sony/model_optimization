@@ -17,6 +17,9 @@ import tensorflow as tf
 import keras
 import unittest
 
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
+
 if tf.__version__ >= "2.13":
     from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
     from keras.src.engine.input_layer import InputLayer
@@ -88,7 +91,7 @@ def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
                                        lambda name, _tp: get_tpc(mixed_precision_candidates_list),
                                        mixed_precision_enabled=True,
                                        attach2fw=AttachTpcToKeras(),
-                                       qc=QuantizationConfig(custom_tpc_opset_to_layer={"Input": ([InputLayer],)}))
+                                       qc=QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])}))
 
     # Split graph substitution
     split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])

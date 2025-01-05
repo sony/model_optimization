@@ -15,6 +15,8 @@
 import torch.nn
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, ResourceUtilization, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
@@ -118,7 +120,7 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                          input_scaling=False, activation_channel_equalization=False,
-                                         custom_tpc_opset_to_layer={"Input": ([DummyPlaceHolder],)})
+                                         custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([DummyPlaceHolder])})
         mpc = MixedPrecisionQuantizationConfig(num_of_images=1)
 
         return {"mixed_precision_bops_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}

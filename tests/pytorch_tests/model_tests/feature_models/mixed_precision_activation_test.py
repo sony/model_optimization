@@ -27,6 +27,8 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
     QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -58,7 +60,7 @@ class MixedPrecisionActivationBaseTest(BasePytorchTest):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                          input_scaling=False, activation_channel_equalization=False,
-                                         custom_tpc_opset_to_layer={"Input": ([DummyPlaceHolder],)})  # TODO: what's wrong with the type hint for this argument?
+                                         custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([DummyPlaceHolder])})
         mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
 
         return {"mixed_precision_activation_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
@@ -141,8 +143,8 @@ class MixedPrecisionActivationMultipleInputs(MixedPrecisionActivationBaseTest):
 
     def get_core_configs(self):
         return {"mixed_precision_activation_model": CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={'Concat': ([torch.concat],),
-                                       "Input": ([DummyPlaceHolder],)}))}
+            custom_tpc_opset_to_layer={'Concat': CustomOpsetLayers([torch.concat]),
+                                       "Input": CustomOpsetLayers([DummyPlaceHolder])}))}
 
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
@@ -259,8 +261,8 @@ class MixedPrecisionDistanceFunctions(MixedPrecisionActivationBaseTest):
 
     def get_core_configs(self):
         return {"mixed_precision_activation_model": CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={'Softmax': ([softmax, Softmax],),
-                                       "Input": ([DummyPlaceHolder],)}))}
+            custom_tpc_opset_to_layer={'Softmax': CustomOpsetLayers([softmax, Softmax]),
+                                       "Input": CustomOpsetLayers([DummyPlaceHolder])}))}
 
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
@@ -292,10 +294,11 @@ class MixedPrecisionActivationConfigurableWeights(MixedPrecisionActivationBaseTe
 
     def get_core_configs(self):
         return {"mixed_precision_activation_model": CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Weights": ([torch.nn.Conv2d],
-                                                   {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
-                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}),
-                                       "Activations": ([torch.nn.ReLU, torch.add],)}
+            custom_tpc_opset_to_layer={"Weights": CustomOpsetLayers([torch.nn.Conv2d],
+                                                                    {KERNEL_ATTR: DefaultDict(
+                                                                        default_value=PYTORCH_KERNEL),
+                                                                     BIAS_ATTR: DefaultDict(default_value=BIAS)}),
+                                       "Activations": CustomOpsetLayers([torch.nn.ReLU, torch.add])}
         ))}
 
     def get_tpc(self):

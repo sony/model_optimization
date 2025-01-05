@@ -82,12 +82,6 @@ class Activation16BitNetMP(torch.nn.Module):
         return x
 
 
-def set_16bit_as_default(tpc, required_op_set):
-    # base_config = [l for l in tpc.layer2qco[op].quantization_configurations if l.activation_n_bits == 16][0]
-    # tpc.layer2qco[op] = replace(tpc.layer2qco[op], base_config=base_config)
-    pass
-
-
 class Activation16BitTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):

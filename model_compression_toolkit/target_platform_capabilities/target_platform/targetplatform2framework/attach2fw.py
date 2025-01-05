@@ -19,7 +19,7 @@ class CustomOpsetLayers(NamedTuple):
     """
 
     operators: List
-    attr_mapping: Optional[Dict[str, DefaultDict]]
+    attr_mapping: Optional[Dict[str, DefaultDict]] = None
 
 
 class AttachTpcToFramework:

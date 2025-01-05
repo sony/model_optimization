@@ -23,6 +23,8 @@ from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     KERNEL_BASE_CONFIG, BIAS_CONFIG
 
@@ -104,7 +106,8 @@ class TestCustomLayer(unittest.TestCase):
 
         core_cfg = CoreConfig(quantization_config=QuantizationConfig(
             custom_tpc_opset_to_layer={"NoQuantization":
-                                           ([CustomIdentity, LayerFilterParams(CustomIdentityWithArg, dummy_arg=0)],)}))
+                                           CustomOpsetLayers([CustomIdentity,
+                                                              LayerFilterParams(CustomIdentityWithArg, dummy_arg=0)])}))
 
         q_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                               lambda: [np.random.randn(1, 3, 3, 3)],

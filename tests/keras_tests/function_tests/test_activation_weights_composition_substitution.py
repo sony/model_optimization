@@ -20,6 +20,8 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
@@ -99,7 +101,7 @@ def representative_dataset():
 
 def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
     fw_info = DEFAULT_KERAS_INFO
-    qc = mct.core.QuantizationConfig(custom_tpc_opset_to_layer={"Input": ([InputLayer],)})
+    qc = mct.core.QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])})
 
     graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
 

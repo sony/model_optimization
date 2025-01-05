@@ -31,6 +31,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.keras.constants import KERNEL, GAMMA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -78,13 +80,14 @@ def get_tpc(quant_method, per_channel):
 class TestParamSelectionWithHMSE(unittest.TestCase):
     def _setup_with_args(self, quant_method, per_channel, running_gptq=True, tpc_fn=get_tpc, model_gen_fn=model_gen):
         self.qc = QuantizationConfig(weights_error_method=mct.core.QuantizationErrorMethod.HMSE,
-                                     custom_tpc_opset_to_layer={"Linear": ([layers.Conv2D, layers.Dense],
-                                                                           {KERNEL_ATTR: DefaultDict(
-                                                                               default_value=KERAS_KERNEL),
-                                                                            BIAS_ATTR: DefaultDict(
-                                                                                default_value=BIAS)}),
-                                                                "BN": ([layers.BatchNormalization],
-                                                                       {GAMMA: DefaultDict(default_value=GAMMA)})})
+                                     custom_tpc_opset_to_layer={
+                                         "Linear": CustomOpsetLayers([layers.Conv2D, layers.Dense],
+                                                                     {KERNEL_ATTR: DefaultDict(
+                                                                         default_value=KERAS_KERNEL),
+                                                                         BIAS_ATTR: DefaultDict(
+                                                                             default_value=BIAS)}),
+                                         "BN": CustomOpsetLayers([layers.BatchNormalization],
+                                                                 {GAMMA: DefaultDict(default_value=GAMMA)})})
 
         self.float_model = model_gen_fn()
         self.keras_impl = KerasImplementation()

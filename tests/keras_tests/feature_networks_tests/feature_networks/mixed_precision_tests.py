@@ -24,6 +24,8 @@ from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -55,7 +57,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
 
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Input": ([layers.InputLayer],)}))
+            custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([layers.InputLayer])}))
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
@@ -76,7 +78,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                            weights_bias_correction=True,
                                            input_scaling=False,
                                            activation_channel_equalization=False,
-                                           custom_tpc_opset_to_layer={"Input": ([layers.InputLayer],)})
+                                           custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([layers.InputLayer])})
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
@@ -557,9 +559,9 @@ class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
 
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Softmax": ([layers.Softmax, tf.nn.softmax, softmax,
-                                                    tp.LayerFilterParams(layers.Activation, activation=SOFTMAX)],),
-                                       "Input": ([layers.InputLayer],)}))
+            custom_tpc_opset_to_layer={"Softmax": CustomOpsetLayers([layers.Softmax, tf.nn.softmax, softmax,
+                                                    tp.LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
+                                       "Input": CustomOpsetLayers([layers.InputLayer])}))
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
@@ -599,7 +601,7 @@ class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
         return ResourceUtilization(np.inf, 767)
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Input": ([layers.InputLayer],)}))
+            custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([layers.InputLayer])}))
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
@@ -646,10 +648,10 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
 
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Weights": ([layers.Conv2D],
+            custom_tpc_opset_to_layer={"Weights": CustomOpsetLayers([layers.Conv2D],
                                                    {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)},),
-                                       "Activations": ([layers.ReLU, layers.Add],)}))
+                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}),
+                                       "Activations":CustomOpsetLayers([layers.ReLU, layers.Add])}))
 
     def get_tpc(self):
         cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()

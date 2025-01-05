@@ -39,7 +39,8 @@ if FOUND_TF:
                                         representative_data_gen: Callable,
                                         core_config: CoreConfig = CoreConfig(
                                             mixed_precision_config=MixedPrecisionQuantizationConfig()),
-                                        target_platform_capabilities: TargetPlatformModel = KERAS_DEFAULT_TPC) -> ResourceUtilization:
+                                        target_platform_capabilities: TargetPlatformModel = KERAS_DEFAULT_TPC
+                                        ) -> ResourceUtilization:
         """
         Computes resource utilization data that can be used to calculate the desired target resource utilization
         for mixed-precision quantization.

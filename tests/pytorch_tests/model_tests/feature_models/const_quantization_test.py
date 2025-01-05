@@ -21,6 +21,8 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model as get_tp_v4
 from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model as get_tp_v3
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
@@ -227,7 +229,7 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
 
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(custom_tpc_opset_to_layer=
-                                                                 {"WeightQuant": ([torch.Tensor.expand, torch.cat],)}))
+                                                                 {"WeightQuant": CustomOpsetLayers([torch.Tensor.expand, torch.cat])}))
 
     def get_tpc(self):
         tp = mct.target_platform

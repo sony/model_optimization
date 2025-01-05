@@ -18,6 +18,8 @@ import tensorflow as tf
 
 from packaging import version
 
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
@@ -86,7 +88,7 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
                                            weights_bias_correction=True,
                                            input_scaling=False,
                                            activation_channel_equalization=True,
-                                           custom_tpc_opset_to_layer={"Input": ([InputLayer],)})
+                                           custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])})
 
     def get_resource_utilization(self):
         ru_data = self.get_max_resources_for_model(self.create_networks())

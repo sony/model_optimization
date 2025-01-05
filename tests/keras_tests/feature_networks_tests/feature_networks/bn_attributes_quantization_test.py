@@ -22,6 +22,8 @@ from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.keras.constants import GAMMA, BETA
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS, BIAS_ATTR
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -106,9 +108,10 @@ class BNAttributesQuantization(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(weights_bias_correction=True,
-                                           custom_tpc_opset_to_layer={'BN': ([layers.BatchNormalization], {
-                                     GAMMA: DefaultDict(default_value=GAMMA),
-                                     BETA: DefaultDict(default_value=BETA)})})
+                                           custom_tpc_opset_to_layer={
+                                               'BN': CustomOpsetLayers([layers.BatchNormalization], {
+                                                   GAMMA: DefaultDict(default_value=GAMMA),
+                                                   BETA: DefaultDict(default_value=BETA)})})
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

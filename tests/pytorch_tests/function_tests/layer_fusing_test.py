@@ -22,6 +22,8 @@ from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
@@ -139,8 +141,8 @@ class LayerFusingTest2(BaseLayerFusingTest):
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
                                            attach2fw=AttachTpcToPytorch(),
                                            qc=QuantizationConfig(
-                                               custom_tpc_opset_to_layer={"AnyAct": ([ReLU, relu6, relu, SiLU, Sigmoid,
-                                                                                      LayerFilterParams(Hardtanh, min_val=0)],)}))
+                                               custom_tpc_opset_to_layer={"AnyAct": CustomOpsetLayers([ReLU, relu6, relu, SiLU, Sigmoid,
+                                                                                      LayerFilterParams(Hardtanh, min_val=0)])}))
 
         self._compare(graph.fused_nodes)
 
@@ -200,7 +202,7 @@ class LayerFusingTest3(BaseLayerFusingTest):
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
                                            attach2fw=AttachTpcToPytorch(),
                                            qc=QuantizationConfig(
-                                               custom_tpc_opset_to_layer={"AnyAct": ([ReLU, relu6, relu],)}))
+                                               custom_tpc_opset_to_layer={"AnyAct": CustomOpsetLayers([ReLU, relu6, relu])}))
 
         self._compare(graph.fused_nodes)
 

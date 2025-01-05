@@ -27,6 +27,8 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
     OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
     QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, \
     get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
@@ -135,10 +137,10 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
 
     def get_core_configs(self):
         return {"mixed_precision_model": CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Weights_mp": ([torch.nn.Conv2d],
+            custom_tpc_opset_to_layer={"Weights_mp": CustomOpsetLayers([torch.nn.Conv2d],
                                                       {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                                        BIAS_ATTR: DefaultDict(default_value=BIAS)}),
-                                       "Weights_fixed": ([torch.nn.Linear],
+                                       "Weights_fixed": CustomOpsetLayers([torch.nn.Linear],
                                                          {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                                           BIAS_ATTR: DefaultDict(default_value=BIAS)})}
         ))}
@@ -288,10 +290,10 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
 
     def get_core_configs(self):
         return {"mixed_precision_model": CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Weights": ([torch.nn.Conv2d],
+            custom_tpc_opset_to_layer={"Weights": CustomOpsetLayers([torch.nn.Conv2d],
                                                    {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                                     BIAS_ATTR: DefaultDict(default_value=BIAS)}),
-                                       "Activations": ([torch.nn.ReLU, torch.add],)}
+                                       "Activations": CustomOpsetLayers([torch.nn.ReLU, torch.add])}
         ))}
 
     def get_tpc(self):

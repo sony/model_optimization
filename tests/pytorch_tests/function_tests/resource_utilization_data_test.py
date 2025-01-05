@@ -21,6 +21,8 @@ from torch.nn import Conv2d, BatchNorm2d, ReLU
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from model_compression_toolkit.core.pytorch.constants import KERNEL
@@ -120,7 +122,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
                                                          core_config=mct.core.CoreConfig(
                                                              quantization_config=QuantizationConfig(
                                                                  custom_tpc_opset_to_layer={
-                                                                     "Input": ([DummyPlaceHolder],)})),
+                                                                     "Input": CustomOpsetLayers([DummyPlaceHolder])})),
                                                          target_platform_capabilities=tpc_dict['ru_data_test'])
 
     return ru_data

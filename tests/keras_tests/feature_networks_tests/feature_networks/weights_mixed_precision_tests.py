@@ -24,6 +24,8 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+    CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs, generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
@@ -173,12 +175,12 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
 
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Weights_fixed": ([layers.Dense],
+            custom_tpc_opset_to_layer={"Weights_fixed": CustomOpsetLayers([layers.Dense],
                                                          {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                                                          BIAS_ATTR: DefaultDict(default_value=BIAS)},),
-                                       "Weights_mp": ([layers.Conv2D],
+                                                          BIAS_ATTR: DefaultDict(default_value=BIAS)}),
+                                       "Weights_mp": CustomOpsetLayers([layers.Conv2D],
                                                       {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                                                       BIAS_ATTR: DefaultDict(default_value=BIAS)},)}))
+                                                       BIAS_ATTR: DefaultDict(default_value=BIAS)})}))
 
     def get_tpc(self):
         # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
@@ -484,10 +486,10 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
 
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Weights": ([layers.Conv2D],
+            custom_tpc_opset_to_layer={"Weights": CustomOpsetLayers([layers.Conv2D],
                                                    {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)},),
-                                       "Activations": ([layers.ReLU, layers.Add],)}))
+                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}),
+                                       "Activations": CustomOpsetLayers([layers.ReLU, layers.Add],)}))
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

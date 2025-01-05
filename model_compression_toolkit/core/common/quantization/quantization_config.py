@@ -16,9 +16,8 @@
 from dataclasses import dataclass
 import math
 from enum import Enum
-from typing import Optional, Dict, Any, Tuple, List
+from typing import Optional, Dict
 
-from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import MIN_THRESHOLD
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
     CustomOpsetLayers
