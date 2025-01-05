@@ -24,8 +24,7 @@ from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest

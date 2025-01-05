@@ -17,8 +17,7 @@ import tensorflow as tf
 import keras
 import unittest
 
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 
 if tf.__version__ >= "2.13":
     from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input

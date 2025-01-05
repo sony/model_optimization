@@ -20,8 +20,7 @@ import numpy as np
 from keras import Input
 from keras.layers import Conv2D
 
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 
 if tf.__version__ >= "2.13":
     from keras.src.engine.input_layer import InputLayer

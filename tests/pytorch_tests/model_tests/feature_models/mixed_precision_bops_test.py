@@ -15,8 +15,7 @@
 import torch.nn
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, ResourceUtilization, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs

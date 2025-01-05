@@ -27,8 +27,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
     OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
     QuantizationConfigOptions
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, \
     get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model

@@ -21,8 +21,7 @@ from torch.nn import Conv2d, BatchNorm2d, ReLU
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from model_compression_toolkit.core.pytorch.constants import KERNEL

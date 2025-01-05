@@ -33,8 +33,7 @@ from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlac
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import \
     BasePytorchQATWeightTrainableQuantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc, \
     get_op_quantization_configs
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod

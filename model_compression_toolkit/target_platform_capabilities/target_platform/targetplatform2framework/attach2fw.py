@@ -1,25 +1,12 @@
-from typing import Dict, NamedTuple, List, Any, Optional
+from typing import Dict, Optional
 
-from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
     OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
     OperationsSetToLayers
 
-
-class CustomOpsetLayers(NamedTuple):
-    """
-    This struct is used to define a set of operators to map to a custom operator set defined in the TPC.
-
-    Args:
-        operators: a list of framework operators to map to a certain custom opset name.
-        attr_mapping: a mapping between an opset name to a mapping between its attributes' general names and names in
-            the framework.
-    """
-
-    operators: List
-    attr_mapping: Optional[Dict[str, DefaultDict]] = None
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 
 
 class AttachTpcToFramework:
@@ -33,7 +20,7 @@ class AttachTpcToFramework:
         self._opset2attr_mapping = None  # Mapping of operation sets to their corresponding framework-specific layers
 
     def attach(self, tpc_model: TargetPlatformModel,
-               custom_opset2layer: Optional[Dict[str, CustomOpsetLayers]] = None
+               custom_opset2layer: Optional[Dict[str, 'CustomOpsetLayers']] = None
                ) -> TargetPlatformCapabilities:
         """
         Attaching a TargetPlatformModel which includes a platform capabilities description to specific
@@ -57,15 +44,11 @@ class AttachTpcToFramework:
             for opset in tpc_model.operator_set:
                 if isinstance(opset, OperatorsSet):  # filter out OperatorsSetConcat
                     if opset.name in custom_opset2layer:
-                        operators = custom_opset2layer[opset.name]
-                        if len(operators) == 1:
-                            OperationsSetToLayers(opset.name, operators[0])
-                        elif len(operators) == 2:
-                            OperationsSetToLayers(opset.name, operators[0], attr_mapping=operators[1])
-                        else:
-                            raise ValueError(f"Custom operator set to layer mapping should include up to 2 elements - "
-                                             f"a list of layers to attach to the operator and an optional mapping of "
-                                             f"attributes names, but given a mapping contains {len(operators)} elements.")
+                        custom_opset_layers = custom_opset2layer[opset.name]
+                        OperationsSetToLayers(opset.name,
+                                              layers=custom_opset_layers.operators,
+                                              attr_mapping=custom_opset_layers.attr_mapping)
+
                     elif opset.name in self._opset2layer:
                         # Note that if the user provided a custom operator set with a name that exists in our
                         # pre-defined set of operator sets, we prioritize the user's custom opset definition

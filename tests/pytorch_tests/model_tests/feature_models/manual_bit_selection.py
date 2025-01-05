@@ -24,8 +24,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
 from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \

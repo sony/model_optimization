@@ -16,11 +16,24 @@
 from dataclasses import dataclass
 import math
 from enum import Enum
-from typing import Optional, Dict
+from typing import Optional, Dict, NamedTuple, List
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import MIN_THRESHOLD
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    CustomOpsetLayers
+
+
+class CustomOpsetLayers(NamedTuple):
+    """
+    This struct is used to define a set of operators to map to a custom operator set defined in the TPC.
+
+    Args:
+        operators: a list of framework operators to map to a certain custom opset name.
+        attr_mapping: a mapping between an opset name to a mapping between its attributes' general names and names in
+            the framework.
+    """
+
+    operators: List
+    attr_mapping: Optional[Dict[str, DefaultDict]] = None
 
 
 class QuantizationErrorMethod(Enum):
