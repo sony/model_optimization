@@ -148,15 +148,15 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
 
-    conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV.value)
-    conv_depthwise = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DEPTHWISE_CONV.value)
-    conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV_TRANSPOSE.value)
-    batchnorm = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM.value)
-    relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
-    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU6.value)
+    conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV)
+    conv_depthwise = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DEPTHWISE_CONV)
+    conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV_TRANSPOSE)
+    batchnorm = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM)
+    relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU)
+    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU6)
 
-    hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARD_TANH.value)
-    linear = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value)
+    hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARD_TANH)
+    linear = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED)
 
     operator_set.extend([conv, conv_depthwise, conv_transpose, batchnorm, relu, relu6, hard_tanh, linear])
 

@@ -23,7 +23,7 @@ from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.logger import Logger
 
 
-class OperatorSetNames(Enum):
+class OperatorSetNames(str, Enum):
     OPSET_CONV = "Conv"
     OPSET_DEPTHWISE_CONV = "DepthwiseConv2D"
     OPSET_CONV_TRANSPOSE = "ConvTranspose"

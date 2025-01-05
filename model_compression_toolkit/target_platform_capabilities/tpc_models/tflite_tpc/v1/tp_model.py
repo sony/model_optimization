@@ -146,52 +146,52 @@ def generate_tp_model(default_config: OpQuantizationConfig,
 
     quant_preserving = default_configuration_options.clone_and_edit(quantization_preserving=True)
 
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSTACK.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TRANSPOSE.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GATHER.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RESHAPE.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAXPOOL.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_AVGPOOL.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_STRIDED_SLICE.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONCATENATE.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MUL.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MIN.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAX.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ZERO_PADDING2d.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RESIZE.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PAD.value, qc_options=quant_preserving))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FOLD.value, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSTACK, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TRANSPOSE, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GATHER, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RESHAPE, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAXPOOL, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_AVGPOOL, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_STRIDED_SLICE, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONCATENATE, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MUL, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MIN, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAX, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ZERO_PADDING2d, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RESIZE, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PAD, qc_options=quant_preserving))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FOLD, qc_options=quant_preserving))
 
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_L2NORM.value,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_L2NORM,
                                             qc_options=default_configuration_options.clone_and_edit(
                                                 fixed_zero_point=0, fixed_scale=1 / 128)))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_LOG_SOFTMAX.value,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_LOG_SOFTMAX,
                                             qc_options=default_configuration_options.clone_and_edit(
                                                 fixed_zero_point=127, fixed_scale=16 / 256)))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SOFTMAX.value,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SOFTMAX,
                                             qc_options=default_configuration_options.clone_and_edit(
                                                 fixed_zero_point=-128, fixed_scale=1 / 256)))
 
-    sigmoid = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SIGMOID.value,
+    sigmoid = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SIGMOID,
                                   qc_options=default_configuration_options.clone_and_edit_weight_attribute(
                                       weights_per_channel_threshold=False))
-    tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TANH.value,
+    tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TANH,
                                qc_options=default_configuration_options.clone_and_edit(
                                    fixed_zero_point=-128, fixed_scale=1 / 256))
-    fc = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value,
+    fc = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED,
                              qc_options=default_configuration_options.clone_and_edit_weight_attribute(
                                  weights_per_channel_threshold=False))
-    squeeze = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SQUEEZE.value,
+    squeeze = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SQUEEZE,
                                   qc_options=default_configuration_options.clone_and_edit(
                                       quantization_preserving=True))
 
-    conv2d = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV.value)
-    relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
-    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU6.value)
-    elu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ELU.value)
-    batch_norm = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM.value)
-    add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD.value)
-    bias_add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD_BIAS.value)
+    conv2d = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV)
+    relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU)
+    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU6)
+    elu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ELU)
+    batch_norm = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM)
+    add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD)
+    bias_add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD_BIAS)
 
     kernel = schema.OperatorSetConcat(operators_set=[conv2d, fc])
     activations_to_fuse = schema.OperatorSetConcat(operators_set=[relu, elu])

@@ -137,7 +137,7 @@ class Manual16BitWidthSelectionTest(ManualBitWidthSelectionTest):
     def get_tpc(self):
         tpc = get_tp_model()
         base_cfg_16 = [c for c in get_config_options_by_operators_set(tpc,
-                                                                      OperatorSetNames.OPSET_MUL.value).quantization_configurations
+                                                                      OperatorSetNames.OPSET_MUL).quantization_configurations
                        if c.activation_n_bits == 16][0].clone_and_edit()
         qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
                                            quantization_configurations=(tpc.default_qco.base_config,
@@ -147,9 +147,9 @@ class Manual16BitWidthSelectionTest(ManualBitWidthSelectionTest):
             base_cfg=tpc.default_qco.base_config,
             base_tp_model=tpc,
             operator_sets_dict={
-                OperatorSetNames.OPSET_MUL.value: qco_16,
-                OperatorSetNames.OPSET_GELU.value: qco_16,
-                OperatorSetNames.OPSET_TANH.value: qco_16,
+                OperatorSetNames.OPSET_MUL: qco_16,
+                OperatorSetNames.OPSET_GELU: qco_16,
+                OperatorSetNames.OPSET_TANH: qco_16,
             })
 
         return tpc
@@ -175,7 +175,7 @@ class Manual16BitWidthSelectionMixedPrecisionTest(Manual16BitWidthSelectionTest)
     def get_tpc(self):
         tpc = get_tp_model()
 
-        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL.value)
+        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL)
         base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
         quantization_configurations = list(mul_qco.quantization_configurations)
         quantization_configurations.extend([
@@ -190,7 +190,7 @@ class Manual16BitWidthSelectionMixedPrecisionTest(Manual16BitWidthSelectionTest)
             base_cfg=tpc.default_qco.base_config,
             base_tp_model=tpc,
             operator_sets_dict={
-                OperatorSetNames.OPSET_MUL.value: qco_16,
+                OperatorSetNames.OPSET_MUL: qco_16,
             })
 
         return tpc

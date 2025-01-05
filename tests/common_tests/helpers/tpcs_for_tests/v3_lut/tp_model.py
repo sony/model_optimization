@@ -197,86 +197,86 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         supported_input_activation_n_bits=(8, 16)).clone_and_edit_weight_attribute(enable_weights_quantization=False)
 
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSTACK.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSTACK, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DROPOUT.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DROPOUT, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FLATTEN.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FLATTEN, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SPLIT_CHUNK.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SPLIT_CHUNK, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GET_ITEM.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GET_ITEM, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RESHAPE.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RESHAPE, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSQUEEZE.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSQUEEZE, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SIZE.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SIZE, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PERMUTE.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PERMUTE, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TRANSPOSE.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TRANSPOSE, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_EQUAL.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_EQUAL, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ARGMAX.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ARGMAX, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GATHER.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GATHER, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TOPK.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TOPK, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SQUEEZE.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SQUEEZE, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAXPOOL.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAXPOOL, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PAD.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PAD, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ZERO_PADDING2d.value, qc_options=no_quantization_config))
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ZERO_PADDING2d, qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CAST.value, qc_options=no_quantization_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_COMBINED_NON_MAX_SUPPRESSION.value,
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CAST, qc_options=no_quantization_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_COMBINED_NON_MAX_SUPPRESSION,
                                             qc_options=no_quantization_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FAKE_QUANT.value,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FAKE_QUANT,
                                             qc_options=no_quantization_config))
     operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_STRIDED_SLICE.value, qc_options=no_quantization_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SSD_POST_PROCESS.value,
+        schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_STRIDED_SLICE, qc_options=no_quantization_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SSD_POST_PROCESS,
                                             qc_options=no_quantization_config))
 
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_STACK.value,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_STACK,
                                             qc_options=const_configuration_options_inout16))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONCATENATE.value,
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONCATENATE,
                                             qc_options=const_configuration_options_inout16))
 
     # Define operator sets that use mixed_precision_configuration_options:
-    conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV.value,
+    conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV,
                                qc_options=mixed_precision_configuration_options)
-    conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV_TRANSPOSE.value,
+    conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV_TRANSPOSE,
                                          qc_options=mixed_precision_configuration_options)
-    depthwise_conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DEPTHWISE_CONV.value,
+    depthwise_conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DEPTHWISE_CONV,
                                          qc_options=mixed_precision_configuration_options)
-    fc = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value,
+    fc = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED,
                              qc_options=mixed_precision_configuration_options)
 
     # Define operations sets without quantization configuration options (useful for creating fusing patterns):
-    relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
-    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU6.value)
-    leaky_relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_LEAKY_RELU.value)
-    prelu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PRELU.value)
-    add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD.value,
+    relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU)
+    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU6)
+    leaky_relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_LEAKY_RELU)
+    prelu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PRELU)
+    add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD,
                               qc_options=const_configuration_options_inout16)
-    sub = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SUB.value,
+    sub = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SUB,
                               qc_options=const_configuration_options_inout16)
-    mul = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MUL.value,
+    mul = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MUL,
                               qc_options=const_configuration_options_inout16)
-    div = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DIV.value, qc_options=const_configuration_options)
-    swish = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SWISH.value)
-    hard_swish = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARDSWISH.value)
-    sigmoid = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SIGMOID.value)
-    tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TANH.value)
-    hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARD_TANH.value)
+    div = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DIV, qc_options=const_configuration_options)
+    swish = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SWISH)
+    hard_swish = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARDSWISH)
+    sigmoid = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SIGMOID)
+    tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TANH)
+    hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARD_TANH)
 
     operator_set.extend(
         [conv, conv_transpose, depthwise_conv, fc, relu, relu6, leaky_relu, add, sub, mul, div, prelu, swish,

@@ -201,7 +201,7 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
     def get_tpc(self):
         tpc = get_tp_model()
 
-        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL.value)
+        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL)
         base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
         quantization_configurations = list(mul_qco.quantization_configurations)
 
@@ -213,7 +213,7 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
             base_cfg=tpc.default_qco.base_config,
             base_tp_model=tpc,
             operator_sets_dict={
-                OperatorSetNames.OPSET_MUL.value: qco_16,
+                OperatorSetNames.OPSET_MUL: qco_16,
             })
 
         return {'manual_bit_selection': tpc}
@@ -227,7 +227,7 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
     def get_tpc(self):
         tpc = get_tp_model()
 
-        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL.value)
+        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL)
         base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
         quantization_configurations = list(mul_qco.quantization_configurations)
         quantization_configurations.extend([
@@ -242,7 +242,7 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
             base_cfg=tpc.default_qco.base_config,
             base_tp_model=tpc,
             operator_sets_dict={
-                OperatorSetNames.OPSET_MUL.value: qco_16,
+                OperatorSetNames.OPSET_MUL: qco_16,
             })
 
         return {'manual_bit_selection': tpc}

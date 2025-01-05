@@ -613,7 +613,7 @@ class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_test",
-                                                custom_opsets={schema.OperatorSetNames.OPSET_SIGMOID.value:
+                                                custom_opsets={schema.OperatorSetNames.OPSET_SIGMOID:
                                                                    mixed_precision_candidates_list})
 
     def create_networks(self):
