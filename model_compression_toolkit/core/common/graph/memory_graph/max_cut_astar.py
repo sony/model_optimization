@@ -154,7 +154,7 @@ class MaxCutAstar:
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
-                return self._remove_dummys_from_path(cut_route[0].op_order), cut_cost,\
+                return self._remove_dummy_nodes_from_path(cut_route[0].op_order), cut_cost,\
                        list(set([self._remove_dummy_tensors_from_cut(c) for c in cut_route]))
 
             if self.is_pivot(next_cut):
@@ -388,7 +388,7 @@ class MaxCutAstar:
         return (u_bound + l_bound) / 2
 
     @staticmethod
-    def _remove_dummys_from_path(path: List[BaseNode]) -> List[BaseNode]:
+    def _remove_dummy_nodes_from_path(path: List[BaseNode]) -> List[BaseNode]:
         """
         An auxiliary method which removes dummy nodes from a given list of nodes (a path in the graph).
 
