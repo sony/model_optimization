@@ -27,8 +27,6 @@ from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from model_compression_toolkit.constants import PYTORCH
 from mct_quantizers import PytorchQuantizationWrapper
 
 tp = mct.target_platform
