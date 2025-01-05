@@ -14,6 +14,7 @@
 # ==============================================================================
 import unittest
 import keras
+import tensorflow as tf
 import numpy as np
 
 from keras import Input

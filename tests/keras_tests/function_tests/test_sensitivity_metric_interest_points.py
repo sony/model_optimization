@@ -20,19 +20,14 @@ from keras.applications.mobilenet_v2 import MobileNetV2
 
 if tf.__version__ >= "2.13":
     from keras.src.engine.input_layer import InputLayer
+    from keras.src.layers.core import TFOpLambda
 else:
     from keras.engine.input_layer import InputLayer
-
-from packaging import version
+    from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
-
-if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers.core import TFOpLambda
-else:
-    from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
