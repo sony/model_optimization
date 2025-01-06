@@ -27,10 +27,13 @@ from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarg
 from mct_quantizers.common.base_inferable_quantizer import QuantizerID
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import \
     BasePytorchQATWeightTrainableQuantizer
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc, \
     get_op_quantization_configs
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
@@ -132,7 +135,6 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization(model_float,
                                                                                   self.representative_data_gen_experimental,
                                                                                   target_platform_capabilities=_tpc)
-
 
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
@@ -270,7 +272,9 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
-        config = mct.core.CoreConfig(mct.core.QuantizationConfig(shift_negative_activation_correction=False))
+        config = mct.core.CoreConfig(mct.core.QuantizationConfig(shift_negative_activation_correction=False,
+                                                                 custom_tpc_opset_to_layer={
+                                                                     "Input": CustomOpsetLayers([DummyPlaceHolder])}))
         ru = mct.core.ResourceUtilization(57, 47)  # inf memory
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
@@ -314,7 +318,9 @@ class QuantizationAwareTrainingMixedPrecisionRUCfgTest(QuantizationAwareTraining
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
-        config = mct.core.CoreConfig(mct.core.QuantizationConfig(shift_negative_activation_correction=False))
+        config = mct.core.CoreConfig(mct.core.QuantizationConfig(shift_negative_activation_correction=False,
+                                                                 custom_tpc_opset_to_layer={
+                                                                     "Input": CustomOpsetLayers([DummyPlaceHolder])}))
         ru = mct.core.ResourceUtilization(weights_memory=50, activation_memory=40)
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,

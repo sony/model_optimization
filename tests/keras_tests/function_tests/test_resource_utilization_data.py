@@ -20,13 +20,13 @@ import model_compression_toolkit as mct
 import numpy as np
 import keras
 import unittest
-from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D
+from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D, InputLayer
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
-    get_op_quantization_configs
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
@@ -95,7 +95,9 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
 
     ru_data = mct.core.keras_resource_utilization_data(in_model=model,
                                                        representative_data_gen=random_datagen,
-                                                       core_config=mct.core.CoreConfig(),
+                                                       core_config=mct.core.CoreConfig(
+                                                           quantization_config=QuantizationConfig(
+                                                               custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])})),
                                                        target_platform_capabilities=tpc)
 
     return ru_data

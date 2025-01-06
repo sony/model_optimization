@@ -13,9 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core import ResourceUtilization, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import ResourceUtilization, MixedPrecisionQuantizationConfig, CoreConfig, \
+    QuantizationConfig
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
 
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 import tensorflow as tf
@@ -37,6 +39,10 @@ class BaseMixedPrecisionBopsTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test)
 
         self.mixed_precision_candidates_list = mixed_precision_candidates_list
+
+    def get_core_config(self):
+        return CoreConfig(quantization_config=QuantizationConfig(
+            custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([layers.InputLayer])}))
 
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()

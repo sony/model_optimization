@@ -17,10 +17,15 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 from mct_quantizers import KerasActivationQuantizationHolder, KerasQuantizationWrapper
-from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.network_editors import NodeNameFilter, NodeTypeFilter
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames, \
+    QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
+    get_config_options_by_operators_set
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs, \
+    generate_custom_test_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
@@ -88,7 +93,8 @@ class ManualBitWidthSelectionTest(BaseKerasFeatureNetworkTest):
     def get_mp_core_config(self):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
-                                         input_scaling=False, activation_channel_equalization=False)
+                                         input_scaling=False, activation_channel_equalization=False,
+                                         custom_tpc_opset_to_layer={'Input': CustomOpsetLayers([layers.InputLayer])})
         mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
 
         core_config = mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)
@@ -130,13 +136,23 @@ class Manual16BitWidthSelectionTest(ManualBitWidthSelectionTest):
     Uses the manual bit width API in the "get_core_configs" method.
     """
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v3')
-        # Force Mul base_config to 16bit only
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[tf.multiply] = tpc.layer2qco[tf.multiply].copy(
-            update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
-                    'base_config': base_config})
+        tpc = get_tp_model()
+        base_cfg_16 = [c for c in get_config_options_by_operators_set(tpc,
+                                                                      OperatorSetNames.MUL).quantization_configurations
+                       if c.activation_n_bits == 16][0].clone_and_edit()
+        qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
+                                           quantization_configurations=(tpc.default_qco.base_config,
+                                                                        base_cfg_16))
+        tpc = generate_custom_test_tp_model(
+            name="custom_16_bit_tpc",
+            base_cfg=tpc.default_qco.base_config,
+            base_tp_model=tpc,
+            operator_sets_dict={
+                OperatorSetNames.MUL: qco_16,
+                OperatorSetNames.GELU: qco_16,
+                OperatorSetNames.TANH: qco_16,
+            })
+
         return tpc
 
     def create_networks(self):
@@ -158,15 +174,26 @@ class Manual16BitWidthSelectionMixedPrecisionTest(Manual16BitWidthSelectionTest)
     Uses the manual bit width API in the "get_core_configs" method.
     """
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v3')
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        quantization_configurations = list(tpc.layer2qco[tf.multiply].quantization_configurations)
+        tpc = get_tp_model()
+
+        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.MUL)
+        base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
+        quantization_configurations = list(mul_qco.quantization_configurations)
         quantization_configurations.extend([
-            tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=4),
-            tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[tf.multiply] = tpc.layer2qco[tf.multiply].copy(
-            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
+            base_cfg_16.clone_and_edit(activation_n_bits=4),
+            base_cfg_16.clone_and_edit(activation_n_bits=2)])
+
+        qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
+                                           quantization_configurations=quantization_configurations)
+
+        tpc = generate_custom_test_tp_model(
+            name="custom_16_bit_tpc",
+            base_cfg=tpc.default_qco.base_config,
+            base_tp_model=tpc,
+            operator_sets_dict={
+                OperatorSetNames.MUL: qco_16,
+            })
+
         return tpc
 
     def get_resource_utilization(self):

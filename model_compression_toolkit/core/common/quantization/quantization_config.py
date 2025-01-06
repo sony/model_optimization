@@ -13,11 +13,28 @@
 # limitations under the License.
 # ==============================================================================
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import math
 from enum import Enum
+from typing import Optional, Dict, NamedTuple, List
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import MIN_THRESHOLD
+
+
+class CustomOpsetLayers(NamedTuple):
+    """
+    This struct defines a set of operators from a specific framework, which will be used to configure a custom operator
+    set in the TPC.
+
+    Args:
+        operators: a list of framework operators to map to a certain custom opset name.
+        attr_mapping: a mapping between an opset name to a mapping between its attributes' general names and names in
+            the framework.
+    """
+
+    operators: List
+    attr_mapping: Optional[Dict[str, DefaultDict]] = None
 
 
 class QuantizationErrorMethod(Enum):
@@ -86,6 +103,7 @@ class QuantizationConfig:
     concat_threshold_update: bool = False
     activation_bias_correction: bool = False
     activation_bias_correction_threshold: float = 0.0
+    custom_tpc_opset_to_layer: Optional[Dict[str, CustomOpsetLayers]] = None
 
 
 # Default quantization configuration the library use.

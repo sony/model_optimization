@@ -20,6 +20,7 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
 from mct_quantizers.keras.metadata import MetadataLayer
+from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model
 
 keras = tf.keras
 layers = keras.layers
@@ -54,7 +55,9 @@ class TestSonySsdPostProcessLayer(unittest.TestCase):
         q_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                               get_rep_dataset(2, (1, 8, 8, 3)),
                                                               core_config=core_config,
-                                                              target_resource_utilization=mct.core.ResourceUtilization(weights_memory=6000))
+                                                              target_resource_utilization=mct.core.ResourceUtilization(weights_memory=6000),
+                                                              target_platform_capabilities=get_tp_model()
+                                                              )
 
         # verify the custom layer is in the quantized model
         last_model_layer_index = -2 if isinstance(q_model.layers[-1], MetadataLayer) else -1

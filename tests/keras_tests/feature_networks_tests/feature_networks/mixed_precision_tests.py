@@ -21,8 +21,10 @@ from keras.activations import sigmoid, softmax
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core import QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -52,6 +54,10 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
 
         self.activation_layers_idx = activation_layers_idx
 
+    def get_core_config(self):
+        return CoreConfig(quantization_config=QuantizationConfig(
+            custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([layers.InputLayer])}))
+
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
 
@@ -70,7 +76,8 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                            relu_bound_to_power_of_2=False,
                                            weights_bias_correction=True,
                                            input_scaling=False,
-                                           activation_channel_equalization=False)
+                                           activation_channel_equalization=False,
+                                           custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([layers.InputLayer])})
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
@@ -557,6 +564,12 @@ class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
     def get_resource_utilization(self):
         return ResourceUtilization(activation_memory=768)
 
+    def get_core_config(self):
+        return CoreConfig(quantization_config=QuantizationConfig(
+            custom_tpc_opset_to_layer={"Softmax": CustomOpsetLayers([layers.Softmax, tf.nn.softmax, softmax,
+                                                    tp.LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
+                                       "Input": CustomOpsetLayers([layers.InputLayer])}))
+
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
 
@@ -565,13 +578,11 @@ class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
 
         default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
 
-        custom_opsets = {"Softmax": [layers.Softmax, tf.nn.softmax, softmax,
-                                     tp.LayerFilterParams(layers.Activation, activation=SOFTMAX)]}
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_test",
-                                                custom_opsets=custom_opsets)
+                                                custom_opsets={'Softmax': mixed_precision_candidates_list})
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -594,7 +605,7 @@ class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, 768)
+        return ResourceUtilization(activation_memory=767)
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
@@ -607,7 +618,9 @@ class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
-                                                name="mixed_precision_activation_test")
+                                                name="mixed_precision_activation_test",
+                                                custom_opsets={schema.OperatorSetNames.SIGMOID:
+                                                                   mixed_precision_candidates_list})
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -636,6 +649,13 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
         outputs = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
+
+    def get_core_config(self):
+        return CoreConfig(quantization_config=QuantizationConfig(
+            custom_tpc_opset_to_layer={"Weights": CustomOpsetLayers([layers.Conv2D],
+                                                   {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}),
+                                       "Activations":CustomOpsetLayers([layers.ReLU, layers.Add])}))
 
     def get_tpc(self):
         cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
@@ -671,22 +691,7 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             add_metadata=False,
             name="mp_activation_conf_weights_test")
 
-        keras_tpc = tp.TargetPlatformCapabilities(tp_model)
-
-        with keras_tpc:
-            tp.OperationsSetToLayers(
-                "Weights",
-                [layers.Conv2D],
-                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
-            )
-
-            tp.OperationsSetToLayers(
-                "Activations",
-                [layers.ReLU, layers.Add]
-            )
-
-        return keras_tpc
+        return tp_model
 
     def get_resource_utilization(self):
         return ResourceUtilization(np.inf, 5410)

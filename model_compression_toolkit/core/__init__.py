@@ -18,7 +18,7 @@ from model_compression_toolkit.core.common import network_editors as network_edi
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.core.common.quantization import quantization_config
 from model_compression_toolkit.core.common.mixed_precision import mixed_precision_quantization_config
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, QuantizationErrorMethod, DEFAULTCONFIG
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, QuantizationErrorMethod, DEFAULTCONFIG, CustomOpsetLayers
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
