@@ -428,11 +428,11 @@ class BaseNode:
 
         Returns: Output size.
         """
-        # multiple output shapes are not necessarily lists, e.g. tf nms uses custom named tuple.
+        # shape can be tuple or list, and multiple shapes can be packed in list or tuple
         if self.output_shape and isinstance(self.output_shape[0], (tuple, list)):
-            output_shapes = list(self.output_shape)
+            output_shapes = self.output_shape
         else:
-            output_shapes = self.output_shape if isinstance(self.output_shape, list) else [self.output_shape]
+            output_shapes = [self.output_shape]
 
         # remove batch size (first element) from output shape
         output_shapes = [s[1:] for s in output_shapes]
