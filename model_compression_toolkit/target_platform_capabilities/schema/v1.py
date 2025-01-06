@@ -37,7 +37,7 @@ class OperatorSetNames(str, Enum):
     L2NORM = "L2Norm"
     RELU = "ReLU"
     RELU6 = "ReLU6"
-    LEAKY_RELU = "LEAKYReLU"
+    LEAKY_RELU = "LeakyReLU"
     ELU = "Elu"
     HARD_TANH = "HardTanh"
     ADD = "Add"
