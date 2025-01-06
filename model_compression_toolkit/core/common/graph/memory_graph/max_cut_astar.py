@@ -100,7 +100,7 @@ class MaxCutAstar:
         edges_src_ab = [(src_dummy_a, src_dummy_b)]
         edges_src_ba = [(src_dummy_b, src_a) for src_a in memory_graph.sources_a]
 
-        # Target Cut (Adding 2 consecutive dummy nodes ao the final cut will include only dummy tensors).
+        # Target Cut (Adding 2 consecutive dummy nodes so the final cut will include only dummy tensors).
         target_dummy_a = next(gen_a)
         target_dummy_a2 = next(gen_a)
         target_dummy_b = next(gen_b)
