@@ -122,7 +122,7 @@ if FOUND_TORCH:
         # not quantized yet. For this reason, we use it to create a graph that acts as a "float" graph
         # for things like similarity analyzer (because the quantized and float graph should have the same
         # architecture to find the appropriate compare points for similarity computation).
-        similarity_baseline_graph = copy.deepcopy(tg)
+        similarity_baseline_graph = copy.deepcopy(tg)  # cause recursion error during run (but not on debug)
 
         graph_with_stats_correction = ptq_runner(tg,
                                                  representative_data_gen,

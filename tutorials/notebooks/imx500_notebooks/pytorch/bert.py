@@ -7,10 +7,10 @@ from datasets import load_dataset
 import random
 import model_compression_toolkit as mct
 from typing import Iterator, Tuple, List
+from time import time
 import torch
 # import sys
 # sys.setrecursionlimit(3000)
-
 
 
 def get_glue_dataset_num_labels():
@@ -130,7 +130,7 @@ def get_representative_dataset(n_iter: int, dataset_loader: Iterator[Tuple]):
 representative_dataset: Iterator = get_representative_dataset(2, representative_dataloader)
 
 #####################################quantize model######################################################
-
+start = time()
 # Perform post training quantization with the default configuration
 quant_model, _ = mct.ptq.pytorch_post_training_quantization(model, representative_dataset)
 print('Quantized model is ready')
@@ -139,10 +139,12 @@ print('Quantized model is ready')
 
 
 mct.exporter.pytorch_export_model(model=quant_model,
-                                  save_model_path='./bert_qmodel_wo_embeds.onnx',
+                                  save_model_path='./bert_qmodel_wo_embeds_2mamtul_subs.onnx',
                                   repr_dataset=representative_dataset,
                                   onnx_opset_version=20)
-print("Finished model quantization!")
+end = time()
+runtime_seconds = end - start
+print(f"Finished model quantization! Total runtime: {(runtime_seconds):.2f} seconds ({runtime_seconds / 60:.2f} minutes)")
 """
 bert-mct issues map:
 attention substitution fails
@@ -151,11 +153,4 @@ nodes with output_shape=[]
 output with single value: [128] and not a tensor
 WARNING:Model Compression Toolkit:Skipping bias correction due to valiation problem.
 recursion error on run, but not on debug mode
-"""
-
-"""
-regarding cast mode:
-* it doesn't exist in original model
-* it's not added during pytorch_post_training_quantization run
-* 
 """

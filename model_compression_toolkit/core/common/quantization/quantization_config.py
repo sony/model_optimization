@@ -65,9 +65,10 @@ class QuantizationConfig:
         such as with Keras in the function: :func:~model_compression_toolkit.ptq.keras_post_training_quantization`.
 
     """
-
-    activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE
-    weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE
+    # NOCLIPPING - sets the thresh to be abs(max tensor val). this will reduce the runtime since we won't search for optimal threshold
+    #Note for future self: this didn't affect the runtime and you can remove these changes (you kept it to remember this configuration option)
+    activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.NOCLIPPING #  add this config to bert call with NO_CLIPPING
+    weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE  #  add this config to bert call with NO_CLIPPING
     relu_bound_to_power_of_2: bool = False
     weights_bias_correction: bool = True
     weights_second_moment_correction: bool = False
