@@ -70,7 +70,8 @@ class MixPrecisionRUHelper:
             act_tensors_util = self._activation_tensor_utilization(act_qcs)
             w_util = w_util or self._weights_utilization(w_qcs)
             total = {n: (w_util.get(n, 0), act_tensors_util.get(n, 0))
-                     for n in self.graph.nodes if n in act_tensors_util or n in w_util}
+                     # for n in self.graph.nodes if n in act_tensors_util or n in w_util}
+                     for n in self.graph.get_topo_sorted_nodes() if n in act_tensors_util or n in w_util}
             ru[RUTarget.TOTAL] = np.array(list(total.values()))
 
         if RUTarget.BOPS in ru_targets:
