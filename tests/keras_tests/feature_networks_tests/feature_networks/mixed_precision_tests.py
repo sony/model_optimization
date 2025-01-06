@@ -605,7 +605,7 @@ class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
 
     def get_resource_utilization(self):
-        return ResourceUtilization(activation_memory=767)
+        return ResourceUtilization(activation_memory=768)
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
