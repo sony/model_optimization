@@ -141,7 +141,7 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
         strides = self._parse_tf_stride_dilation(conv_func_node, STRIDES)
         if strides is None:
             # Non-standard strides -> skip substitution.
-            return graph
+            return graph  # pragma: no cover
         conv_fw_attr[STRIDES] = strides
 
         padding = conv_func_node.op_call_kwargs.get(PADDING) or 'VALID'
@@ -153,7 +153,7 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
         dilations = self._parse_tf_stride_dilation(conv_func_node, DILATIONS)
         if dilations is None:
             # Non-standard dilations -> skip substitution.
-            return graph
+            return graph  # pragma: no cover
         conv_fw_attr[DILATION_RATE] = dilations
 
         if b is None:
