@@ -28,7 +28,8 @@ from tests.common_tests.function_tests.test_logger import TestLogger
 from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
-from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
+from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest, \
+    TPModelInputOutputTests
 
 found_tf = importlib.util.find_spec("tensorflow") is not None
 if found_tf:
@@ -116,6 +117,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHistogramCollector))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCollectorsManipulations))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestThresholdSelection))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TPModelInputOutputTests))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TargetPlatformModelingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
