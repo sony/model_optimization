@@ -52,6 +52,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.fu
     FunctionalLayerNorm
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.functional_linear import \
     FunctionalLinear
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.matmul_decomposition import \
+    MatMulDecomposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.linear_collapsing import \
     pytorch_linear_collapsing
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
@@ -264,6 +266,7 @@ class PytorchImplementation(FrameworkImplementation):
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
                 ScaledDotProductDecomposition(),
+                MatMulDecomposition(),
                 TransformFunctionCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
