@@ -594,7 +594,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
     def test_mixed_precision_multiple_inputs(self):
        """
        This test checks the activation Mixed Precision search with multiple inputs to model.
-      """
+       """
        MixedPrecisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_bops_utilization(self):

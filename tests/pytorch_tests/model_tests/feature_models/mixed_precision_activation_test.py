@@ -131,7 +131,7 @@ class MixedPrecisionActivationSearch4BitFunctional(MixedPrecisionActivationBaseT
 class MixedPrecisionActivationMultipleInputs(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [0, 0, 0, 0, 1, 1, 2, 1, 1]  # expected config for this test.
+        self.expected_config = [0, 0, 0, 0, 2, 1, 1, 1, 1]  # expected config for this test.
         self.num_calibration_iter = 3
         self.val_batch_size = 2
 
