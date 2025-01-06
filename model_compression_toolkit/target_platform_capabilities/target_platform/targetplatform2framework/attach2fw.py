@@ -1,12 +1,15 @@
-from typing import Dict, Tuple, List, Any, Optional
+from typing import Dict, Optional
 
-from model_compression_toolkit import DefaultDict
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
+    OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
     OperationsSetToLayers
 
+from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 
-class AttachTpModelToFw:
+
+class AttachTpcToFramework:
 
     def __init__(self):
         self._opset2layer = None
@@ -17,7 +20,7 @@ class AttachTpModelToFw:
         self._opset2attr_mapping = None  # Mapping of operation sets to their corresponding framework-specific layers
 
     def attach(self, tpc_model: TargetPlatformModel,
-               custom_opset2layer: Dict[str, Tuple[List[Any], Optional[Dict[str, DefaultDict]]]] = None
+               custom_opset2layer: Optional[Dict[str, 'CustomOpsetLayers']] = None
                ) -> TargetPlatformCapabilities:
         """
         Attaching a TargetPlatformModel which includes a platform capabilities description to specific
@@ -35,22 +38,30 @@ class AttachTpModelToFw:
         """
 
         tpc = TargetPlatformCapabilities(tpc_model)
+        custom_opset2layer = custom_opset2layer if custom_opset2layer is not None else {}
 
         with tpc:
-            for opset_name, operators in self._opset2layer.items():
-                attr_mapping = self._opset2attr_mapping.get(opset_name)
-                OperationsSetToLayers(opset_name, operators, attr_mapping=attr_mapping)
+            for opset in tpc_model.operator_set:
+                if isinstance(opset, OperatorsSet):  # filter out OperatorsSetConcat
+                    if opset.name in custom_opset2layer:
+                        custom_opset_layers = custom_opset2layer[opset.name]
+                        OperationsSetToLayers(opset.name,
+                                              layers=custom_opset_layers.operators,
+                                              attr_mapping=custom_opset_layers.attr_mapping)
 
-            if custom_opset2layer is not None:
-                for opset_name, operators in custom_opset2layer.items():
-                    if len(operators) == 1:
-                        OperationsSetToLayers(opset_name, operators[0])
-                    elif len(operators) == 2:
-                        OperationsSetToLayers(opset_name, operators[0], attr_mapping=operators[1])
+                    elif opset.name in self._opset2layer:
+                        # Note that if the user provided a custom operator set with a name that exists in our
+                        # pre-defined set of operator sets, we prioritize the user's custom opset definition
+                        layers = self._opset2layer[opset.name]
+                        if len(layers) > 0:
+                            # If the framework does not define any matching operators to a given operator set name that
+                            # appears in the TPC, then we just skip it
+                            attr_mapping = self._opset2attr_mapping.get(opset.name)
+                            OperationsSetToLayers(opset.name, layers, attr_mapping=attr_mapping)
                     else:
-                        raise ValueError(f"Custom operator set to layer mapping should include up to 2 elements - "
-                                         f"a list of layers to attach to the operator and an optional mapping of "
-                                         f"attributes names, but given a mapping contains {len(operators)} elements.")
+                        Logger.critical(f'{opset.name} is defined in TargetPlatformModel, '
+                                        f'but is not defined in the framework set of operators or in the provided '
+                                        f'custom operator sets mapping.')
 
         return tpc
 

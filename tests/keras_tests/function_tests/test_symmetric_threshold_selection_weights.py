@@ -22,6 +22,8 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.constants import THRESHOLD
 from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -102,7 +104,8 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
         graph = prepare_graph_with_quantization_parameters(in_model, KerasImplementation(), DEFAULT_KERAS_INFO,
                                                            representative_dataset,
                                                            lambda name, _tp: get_tpc(per_channel),
-                                                           qc=qc, input_shape=(1, 16, 16, 4))
+                                                           qc=qc, input_shape=(1, 16, 16, 4),
+                                                           attach2fw=AttachTpcToKeras(), )
 
         nodes_list = list(graph.nodes)
         conv1_threshold = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_quantization_params[THRESHOLD]

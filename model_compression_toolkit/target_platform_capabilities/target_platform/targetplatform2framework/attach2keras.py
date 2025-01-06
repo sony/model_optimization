@@ -23,12 +23,12 @@ if FOUND_SONY_CUSTOM_LAYERS:
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Identity, Concatenate, BatchNormalization, Minimum, Maximum
+        MaxPooling2D, AveragePooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
+        Conv2DTranspose, Concatenate, BatchNormalization, Minimum, Maximum, Softmax
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Concatenate, BatchNormalization, Minimum, Maximum
+        MaxPooling2D, AveragePooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
+        Conv2DTranspose, Concatenate, BatchNormalization, Minimum, Maximum, Softmax
 
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS, \
@@ -36,72 +36,93 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    AttachTpModelToFw
+    AttachTpcToFramework
 
 
-class AttachTpModelToKeras(AttachTpModelToFw):
+class AttachTpcToKeras(AttachTpcToFramework):
     def __init__(self):
         super().__init__()
 
         self._opset2layer = {
-            OperatorSetNames.OPSET_CONV.value: [Conv2D, tf.nn.conv2d],
-            OperatorSetNames.OPSET_DEPTHWISE_CONV.value: [DepthwiseConv2D, tf.nn.depthwise_conv2d],
-            OperatorSetNames.OPSET_CONV_TRANSPOSE.value: [Conv2DTranspose, tf.nn.conv2d_transpose],
-            OperatorSetNames.OPSET_FULLY_CONNECTED.value: [Dense],
-            OperatorSetNames.OPSET_CONCATENATE.value: [tf.concat, Concatenate],
-            OperatorSetNames.OPSET_STACK.value: [tf.stack],
-            OperatorSetNames.OPSET_UNSTACK.value: [tf.unstack],
-            OperatorSetNames.OPSET_GATHER.value: [tf.gather, tf.compat.v1.gather],
-            OperatorSetNames.OPSET_EXPAND.value: [],
-            OperatorSetNames.OPSET_BATCH_NORM.value: [BatchNormalization],
-            OperatorSetNames.OPSET_RELU.value: [tf.nn.relu, ReLU],
-            OperatorSetNames.OPSET_RELU6.value: [tf.nn.relu6],
-            OperatorSetNames.OPSET_LEAKY_RELU.value: [tf.nn.leaky_relu, LeakyReLU],
-            OperatorSetNames.OPSET_HARD_TANH.value: [LayerFilterParams(Activation, activation="hard_tanh")],
-            OperatorSetNames.OPSET_ADD.value: [tf.add, Add],
-            OperatorSetNames.OPSET_SUB.value: [tf.subtract, Subtract],
-            OperatorSetNames.OPSET_MUL.value: [tf.math.multiply, Multiply],
-            OperatorSetNames.OPSET_DIV.value: [tf.math.divide, tf.math.truediv],
-            OperatorSetNames.OPSET_MIN.value: [tf.math.minimum, Minimum],
-            OperatorSetNames.OPSET_MAX.value: [tf.math.maximum, Maximum],
-            OperatorSetNames.OPSET_PRELU.value: [PReLU],
-            OperatorSetNames.OPSET_SWISH.value: [tf.nn.swish, LayerFilterParams(Activation, activation="swish")],
-            OperatorSetNames.OPSET_SIGMOID.value: [tf.nn.sigmoid, LayerFilterParams(Activation, activation="sigmoid")],
-            OperatorSetNames.OPSET_TANH.value: [tf.nn.tanh, LayerFilterParams(Activation, activation="tanh")],
-            OperatorSetNames.OPSET_GELU.value: [tf.nn.gelu, LayerFilterParams(Activation, activation="gelu")],
-            OperatorSetNames.OPSET_HARDSIGMOID.value: [tf.keras.activations.hard_sigmoid,
-                                                       LayerFilterParams(Activation, activation="hard_sigmoid")],
-            OperatorSetNames.OPSET_FLATTEN.value: [Flatten],
-            OperatorSetNames.OPSET_GET_ITEM.value: [tf.__operators__.getitem],
-            OperatorSetNames.OPSET_RESHAPE.value: [Reshape, tf.reshape],
-            OperatorSetNames.OPSET_PERMUTE.value: [Permute],
-            OperatorSetNames.OPSET_TRANSPOSE.value: [tf.transpose],
-            OperatorSetNames.OPSET_DROPOUT.value: [Dropout],
-            OperatorSetNames.OPSET_SPLIT.value: [tf.split],
-            OperatorSetNames.OPSET_MAXPOOL.value: [MaxPooling2D],
-            OperatorSetNames.OPSET_SHAPE.value: [tf.shape, tf.compat.v1.shape],
-            OperatorSetNames.OPSET_EQUAL.value: [tf.math.equal],
-            OperatorSetNames.OPSET_ARGMAX.value: [tf.math.argmax],
-            OperatorSetNames.OPSET_TOPK.value: [tf.nn.top_k],
-            OperatorSetNames.OPSET_FAKE_QUANT_WITH_MIN_MAX_VARS.value: [tf.quantization.fake_quant_with_min_max_vars],
-            OperatorSetNames.OPSET_COMBINED_NON_MAX_SUPPRESSION.value: [tf.image.combined_non_max_suppression],
-            OperatorSetNames.OPSET_CROPPING2D.value: [Cropping2D],
-            OperatorSetNames.OPSET_ZERO_PADDING2d.value: [ZeroPadding2D],
-            OperatorSetNames.OPSET_CAST.value: [tf.cast],
-            OperatorSetNames.OPSET_STRIDED_SLICE.value: [tf.strided_slice]
+            OperatorSetNames.CONV: [Conv2D, tf.nn.conv2d],
+            OperatorSetNames.DEPTHWISE_CONV: [DepthwiseConv2D, tf.nn.depthwise_conv2d],
+            OperatorSetNames.CONV_TRANSPOSE: [Conv2DTranspose, tf.nn.conv2d_transpose],
+            OperatorSetNames.FULLY_CONNECTED: [Dense],
+            OperatorSetNames.CONCATENATE: [tf.concat, Concatenate],
+            OperatorSetNames.STACK: [tf.stack],
+            OperatorSetNames.UNSTACK: [tf.unstack],
+            OperatorSetNames.GATHER: [tf.gather, tf.compat.v1.gather],
+            OperatorSetNames.EXPAND: [],
+            OperatorSetNames.BATCH_NORM: [BatchNormalization, tf.nn.batch_normalization],
+            OperatorSetNames.RELU: [tf.nn.relu, ReLU, LayerFilterParams(Activation, activation="relu")],
+            OperatorSetNames.RELU6: [tf.nn.relu6],
+            OperatorSetNames.LEAKY_RELU: [tf.nn.leaky_relu, LeakyReLU, LayerFilterParams(Activation, activation="leaky_relu")],
+            OperatorSetNames.HARD_TANH: [LayerFilterParams(Activation, activation="hard_tanh")],
+            OperatorSetNames.ADD: [tf.add, Add],
+            OperatorSetNames.SUB: [tf.subtract, Subtract],
+            OperatorSetNames.MUL: [tf.math.multiply, Multiply],
+            OperatorSetNames.DIV: [tf.math.divide, tf.math.truediv],
+            OperatorSetNames.MIN: [tf.math.minimum, Minimum],
+            OperatorSetNames.MAX: [tf.math.maximum, Maximum],
+            OperatorSetNames.PRELU: [PReLU],
+            OperatorSetNames.SWISH: [tf.nn.swish, LayerFilterParams(Activation, activation="swish")],
+            OperatorSetNames.HARDSWISH: [LayerFilterParams(Activation, activation="hard_swish")],
+            OperatorSetNames.SIGMOID: [tf.nn.sigmoid, LayerFilterParams(Activation, activation="sigmoid")],
+            OperatorSetNames.TANH: [tf.nn.tanh, LayerFilterParams(Activation, activation="tanh")],
+            OperatorSetNames.GELU: [tf.nn.gelu, LayerFilterParams(Activation, activation="gelu")],
+            OperatorSetNames.HARDSIGMOID: [tf.keras.activations.hard_sigmoid,
+                                           LayerFilterParams(Activation, activation="hard_sigmoid")],
+            OperatorSetNames.FLATTEN: [Flatten],
+            OperatorSetNames.GET_ITEM: [tf.__operators__.getitem],
+            OperatorSetNames.RESHAPE: [Reshape, tf.reshape],
+            OperatorSetNames.PERMUTE: [Permute],
+            OperatorSetNames.TRANSPOSE: [tf.transpose],
+            OperatorSetNames.UNSQUEEZE: [tf.expand_dims],
+            OperatorSetNames.SQUEEZE: [tf.squeeze],
+            OperatorSetNames.DROPOUT: [Dropout],
+            OperatorSetNames.SPLIT_CHUNK: [tf.split],
+            OperatorSetNames.MAXPOOL: [MaxPooling2D, tf.nn.avg_pool2d],
+            OperatorSetNames.AVGPOOL: [AveragePooling2D],
+            OperatorSetNames.SIZE: [tf.size],
+            OperatorSetNames.RESIZE: [tf.image.resize],
+            OperatorSetNames.PAD: [tf.pad, Cropping2D],
+            OperatorSetNames.FOLD: [tf.space_to_batch_nd],
+            OperatorSetNames.SHAPE: [tf.shape, tf.compat.v1.shape],
+            OperatorSetNames.EQUAL: [tf.math.equal],
+            OperatorSetNames.ARGMAX: [tf.math.argmax],
+            OperatorSetNames.TOPK: [tf.nn.top_k],
+            OperatorSetNames.FAKE_QUANT: [tf.quantization.fake_quant_with_min_max_vars],
+            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [tf.image.combined_non_max_suppression],
+            OperatorSetNames.ZERO_PADDING2D: [ZeroPadding2D],
+            OperatorSetNames.CAST: [tf.cast],
+            OperatorSetNames.STRIDED_SLICE: [tf.strided_slice],
+            OperatorSetNames.ELU: [tf.nn.elu, LayerFilterParams(Activation, activation="elu")],
+            OperatorSetNames.SOFTMAX: [tf.nn.softmax, Softmax,
+                                       LayerFilterParams(Activation, activation="softmax")],
+            OperatorSetNames.LOG_SOFTMAX: [tf.nn.log_softmax],
+            OperatorSetNames.ADD_BIAS: [tf.nn.bias_add],
+            OperatorSetNames.L2NORM: [tf.math.l2_normalize],
         }
 
         if FOUND_SONY_CUSTOM_LAYERS:
-            self._opset2layer[OperatorSetNames.OPSET_POST_PROCESS] = [SSDPostProcess]
+            self._opset2layer[OperatorSetNames.SSD_POST_PROCESS] = [SSDPostProcess]
+        else:
+            # If Custom layers is not installed then we don't want the user to fail, but just ignore custom layers
+            # in the initialized framework TPC
+            self._opset2layer[OperatorSetNames.SSD_POST_PROCESS] = []
 
-        self._opset2attr_mapping = {OperatorSetNames.OPSET_CONV.value: {
-            KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-            BIAS_ATTR: DefaultDict(default_value=BIAS)},
-            OperatorSetNames.OPSET_DEPTHWISE_CONV.value: {
+        self._opset2attr_mapping = {
+            OperatorSetNames.CONV: {
+                KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                BIAS_ATTR: DefaultDict(default_value=BIAS)},
+            OperatorSetNames.CONV_TRANSPOSE: {
+                KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                BIAS_ATTR: DefaultDict(default_value=BIAS)},
+            OperatorSetNames.DEPTHWISE_CONV: {
                 KERNEL_ATTR: DefaultDict({
                     DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
                     tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
                 BIAS_ATTR: DefaultDict(default_value=BIAS)},
-            OperatorSetNames.OPSET_FULLY_CONNECTED.value: {
+            OperatorSetNames.FULLY_CONNECTED: {
                 KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
                 BIAS_ATTR: DefaultDict(default_value=BIAS)}}

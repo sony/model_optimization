@@ -148,19 +148,29 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
 
-    conv = schema.OperatorsSet(name="Conv")
-    batchnorm = schema.OperatorsSet(name="BatchNorm")
-    relu = schema.OperatorsSet(name="Relu")
-    linear = schema.OperatorsSet(name="Linear")
+    conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
+    conv_depthwise = schema.OperatorsSet(name=schema.OperatorSetNames.DEPTHWISE_CONV)
+    conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.CONV_TRANSPOSE)
+    batchnorm = schema.OperatorsSet(name=schema.OperatorSetNames.BATCH_NORM)
+    relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.RELU6)
 
-    operator_set.extend([conv, batchnorm, relu, linear])
+    hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.HARD_TANH)
+    linear = schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED)
+
+    operator_set.extend([conv, conv_depthwise, conv_transpose, batchnorm, relu, relu6, hard_tanh, linear])
+
+    conv_opset_concat = schema.OperatorSetConcat(operators_set=[conv, conv_transpose])
+    relu_opset_concat = schema.OperatorSetConcat(operators_set=[relu, relu6, hard_tanh])
+
     # ------------------- #
     # Fusions
     # ------------------- #
-    fusing_patterns.append(schema.Fusing(operator_groups=(conv, batchnorm, relu)))
-    fusing_patterns.append(schema.Fusing(operator_groups=(conv, batchnorm)))
-    fusing_patterns.append(schema.Fusing(operator_groups=(conv, relu)))
-    fusing_patterns.append(schema.Fusing(operator_groups=(linear, relu)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv_opset_concat, batchnorm, relu_opset_concat)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv_opset_concat, batchnorm)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv_opset_concat, relu_opset_concat)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(linear, relu_opset_concat)))
+
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):

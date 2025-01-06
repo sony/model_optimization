@@ -23,6 +23,8 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService, He
 from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -76,6 +78,7 @@ class BaseHessianServiceTest(BasePytorchTest):
         self.pytorch_impl = PytorchImplementation()
         self.run_verification = run_verification
         self.compute_hessian = compute_hessian
+        self.attach2fw = AttachTpcToPytorch()
 
     def verify_hessian(self):
         self.unit_test.assertEqual(len(self.hessian), self.num_nodes, f"Expecting returned Hessian list to include "
@@ -115,7 +118,8 @@ class FetchActivationHessianTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=self.attach2fw)
         dataloader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
@@ -138,7 +142,8 @@ class FetchWeightsHessianTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=self.attach2fw)
 
         self.request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                             granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
@@ -161,7 +166,8 @@ class FetchHessianNotEnoughSamplesThrowTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=self.attach2fw)
         data_loader = data_gen_to_dataloader(representative_dataset, batch_size=2)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
@@ -188,7 +194,8 @@ class FetchHessianNotEnoughSamplesSmallBatchThrowTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=self.attach2fw)
 
         data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
@@ -217,7 +224,8 @@ class FetchComputeBatchLargerThanReprBatchTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=self.attach2fw)
 
         data_loader = data_gen_to_dataloader(representative_dataset, batch_size=3)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
@@ -243,7 +251,8 @@ class FetchHessianRequiredZeroTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=AttachTpcToPytorch())
         data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
@@ -266,7 +275,8 @@ class FetchHessianMultipleNodesTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=self.attach2fw)
 
         nodes = list(self.graph.get_topo_sorted_nodes())
         data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
@@ -290,7 +300,8 @@ class DoubleFetchHessianTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=self.attach2fw)
 
         target_node = list(self.graph.get_topo_sorted_nodes())[0]
         data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
