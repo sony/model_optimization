@@ -93,3 +93,9 @@ class ResourceUtilization:
 
     def is_any_restricted(self) -> bool:
         return bool(self.get_restricted_metrics())
+
+    def __repr__(self):
+        return f"Weights_memory: {self.weights_memory}, " \
+               f"Activation_memory: {self.activation_memory}, " \
+               f"Total_memory: {self.total_memory}, " \
+               f"BOPS: {self.bops}"
