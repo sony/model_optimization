@@ -24,7 +24,8 @@ from model_compression_toolkit.constants import MIN_THRESHOLD
 
 class CustomOpsetLayers(NamedTuple):
     """
-    This struct is used to define a set of operators to be used for setting a custom operator set in the TPC.
+    This struct is used to define a set of operators from a specific framework
+    to be used for setting a custom operator set in the TPC.
 
     Args:
         operators: a list of framework operators to map to a certain custom opset name.
