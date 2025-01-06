@@ -266,7 +266,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MatMulFNetTest(self, [3, 1, 7, 1, 50, 100], [3, 10, 7, 5, 100, 80]).run_test()
         MatMulOpNetTest(self, [3, 1, 7, 1, 50, 100], [3, 10, 7, 5, 100, 80]).run_test()
 
-
     def test_broken_net(self):
         """
         This test checks that the "broken" node (node without output) is being
