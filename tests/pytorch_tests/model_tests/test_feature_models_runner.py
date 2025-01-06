@@ -614,7 +614,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
     def test_mixed_precision_multiple_inputs(self):
        """
        This test checks the activation Mixed Precision search with multiple inputs to model.
-      """
+       """
        MixedPrecisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_bops_utilization(self):
@@ -789,7 +789,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_16bit_activations(self):
         Activation16BitTest(self).run_test()
-        Activation16BitMixedPrecisionTest(self, input_shape=(3, 30, 30)).run_test()
+        Activation16BitMixedPrecisionTest(self, input_shape=(3, 25, 25)).run_test()
 
     def test_invalid_bit_width_selection(self):
         with self.assertRaises(Exception) as context:

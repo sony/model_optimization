@@ -345,11 +345,11 @@ class TestMaxCutAstarSolve(unittest.TestCase):
 
         l_bound = memory_graph.memory_lbound_single_op
         u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
-        estimate_factor = (u_bound + l_bound) / 2
+        estimate = (u_bound + l_bound) / 2
 
         mc_astar = MaxCutAstar(memory_graph)
 
-        solution = mc_astar.solve(iter_limit=10, estimate_factor=estimate_factor)
+        solution = mc_astar.solve(iter_limit=10, estimate=estimate)
         self.assertIsNotNone(solution)
         path, cost, cuts = solution
 
@@ -364,11 +364,11 @@ class TestMaxCutAstarSolve(unittest.TestCase):
 
         l_bound = memory_graph.memory_lbound_single_op
         u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
-        estimate_factor = (u_bound + l_bound) / 2
+        estimate = (u_bound + l_bound) / 2
 
         mc_astar = MaxCutAstar(memory_graph)
 
-        solution = mc_astar.solve(iter_limit=20, estimate_factor=estimate_factor)
+        solution = mc_astar.solve(iter_limit=20, estimate=estimate)
         self.assertIsNotNone(solution)
         path, cost, cuts = solution
 
@@ -386,11 +386,11 @@ class TestMaxCutAstarSolve(unittest.TestCase):
 
         l_bound = memory_graph.memory_lbound_single_op
         u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
-        estimate_factor = (u_bound + l_bound) / 2
+        estimate = (u_bound + l_bound) / 2
 
         mc_astar = MaxCutAstar(memory_graph)
 
-        solution = mc_astar.solve(iter_limit=20, estimate_factor=estimate_factor)
+        solution = mc_astar.solve(iter_limit=20, estimate=estimate)
         self.assertIsNotNone(solution)
         path, cost, cuts = solution
 

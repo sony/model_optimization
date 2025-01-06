@@ -100,7 +100,7 @@ class MaxCutAstar:
         edges_src_ab = [(src_dummy_a, src_dummy_b)]
         edges_src_ba = [(src_dummy_b, src_a) for src_a in memory_graph.sources_a]
 
-        # Target Cut
+        # Target Cut (Adding 2 consecutive dummy nodes so the final cut will include only dummy tensors).
         target_dummy_a = next(gen_a)
         target_dummy_a2 = next(gen_a)
         target_dummy_b = next(gen_b)
@@ -122,13 +122,13 @@ class MaxCutAstar:
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b, target_dummy_b2},
                                                         total_size=0))
 
-    def solve(self, estimate_factor: float, iter_limit: int = 500) -> Tuple[List[BaseNode], float, List[Cut]]:
+    def solve(self, estimate: float, iter_limit: int = 500) -> Tuple[List[BaseNode], float, List[Cut]]:
         """
         The AStar solver function. This method runs an AStar-like search on the memory graph,
-        using the given estimate_factor as a heuristic gap for solutions to consider.
+        using the given estimate as a heuristic gap for solutions to consider.
 
         Args:
-            estimate_factor: A multiplication factor which allows the search to consider larger size of nodes in each
+            estimate: Cut size estimation to consider larger size of nodes in each
                 expansion step, in order to fasten the algorithm divergence towards a solution.
             iter_limit: An upper limit for the number of expansion steps that the algorithm preforms.
 
@@ -148,17 +148,14 @@ class MaxCutAstar:
 
         while expansion_count < iter_limit and len(open_list) > 0:
             # Choose next node to expand
-            next_cut = self._get_cut_to_expand(open_list, costs, routes, estimate_factor)
+            next_cut = self._get_cut_to_expand(open_list, costs, routes, estimate)
 
             cut_cost = costs[next_cut]
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
-                # TODO maxcut: Why do we filter the cuts (cut_route) but not the max cut size (cut_sost).
-                #              This is a mismatch between max_cut and max(cuts).
-                #              Also, unfiltered cut_route seems perfect, including input and output tensor sizes of current op.
-                return self._remove_dummys_from_path(cut_route[0].op_order), cut_cost,\
-                       list(set([self._remove_dummys_from_cut(self.clean_memory_for_next_step(c)) for c in cut_route]))
+                return self._remove_dummy_nodes_from_path(cut_route[0].op_order), cut_cost,\
+                       list(set([self._remove_dummy_tensors_from_cut(c) for c in cut_route]))
 
             if self.is_pivot(next_cut):
                 # Can clear all search history
@@ -176,7 +173,7 @@ class MaxCutAstar:
             expansion_count += 1
 
             # Only consider nodes that where not already visited
-            expanded_cuts = list(filter(lambda _c: _c not in closed_list, expanded_cuts))
+            expanded_cuts = [_c for _c in expanded_cuts if _c not in closed_list]
             for c in expanded_cuts:
                 cost = self.accumulate(cut_cost, c.memory_size())
                 if c not in open_list:
@@ -191,7 +188,7 @@ class MaxCutAstar:
                     self._update_expanded_node(c, cost, cut_route, open_list, costs, routes)
 
         # Halt or No Solution
-        # TODO maxcut: this isn't covered in the coverage test. check if needed and remove no cover
+        # TODO maxcut: this isn't covered in the coverage test. Add test and remove no cover
         return None, 0, None  # pragma: no cover
 
     @staticmethod
@@ -214,7 +211,7 @@ class MaxCutAstar:
         routes.update({cut: [cut] + route})
 
     def _get_cut_to_expand(self, open_list: List[Cut], costs: Dict[Cut, float], routes: Dict[Cut, List[Cut]],
-                           estimate_factor: float) -> Cut:
+                           estimate: float) -> Cut:
         """
         An auxiliary method for finding a cut for expanding the search out of a set of potential cuts for expansion.
 
@@ -222,13 +219,15 @@ class MaxCutAstar:
             open_list: The search open list.
             costs: The search utility mapping between cuts and their cost.
             routes: The search utility mapping between cuts and their routes.
-            estimate_factor: A multiplication factor to set extended boundaries on the potential cuts to exapand.
+            estimate: Cut size estimation to set extended boundaries on the potential cuts to expand.
 
         Returns: A sorted list of potential cuts for expansion (ordered by lowest cost first).
 
         """
+        max_cut_len = max([len(routes[c]) for c in open_list])
         ordered_cuts_list = sorted(open_list,
-                                   key=lambda c: (self.accumulate(costs[c], self.estimate(c, estimate_factor)), -len(routes[c])))
+                                   key=lambda c: (self.accumulate(costs[c], self.estimate(c, estimate)),
+                                                  max_cut_len - len(routes[c])))
 
         assert len(ordered_cuts_list) > 0
         return ordered_cuts_list[0]
@@ -356,7 +355,8 @@ class MaxCutAstar:
         # TODO maxcut: this isn't covered in the coverage test. check if needed and remove no cover
         return cost_1 < cost_2  # pragma: no cover
 
-    def estimate(self, cut: Cut, estimate_factor: float) -> float:
+    @staticmethod
+    def estimate(cut: Cut, estimate: float) -> float:
         """
         A function that defines the estimation gap for the Astar search.
         The estimation gap is used to sort the cuts that are considered for expanding the search in each iteration.
@@ -364,15 +364,15 @@ class MaxCutAstar:
         Args:
             cut: A cut (not used in the default implementation, but can be used if overriding the method to consider
                 the actual cut in the estimation computation).
-            estimate_factor: The given estimate factor to the search.
+            estimate: The given estimate to the search.
 
         Returns: An estimation value.
 
         """
-        return estimate_factor * self.memory_graph.memory_lbound_single_op
+        return estimate
 
     @staticmethod
-    def get_init_estimate_factor(memory_graph: MemoryGraph) -> float:
+    def get_init_estimate(memory_graph: MemoryGraph) -> float:  # pragma: no cover
         """
         Returns an initial estimation value, which is based on the memory graph's upper and lower bounds.
 
@@ -383,12 +383,12 @@ class MaxCutAstar:
 
         """
         # TODO maxcut: this isn't covered in the coverage test. check if needed and remove no cover
-        l_bound = memory_graph.memory_lbound_single_op  # pragma: no cover
-        u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound  # pragma: no cover
-        return (u_bound + l_bound) / 2  # pragma: no cover
+        l_bound = memory_graph.memory_lbound_single_op
+        u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
+        return (u_bound + l_bound) / 2
 
     @staticmethod
-    def _remove_dummys_from_path(path: List[BaseNode]) -> List[BaseNode]:
+    def _remove_dummy_nodes_from_path(path: List[BaseNode]) -> List[BaseNode]:
         """
         An auxiliary method which removes dummy nodes from a given list of nodes (a path in the graph).
 
@@ -401,7 +401,7 @@ class MaxCutAstar:
         return list(filter(lambda n: DUMMY_NODE not in n.name, path))
 
     @staticmethod
-    def _remove_dummys_from_cut(cut: Cut) -> Cut:
+    def _remove_dummy_tensors_from_cut(cut: Cut) -> Cut:
         """
         An auxiliary method which removes dummy nodes from a given cut.
 
@@ -411,7 +411,7 @@ class MaxCutAstar:
         Returns: The same cut without dummy nodes elements.
 
         """
-        filtered_memory_elements = set(filter(lambda elm: DUMMY_TENSOR not in elm.node_name, cut.mem_elements.elements))
+        filtered_memory_elements = set([elm for elm in cut.mem_elements.elements if DUMMY_TENSOR not in elm.node_name])
 
         return Cut(cut.op_order, cut.op_record,
                    mem_elements=MemoryElements(filtered_memory_elements,
