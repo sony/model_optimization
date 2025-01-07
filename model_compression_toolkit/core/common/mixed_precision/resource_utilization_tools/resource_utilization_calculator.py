@@ -300,12 +300,13 @@ class ResourceUtilizationCalculator:
             if cuts is None:
                 raise RuntimeError("Failed to calculate activation memory cuts for graph.")  # pragma: no cover
             cuts = [cut for cut in cuts if cut.mem_elements.elements]
-            self._cuts = cuts
+            self._cuts = {cut: [self.graph.find_node_by_name(m.node_name)[0] for m in cut.mem_elements.elements]
+                          for cut in cuts}
 
         util_per_cut: Dict[Cut, Utilization] = {}    # type: ignore
         util_per_cut_per_node = defaultdict(dict)
         for cut in self._cuts:
-            target_nodes = self._get_cut_target_nodes(cut, target_criterion)
+            target_nodes = self._get_target_activation_nodes(target_criterion, include_reused=True, nodes=self._cuts[cut])
             if not target_nodes:
                 continue
             for n in target_nodes:
