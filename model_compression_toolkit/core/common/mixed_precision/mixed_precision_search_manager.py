@@ -207,12 +207,10 @@ class MixedPrecisionSearchManager:
 
         """
         act_qcs, w_qcs = self.ru_helper.get_configurable_qcs(config)
-        # TODO on graph or on orig graph???
-        ru_calc = ResourceUtilizationCalculator(self.graph, self.fw_impl, self.fw_info)
-        ru = ru_calc.compute_resource_utilization(target_criterion=TargetInclusionCriterion.AnyQuantized,
-                                                  bitwidth_mode=BitwidthMode.MpCustom,
-                                                  act_qcs=act_qcs,
-                                                  w_qcs=w_qcs)
+        ru = self.ru_helper.ru_calculator.compute_resource_utilization(target_criterion=TargetInclusionCriterion.AnyQuantized,
+                                                                       bitwidth_mode=BitwidthMode.MpCustom,
+                                                                       act_qcs=act_qcs,
+                                                                       w_qcs=w_qcs)
         return ru
 
     def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[int, Dict[int, float]]):
