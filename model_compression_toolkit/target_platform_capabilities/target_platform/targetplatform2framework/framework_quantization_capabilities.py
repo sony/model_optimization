@@ -23,7 +23,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.schema_functi
     get_config_options_by_operators_set, get_default_op_quantization_config, get_opset_by_name
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.framework_quantization_capabilities_component import FrameworkQuantizationCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSetBase, \
@@ -31,7 +31,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
 
 
-class TargetPlatformCapabilities(ImmutableClass):
+class FrameworkQuantizationCapabilities(ImmutableClass):
     """
     Attach framework information to a modeled hardware.
     """
@@ -42,12 +42,12 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         Args:
             tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
-            name (str): Name of the TargetPlatformCapabilities.
+            name (str): Name of the FrameworkQuantizationCapabilities.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
+        assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to FrameworkQuantizationCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
         self.tp_model = tp_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
@@ -68,7 +68,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         opset = get_opset_by_name(self.tp_model, opset_name)
         if opset is None:
-            Logger.warning(f'{opset_name} was not found in TargetPlatformCapabilities.')
+            Logger.warning(f'{opset_name} was not found in FrameworkQuantizationCapabilities.')
             return None
         return self.get_layers_by_opset(opset)
 
@@ -111,7 +111,7 @@ class TargetPlatformCapabilities(ImmutableClass):
     def get_info(self) -> Dict[str, Any]:
         """
 
-        Returns: Summarization of information in the TargetPlatformCapabilities.
+        Returns: Summarization of information in the FrameworkQuantizationCapabilities.
 
         """
         return {"Target Platform Capabilities": self.name,
@@ -124,34 +124,34 @@ class TargetPlatformCapabilities(ImmutableClass):
     def show(self):
         """
 
-        Display the TargetPlatformCapabilities.
+        Display the FrameworkQuantizationCapabilities.
 
         """
         pprint.pprint(self.get_info(), sort_dicts=False, width=110)
 
-    def append_component(self, tpc_component: TargetPlatformCapabilitiesComponent):
+    def append_component(self, tpc_component: FrameworkQuantizationCapabilitiesComponent):
         """
-        Append a Component (like OperationsSetToLayers) to the TargetPlatformCapabilities.
+        Append a Component (like OperationsSetToLayers) to the FrameworkQuantizationCapabilities.
 
         Args:
-            tpc_component: Component to append to TargetPlatformCapabilities.
+            tpc_component: Component to append to FrameworkQuantizationCapabilities.
 
         """
         if isinstance(tpc_component, OperationsSetToLayers):
             self.op_sets_to_layers += tpc_component
         else:
-            Logger.critical(f"Attempt to append an unrecognized 'TargetPlatformCapabilitiesComponent' of type: '{type(tpc_component)}'. Ensure the component is compatible.")  # pragma: no cover
+            Logger.critical(f"Attempt to append an unrecognized 'FrameworkQuantizationCapabilitiesComponent' of type: '{type(tpc_component)}'. Ensure the component is compatible.")  # pragma: no cover
 
     def __enter__(self):
         """
-        Init a TargetPlatformCapabilities object.
+        Init a FrameworkQuantizationCapabilities object.
         """
         _current_tpc.set(self)
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
         """
-        Finalize a TargetPlatformCapabilities object.
+        Finalize a FrameworkQuantizationCapabilities object.
         """
         if exc_value is not None:
             print(exc_value, exc_value.args)
@@ -165,7 +165,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
 
         Returns: The default OpQuantizationConfig of the TargetPlatformModel that is attached
-        to the TargetPlatformCapabilities.
+        to the FrameworkQuantizationCapabilities.
 
         """
         return get_default_op_quantization_config(self.tp_model)
