@@ -254,7 +254,7 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
                                                    weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
         const_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config]))
 
-        tp_model = schema.TargetPlatformModel(
+        tp_model = schema.TargetPlatformCapabilities(
             default_qco=default_configuration_options,
             tpc_minor_version=None,
             tpc_patch_version=None,

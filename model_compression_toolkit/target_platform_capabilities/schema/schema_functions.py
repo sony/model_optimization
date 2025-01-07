@@ -16,7 +16,7 @@ from logging import Logger
 from typing import Optional
 
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
-    TargetPlatformModel, QuantizationConfigOptions, OperatorsSetBase
+    TargetPlatformCapabilities, QuantizationConfigOptions, OperatorsSetBase
 
 
 def max_input_activation_n_bits(op_quantization_config: OpQuantizationConfig) -> int:
@@ -32,13 +32,13 @@ def max_input_activation_n_bits(op_quantization_config: OpQuantizationConfig) ->
     return max(op_quantization_config.supported_input_activation_n_bits)
 
 
-def get_config_options_by_operators_set(tp_model: TargetPlatformModel,
+def get_config_options_by_operators_set(tp_model: TargetPlatformCapabilities,
                                         operators_set_name: str) -> QuantizationConfigOptions:
     """
     Get the QuantizationConfigOptions of an OperatorsSet by its name.
 
     Args:
-        tp_model (TargetPlatformModel): The target platform model containing the operator sets and their configurations.
+        tp_model (TargetPlatformCapabilities): The target platform model containing the operator sets and their configurations.
         operators_set_name (str): The name of the OperatorsSet whose quantization configuration options are to be retrieved.
 
     Returns:
@@ -51,12 +51,12 @@ def get_config_options_by_operators_set(tp_model: TargetPlatformModel,
     return tp_model.default_qco
 
 
-def get_default_op_quantization_config(tp_model: TargetPlatformModel) -> OpQuantizationConfig:
+def get_default_op_quantization_config(tp_model: TargetPlatformCapabilities) -> OpQuantizationConfig:
     """
-    Get the default OpQuantizationConfig of the TargetPlatformModel.
+    Get the default OpQuantizationConfig of the TargetPlatformCapabilities.
 
     Args:
-        tp_model (TargetPlatformModel): The target platform model containing the default quantization configuration.
+        tp_model (TargetPlatformCapabilities): The target platform model containing the default quantization configuration.
 
     Returns:
         OpQuantizationConfig: The default quantization configuration.
@@ -70,12 +70,12 @@ def get_default_op_quantization_config(tp_model: TargetPlatformModel) -> OpQuant
     return tp_model.default_qco.quantization_configurations[0]
 
 
-def is_opset_in_model(tp_model: TargetPlatformModel, opset_name: str) -> bool:
+def is_opset_in_model(tp_model: TargetPlatformCapabilities, opset_name: str) -> bool:
     """
     Check whether an OperatorsSet is defined in the model.
 
     Args:
-        tp_model (TargetPlatformModel): The target platform model containing the list of operator sets.
+        tp_model (TargetPlatformCapabilities): The target platform model containing the list of operator sets.
         opset_name (str): The name of the OperatorsSet to check for existence.
 
     Returns:
@@ -84,12 +84,12 @@ def is_opset_in_model(tp_model: TargetPlatformModel, opset_name: str) -> bool:
     """
     return tp_model.operator_set is not None and opset_name in [x.name for x in tp_model.operator_set]
 
-def get_opset_by_name(tp_model: TargetPlatformModel, opset_name: str) -> Optional[OperatorsSetBase]:
+def get_opset_by_name(tp_model: TargetPlatformCapabilities, opset_name: str) -> Optional[OperatorsSetBase]:
     """
     Get an OperatorsSet object from the model by its name.
 
     Args:
-        tp_model (TargetPlatformModel): The target platform model containing the list of operator sets.
+        tp_model (TargetPlatformCapabilities): The target platform model containing the list of operator sets.
         opset_name (str): The name of the OperatorsSet to be retrieved.
 
     Returns:
@@ -101,5 +101,5 @@ def get_opset_by_name(tp_model: TargetPlatformModel, opset_name: str) -> Optiona
     """
     opset_list = [x for x in tp_model.operator_set if x.name == opset_name]
     if len(opset_list) > 1:
-        Logger.critical(f"Found more than one OperatorsSet in TargetPlatformModel with the name {opset_name}.") # pragma: no cover
+        Logger.critical(f"Found more than one OperatorsSet in TargetPlatformCapabilities with the name {opset_name}.") # pragma: no cover
     return opset_list[0] if opset_list else None

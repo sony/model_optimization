@@ -130,7 +130,7 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
 
 def generate_custom_test_tp_model(name: str,
                                   base_cfg: OpQuantizationConfig,
-                                  base_tp_model: schema.TargetPlatformModel,
+                                  base_tp_model: schema.TargetPlatformCapabilities,
                                   operator_sets_dict: Dict[str, QuantizationConfigOptions] = None):
     default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([base_cfg]))
 
@@ -154,7 +154,7 @@ def generate_custom_test_tp_model(name: str,
     for fusion in base_tp_model.fusing_patterns:
         fusing_patterns.append(schema.Fusing(operator_groups=fusion.operator_groups))
 
-    custom_tp_model = schema.TargetPlatformModel(
+    custom_tp_model = schema.TargetPlatformCapabilities(
         default_qco=default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
@@ -167,7 +167,7 @@ def generate_custom_test_tp_model(name: str,
 
 
 def generate_test_tpc(name: str,
-                      tp_model: schema.TargetPlatformModel,
+                      tp_model: schema.TargetPlatformCapabilities,
                       base_tpc: tp.FrameworkQuantizationCapabilities,
                       op_sets_to_layer_add: Dict[str, List[Any]] = None,
                       op_sets_to_layer_drop: Dict[str, List[Any]] = None,

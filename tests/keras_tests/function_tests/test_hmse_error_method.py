@@ -190,14 +190,14 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                              {GAMMA: AttributeQuantizationConfig(weights_n_bits=8,
                                                                                  enable_weights_quantization=True)})
 
-            tp_model = schema.TargetPlatformModel(default_qco=conv_qco,
-                                                  tpc_minor_version=None,
-                                                  tpc_patch_version=None,
-                                                  tpc_platform_type=None,
-                                                  operator_set=tuple(
+            tp_model = schema.TargetPlatformCapabilities(default_qco=conv_qco,
+                                                         tpc_minor_version=None,
+                                                         tpc_patch_version=None,
+                                                         tpc_platform_type=None,
+                                                         operator_set=tuple(
                                                       [schema.OperatorsSet(name="Linear", qc_options=conv_qco),
                                                        schema.OperatorsSet(name="BN", qc_options=bn_qco)]),
-                                                  add_metadata=False)
+                                                         add_metadata=False)
 
             return tp_model
 

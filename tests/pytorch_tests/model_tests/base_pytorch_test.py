@@ -21,7 +21,7 @@ import model_compression_toolkit as mct
 import torch
 import numpy as np
 
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
@@ -136,7 +136,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                                            "mapping the test model name to a TPC object."
         for model_name in tpc_dict.keys():
             tpc = tpc_dict[model_name]
-            assert isinstance(tpc, TargetPlatformModel)
+            assert isinstance(tpc, TargetPlatformCapabilities)
 
             core_config = core_config_dict.get(model_name)
             assert core_config is not None, f"Model name {model_name} does not exists in the test's " \

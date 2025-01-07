@@ -57,7 +57,7 @@ class OperationsSetToLayers(FrameworkQuantizationCapabilitiesComponent):
 
 class OperationsToLayers:
     """
-    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to TargetPlatformModel OperatorsSet.
+    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to TargetPlatformCapabilities OperatorsSet.
     """
     def __init__(self,
                  op_sets_to_layers: List[OperationsSetToLayers]=None):
@@ -142,7 +142,7 @@ class OperationsToLayers:
             assert ops2layers.name not in existing_opset_names, f'OperationsSetToLayers names should be unique, but {ops2layers.name} appears to violate it.'
             existing_opset_names.append(ops2layers.name)
 
-            # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformModel.
+            # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformCapabilities.
             for layer in ops2layers.layers:
                 qco_by_opset_name = get_config_options_by_operators_set(_current_tpc.get().tp_model, ops2layers.name)
                 if layer in existing_layers:

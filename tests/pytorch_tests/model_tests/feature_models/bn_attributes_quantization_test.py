@@ -82,7 +82,7 @@ def _generate_bn_quantized_tpm(quantize_linear):
     linear_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([linear_op_qc]))
     bn_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([bn_op_qc]))
 
-    generated_tpm = schema.TargetPlatformModel(
+    generated_tpm = schema.TargetPlatformCapabilities(
         default_qco=default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,

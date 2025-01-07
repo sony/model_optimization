@@ -25,7 +25,7 @@ from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, \
     OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OperatorsSet, \
     QuantizationConfigOptions
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, \
@@ -162,7 +162,7 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
             base_config=two_bit_cfg,
         )
 
-        tp_model = schema.TargetPlatformModel(
+        tp_model = schema.TargetPlatformCapabilities(
             default_qco=weight_fixed_cfg,
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -319,7 +319,7 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
             base_config=cfg,
         )
 
-        tp_model = TargetPlatformModel(
+        tp_model = TargetPlatformCapabilities(
             default_qco=QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,

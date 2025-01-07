@@ -19,14 +19,14 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS, \
     IMX500_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, \
     Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
 
 tp = mct.target_platform
 
 
-def get_tp_model() -> TargetPlatformModel:
+def get_tp_model() -> TargetPlatformCapabilities:
     """
     A method that generates a default target platform model, with base 8-bit quantization configuration and 8, 4, 2
     bits configuration list for mixed-precision quantization.
@@ -34,7 +34,7 @@ def get_tp_model() -> TargetPlatformModel:
     (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
     'get_op_quantization_configs' method and use its output to call 'generate_tp_model' with your configurations.
 
-    Returns: A TargetPlatformModel object.
+    Returns: A TargetPlatformCapabilities object.
 
     """
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
@@ -46,7 +46,7 @@ def get_tp_model() -> TargetPlatformModel:
 
 def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
     """
-    Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.
+    Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformCapabilities.
     In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
     default configuration for mixed-precision quantization.
 
@@ -128,19 +128,19 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 def generate_tp_model(default_config: OpQuantizationConfig,
                       base_config: OpQuantizationConfig,
                       mixed_precision_cfg_list: List[OpQuantizationConfig],
-                      name: str) -> TargetPlatformModel:
+                      name: str) -> TargetPlatformCapabilities:
     """
-    Generates TargetPlatformModel with default defined Operators Sets, based on the given base configuration and
+    Generates TargetPlatformCapabilities with default defined Operators Sets, based on the given base configuration and
     mixed-precision configurations options list.
 
     Args
         default_config: A default OpQuantizationConfig to set as the TP model default configuration.
-        base_config: An OpQuantizationConfig to set as the TargetPlatformModel base configuration for mixed-precision purposes only.
+        base_config: An OpQuantizationConfig to set as the TargetPlatformCapabilities base configuration for mixed-precision purposes only.
         mixed_precision_cfg_list: A list of OpQuantizationConfig to be used as the TP model mixed-precision
             quantization configuration options.
-        name: The name of the TargetPlatformModel.
+        name: The name of the TargetPlatformCapabilities.
 
-    Returns: A TargetPlatformModel object.
+    Returns: A TargetPlatformCapabilities object.
 
     """
     # Create a QuantizationConfigOptions, which defines a set
@@ -263,10 +263,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     fusing_patterns.append(schema.Fusing(operator_groups=(fc, activations_after_fc_to_fuse)))
     fusing_patterns.append(schema.Fusing(operator_groups=(any_binary, any_relu)))
 
-    # Create a TargetPlatformModel and set its default quantization config.
+    # Create a TargetPlatformCapabilities and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    generated_tpm = schema.TargetPlatformModel(
+    generated_tpm = schema.TargetPlatformCapabilities(
         default_qco=default_configuration_options,
         tpc_minor_version=2,
         tpc_patch_version=0,

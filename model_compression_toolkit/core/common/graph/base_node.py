@@ -539,7 +539,7 @@ class BaseNode:
     def get_qco(self, tpc: FrameworkQuantizationCapabilities) -> QuantizationConfigOptions:
         """
         Get the QuantizationConfigOptions of the node according
-        to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.
+        to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformCapabilities.
 
         Args:
             tpc: TPC to extract the QuantizationConfigOptions for the node.

@@ -16,7 +16,7 @@
 from typing import Callable, Tuple
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
@@ -48,7 +48,7 @@ if FOUND_TORCH:
                                      target_resource_utilization: ResourceUtilization,
                                      representative_data_gen: Callable,
                                      pruning_config: PruningConfig = PruningConfig(),
-                                     target_platform_capabilities: TargetPlatformModel = DEFAULT_PYOTRCH_TPC) -> \
+                                     target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYOTRCH_TPC) -> \
             Tuple[Module, PruningInfo]:
         """
         Perform structured pruning on a Pytorch model to meet a specified target resource utilization.

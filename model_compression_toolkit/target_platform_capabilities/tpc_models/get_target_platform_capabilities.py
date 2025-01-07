@@ -15,7 +15,7 @@
 from model_compression_toolkit.constants import TENSORFLOW, PYTORCH
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model as get_tp_model_imx500_v1
 from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.v1.tp_model import get_tp_model as get_tp_model_tflite_v1
@@ -26,9 +26,9 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_t
 
 def get_target_platform_capabilities(fw_name: str,
                                      target_platform_name: str,
-                                     target_platform_version: str = None) -> TargetPlatformModel:
+                                     target_platform_version: str = None) -> TargetPlatformCapabilities:
     """
-    This is a degenerated function that only returns the MCT default TargetPlatformModel object, to comply with the
+    This is a degenerated function that only returns the MCT default TargetPlatformCapabilities object, to comply with the
     existing TPC API.
 
     Args:
@@ -37,7 +37,7 @@ def get_target_platform_capabilities(fw_name: str,
         target_platform_version: Target platform capabilities version.
 
     Returns:
-        A default TargetPlatformModel object.
+        A default TargetPlatformCapabilities object.
     """
 
     assert fw_name in [TENSORFLOW, PYTORCH], f"Unsupported framework {fw_name}."
@@ -58,16 +58,16 @@ def get_target_platform_capabilities(fw_name: str,
     raise ValueError(f"Unsupported target platform name {target_platform_name}.")
 
 
-def get_tpc_model(name: str, tp_model: TargetPlatformModel):
+def get_tpc_model(name: str, tp_model: TargetPlatformCapabilities):
     """
-    This is a utility method that just returns the TargetPlatformModel that it receives, to support existing TPC API.
+    This is a utility method that just returns the TargetPlatformCapabilities that it receives, to support existing TPC API.
 
     Args:
-        name: the name of the TargetPlatformModel (not used in this function).
-        tp_model: a TargetPlatformModel to return.
+        name: the name of the TargetPlatformCapabilities (not used in this function).
+        tp_model: a TargetPlatformCapabilities to return.
 
     Returns:
-        The given TargetPlatformModel object.
+        The given TargetPlatformCapabilities object.
 
     """
 

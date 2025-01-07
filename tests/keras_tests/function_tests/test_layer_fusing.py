@@ -83,7 +83,7 @@ def generate_base_tpc(operator_set, fusing_patterns):
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
     default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(
         [default_config]))
-    generated_tp = schema.TargetPlatformModel(
+    generated_tp = schema.TargetPlatformCapabilities(
         default_qco=default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,

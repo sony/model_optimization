@@ -85,12 +85,12 @@ def get_tpc():
                                         qc_options=default_configuration_options.clone_and_edit(
                                             enable_activation_quantization=False)
                                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))]
-    tp_model = schema.TargetPlatformModel(default_qco=default_configuration_options,
-                                          operator_set=tuple(operator_set),
-                                          tpc_minor_version=None,
-                                          tpc_patch_version=None,
-                                          tpc_platform_type=None,
-                                          add_metadata=False)
+    tp_model = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
+                                                 operator_set=tuple(operator_set),
+                                                 tpc_minor_version=None,
+                                                 tpc_patch_version=None,
+                                                 tpc_platform_type=None,
+                                                 add_metadata=False)
 
     return tp_model
 

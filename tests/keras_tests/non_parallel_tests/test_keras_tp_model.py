@@ -106,7 +106,7 @@ class TestKerasTPModel(unittest.TestCase):
     def test_get_layers_by_op(self):
         op_obj = schema.OperatorsSet(name='opsetA')
 
-        hm = schema.TargetPlatformModel(
+        hm = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -125,7 +125,7 @@ class TestKerasTPModel(unittest.TestCase):
         op_obj_a = schema.OperatorsSet(name='opsetA')
         op_obj_b = schema.OperatorsSet(name='opsetB')
         op_concat = schema.OperatorSetGroup(operators_set=[op_obj_a, op_obj_b])
-        hm = schema.TargetPlatformModel(
+        hm = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -143,7 +143,7 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(fw_tp.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
 
     def test_layer_attached_to_multiple_opsets(self):
-        hm = schema.TargetPlatformModel(
+        hm = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -161,7 +161,7 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual('Found layer Conv2D in more than one OperatorsSet', str(e.exception))
 
     def test_filter_layer_attached_to_multiple_opsets(self):
-        hm = schema.TargetPlatformModel(
+        hm = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -192,13 +192,13 @@ class TestKerasTPModel(unittest.TestCase):
         operator_set.append(schema.OperatorsSet(name="tanh", qc_options=sevenbit_qco))
         operator_set.append(schema.OperatorsSet(name="relu"))
 
-        tpm = schema.TargetPlatformModel(default_qco=default_qco,
-                                         tpc_minor_version=None,
-                                         tpc_patch_version=None,
-                                         tpc_platform_type=None,
-                                         operator_set=tuple(operator_set),
-                                         add_metadata=False,
-                                         name='test')
+        tpm = schema.TargetPlatformCapabilities(default_qco=default_qco,
+                                                tpc_minor_version=None,
+                                                tpc_patch_version=None,
+                                                tpc_platform_type=None,
+                                                operator_set=tuple(operator_set),
+                                                add_metadata=False,
+                                                name='test')
 
         tpc_keras = tp.FrameworkQuantizationCapabilities(tpm)
         with tpc_keras:
@@ -228,7 +228,7 @@ class TestKerasTPModel(unittest.TestCase):
     # TODO: need to test as part of attach to fw tests
     # def test_opset_not_in_tp(self):
     #     default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
-    #     hm = schema.TargetPlatformModel(default_qco=default_qco,
+    #     hm = schema.TargetPlatformCapabilities(default_qco=default_qco,
     #                                     tpc_minor_version=None,
     #                                     tpc_patch_version=None,
     #                                     tpc_platform_type=None,
@@ -251,13 +251,13 @@ class TestKerasTPModel(unittest.TestCase):
         fusing_patterns = [schema.Fusing(operator_groups=(a, b, c)),
                            schema.Fusing(operator_groups=(a, c))]
 
-        hm = schema.TargetPlatformModel(default_qco=default_qco,
-                                        tpc_minor_version=None,
-                                        tpc_patch_version=None,
-                                        tpc_platform_type=None,
-                                        operator_set=tuple(operator_set),
-                                        fusing_patterns=tuple(fusing_patterns),
-                                        add_metadata=False)
+        hm = schema.TargetPlatformCapabilities(default_qco=default_qco,
+                                               tpc_minor_version=None,
+                                               tpc_patch_version=None,
+                                               tpc_platform_type=None,
+                                               operator_set=tuple(operator_set),
+                                               fusing_patterns=tuple(fusing_patterns),
+                                               add_metadata=False)
 
         hm_keras = tp.FrameworkQuantizationCapabilities(hm)
         with hm_keras:
@@ -280,12 +280,12 @@ class TestKerasTPModel(unittest.TestCase):
 
     def test_get_default_op_qc(self):
         default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
-        tpm = schema.TargetPlatformModel(default_qco=default_qco,
-                                         tpc_minor_version=None,
-                                         tpc_patch_version=None,
-                                         tpc_platform_type=None,
-                                         operator_set=tuple([schema.OperatorsSet(name="opA")]),
-                                         add_metadata=False)
+        tpm = schema.TargetPlatformCapabilities(default_qco=default_qco,
+                                                tpc_minor_version=None,
+                                                tpc_patch_version=None,
+                                                tpc_platform_type=None,
+                                                operator_set=tuple([schema.OperatorsSet(name="opA")]),
+                                                add_metadata=False)
 
         tpc = tp.FrameworkQuantizationCapabilities(tpm)
         with tpc:

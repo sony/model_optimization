@@ -9,4 +9,4 @@ OperatorsSetBase = schema.OperatorsSetBase
 OperatorsSet = schema.OperatorsSet
 OperatorSetGroup = schema.OperatorSetGroup
 Fusing = schema.Fusing
-TargetPlatformModel = schema.TargetPlatformModel
+TargetPlatformCapabilities = schema.TargetPlatformCapabilities

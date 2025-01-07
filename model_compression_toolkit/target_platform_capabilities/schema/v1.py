@@ -414,7 +414,7 @@ class QuantizationConfigOptions(BaseModel):
 
 class TargetPlatformModelComponent(BaseModel):
     """
-    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.).
+    Component of TargetPlatformCapabilities (Fusing, OperatorsSet, etc.).
     """
     class Config:
         frozen = True
@@ -433,7 +433,7 @@ class OperatorsSet(OperatorsSetBase):
     Set of operators that are represented by a unique label.
 
     Attributes:
-        name (Union[str, OperatorSetNames]): The set's label (must be unique within a TargetPlatformModel).
+        name (Union[str, OperatorSetNames]): The set's label (must be unique within a TargetPlatformCapabilities).
         qc_options (Optional[QuantizationConfigOptions]): Configuration options to use for this set of operations.
             If None, it represents a fusing set.
         type (Literal["OperatorsSet"]): Fixed type identifier.
@@ -621,7 +621,7 @@ class Fusing(TargetPlatformModelComponent):
             for x in self.operator_groups
         ])
 
-class TargetPlatformModel(BaseModel):
+class TargetPlatformCapabilities(BaseModel):
     """
     Represents the hardware configuration used for quantized model inference.
 
@@ -682,10 +682,10 @@ class TargetPlatformModel(BaseModel):
 
     def get_info(self) -> Dict[str, Any]:
         """
-        Get a dictionary summarizing the TargetPlatformModel properties.
+        Get a dictionary summarizing the TargetPlatformCapabilities properties.
 
         Returns:
-            Dict[str, Any]: Summary of the TargetPlatformModel properties.
+            Dict[str, Any]: Summary of the TargetPlatformCapabilities properties.
         """
         return {
             "Model name": self.name,
@@ -695,6 +695,6 @@ class TargetPlatformModel(BaseModel):
 
     def show(self):
         """
-        Display the TargetPlatformModel.
+        Display the TargetPlatformCapabilities.
         """
         pprint.pprint(self.get_info(), sort_dicts=False)

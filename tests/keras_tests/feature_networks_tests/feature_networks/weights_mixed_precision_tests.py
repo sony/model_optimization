@@ -199,7 +199,7 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
             base_config=two_bit_cfg,
         )
 
-        tp_model = schema.TargetPlatformModel(
+        tp_model = schema.TargetPlatformCapabilities(
             default_qco=weight_fixed_cfg,
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -522,7 +522,7 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
             base_config=cfg,
         )
 
-        tp_model = schema.TargetPlatformModel(
+        tp_model = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,

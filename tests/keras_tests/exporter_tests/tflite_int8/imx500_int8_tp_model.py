@@ -33,13 +33,13 @@ else:
         Conv2DTranspose
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OpQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OpQuantizationConfig
 from tests.common_tests.helpers.tpcs_for_tests.v1.tp_model import generate_tp_model
 
 tp = mct.target_platform
 
 
-def get_tp_model(edit_weights_params_dict, edit_act_params_dict) -> TargetPlatformModel:
+def get_tp_model(edit_weights_params_dict, edit_act_params_dict) -> TargetPlatformCapabilities:
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
 
     updated_config = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: edit_weights_params_dict},
@@ -63,12 +63,12 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     return eight_bits, mixed_precision_cfg_list, default_config
 
 
-def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.TargetPlatformModel:
+def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.TargetPlatformCapabilities:
     default_tp_model = get_tp_model(edit_weights_params_dict, edit_act_params_dict)
     return default_tp_model
 
 
-def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
+def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformCapabilities):
     keras_tpc = tp.FrameworkQuantizationCapabilities(tp_model)
 
     with keras_tpc:

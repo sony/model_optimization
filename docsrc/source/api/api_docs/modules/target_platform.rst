@@ -56,9 +56,9 @@ QuantizationConfigOptions
 .. autoclass:: model_compression_toolkit.target_platform.QuantizationConfigOptions
 
 
-TargetPlatformModel
+TargetPlatformCapabilities
 =======================
-.. autoclass:: model_compression_toolkit.target_platform.TargetPlatformModel
+.. autoclass:: model_compression_toolkit.target_platform.TargetPlatformCapabilities
 
 
 OperatorsSet

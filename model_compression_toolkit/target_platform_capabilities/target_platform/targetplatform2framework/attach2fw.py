@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, \
     OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, \
     OperationsSetToLayers
@@ -19,15 +19,15 @@ class AttachTpcToFramework:
         # in the operation set are provided in the mapping,  a DefaultDict should be supplied to handle missing entries.
         self._opset2attr_mapping = None  # Mapping of operation sets to their corresponding framework-specific layers
 
-    def attach(self, tpc_model: TargetPlatformModel,
+    def attach(self, tpc_model: TargetPlatformCapabilities,
                custom_opset2layer: Optional[Dict[str, 'CustomOpsetLayers']] = None
                ) -> FrameworkQuantizationCapabilities:
         """
-        Attaching a TargetPlatformModel which includes a platform capabilities description to specific
+        Attaching a TargetPlatformCapabilities which includes a platform capabilities description to specific
         framework's operators.
 
         Args:
-            tpc_model: a TargetPlatformModel object.
+            tpc_model: a TargetPlatformCapabilities object.
             custom_opset2layer: optional set of custom operator sets which allows to add/override the built-in set
                 of framework operator, to define a specific behavior for those operators. This dictionary should map
                 an operator set unique name to a pair of: a list of framework operators and an optional
@@ -59,7 +59,7 @@ class AttachTpcToFramework:
                             attr_mapping = self._opset2attr_mapping.get(opset.name)
                             OperationsSetToLayers(opset.name, layers, attr_mapping=attr_mapping)
                     else:
-                        Logger.critical(f'{opset.name} is defined in TargetPlatformModel, '
+                        Logger.critical(f'{opset.name} is defined in TargetPlatformCapabilities, '
                                         f'but is not defined in the framework set of operators or in the provided '
                                         f'custom operator sets mapping.')
 

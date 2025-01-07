@@ -26,7 +26,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.framework_quantization_capabilities_component import FrameworkQuantizationCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSetBase, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OperatorsSetBase, \
     OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
 
@@ -36,18 +36,18 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
     Attach framework information to a modeled hardware.
     """
     def __init__(self,
-                 tp_model: TargetPlatformModel,
+                 tp_model: TargetPlatformCapabilities,
                  name: str = "base"):
         """
 
         Args:
-            tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
+            tp_model (TargetPlatformCapabilities): Modeled hardware to attach framework information to.
             name (str): Name of the FrameworkQuantizationCapabilities.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to FrameworkQuantizationCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
+        assert isinstance(tp_model, TargetPlatformCapabilities), f'Target platform model that was passed to FrameworkQuantizationCapabilities must be of type TargetPlatformCapabilities, but has type of {type(tp_model)}'
         self.tp_model = tp_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
@@ -164,7 +164,7 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
     def get_default_op_qc(self) -> OpQuantizationConfig:
         """
 
-        Returns: The default OpQuantizationConfig of the TargetPlatformModel that is attached
+        Returns: The default OpQuantizationConfig of the TargetPlatformCapabilities that is attached
         to the FrameworkQuantizationCapabilities.
 
         """
