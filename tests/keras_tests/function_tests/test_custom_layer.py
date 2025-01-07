@@ -60,10 +60,10 @@ def get_tpc():
     Assuming a target hardware that uses power-of-2 thresholds and quantizes weights and activations
     to 2 and 3 bits, accordingly. Our assumed hardware does not require quantization of some layers
     (e.g. Flatten & Droupout).
-    This function generates a TargetPlatformCapabilities with the above specification.
+    This function generates a FrameworkQuantizationCapabilities with the above specification.
 
     Returns:
-         TargetPlatformCapabilities object
+         FrameworkQuantizationCapabilities object
     """
     tp = mct.target_platform
     attr_cfg = generate_test_attr_configs(kernel_lut_values_bitwidth=0)

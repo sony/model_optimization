@@ -25,7 +25,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
     OpQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, LayerFilterParams
 
 
 class BaseNode:
@@ -536,7 +536,7 @@ class BaseNode:
         # the inner method would log an exception.
         return [c.weights_quantization_cfg.get_attr_config(attr) for c in self.candidates_quantization_cfg]
 
-    def get_qco(self, tpc: TargetPlatformCapabilities) -> QuantizationConfigOptions:
+    def get_qco(self, tpc: FrameworkQuantizationCapabilities) -> QuantizationConfigOptions:
         """
         Get the QuantizationConfigOptions of the node according
         to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.
@@ -563,7 +563,7 @@ class BaseNode:
                 Logger.critical(f"Found duplicate qco types for node '{self.name}' of type '{self.type}'!")  # pragma: no cover
         return tpc.tp_model.default_qco
 
-    def filter_node_qco_by_graph(self, tpc: TargetPlatformCapabilities,
+    def filter_node_qco_by_graph(self, tpc: FrameworkQuantizationCapabilities,
                                  next_nodes: List, node_qc_options: QuantizationConfigOptions
                                  ) -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
         """

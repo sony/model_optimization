@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
     get_weights_quantization_fn
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
     QuantizationConfigOptions
 
@@ -78,7 +78,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
 
 def filter_node_qco_by_graph(node: BaseNode,
-                             tpc: TargetPlatformCapabilities,
+                             tpc: FrameworkQuantizationCapabilities,
                              graph: Graph,
                              node_qc_options: QuantizationConfigOptions
                              ) -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
@@ -147,7 +147,7 @@ def set_quantization_configs_to_node(node: BaseNode,
                                      graph: Graph,
                                      quant_config: QuantizationConfig,
                                      fw_info: FrameworkInfo,
-                                     tpc: TargetPlatformCapabilities,
+                                     tpc: FrameworkQuantizationCapabilities,
                                      mixed_precision_enable: bool = False,
                                      manual_bit_width_override: Optional[int] = None):
     """
@@ -158,7 +158,7 @@ def set_quantization_configs_to_node(node: BaseNode,
         graph (Graph): Model's internal representation graph.
         quant_config (QuantizationConfig): Quantization configuration to generate the node's configurations from.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework.
-        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to get default OpQuantizationConfig.
+        tpc (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to get default OpQuantizationConfig.
         mixed_precision_enable (bool): Whether mixed precision is enabled. Defaults to False.
         manual_bit_width_override (Optional[int]): Specifies a custom bit-width to override the node's activation bit-width. Defaults to None.
     """

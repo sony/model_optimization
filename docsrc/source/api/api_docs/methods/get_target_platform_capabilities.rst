@@ -4,7 +4,7 @@
 
 
 =======================================
-Get TargetPlatformCapabilities
+Get FrameworkQuantizationCapabilities
 =======================================
 
 .. autofunction:: model_compression_toolkit.get_target_platform_capabilities

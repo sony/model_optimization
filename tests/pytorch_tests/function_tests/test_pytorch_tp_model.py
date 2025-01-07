@@ -28,7 +28,7 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
     LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
@@ -113,7 +113,7 @@ class TestPytorchTPModel(unittest.TestCase):
                                          add_metadata=False,
                                          name='test')
 
-        tpc_pytorch = tp.TargetPlatformCapabilities(tpm)
+        tpc_pytorch = tp.FrameworkQuantizationCapabilities(tpm)
         with tpc_pytorch:
             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d],
                                      attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
@@ -155,7 +155,7 @@ class TestPytorchTPModel(unittest.TestCase):
             operator_set=tuple([op_obj]),
             add_metadata=False)
 
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with fw_tp:
             opset_layers = [torch.nn.Conv2d, LayerFilterParams(torch.nn.Softmax, dim=1)]
             tp.OperationsSetToLayers('opsetA', opset_layers)
@@ -175,7 +175,7 @@ class TestPytorchTPModel(unittest.TestCase):
             operator_set=tuple([op_obj_a, op_obj_b]),
             add_metadata=False)
 
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with fw_tp:
             opset_layers_a = [torch.nn.Conv2d]
             opset_layers_b = [LayerFilterParams(torch.nn.Softmax, dim=1)]
@@ -195,7 +195,7 @@ class TestPytorchTPModel(unittest.TestCase):
                 schema.OperatorsSet(name='opsetB')]),
             add_metadata=False)
 
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
                 tp.OperationsSetToLayers('opsetA', [torch.nn.Conv2d])
@@ -212,7 +212,7 @@ class TestPytorchTPModel(unittest.TestCase):
                           schema.OperatorsSet(name='opsetB')]),
             add_metadata=False)
 
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
                 tp.OperationsSetToLayers('opsetA', [LayerFilterParams(torch.nn.Softmax, dim=2)])
@@ -228,7 +228,7 @@ class TestPytorchTPModel(unittest.TestCase):
     #                                     tpc_platform_type=None,
     #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
     #                                     add_metadata=False)
-    #     hm_pytorch = tp.TargetPlatformCapabilities(hm)
+    #     hm_pytorch = tp.FrameworkQuantizationCapabilities(hm)
     #     with self.assertRaises(Exception) as e:
     #         with hm_pytorch:
     #             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
@@ -253,7 +253,7 @@ class TestPytorchTPModel(unittest.TestCase):
                                         fusing_patterns=tuple(fusing_patterns),
                                         add_metadata=False)
 
-        hm_keras = tp.TargetPlatformCapabilities(hm)
+        hm_keras = tp.FrameworkQuantizationCapabilities(hm)
         with hm_keras:
             tp.OperationsSetToLayers("opA", [torch.conv2d])
             tp.OperationsSetToLayers("opB", [torch.tanh])

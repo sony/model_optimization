@@ -24,7 +24,7 @@ Models for IMX500, TFLite and qnnpack can be observed `here <https://github.com/
 
 |
 
-The object MCT should get called TargetPlatformCapabilities (or shortly TPC).
+The object MCT should get called FrameworkQuantizationCapabilities (or shortly TPC).
 This diagram demonstrates the main components:
 
 .. image:: ../../../../images/tpc.jpg
@@ -95,9 +95,9 @@ LayerFilterParams
 More filters and usage examples are detailed :ref:`here<ug-layer_filters>`.
 
 
-TargetPlatformCapabilities
+FrameworkQuantizationCapabilities
 =============================
-.. autoclass:: model_compression_toolkit.target_platform.TargetPlatformCapabilities
+.. autoclass:: model_compression_toolkit.target_platform.FrameworkQuantizationCapabilities
 
 
 

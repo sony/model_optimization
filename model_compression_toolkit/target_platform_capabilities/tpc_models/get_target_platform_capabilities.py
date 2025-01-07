@@ -32,7 +32,7 @@ def get_target_platform_capabilities(fw_name: str,
     existing TPC API.
 
     Args:
-        fw_name: Framework name of the TargetPlatformCapabilities.
+        fw_name: Framework name of the FrameworkQuantizationCapabilities.
         target_platform_name: Target platform model name the model will use for inference.
         target_platform_version: Target platform capabilities version.
 

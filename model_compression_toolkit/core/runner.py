@@ -44,7 +44,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
@@ -57,7 +57,7 @@ def core_runner(in_model: Any,
                 core_config: CoreConfig,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
-                tpc: TargetPlatformCapabilities,
+                tpc: FrameworkQuantizationCapabilities,
                 target_resource_utilization: ResourceUtilization = None,
                 running_gptq: bool = False,
                 tb_w: TensorboardWriter = None):
@@ -77,7 +77,7 @@ def core_runner(in_model: Any,
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.).
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        tpc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         target_resource_utilization: ResourceUtilization to constraint the search of the mixed-precision configuration for the model.
         tb_w: TensorboardWriter object for logging

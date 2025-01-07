@@ -29,7 +29,7 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import \
     linear_collapsing_substitute
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 
 
@@ -38,7 +38,7 @@ def graph_preparation_runner(in_model: Any,
                              quantization_config: QuantizationConfig,
                              fw_info: FrameworkInfo,
                              fw_impl: FrameworkImplementation,
-                             tpc: TargetPlatformCapabilities,
+                             tpc: FrameworkQuantizationCapabilities,
                              bit_width_config: BitWidthConfig = None,
                              tb_w: TensorboardWriter = None,
                              mixed_precision_enable: bool = False,
@@ -58,7 +58,7 @@ def graph_preparation_runner(in_model: Any,
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices,
             groups of layers by how they should be quantized, etc.).
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
-        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object that models the inference target platform and
+        tpc (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities object that models the inference target platform and
             the attached framework operator's information.
         bit_width_config (BitWidthConfig): Config for bit-width selection. Defaults to None.
         tb_w (TensorboardWriter): TensorboardWriter object for logging.
@@ -92,7 +92,7 @@ def graph_preparation_runner(in_model: Any,
 
 
 def get_finalized_graph(initial_graph: Graph,
-                        tpc: TargetPlatformCapabilities,
+                        tpc: FrameworkQuantizationCapabilities,
                         quant_config: QuantizationConfig = DEFAULTCONFIG,
                         bit_width_config: BitWidthConfig = None,
                         fw_info: FrameworkInfo = None,
@@ -106,7 +106,7 @@ def get_finalized_graph(initial_graph: Graph,
 
     Args:
         initial_graph (Graph): Graph to apply the changes to.
-        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
+        tpc (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
         quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
             quantized.
         bit_width_config (BitWidthConfig): Config for bit-width selection. Defaults to None.
@@ -185,7 +185,7 @@ def get_finalized_graph(initial_graph: Graph,
 
 def read_model_to_graph(in_model: Any,
                         representative_data_gen: Callable,
-                        tpc: TargetPlatformCapabilities,
+                        tpc: FrameworkQuantizationCapabilities,
                         fw_info: FrameworkInfo = None,
                         fw_impl: FrameworkImplementation = None) -> Graph:
 
@@ -195,7 +195,7 @@ def read_model_to_graph(in_model: Any,
     Args:
         in_model: Model to optimize and prepare for quantization.
         representative_data_gen: Dataset used for calibration.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        tpc: FrameworkQuantizationCapabilities object that models the inference target platform and
                       the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework (e.g.,
                 kernel channels indices, groups of layers by how they should be quantized, etc.)

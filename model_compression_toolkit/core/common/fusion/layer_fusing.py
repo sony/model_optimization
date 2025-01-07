@@ -16,7 +16,7 @@ import copy
 from typing import Any, List
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 
 
@@ -77,14 +77,14 @@ def disable_nodes_activation_quantization(nodes: List[BaseNode]):
             qc.activation_quantization_cfg.enable_activation_quantization = False
 
 
-def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
+def fusion(graph: Graph, tpc: FrameworkQuantizationCapabilities) -> Graph:
     """
     Fusing defines a list of operators that should be combined and treated as a single operator,
     hence no quantization is applied between them when they appear in the graph.
     This function search and disable quantization for such patterns.
     Args:
         graph: Graph we apply the fusion on.
-        tpc: TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
+        tpc: FrameworkQuantizationCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
     Returns:
         Graph after applying fusion activation marking.
     """

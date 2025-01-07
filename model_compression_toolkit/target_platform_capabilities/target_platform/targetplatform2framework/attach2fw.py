@@ -3,7 +3,7 @@ from typing import Dict, Optional
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
     OperatorsSet
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, \
     OperationsSetToLayers
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
@@ -21,7 +21,7 @@ class AttachTpcToFramework:
 
     def attach(self, tpc_model: TargetPlatformModel,
                custom_opset2layer: Optional[Dict[str, 'CustomOpsetLayers']] = None
-               ) -> TargetPlatformCapabilities:
+               ) -> FrameworkQuantizationCapabilities:
         """
         Attaching a TargetPlatformModel which includes a platform capabilities description to specific
         framework's operators.
@@ -33,11 +33,11 @@ class AttachTpcToFramework:
                 an operator set unique name to a pair of: a list of framework operators and an optional
                 operator's attributes names mapping.
 
-        Returns: a TargetPlatformCapabilities object.
+        Returns: a FrameworkQuantizationCapabilities object.
 
         """
 
-        tpc = TargetPlatformCapabilities(tpc_model)
+        tpc = FrameworkQuantizationCapabilities(tpc_model)
         custom_opset2layer = custom_opset2layer if custom_opset2layer is not None else {}
 
         with tpc:

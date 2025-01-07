@@ -29,7 +29,7 @@ from model_compression_toolkit.core.common.pruning.pruning_framework_implementat
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo, \
     unroll_simd_scores_to_per_channel_scores
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 
 class Pruner:
     """
@@ -43,7 +43,7 @@ class Pruner:
                  target_resource_utilization: ResourceUtilization,
                  representative_data_gen: Callable,
                  pruning_config: PruningConfig,
-                 target_platform_capabilities: TargetPlatformCapabilities):
+                 target_platform_capabilities: FrameworkQuantizationCapabilities):
         """
         Args:
             float_graph (Graph): The floating-point representation of the model's computation graph.
@@ -52,7 +52,7 @@ class Pruner:
             target_resource_utilization (ResourceUtilization): The target resource utilization to be achieved after pruning.
             representative_data_gen (Callable): Generator function for representative dataset used in pruning analysis.
             pruning_config (PruningConfig): Configuration object specifying how pruning should be performed.
-            target_platform_capabilities (TargetPlatformCapabilities): Object encapsulating the capabilities of the target hardware platform.
+            target_platform_capabilities (FrameworkQuantizationCapabilities): Object encapsulating the capabilities of the target hardware platform.
         """
         self.float_graph = float_graph
         self.fw_info = fw_info

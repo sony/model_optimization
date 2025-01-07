@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
     BIAS
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
     QuantizationConfigOptions
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers

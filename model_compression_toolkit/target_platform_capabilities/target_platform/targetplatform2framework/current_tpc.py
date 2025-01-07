@@ -18,7 +18,7 @@ from model_compression_toolkit.logger import Logger
 def get_current_tpc():
     """
 
-    Returns: The current TargetPlatformCapabilities that is being used and accessed.
+    Returns: The current FrameworkQuantizationCapabilities that is being used and accessed.
 
     """
     return _current_tpc.get()
@@ -26,7 +26,7 @@ def get_current_tpc():
 
 class _CurrentTPC(object):
     """
-    Wrapper of the current TargetPlatformCapabilities object that is being accessed and defined.
+    Wrapper of the current FrameworkQuantizationCapabilities object that is being accessed and defined.
     """
     def __init__(self):
         super(_CurrentTPC, self).__init__()
@@ -35,28 +35,28 @@ class _CurrentTPC(object):
     def get(self):
         """
 
-        Returns: The current TargetPlatformCapabilities that is being defined.
+        Returns: The current FrameworkQuantizationCapabilities that is being defined.
 
         """
         if self.tpc is None:
-            Logger.critical("'TargetPlatformCapabilities' (TPC) instance is not initialized.")
+            Logger.critical("'FrameworkQuantizationCapabilities' (TPC) instance is not initialized.")
         return self.tpc
 
     def reset(self):
         """
 
-        Reset the current TargetPlatformCapabilities so a new TargetPlatformCapabilities can be wrapped and
-        used as the current TargetPlatformCapabilities object.
+        Reset the current FrameworkQuantizationCapabilities so a new FrameworkQuantizationCapabilities can be wrapped and
+        used as the current FrameworkQuantizationCapabilities object.
 
         """
         self.tpc = None
 
     def set(self, target_platform_capabilities):
         """
-        Set and wrap a TargetPlatformCapabilities as the current TargetPlatformCapabilities.
+        Set and wrap a FrameworkQuantizationCapabilities as the current FrameworkQuantizationCapabilities.
 
         Args:
-            target_platform_capabilities: TargetPlatformCapabilities to set as the current TargetPlatformCapabilities
+            target_platform_capabilities: FrameworkQuantizationCapabilities to set as the current FrameworkQuantizationCapabilities
             to access and use.
 
         """

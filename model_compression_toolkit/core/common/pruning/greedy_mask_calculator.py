@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.pruning.memory_calculator import Memo
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.mask.per_simd_group_mask import PerSIMDGroupMask
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 
 
 class GreedyMaskCalculator:
@@ -42,7 +42,7 @@ class GreedyMaskCalculator:
                  target_resource_utilization: ResourceUtilization,
                  graph: Graph,
                  fw_impl: PruningFrameworkImplementation,
-                 tpc: TargetPlatformCapabilities,
+                 tpc: FrameworkQuantizationCapabilities,
                  simd_groups_indices: Dict[BaseNode, List[List[int]]]):
         """
         Args:
@@ -52,7 +52,7 @@ class GreedyMaskCalculator:
             target_resource_utilization (ResourceUtilization): The target resource utilization to achieve.
             graph (Graph): The computational graph of the model.
             fw_impl (PruningFrameworkImplementation): Framework-specific implementation details.
-            tpc (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
+            tpc (FrameworkQuantizationCapabilities): Platform-specific constraints and capabilities.
             simd_groups_indices (Dict[BaseNode, List[List[int]]]): Indices of SIMD groups in each node.
         """
         self.prunable_nodes = prunable_nodes

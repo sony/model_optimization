@@ -36,7 +36,7 @@ else:
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
     LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
@@ -113,7 +113,7 @@ class TestKerasTPModel(unittest.TestCase):
             tpc_platform_type=None,
             operator_set=tuple([op_obj]),
             add_metadata=False)
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with fw_tp:
             opset_layers = [Conv2D, LayerFilterParams(ReLU, max_value=2)]
             tp.OperationsSetToLayers('opsetA', opset_layers)
@@ -133,7 +133,7 @@ class TestKerasTPModel(unittest.TestCase):
             operator_set=tuple([op_obj_a, op_obj_b]),
             add_metadata=False)
 
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with fw_tp:
             opset_layers_a = [Conv2D]
             opset_layers_b = [LayerFilterParams(ReLU, max_value=2)]
@@ -153,7 +153,7 @@ class TestKerasTPModel(unittest.TestCase):
             add_metadata=False)
 
 
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
                 tp.OperationsSetToLayers('opsetA', [Conv2D])
@@ -169,7 +169,7 @@ class TestKerasTPModel(unittest.TestCase):
             operator_set=tuple([schema.OperatorsSet(name='opsetA'),
                           schema.OperatorsSet(name='opsetB')]),
             add_metadata=False)
-        fw_tp = TargetPlatformCapabilities(hm)
+        fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
                 tp.OperationsSetToLayers('opsetA', [LayerFilterParams(Activation, activation="relu")])
@@ -200,7 +200,7 @@ class TestKerasTPModel(unittest.TestCase):
                                          add_metadata=False,
                                          name='test')
 
-        tpc_keras = tp.TargetPlatformCapabilities(tpm)
+        tpc_keras = tp.FrameworkQuantizationCapabilities(tpm)
         with tpc_keras:
             tp.OperationsSetToLayers("conv", [Conv2D],
                                      attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
@@ -234,7 +234,7 @@ class TestKerasTPModel(unittest.TestCase):
     #                                     tpc_platform_type=None,
     #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
     #                                     add_metadata=False)
-    #     hm_keras = tp.TargetPlatformCapabilities(hm)
+    #     hm_keras = tp.FrameworkQuantizationCapabilities(hm)
     #     with self.assertRaises(Exception) as e:
     #         with hm_keras:
     #             tp.OperationsSetToLayers("conv", [Conv2D])
@@ -259,7 +259,7 @@ class TestKerasTPModel(unittest.TestCase):
                                         fusing_patterns=tuple(fusing_patterns),
                                         add_metadata=False)
 
-        hm_keras = tp.TargetPlatformCapabilities(hm)
+        hm_keras = tp.FrameworkQuantizationCapabilities(hm)
         with hm_keras:
             tp.OperationsSetToLayers("opA", [Conv2D])
             tp.OperationsSetToLayers("opB", [tf.nn.tanh])
@@ -287,7 +287,7 @@ class TestKerasTPModel(unittest.TestCase):
                                          operator_set=tuple([schema.OperatorsSet(name="opA")]),
                                          add_metadata=False)
 
-        tpc = tp.TargetPlatformCapabilities(tpm)
+        tpc = tp.FrameworkQuantizationCapabilities(tpm)
         with tpc:
             tp.OperationsSetToLayers("opA", [Conv2D])
 

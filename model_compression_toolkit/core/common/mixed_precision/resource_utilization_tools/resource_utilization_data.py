@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import calc_graph_cuts
 
@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 def compute_resource_utilization_data(in_model: Any,
                                       representative_data_gen: Callable,
                                       core_config: CoreConfig,
-                                      tpc: TargetPlatformCapabilities,
+                                      tpc: FrameworkQuantizationCapabilities,
                                       fw_info: FrameworkInfo,
                                       fw_impl: FrameworkImplementation,
                                       transformed_graph: Graph = None,
@@ -47,7 +47,7 @@ def compute_resource_utilization_data(in_model: Any,
         in_model:  Model to build graph from (the model that intended to be quantized).
         representative_data_gen: Dataset used for calibration.
         core_config: CoreConfig containing parameters of how the model should be quantized.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        tpc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -246,7 +246,7 @@ def requires_mixed_precision(in_model: Any,
                              target_resource_utilization: ResourceUtilization,
                              representative_data_gen: Callable,
                              core_config: CoreConfig,
-                             tpc: TargetPlatformCapabilities,
+                             tpc: FrameworkQuantizationCapabilities,
                              fw_info: FrameworkInfo,
                              fw_impl: FrameworkImplementation) -> bool:
     """
@@ -261,7 +261,7 @@ def requires_mixed_precision(in_model: Any,
         target_resource_utilization: The resource utilization of the target device.
         representative_data_gen: A function that generates representative data for the model.
         core_config: CoreConfig containing parameters of how the model should be quantized.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        tpc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.

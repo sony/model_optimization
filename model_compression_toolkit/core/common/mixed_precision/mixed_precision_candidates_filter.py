@@ -17,13 +17,13 @@ import numpy as np
 from model_compression_toolkit.core import ResourceUtilization, FrameworkInfo
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 
 
 def filter_candidates_for_mixed_precision(graph: Graph,
                                           target_resource_utilization: ResourceUtilization,
                                           fw_info: FrameworkInfo,
-                                          tpc: TargetPlatformCapabilities):
+                                          tpc: FrameworkQuantizationCapabilities):
     """
     Filters out candidates in case of mixed precision search for only weights or activation compression.
     For instance, if running only weights compression - filters out candidates of activation configurable nodes
@@ -36,7 +36,7 @@ def filter_candidates_for_mixed_precision(graph: Graph,
         graph: A graph representation of the model to be quantized.
         target_resource_utilization: The resource utilization of the target device.
         fw_info: fw_info: Information needed for quantization about the specific framework.
-        tpc: TargetPlatformCapabilities object that describes the desired inference target platform.
+        tpc: FrameworkQuantizationCapabilities object that describes the desired inference target platform.
 
     """
 

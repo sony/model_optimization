@@ -168,7 +168,7 @@ def generate_custom_test_tp_model(name: str,
 
 def generate_test_tpc(name: str,
                       tp_model: schema.TargetPlatformModel,
-                      base_tpc: tp.TargetPlatformCapabilities,
+                      base_tpc: tp.FrameworkQuantizationCapabilities,
                       op_sets_to_layer_add: Dict[str, List[Any]] = None,
                       op_sets_to_layer_drop: Dict[str, List[Any]] = None,
                       attr_mapping: Dict[str, Dict] = {}):
@@ -189,7 +189,7 @@ def generate_test_tpc(name: str,
         # Remove empty op sets
         merged_dict = {op_set_name: layers for op_set_name, layers in merged_dict.items() if len(layers) == 0}
 
-    tpc = tp.TargetPlatformCapabilities(tp_model)
+    tpc = tp.FrameworkQuantizationCapabilities(tp_model)
 
     with tpc:
         for op_set_name, layers in merged_dict.items():

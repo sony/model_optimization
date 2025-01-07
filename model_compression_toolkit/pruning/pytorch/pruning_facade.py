@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.pruning.pruning_info import PruningIn
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
@@ -67,7 +67,7 @@ if FOUND_TORCH:
             target_resource_utilization (ResourceUtilization): Key Performance Indicators specifying the pruning targets.
             representative_data_gen (Callable): A function to generate representative data for pruning analysis.
             pruning_config (PruningConfig): Configuration settings for the pruning process. Defaults to standard config.
-            target_platform_capabilities (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
+            target_platform_capabilities (FrameworkQuantizationCapabilities): Platform-specific constraints and capabilities.
                 Defaults to DEFAULT_PYTORCH_TPC.
 
         Returns:

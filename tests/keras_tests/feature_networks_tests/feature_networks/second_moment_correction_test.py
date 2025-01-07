@@ -37,7 +37,7 @@ from model_compression_toolkit.core.keras.statistics_correction.apply_second_mom
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -268,7 +268,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                       network_editor: List[EditRule] = [],
                       analyze_similarity: bool = False,
-                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
+                      target_platform_capabilities: FrameworkQuantizationCapabilities = DEFAULT_KERAS_TPC) -> \
             Tuple[Graph, Graph]:
 
         KerasModelValidation(model=in_model,

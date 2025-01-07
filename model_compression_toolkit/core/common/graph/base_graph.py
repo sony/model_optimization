@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.pruning.pruning_section import Prunin
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    TargetPlatformCapabilities, LayerFilterParams
+    FrameworkQuantizationCapabilities, LayerFilterParams
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
@@ -87,11 +87,11 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.fw_info = fw_info
 
     def set_tpc(self,
-                tpc: TargetPlatformCapabilities):
+                tpc: FrameworkQuantizationCapabilities):
         """
         Set the graph's TPC.
         Args:
-            tpc: TargetPlatformCapabilities object.
+            tpc: FrameworkQuantizationCapabilities object.
         """
         # validate graph nodes are either from the framework or a custom layer defined in the TPC
         # Validate graph nodes are either built-in layers from the framework or custom layers defined in the TPC

@@ -18,10 +18,10 @@ from typing import Dict, Any
 from model_compression_toolkit.constants import OPERATORS_SCHEDULING, FUSED_NODES_MAPPING, CUTS, MAX_CUT, OP_ORDER, \
     OP_RECORD, SHAPE, NODE_OUTPUT_INDEX, NODE_NAME, TOTAL_SIZE, MEM_ELEMENTS
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import SchedulerInfo
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 
 
-def create_model_metadata(tpc: TargetPlatformCapabilities,
+def create_model_metadata(tpc: FrameworkQuantizationCapabilities,
                           scheduling_info: SchedulerInfo = None) -> Dict:
     """
     Creates and returns a metadata dictionary for the model, including version information

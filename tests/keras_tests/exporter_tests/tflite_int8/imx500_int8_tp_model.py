@@ -69,7 +69,7 @@ def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.Tar
 
 
 def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model)
+    keras_tpc = tp.FrameworkQuantizationCapabilities(tp_model)
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", [Reshape,

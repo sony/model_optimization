@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.statistics_correction.apply_second_mo
     quantized_model_builder_for_second_moment_correction
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.pytorch.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -350,7 +350,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                       representative_data_gen: Callable,
                       core_config: CoreConfig = CoreConfig(),
                       fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_INFO) -> \
+                      target_platform_capabilities: FrameworkQuantizationCapabilities = DEFAULT_PYTORCH_INFO) -> \
             Tuple[Graph, Graph]:
 
         tb_w = init_tensorboard_writer(fw_info)
