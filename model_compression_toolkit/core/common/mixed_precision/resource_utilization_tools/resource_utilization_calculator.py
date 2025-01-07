@@ -301,22 +301,28 @@ class ResourceUtilizationCalculator:
         if target_criterion != TargetInclusionCriterion.AnyQuantized:
             raise NotImplementedError('Computing MaxCut activation utilization is currently only supported for quantized targets.')
 
+        graph_target_nodes = self._get_target_activation_nodes(target_criterion, include_reused=False)
+        # if there are no target activations in the graph, don't waste time looking for cuts
+        if not graph_target_nodes:
+            return 0, {}, {}
+
         if self._cuts is None:
             memory_graph = MemoryGraph(deepcopy(self.graph))
             _, _, cuts = compute_graph_max_cut(memory_graph)
             if cuts is None:
                 raise RuntimeError("Failed to calculate activation memory cuts for graph.")  # pragma: no cover
             cuts = [cut for cut in cuts if cut.mem_elements.elements]
+            # cache cuts nodes for future use, so do not filter by target
             self._cuts = {cut: [self.graph.find_node_by_name(m.node_name)[0] for m in cut.mem_elements.elements]
                           for cut in cuts}
 
         util_per_cut: Dict[Cut, Utilization] = {}    # type: ignore
         util_per_cut_per_node = defaultdict(dict)
         for cut in self._cuts:
-            target_nodes = self._get_target_activation_nodes(target_criterion, include_reused=True, nodes=self._cuts[cut])
-            if not target_nodes:
+            cut_target_nodes = [n for n in self._cuts[cut] if n in graph_target_nodes]
+            if not cut_target_nodes:
                 continue
-            for n in target_nodes:
+            for n in cut_target_nodes:
                 qc = act_qcs.get(n) if act_qcs else None
                 util_per_cut_per_node[cut][n] = self.compute_node_activation_tensor_utilization(n, target_criterion,
                                                                                                 bitwidth_mode, qc)
