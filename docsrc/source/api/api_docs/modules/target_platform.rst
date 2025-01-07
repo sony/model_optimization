@@ -73,9 +73,9 @@ Fusing
 
 
 
-OperatorSetConcat
+OperatorSetGroup
 ====================
-.. autoclass:: model_compression_toolkit.target_platform.OperatorSetConcat
+.. autoclass:: model_compression_toolkit.target_platform.OperatorSetGroup
 
 
 OperationsToLayers

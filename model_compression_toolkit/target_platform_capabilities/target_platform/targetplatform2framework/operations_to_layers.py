@@ -20,7 +20,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.schema_functi
     get_config_options_by_operators_set, is_opset_in_model
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import  _current_tpc
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.framework_quantization_capabilities_component import FrameworkQuantizationCapabilitiesComponent
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorsSetBase, OperatorSetConcat
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorsSetBase, OperatorSetGroup
 from model_compression_toolkit import DefaultDict
 
 
@@ -88,7 +88,7 @@ class OperationsToLayers:
         for o in self.op_sets_to_layers:
             if op.name == o.name:
                 return o.layers
-        if isinstance(op, OperatorSetConcat):  # If its a concat - return all layers from all OperatorsSets that in the OperatorSetConcat
+        if isinstance(op, OperatorSetGroup):  # If its a concat - return all layers from all OperatorsSets that in the OperatorSetGroup
             layers = []
             for o in op.operators_set:
                 layers.extend(self.get_layers_by_op(o))

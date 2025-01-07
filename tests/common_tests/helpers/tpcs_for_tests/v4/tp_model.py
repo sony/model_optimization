@@ -291,17 +291,17 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.extend(
         [conv, conv_transpose, depthwise_conv, fc, relu, relu6, leaky_relu, add, sub, mul, div, prelu, swish, hardswish, sigmoid,
          tanh, gelu, hardsigmoid, hard_tanh])
-    any_relu = schema.OperatorSetConcat(operators_set=[relu, relu6, leaky_relu, hard_tanh])
+    any_relu = schema.OperatorSetGroup(operators_set=[relu, relu6, leaky_relu, hard_tanh])
 
     # Combine multiple operators into a single operator to avoid quantization between
     # them. To do this we define fusing patterns using the OperatorsSets that were created.
-    # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-    activations_after_conv_to_fuse = schema.OperatorSetConcat(
+    # To group multiple sets with regard to fusing, an OperatorSetGroup can be created
+    activations_after_conv_to_fuse = schema.OperatorSetGroup(
         operators_set=[relu, relu6, leaky_relu, hard_tanh, swish, gelu, hardswish, hardsigmoid, prelu, sigmoid, tanh])
-    conv_types = schema.OperatorSetConcat(operators_set=[conv, conv_transpose, depthwise_conv])
-    activations_after_fc_to_fuse = schema.OperatorSetConcat(operators_set=[relu, relu6, leaky_relu, hard_tanh, swish, sigmoid, tanh, gelu,
-                                                             hardswish, hardsigmoid])
-    any_binary = schema.OperatorSetConcat(operators_set=[add, sub, mul, div])
+    conv_types = schema.OperatorSetGroup(operators_set=[conv, conv_transpose, depthwise_conv])
+    activations_after_fc_to_fuse = schema.OperatorSetGroup(operators_set=[relu, relu6, leaky_relu, hard_tanh, swish, sigmoid, tanh, gelu,
+                                                                          hardswish, hardsigmoid])
+    any_binary = schema.OperatorSetGroup(operators_set=[add, sub, mul, div])
 
     # ------------------- #
     # Fusions

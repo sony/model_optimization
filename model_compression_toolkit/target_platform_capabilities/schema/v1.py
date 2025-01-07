@@ -457,7 +457,7 @@ class OperatorsSet(OperatorsSetBase):
         return {"name": self.name}
 
 
-class OperatorSetConcat(OperatorsSetBase):
+class OperatorSetGroup(OperatorsSetBase):
     """
     Concatenate a tuple of operator sets to treat them similarly in different places (like fusing).
 
@@ -469,7 +469,7 @@ class OperatorSetConcat(OperatorsSetBase):
     name: Optional[str] = None  # Will be set in the validator if not given
 
     # Define a private attribute _type
-    type: Literal["OperatorSetConcat"] = "OperatorSetConcat"
+    type: Literal["OperatorSetGroup"] = "OperatorSetGroup"
 
     class Config:
         frozen = True
@@ -518,11 +518,11 @@ class Fusing(TargetPlatformModelComponent):
     hence no quantization is applied between them.
 
     Attributes:
-        operator_groups (Tuple[Union[OperatorsSet, OperatorSetConcat], ...]): A tuple of operator groups,
-                                                                              each being either an OperatorSetConcat or an OperatorsSet.
+        operator_groups (Tuple[Union[OperatorsSet, OperatorSetGroup], ...]): A tuple of operator groups,
+                                                                              each being either an OperatorSetGroup or an OperatorsSet.
         name (Optional[str]): The name for the Fusing instance. If not provided, it is generated from the operator groups' names.
     """
-    operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetConcat], Field(discriminator='type')], ...]
+    operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetGroup], Field(discriminator='type')], ...]
     name: Optional[str] = None  # Will be set in the validator if not given.
 
     class Config:
@@ -591,7 +591,7 @@ class Fusing(TargetPlatformModelComponent):
         for i in range(len(self.operator_groups) - len(other.operator_groups) + 1):
             for j in range(len(other.operator_groups)):
                 if self.operator_groups[i + j] != other.operator_groups[j] and not (
-                        isinstance(self.operator_groups[i + j], OperatorSetConcat) and (
+                        isinstance(self.operator_groups[i + j], OperatorSetGroup) and (
                         other.operator_groups[j] in self.operator_groups[i + j].operators_set)):
                     break
             else:

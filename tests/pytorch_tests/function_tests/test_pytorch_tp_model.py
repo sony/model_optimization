@@ -165,7 +165,7 @@ class TestPytorchTPModel(unittest.TestCase):
     def test_get_layers_by_opconcat(self):
         op_obj_a = schema.OperatorsSet(name='opsetA')
         op_obj_b = schema.OperatorsSet(name='opsetB')
-        op_concat = schema.OperatorSetConcat(operators_set=[op_obj_a, op_obj_b])
+        op_concat = schema.OperatorSetGroup(operators_set=[op_obj_a, op_obj_b])
 
         hm = schema.TargetPlatformModel(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),

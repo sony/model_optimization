@@ -160,8 +160,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
 
     operator_set.extend([conv, conv_depthwise, conv_transpose, batchnorm, relu, relu6, hard_tanh, linear])
 
-    conv_opset_concat = schema.OperatorSetConcat(operators_set=[conv, conv_transpose])
-    relu_opset_concat = schema.OperatorSetConcat(operators_set=[relu, relu6, hard_tanh])
+    conv_opset_concat = schema.OperatorSetGroup(operators_set=[conv, conv_transpose])
+    relu_opset_concat = schema.OperatorSetGroup(operators_set=[relu, relu6, hard_tanh])
 
     # ------------------- #
     # Fusions

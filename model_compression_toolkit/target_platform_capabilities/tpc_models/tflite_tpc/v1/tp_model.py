@@ -193,8 +193,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD)
     bias_add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD_BIAS)
 
-    kernel = schema.OperatorSetConcat(operators_set=[conv2d, fc])
-    activations_to_fuse = schema.OperatorSetConcat(operators_set=[relu, elu])
+    kernel = schema.OperatorSetGroup(operators_set=[conv2d, fc])
+    activations_to_fuse = schema.OperatorSetGroup(operators_set=[relu, elu])
 
     operator_set.extend([fc, conv2d, relu, relu6, tanh, sigmoid, batch_norm, add, bias_add, elu, squeeze])
 

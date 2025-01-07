@@ -44,7 +44,7 @@ class TPModelInputOutputTests(unittest.TestCase):
         op1 = schema.OperatorsSet(name="opset1")
         op2 = schema.OperatorsSet(name="opset2")
         op3 = schema.OperatorsSet(name="opset3")
-        op12 = schema.OperatorSetConcat(operators_set=[op1, op2])
+        op12 = schema.OperatorSetGroup(operators_set=[op1, op2])
         self.tp_model = schema.TargetPlatformModel(default_qco=TEST_QCO,
                                                    operator_set=(op1, op2, op3),
                                                    fusing_patterns=(schema.Fusing(operator_groups=(op12, op3)),
@@ -327,7 +327,7 @@ class FusingTest(unittest.TestCase):
         tanh = schema.OperatorsSet(name="tanh")
         operator_set.extend([conv, add, tanh])
 
-        add_tanh = schema.OperatorSetConcat(operators_set=[add, tanh])
+        add_tanh = schema.OperatorSetGroup(operators_set=[add, tanh])
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add)))
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add_tanh)))
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add, tanh)))
