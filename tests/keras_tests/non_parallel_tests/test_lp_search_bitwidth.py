@@ -63,7 +63,7 @@ class MockMixedPrecisionSearchManager:
         self.compute_metric_fn = lambda x, y=None, z=None: {0: 2, 1: 1, 2: 0}[x[0]]
         self.min_ru = {RUTarget.WEIGHTS: [[1], [1], [1]],
                        RUTarget.ACTIVATION: [[1], [1], [1]],
-                       RUTarget.TOTAL: [[2], [2], [2]],
+                       RUTarget.TOTAL: [[1, 1], [1, 1], [1, 1]],
                        RUTarget.BOPS: [[1], [1], [1]]}  # minimal resource utilization in the tests layer_to_ru_mapping
 
         self.max_ru_config = [0]
@@ -77,8 +77,8 @@ class MockMixedPrecisionSearchManager:
         elif target == RUTarget.ACTIVATION:
             ru_matrix = [np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         elif target == RUTarget.TOTAL:
-            ru_matrix = [np.flip(np.array([ru.weights_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()])),
-                         np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
+            ru_matrix = [[np.flip(np.array([ru.weights_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()])),
+                         np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]]
         elif target == RUTarget.BOPS:
             ru_matrix = [np.flip(np.array([ru.bops - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         else:
