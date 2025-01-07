@@ -19,6 +19,12 @@ jobs:
       COVERAGE_THRESHOLD: 98
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create .coveragerc
+        run: |
+          echo "[run]" > .coveragerc
+          echo "dynamic_context = test_function" >> .coveragerc
+          
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
@@ -69,7 +75,7 @@ jobs:
         run: coverage combine
 
       - name: Run Coverage HTML
-        run: coverage html -i --directory ./coverage_report_html
+        run: coverage html -i --directory ./coverage_report_html --show-contexts
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
