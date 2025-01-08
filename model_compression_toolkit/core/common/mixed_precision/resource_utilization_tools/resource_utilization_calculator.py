@@ -90,8 +90,7 @@ class Utilization(NamedTuple):
         return Utilization(0, bytes=None if bitwidth_mode == BitwidthMode.Size else 0)
 
     def __add__(self, other: 'Utilization') -> 'Utilization':
-        if [self.bytes, other.bytes].count(None) == 1:
-            raise ValueError('bytes field must be set either by both or by none of the objects.')
+        self._validate_pair(self, other)
         bytes_ = None if self.bytes is None else (self.bytes + other.bytes)
         return Utilization(self.size + other.size, bytes_)
 
@@ -102,12 +101,23 @@ class Utilization(NamedTuple):
         return self + other
 
     def __gt__(self, other: 'Utilization'):
-        # Needed for max / min. Compare by bytes, if not defined then by size.
-        if [self.bytes, other.bytes].count(None) == 1:
-            raise ValueError('bytes field must be set either by both or by none of the objects.')
+        # Needed for max. Compare by bytes, if not defined then by size.
+        self._validate_pair(self, other)
         if self.bytes is not None:
             return self.bytes > other.bytes
         return self.size > other.size
+
+    def __lt__(self, other: 'Utilization'):
+        self._validate_pair(self, other)
+        # Needed for min. Compare by bytes, if not defined then by size.
+        if self.bytes is not None:
+            return self.bytes < other.bytes
+        return self.size < other.size
+
+    @staticmethod
+    def _validate_pair(u1, u2):
+        if [u1.bytes, u2.bytes].count(None) == 1:
+            raise ValueError('bytes field must be set either by both or by none of the objects.')
 
 
 class AggregationMethod(Enum):
@@ -591,6 +601,18 @@ class ResourceUtilizationCalculator:
         Returns:
             Activation bit-width.
         """
+        if bitwidth_mode == BitwidthMode.Size:
+            raise ValueError(f'nbits is not defined for {bitwidth_mode}.')
+
+        if act_qc:
+            if bitwidth_mode != BitwidthMode.MpCustom or not n.is_activation_quantization_enabled():
+                raise ValueError(
+                    f'Activation config is not expected for non-custom bit mode or for un-quantized activation.'
+                    f'Mode: {bitwidth_mode}, quantized activation: {n.is_activation_quantization_enabled()}'
+                )
+            assert act_qc.enable_activation_quantization
+            return act_qc.activation_n_bits
+
         if bitwidth_mode == BitwidthMode.Float or not n.is_activation_quantization_enabled():
             return FLOAT_BITWIDTH
 
@@ -598,13 +620,10 @@ class ResourceUtilizationCalculator:
             candidates_nbits = [c.activation_quantization_cfg.activation_n_bits for c in n.candidates_quantization_cfg]
             return _bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
 
-        if bitwidth_mode == BitwidthMode.MpCustom and act_qc:
-            return act_qc.activation_n_bits
-
         if bitwidth_mode in [BitwidthMode.MpCustom, BitwidthMode.SpDefault]:
             qcs = n.get_unique_activation_candidates()
             if len(qcs) != 1:
-                raise ValueError(f'Could not retrieve the default activation quantization candidate for node {n.name} '
+                raise ValueError(f'Could not retrieve the activation quantization candidate for node {n.name} '
                                  f'as it has {len(qcs)}!=1 unique candidates .')
             return qcs[0].activation_quantization_cfg.activation_n_bits
 
@@ -625,11 +644,20 @@ class ResourceUtilizationCalculator:
         Returns:
             Weight bit-width.
         """
+        if bitwidth_mode == BitwidthMode.Size:
+            raise ValueError(f'nbits is not defined for {bitwidth_mode}.')
+
+        if w_qc and w_qc.has_attribute_config(w_attr):
+            if bitwidth_mode != BitwidthMode.MpCustom or not n.is_weights_quantization_enabled(w_attr):
+                raise ValueError('Weight config is not expected for non-custom bit mode or for un-quantized weight.'
+                                 f'Bit mode: {bitwidth_mode}, quantized attr {w_attr}: '
+                                 f'{n.is_weights_quantization_enabled(w_attr)}')
+            attr_cfg = w_qc.get_attr_config(w_attr)
+            assert attr_cfg.enable_weights_quantization
+            return attr_cfg.weights_n_bits
+
         if bitwidth_mode == BitwidthMode.Float or not n.is_weights_quantization_enabled(w_attr):
             return FLOAT_BITWIDTH
-
-        if bitwidth_mode == BitwidthMode.MpCustom and w_qc and w_qc.has_attribute_config(w_attr):
-            return w_qc.get_attr_config(w_attr).weights_n_bits
 
         node_qcs = n.get_unique_weights_candidates(w_attr)
         w_qcs = [qc.weights_quantization_cfg.get_attr_config(w_attr) for qc in node_qcs]
