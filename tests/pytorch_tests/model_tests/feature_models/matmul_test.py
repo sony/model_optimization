@@ -62,10 +62,10 @@ class MatMulNetBaseTest(BasePytorchTest):
                 name="no_quant_pytorch_test",
                 tp_model=generate_test_tp_model(
                     {
-                        'weights_n_bits': 32,
-                        'activation_n_bits': 32,
-                        'enable_weights_quantization': False,
-                        'enable_activation_quantization': False
+                        'weights_n_bits': 4,
+                        'activation_n_bits': 4,
+                        'enable_weights_quantization': True,
+                        'enable_activation_quantization': True
                     }
                 )
             )

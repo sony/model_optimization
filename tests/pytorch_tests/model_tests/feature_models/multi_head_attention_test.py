@@ -57,20 +57,29 @@ class MHABaseTest(BasePytorchTest):
                 [self.val_batch_size] + list(self.value_input_shape)]
 
     def get_tpc(self):
-        tpc = {
-            'no_quantization': generate_test_tp_model({
-                'weights_n_bits': 32,
-                'activation_n_bits': 32,
-                'enable_weights_quantization': False,
-                'enable_activation_quantization': False
+        return {
+            'all_4bit': generate_test_tp_model({
+                'weights_n_bits': 4,
+                'activation_n_bits': 4,
+                'enable_weights_quantization': True,
+                'enable_activation_quantization': True
             })
         }
-        if self.num_heads < 5:
-            tpc['all_4bit'] = generate_test_tp_model({'weights_n_bits': 4,
-                                                      'activation_n_bits': 4,
-                                                      'enable_weights_quantization': True,
-                                                      'enable_activation_quantization': True})
-        return tpc
+
+        # tpc = {
+        #     'no_quantization': generate_test_tp_model({
+        #         'weights_n_bits': 32,
+        #         'activation_n_bits': 32,
+        #         'enable_weights_quantization': False,
+        #         'enable_activation_quantization': False
+        #     })
+        # }
+        # if self.num_heads < 5:
+        #     tpc['all_4bit'] = generate_test_tp_model({'weights_n_bits': 4,
+        #                                               'activation_n_bits': 4,
+        #                                               'enable_weights_quantization': True,
+        #                                               'enable_activation_quantization': True})
+        # return tpc
 
 
 class MHANet(nn.Module):
