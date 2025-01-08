@@ -26,4 +26,4 @@ jobs:
           pip install -r requirements.txt
           pip install sphinx sphinx-autodoc-typehints torch==2.5.* torchvision tensorflow==2.15.*
       - name: Build docs
-        run: cd docsrc && make github
+        run: cd docsrc && make github SPHINXOPTS="-W --keep-going"
