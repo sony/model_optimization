@@ -36,6 +36,15 @@ It adds to the base quantizer a get_config and from_config functions to enable l
 
 .. autoclass:: model_compression_toolkit.trainable_infrastructure.BasePytorchTrainableQuantizer
 
+
+
+TrainingMethod
+================================
+**Select a training method:**
+
+.. autoclass:: model_compression_toolkit.trainable_infrastructure.TrainingMethod
+
+
 TrainableQuantizerWeightsConfig
 =================================
 This configuration object contains the necessary attributes for configuring a weights trainable quantizer.

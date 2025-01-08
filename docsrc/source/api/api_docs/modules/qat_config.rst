@@ -10,9 +10,9 @@ qat_config Module
 
 TrainingMethod
 ================================
-**Select a QAT training method:**
+**Select a training method:**
 
-.. autoclass:: model_compression_toolkit.qat.TrainingMethod
+.. autoclass:: model_compression_toolkit.trainable_infrastructure.TrainingMethod
 
 
 |
