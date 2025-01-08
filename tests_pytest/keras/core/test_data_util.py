@@ -108,7 +108,7 @@ class TestTFDataUtil:
 
     def test_create_tf_dataloader_iterable_tfdataset_with_const_info(self, fixed_gen):
         iterable_ds = TFDatasetFromGenerator(fixed_gen)
-        dataset = IterableSampleWithConstInfoDataset(iterable_ds, tf.constant("some_string"))
+        dataset = IterableSampleWithConstInfoDataset(iterable_ds.tf_dataset, tf.constant("some_string"))
 
         for i, sample_with_info in enumerate(dataset):
             sample, info = sample_with_info

@@ -151,7 +151,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         # Create final dataset using the new dataloader with collate_fn
         final_dataset = create_tf_dataloader(
-            dataset=sla_train_dataset,
+            sla_train_dataset,
             batch_size=orig_batch_size,
             shuffle=True,
             collate_fn=collate_fn
@@ -176,14 +176,14 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         # Step 2: Compute loss weights
         if self.gptq_config.hessian_weights_config:
-            hessian_dataset = create_tf_dataloader(dataset=dataset, batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
+            hessian_dataset = create_tf_dataloader(dataset, batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
             hessian_weights = self.compute_hessian_based_weights(hessian_dataset)
             loss_weights = tf.convert_to_tensor(hessian_weights, dtype=tf.float32)
         else:
             loss_weights = tf.ones(num_nodes, dtype=tf.float32) / num_nodes
 
         # Step 3: Create a dataset with samples and loss weights
-        augmented_dataset = IterableSampleWithConstInfoDataset(dataset.dataset, loss_weights)
+        augmented_dataset = IterableSampleWithConstInfoDataset(dataset.tf_dataset, loss_weights)
 
         # Step 4: Add constant regularization weights
         reg_weights = tf.ones(num_nodes, dtype=tf.float32)
