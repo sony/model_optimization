@@ -233,8 +233,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION,
                                             qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.FAKE_QUANT, qc_options=no_quantization_config))
-    operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.SSD_POST_PROCESS, qc_options=no_quantization_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.SSD_POST_PROCESS, qc_options=no_quantization_config))
 
     quant_preserving_config = (default_configuration_options.clone_and_edit(
         enable_activation_quantization=False,
@@ -243,8 +242,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.DROPOUT, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.MAXPOOL, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.PAD, qc_options=quant_preserving_config))
-    operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.ZERO_PADDING2D, qc_options=quant_preserving_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.ZERO_PADDING2D, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.CAST, qc_options=quant_preserving_config))
 
     dim_manipulation_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False,
@@ -252,12 +250,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                                                             supported_input_activation_n_bits=(8, 16))
                                .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
-    operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.SPLIT_CHUNK, qc_options=dim_manipulation_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.SPLIT_CHUNK, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.GET_ITEM, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.UNSTACK, qc_options=dim_manipulation_config))
-    operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.STRIDED_SLICE, qc_options=dim_manipulation_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.STRIDED_SLICE, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.FLATTEN, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.RESHAPE, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.UNSQUEEZE, qc_options=dim_manipulation_config))
@@ -265,18 +261,15 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.PERMUTE, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.TRANSPOSE, qc_options=dim_manipulation_config))
 
-    operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.GATHER, qc_options=qpreserving_const_config_options))
-    operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.EXPAND, qc_options=qpreserving_const_config_options))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.GATHER, qc_options=qpreserving_const_config_options))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.EXPAND, qc_options=qpreserving_const_config_options))
 
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.STACK,
                                             qc_options=const_configuration_options_inout16_per_tensor))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.CONCATENATE,
                                             qc_options=const_configuration_options_inout16_per_tensor))
 
-    operator_set.append(
-        schema.OperatorsSet(name=schema.OperatorSetNames.BATCH_NORM, qc_options=default_config_options_16bit))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.BATCH_NORM, qc_options=default_config_options_16bit))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.MIN, qc_options=default_config_options_16bit))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.MAX, qc_options=default_config_options_16bit))
 
