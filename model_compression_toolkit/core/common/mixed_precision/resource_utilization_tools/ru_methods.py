@@ -212,47 +212,7 @@ def _get_node_cfg_idx(node: BaseNode, mp_cfg: List[int], sorted_configurable_nod
     if node.name in sorted_configurable_nodes_names:
         node_idx = sorted_configurable_nodes_names.index(node.name)
         return mp_cfg[node_idx]
-    else:
+    else:    # pragma: no cover
         assert len(node.candidates_quantization_cfg) > 0, \
             "Any node should have at least one candidate configuration."
         return 0
-
-
-def _get_origin_weights_node(n: BaseNode) -> BaseNode:
-    """
-    In case we run a resource utilization computation on a virtual graph,
-    this method is used to retrieve the original node out of a virtual weights node,
-
-    Args:
-        n: A possibly virtual node.
-
-    Returns: A node from the original (non-virtual) graph which the given node represents.
-
-    """
-
-    if isinstance(n, VirtualActivationWeightsNode):
-        return n.original_weights_node
-    if isinstance(n, VirtualSplitWeightsNode):
-        return n.origin_node
-
-    return n
-
-
-def _get_origin_activation_node(n: BaseNode) -> BaseNode:
-    """
-    In case we run a resource utilization computation on a virtual graph,
-    this method is used to retrieve the original node out of a virtual activation node,
-
-    Args:
-        n: A possibly virtual node.
-
-    Returns: A node from the original (non-virtual) graph which the given node represents.
-
-    """
-
-    if isinstance(n, VirtualActivationWeightsNode):
-        return n.original_activation_node
-    if isinstance(n, VirtualSplitActivationNode):
-        return n.origin_node
-
-    return n

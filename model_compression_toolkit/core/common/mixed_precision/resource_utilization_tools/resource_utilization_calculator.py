@@ -178,10 +178,10 @@ class ResourceUtilizationCalculator:
         w_total, a_total = None, None
         if {RUTarget.WEIGHTS, RUTarget.TOTAL}.intersection(metrics):
             w_total, *_ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
-        elif w_qcs is not None:
+        elif w_qcs is not None:    # pragma: no cover
             raise ValueError('Weight configuration passed but no relevant metric requested.')
 
-        if act_qcs and not {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(metrics):
+        if act_qcs and not {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(metrics):    # pragma: no cover
             raise ValueError('Activation configuration passed but no relevant metric requested.')
         if RUTarget.ACTIVATION in metrics:
             a_total, *_ = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
@@ -258,7 +258,7 @@ class ResourceUtilizationCalculator:
             - Detailed per weight utilization.
         """
         weight_attrs = self._get_target_weight_attrs(n, target_criterion)
-        if not weight_attrs:
+        if not weight_attrs:    # pragma: no cover
             return Utilization.zero_utilization(bitwidth_mode, ), {}
 
         attr_util = {}
@@ -298,10 +298,10 @@ class ResourceUtilizationCalculator:
             - Total utilization per cut.
             - Detailed utilization per cut per node.
         """
-        if target_criterion != TargetInclusionCriterion.AnyQuantized:
+        if target_criterion != TargetInclusionCriterion.AnyQuantized:    # pragma: no cover
             raise NotImplementedError('Computing MaxCut activation utilization is currently only supported for quantized targets.')
 
-        graph_target_nodes = self._get_target_activation_nodes(target_criterion, include_reused=False)
+        graph_target_nodes = self._get_target_activation_nodes(target_criterion, include_reused=True)
         # if there are no target activations in the graph, don't waste time looking for cuts
         if not graph_target_nodes:
             return 0, {}, {}
@@ -382,7 +382,7 @@ class ResourceUtilizationCalculator:
         """
         if target_criterion:
             nodes = self._get_target_activation_nodes(target_criterion=target_criterion, include_reused=True, nodes=[n])
-            if not nodes:
+            if not nodes:    # pragma: no cover
                 return Utilization.zero_utilization(bitwidth_mode)
 
         size = self._act_tensors_size[n]
@@ -415,7 +415,7 @@ class ResourceUtilizationCalculator:
         """
         # currently we compute bops for all nodes with quantized weights, regardless of whether the input
         # activation is quantized.
-        if target_criterion != TargetInclusionCriterion.AnyQuantized:
+        if target_criterion != TargetInclusionCriterion.AnyQuantized:    # pragma: no cover
             raise NotImplementedError('BOPS computation is currently only supported for quantized targets.')
 
         nodes = [n for n in self.graph.nodes if n.has_kernel_weight_to_quantize(self.fw_info)]
@@ -447,7 +447,7 @@ class ResourceUtilizationCalculator:
             BOPS count.
         """
         node_mac = self.fw_impl.get_node_mac_operations(n, self.fw_info)
-        if node_mac == 0 or bitwidth_mode == BitwidthMode.Size:
+        if node_mac == 0 or bitwidth_mode == BitwidthMode.Size:    # pragma: no cover
             return node_mac
 
         incoming_edges = self.graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
@@ -591,7 +591,7 @@ class ResourceUtilizationCalculator:
         Returns:
             Activation bit-width.
         """
-        if bitwidth_mode == BitwidthMode.Float:
+        if bitwidth_mode == BitwidthMode.Float or not n.is_activation_quantization_enabled():
             return FLOAT_BITWIDTH
 
         if bitwidth_mode in _bitwidth_mode_fn:

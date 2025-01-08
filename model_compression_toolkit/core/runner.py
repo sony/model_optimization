@@ -226,6 +226,12 @@ def _set_final_resource_utilization(graph: Graph,
     ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
     final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.MpCustom,
                                                           act_qcs=a_qcs, w_qcs=w_qcs)
+
+    for ru_target, ru in final_ru.get_resource_utilization_dict().items():
+        if ru == 0:
+            Logger.warning(f"No relevant quantized layers for the ru target {ru_target} were found, the recorded "
+                           f"final ru for this target would be 0.")
+
     print(final_ru)
     graph.user_info.final_resource_utilization = final_ru
     graph.user_info.mixed_precision_cfg = final_bit_widths_config
