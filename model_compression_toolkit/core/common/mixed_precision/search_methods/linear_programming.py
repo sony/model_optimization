@@ -18,8 +18,6 @@ from pulp import *
 from tqdm import tqdm
 from typing import Dict, Tuple
 
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
-    ru_target_aggregation_fn, AggregationMethod
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
@@ -250,14 +248,14 @@ def _aggregate_for_lp(ru_vec, target: RUTarget) -> list:
         w = lpSum(v[0] for v in ru_vec)
         return [w + v[1] for v in ru_vec]
 
-    if ru_target_aggregation_fn[target] == AggregationMethod.SUM:
+    if target in [RUTarget.WEIGHTS, RUTarget.BOPS]:
         return [lpSum(ru_vec)]
 
-    if ru_target_aggregation_fn[target] == AggregationMethod.MAX:
+    if target == RUTarget.ACTIVATION:
+        # for max aggregation, each value constitutes a separate constraint
         return list(ru_vec)
 
-    raise NotImplementedError(f'Cannot define lp constraints with unsupported aggregation function '
-                              f'{ru_target_aggregation_fn[target]}')  # pragma: no cover
+    raise ValueError(f'Unexpected target {target}.')
 
 
 def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
