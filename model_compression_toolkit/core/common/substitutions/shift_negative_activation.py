@@ -359,7 +359,7 @@ def shift_negative_function(graph: Graph,
                                          node=pad_node,
                                          graph=graph,
                                          quant_config=core_config.quantization_config,
-                                         tpc=graph.tpc,
+                                         fqc=graph.fqc,
                                          mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
         for candidate_qc in pad_node.candidates_quantization_cfg:
@@ -376,7 +376,7 @@ def shift_negative_function(graph: Graph,
                                      node=add_node,
                                      graph=graph,
                                      quant_config=core_config.quantization_config,
-                                     tpc=graph.tpc,
+                                     fqc=graph.fqc,
                                      mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
     original_non_linear_activation_nbits = non_linear_node_cfg_candidate.activation_n_bits
@@ -392,7 +392,7 @@ def shift_negative_function(graph: Graph,
                     bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    add_node_qco = add_node.get_qco(graph.tpc).quantization_configurations
+    add_node_qco = add_node.get_qco(graph.fqc).quantization_configurations
     for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
         for attr in add_node.get_node_weights_attributes():
             candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
@@ -533,7 +533,7 @@ def apply_shift_negative_correction(graph: Graph,
     nodes = list(graph.nodes())
     for n in nodes:
         # Skip substitution if QuantizationMethod is uniform.
-        node_qco = n.get_qco(graph.tpc)
+        node_qco = n.get_qco(graph.fqc)
         if any([op_qc.activation_quantization_method is QuantizationMethod.UNIFORM
                 for op_qc in node_qco.quantization_configurations]):
             continue

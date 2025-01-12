@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 def compute_resource_utilization_data(in_model: Any,
                                       representative_data_gen: Callable,
                                       core_config: CoreConfig,
-                                      tpc: FrameworkQuantizationCapabilities,
+                                      fqc: FrameworkQuantizationCapabilities,
                                       fw_info: FrameworkInfo,
                                       fw_impl: FrameworkImplementation,
                                       transformed_graph: Graph = None,
@@ -47,7 +47,7 @@ def compute_resource_utilization_data(in_model: Any,
         in_model:  Model to build graph from (the model that intended to be quantized).
         representative_data_gen: Dataset used for calibration.
         core_config: CoreConfig containing parameters of how the model should be quantized.
-        tpc: FrameworkQuantizationCapabilities object that models the inference target platform and
+        fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -70,7 +70,7 @@ def compute_resource_utilization_data(in_model: Any,
                                                      core_config.quantization_config,
                                                      fw_info,
                                                      fw_impl,
-                                                     tpc,
+                                                     fqc,
                                                      bit_width_config=core_config.bit_width_config,
                                                      mixed_precision_enable=mixed_precision_enable)
 
@@ -246,7 +246,7 @@ def requires_mixed_precision(in_model: Any,
                              target_resource_utilization: ResourceUtilization,
                              representative_data_gen: Callable,
                              core_config: CoreConfig,
-                             tpc: FrameworkQuantizationCapabilities,
+                             fqc: FrameworkQuantizationCapabilities,
                              fw_info: FrameworkInfo,
                              fw_impl: FrameworkImplementation) -> bool:
     """
@@ -261,7 +261,7 @@ def requires_mixed_precision(in_model: Any,
         target_resource_utilization: The resource utilization of the target device.
         representative_data_gen: A function that generates representative data for the model.
         core_config: CoreConfig containing parameters of how the model should be quantized.
-        tpc: FrameworkQuantizationCapabilities object that models the inference target platform and
+        fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -276,7 +276,7 @@ def requires_mixed_precision(in_model: Any,
                                                  core_config.quantization_config,
                                                  fw_info,
                                                  fw_impl,
-                                                 tpc,
+                                                 fqc,
                                                  bit_width_config=core_config.bit_width_config,
                                                  mixed_precision_enable=False)
     # Compute max weights memory in bytes

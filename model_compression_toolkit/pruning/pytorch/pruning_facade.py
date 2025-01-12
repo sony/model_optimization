@@ -67,7 +67,7 @@ if FOUND_TORCH:
             target_resource_utilization (ResourceUtilization): Key Performance Indicators specifying the pruning targets.
             representative_data_gen (Callable): A function to generate representative data for pruning analysis.
             pruning_config (PruningConfig): Configuration settings for the pruning process. Defaults to standard config.
-            target_platform_capabilities (FrameworkQuantizationCapabilities): Platform-specific constraints and capabilities.
+            target_platform_capabilities (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
                 Defaults to DEFAULT_PYTORCH_TPC.
 
         Returns:
@@ -121,12 +121,12 @@ if FOUND_TORCH:
 
         # Attach TPC to framework
         attach2pytorch = AttachTpcToPytorch()
-        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)
+        framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)
 
         # Convert the original Pytorch model to an internal graph representation.
         float_graph = read_model_to_graph(model,
                                           representative_data_gen,
-                                          target_platform_capabilities,
+                                          framework_platform_capabilities,
                                           DEFAULT_PYTORCH_INFO,
                                           fw_impl)
 
@@ -143,7 +143,7 @@ if FOUND_TORCH:
                         target_resource_utilization,
                         representative_data_gen,
                         pruning_config,
-                        target_platform_capabilities)
+                        framework_platform_capabilities)
 
         # Apply the pruning process.
         pruned_graph = pruner.prune_graph()

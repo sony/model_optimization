@@ -166,13 +166,13 @@ def generate_custom_test_tp_model(name: str,
     return custom_tp_model
 
 
-def generate_test_tpc(name: str,
+def generate_test_fqc(name: str,
                       tp_model: schema.TargetPlatformCapabilities,
-                      base_tpc: tp.FrameworkQuantizationCapabilities,
+                      base_fqc: tp.FrameworkQuantizationCapabilities,
                       op_sets_to_layer_add: Dict[str, List[Any]] = None,
                       op_sets_to_layer_drop: Dict[str, List[Any]] = None,
                       attr_mapping: Dict[str, Dict] = {}):
-    op_set_to_layers_list = base_tpc.op_sets_to_layers.op_sets_to_layers
+    op_set_to_layers_list = base_fqc.op_sets_to_layers.op_sets_to_layers
     op_set_to_layers_dict = {op_set.name: op_set.layers for op_set in op_set_to_layers_list}
 
     merged_dict = copy.deepcopy(op_set_to_layers_dict)
@@ -189,14 +189,14 @@ def generate_test_tpc(name: str,
         # Remove empty op sets
         merged_dict = {op_set_name: layers for op_set_name, layers in merged_dict.items() if len(layers) == 0}
 
-    tpc = tp.FrameworkQuantizationCapabilities(tp_model)
+    fqc = tp.FrameworkQuantizationCapabilities(tp_model)
 
-    with tpc:
+    with fqc:
         for op_set_name, layers in merged_dict.items():
             am = attr_mapping.get(op_set_name)
             tp.OperationsSetToLayers(op_set_name, layers, attr_mapping=am)
 
-    return tpc
+    return fqc
 
 
 def generate_test_attr_configs(default_cfg_nbits: int = 8,

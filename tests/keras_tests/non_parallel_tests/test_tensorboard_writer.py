@@ -146,7 +146,7 @@ class TestFileLogger(unittest.TestCase):
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
-        tpc =AttachTpcToKeras().attach(tpc, core_config.quantization_config.custom_tpc_opset_to_layer)
+        fqc =AttachTpcToKeras().attach(tpc, core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = mct.core.DEFAULTCONFIG
@@ -159,7 +159,7 @@ class TestFileLogger(unittest.TestCase):
                                           fw_impl=KerasImplementation(),
                                           fw_info=DEFAULT_KERAS_INFO,
                                           representative_data_gen=random_datagen,
-                                          tpc=tpc,
+                                          fqc=fqc,
                                           network_editor=[],
                                           quant_config=cfg,
                                           target_resource_utilization=mct.core.ResourceUtilization(),

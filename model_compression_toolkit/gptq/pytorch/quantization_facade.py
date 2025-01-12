@@ -168,7 +168,7 @@ if FOUND_TORCH:
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
-            target_platform_capabilities (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to optimize the PyTorch model according to.
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -215,7 +215,7 @@ if FOUND_TORCH:
 
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
-        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
+        framework_quantization_capabilities = attach2pytorch.attach(target_platform_capabilities,
                                                              core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # ---------------------- #
@@ -226,7 +226,7 @@ if FOUND_TORCH:
                                                                                       core_config=core_config,
                                                                                       fw_info=DEFAULT_PYTORCH_INFO,
                                                                                       fw_impl=fw_impl,
-                                                                                      tpc=target_platform_capabilities,
+                                                                                      fqc=framework_quantization_capabilities,
                                                                                       target_resource_utilization=target_resource_utilization,
                                                                                       tb_w=tb_w,
                                                                                       running_gptq=True)
@@ -255,9 +255,9 @@ if FOUND_TORCH:
                                         DEFAULT_PYTORCH_INFO)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_gptq)
-        if target_platform_capabilities.tp_model.add_metadata:
+        if framework_quantization_capabilities.tp_model.add_metadata:
             exportable_model = add_metadata(exportable_model,
-                                            create_model_metadata(tpc=target_platform_capabilities,
+                                            create_model_metadata(fqc=target_platform_capabilities,
                                                                   scheduling_info=scheduling_info))
         return exportable_model, user_info
 

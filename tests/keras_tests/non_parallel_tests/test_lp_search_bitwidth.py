@@ -233,10 +233,10 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
 
-        tpc = AttachTpcToKeras().attach(tpc)
+        fqc = AttachTpcToKeras().attach(tpc)
 
         graph.set_fw_info(fw_info)
-        graph.set_tpc(tpc)
+        graph.set_fqc(fqc)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=core_config.quantization_config,
                                                         mixed_precision_enable=True)

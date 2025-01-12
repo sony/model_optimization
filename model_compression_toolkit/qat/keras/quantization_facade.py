@@ -115,7 +115,7 @@ if FOUND_TF:
              target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              qat_config (QATConfig): QAT configuration
-             target_platform_capabilities (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to optimize the Keras model according to.
+             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
          Returns:
 
@@ -200,7 +200,7 @@ if FOUND_TF:
                                                   core_config=core_config,
                                                   fw_info=DEFAULT_KERAS_INFO,
                                                   fw_impl=fw_impl,
-                                                  tpc=target_platform_capabilities,
+                                                  fqc=target_platform_capabilities,
                                                   target_resource_utilization=target_resource_utilization,
                                                   tb_w=tb_w)
 

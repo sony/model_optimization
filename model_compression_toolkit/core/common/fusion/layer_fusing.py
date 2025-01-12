@@ -77,18 +77,18 @@ def disable_nodes_activation_quantization(nodes: List[BaseNode]):
             qc.activation_quantization_cfg.enable_activation_quantization = False
 
 
-def fusion(graph: Graph, tpc: FrameworkQuantizationCapabilities) -> Graph:
+def fusion(graph: Graph, fqc: FrameworkQuantizationCapabilities) -> Graph:
     """
     Fusing defines a list of operators that should be combined and treated as a single operator,
     hence no quantization is applied between them when they appear in the graph.
     This function search and disable quantization for such patterns.
     Args:
         graph: Graph we apply the fusion on.
-        tpc: FrameworkQuantizationCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
+        fqc: FrameworkQuantizationCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
     Returns:
         Graph after applying fusion activation marking.
     """
-    fusing_patterns = tpc.get_fusing_patterns()
+    fusing_patterns = fqc.get_fusing_patterns()
     if len(fusing_patterns) == 0:
         return graph
 

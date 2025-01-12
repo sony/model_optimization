@@ -46,12 +46,12 @@ class KerasReportUtils(FrameworkReportUtils):
         # Set the default Target Platform Capabilities (TPC) for Keras.
         default_tpc = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
         attach2pytorch = AttachTpcToKeras()
-        target_platform_capabilities = attach2pytorch.attach(default_tpc)
+        framework_platform_capabilities = attach2pytorch.attach(default_tpc)
 
         dataset_utils = KerasDatasetUtils()
         model_folding = ModelFoldingUtils(fw_info=fw_info,
                                           fw_impl=fw_impl,
-                                          fw_default_tpc=target_platform_capabilities)
+                                          fw_default_fqc=framework_platform_capabilities)
 
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
                                                      model_folding=model_folding,

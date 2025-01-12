@@ -68,7 +68,7 @@ if FOUND_TORCH:
             representative_data_gen (Callable): Dataset used for calibration.
             target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            target_platform_capabilities (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to optimize the PyTorch model according to.
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -112,7 +112,7 @@ if FOUND_TORCH:
 
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
-        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
+        framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
                                                              core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore hessian info service as it is not used here yet.
@@ -121,7 +121,7 @@ if FOUND_TORCH:
                                                                 core_config=core_config,
                                                                 fw_info=fw_info,
                                                                 fw_impl=fw_impl,
-                                                                tpc=target_platform_capabilities,
+                                                                fqc=framework_platform_capabilities,
                                                                 target_resource_utilization=target_resource_utilization,
                                                                 tb_w=tb_w)
 
@@ -149,9 +149,9 @@ if FOUND_TORCH:
                                         fw_info)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_with_stats_correction)
-        if target_platform_capabilities.tp_model.add_metadata:
+        if framework_platform_capabilities.tp_model.add_metadata:
             exportable_model = add_metadata(exportable_model,
-                                            create_model_metadata(tpc=target_platform_capabilities,
+                                            create_model_metadata(fqc=framework_platform_capabilities,
                                                                   scheduling_info=scheduling_info))
         return exportable_model, user_info
 

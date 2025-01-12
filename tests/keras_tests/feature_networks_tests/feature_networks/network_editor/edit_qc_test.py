@@ -51,14 +51,14 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
         core_config.mixed_precision_config.set_mixed_precision_enable()
 
     attach2keras = AttachTpcToKeras()
-    tpc = attach2keras.attach(tpc)
+    fqc = attach2keras.attach(tpc)
 
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
                                                  fw_info,
                                                  fw_impl,
-                                                 tpc,
+                                                 fqc,
                                                  core_config.bit_width_config,
                                                  tb_w,
                                                  mixed_precision_enable=core_config.is_mixed_precision_enabled)

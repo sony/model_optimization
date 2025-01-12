@@ -52,14 +52,14 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph = keras_impl.model_reader(in_model, None)  # model reading
 
     attach2keras = AttachTpcToKeras()
-    tpc = attach2keras.attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
+    fqc = attach2keras.attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
 
-    graph.set_tpc(tpc)
+    graph.set_fqc(fqc)
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, tpc)
+    graph = fusion(graph, fqc)
 
     return graph
 

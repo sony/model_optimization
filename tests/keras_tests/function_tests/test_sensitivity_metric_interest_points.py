@@ -67,9 +67,9 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                                                       c.activation_n_bits) for c in mixed_precision_cfg_list],
                                         name="sem_test")
 
-    tpc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": ([InputLayer],)})
+    fqc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": ([InputLayer],)})
 
-    graph.set_tpc(tpc)
+    graph.set_fqc(fqc)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=DEFAULTCONFIG,
                                                     mixed_precision_enable=True)

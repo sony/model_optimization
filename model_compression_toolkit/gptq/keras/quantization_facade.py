@@ -179,7 +179,7 @@ if FOUND_TF:
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            target_platform_capabilities (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to optimize the Keras model according to.
+            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
         Returns:
 
@@ -242,7 +242,7 @@ if FOUND_TF:
 
         # Attach tpc model to framework
         attach2keras = AttachTpcToKeras()
-        target_platform_capabilities = attach2keras.attach(
+        framework_platform_capabilities = attach2keras.attach(
             target_platform_capabilities,
             custom_opset2layer=core_config.quantization_config.custom_tpc_opset_to_layer)
 
@@ -251,7 +251,7 @@ if FOUND_TF:
                                                                                    core_config=core_config,
                                                                                    fw_info=DEFAULT_KERAS_INFO,
                                                                                    fw_impl=fw_impl,
-                                                                                   tpc=target_platform_capabilities,
+                                                                                   fqc=framework_platform_capabilities,
                                                                                    target_resource_utilization=target_resource_utilization,
                                                                                    tb_w=tb_w,
                                                                                    running_gptq=True)
@@ -279,9 +279,9 @@ if FOUND_TF:
                                         DEFAULT_KERAS_INFO)
 
         exportable_model, user_info = get_exportable_keras_model(tg_gptq)
-        if target_platform_capabilities.tp_model.add_metadata:
+        if framework_platform_capabilities.tp_model.add_metadata:
             exportable_model = add_metadata(exportable_model,
-                                            create_model_metadata(tpc=target_platform_capabilities,
+                                            create_model_metadata(fqc=framework_platform_capabilities,
                                                                   scheduling_info=scheduling_info))
         return exportable_model, user_info
 

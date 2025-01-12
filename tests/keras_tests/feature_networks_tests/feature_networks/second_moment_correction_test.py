@@ -36,6 +36,7 @@ from model_compression_toolkit.core.keras.statistics_correction.apply_second_mom
     keras_apply_second_moment_correction
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
@@ -268,7 +269,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                       network_editor: List[EditRule] = [],
                       analyze_similarity: bool = False,
-                      target_platform_capabilities: FrameworkQuantizationCapabilities = DEFAULT_KERAS_TPC) -> \
+                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
             Tuple[Graph, Graph]:
 
         KerasModelValidation(model=in_model,
@@ -284,7 +285,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         fw_impl = KerasImplementation()
 
         attach2keras = AttachTpcToKeras()
-        target_platform_capabilities = attach2keras.attach(target_platform_capabilities)
+        framework_quantization_capabilities = attach2keras.attach(target_platform_capabilities)
 
         # Ignore initialized hessian service as it is not used here
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
@@ -292,7 +293,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                                                   core_config=core_config,
                                                   fw_info=fw_info,
                                                   fw_impl=fw_impl,
-                                                  tpc=target_platform_capabilities,
+                                                  fqc=framework_quantization_capabilities,
                                                   tb_w=tb_w)
         graph_to_apply_second_moment = copy.deepcopy(tg)
         semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph_to_apply_second_moment,

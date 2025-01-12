@@ -110,10 +110,10 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
                                            name="activation_weights_composition_test")
 
     attach2keras = AttachTpcToKeras()
-    tpc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
+    fqc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
 
     graph.set_fw_info(fw_info)
-    graph.set_tpc(tpc)
+    graph.set_fqc(fqc)
 
     # Standard graph substitutions
     graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
@@ -125,7 +125,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, tpc)
+    graph = fusion(graph, fqc)
     graph = filter_nodes_candidates(graph)
 
     return graph

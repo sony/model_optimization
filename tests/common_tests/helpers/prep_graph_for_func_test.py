@@ -49,7 +49,7 @@ def prepare_graph_with_configs(in_model,
     _tp = generate_tp_model(default_config, base_config, op_cfg_list, "function_test")
     tpc = get_tpc_func("function_test", _tp)
 
-    tpc = attach2fw.attach(tpc, qc.custom_tpc_opset_to_layer)
+    fqc = attach2fw.attach(tpc, qc.custom_tpc_opset_to_layer)
 
     # Read Model
     graph = graph_preparation_runner(in_model,
@@ -57,7 +57,7 @@ def prepare_graph_with_configs(in_model,
                                      quantization_config=qc,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
-                                     tpc=tpc,
+                                     fqc=fqc,
                                      mixed_precision_enable=mixed_precision_enabled,
                                      running_gptq=running_gptq)
 
@@ -106,7 +106,7 @@ def prepare_graph_set_bit_widths(in_model,
                                  fw_info,
                                  network_editor,
                                  analyze_similarity,
-                                 tpc,
+                                 fqc,
                                  mp_cfg):
 
     # Config
@@ -130,7 +130,7 @@ def prepare_graph_set_bit_widths(in_model,
                                      quantization_config=quant_config,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
-                                     tpc=tpc,
+                                     fqc=fqc,
                                      bit_width_config=core_config.bit_width_config,
                                      mixed_precision_enable=core_config.is_mixed_precision_enabled)
 

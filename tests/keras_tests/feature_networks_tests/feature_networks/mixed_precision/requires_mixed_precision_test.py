@@ -69,12 +69,12 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
         tpc = self.get_tpc()
         cc = self.get_core_config()
         attach2keras = AttachTpcToKeras()
-        tpc = attach2keras.attach(tpc, cc.quantization_config.custom_tpc_opset_to_layer)
+        fqc = attach2keras.attach(tpc, cc.quantization_config.custom_tpc_opset_to_layer)
 
         return compute_resource_utilization_data(in_model=model,
                                                  representative_data_gen=self.representative_data_gen(),
                                                  core_config=cc,
-                                                 tpc=tpc,
+                                                 fqc=fqc,
                                                  fw_info=DEFAULT_KERAS_INFO,
                                                  fw_impl=KerasImplementation(),
                                                  transformed_graph=None,

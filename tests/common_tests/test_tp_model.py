@@ -274,7 +274,7 @@ class QCOptionsTest(unittest.TestCase):
         mock_node = BaseNode(name="", framework_attr={}, input_shape=(), output_shape=(), weights={}, layer_class=None)
         with self.assertRaises(Exception) as e:
             mock_node.get_qco(None)
-        self.assertEqual('Can not retrieve QC options for None TPC', str(e.exception))
+        self.assertEqual('Can not retrieve QC options for None FQC', str(e.exception))
 
 
 class FusingTest(unittest.TestCase):
