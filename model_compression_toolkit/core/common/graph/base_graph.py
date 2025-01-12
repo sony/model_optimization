@@ -544,8 +544,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         potential_conf_nodes = [n for n in list(self) if fw_info.is_kernel_op(n.type)]
 
         def is_configurable(n):
-            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-            return n.is_configurable_weight(kernel_attr) and (not n.reuse or include_reused_nodes)
+            kernel_attrs = fw_info.get_kernel_op_attributes(n.type)
+            return any(n.is_configurable_weight(attr) for attr in kernel_attrs) and (not n.reuse or include_reused_nodes)
 
         return [n for n in potential_conf_nodes if is_configurable(n)]
 

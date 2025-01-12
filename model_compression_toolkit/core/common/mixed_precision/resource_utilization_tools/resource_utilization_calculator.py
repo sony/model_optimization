@@ -517,7 +517,7 @@ class ResourceUtilizationCalculator:
             configurable = self.graph.get_weights_configurable_nodes(self.fw_info, include_reused_nodes=include_reused)
             nodes = [n for n in quantized if n not in configurable]
         elif target_criterion == TargetInclusionCriterion.Any:
-            nodes = self.graph.nodes
+            nodes = list(self.graph.nodes)
         else:
             raise ValueError(f'Unknown {target_criterion}.')
 
