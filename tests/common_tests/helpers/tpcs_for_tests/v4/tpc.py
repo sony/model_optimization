@@ -155,13 +155,15 @@ def generate_tpc(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
+    default_configuration_options = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple([default_config]))
     default_config_input16 = default_config.clone_and_edit(supported_input_activation_n_bits=(8, 16))
-    default_config_options_16bit = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config_input16,
-                                                                     default_config_input16.clone_and_edit(
-                                                                         activation_n_bits=16,
-                                                                         signedness=Signedness.SIGNED)]),
-                                                                    base_config=default_config_input16)
+    default_config_options_16bit = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple([default_config_input16,
+                                           default_config_input16.clone_and_edit(
+                                               activation_n_bits=16,
+                                               signedness=Signedness.SIGNED)]),
+        base_config=default_config_input16)
 
     # Create a QuantizationConfigOptions for quantizing constants in functional ops.
     # Constant configuration is similar to the default eight bit configuration except for PoT
@@ -180,9 +182,10 @@ def generate_tpc(default_config: OpQuantizationConfig,
         supported_input_activation_n_bits=(8, 16))
     const_config_input16_output16 = const_config_input16.clone_and_edit(
         activation_n_bits=16, signedness=Signedness.SIGNED)
-    const_configuration_options_inout16 = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config_input16_output16,
+    const_configuration_options_inout16 = (
+        schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config_input16_output16,
                                                                             const_config_input16]),
-                                                                           base_config=const_config_input16)
+                                         base_config=const_config_input16))
 
     const_config_input16_per_tensor = const_config.clone_and_edit(
         supported_input_activation_n_bits=(8, 16),
@@ -201,7 +204,8 @@ def generate_tpc(default_config: OpQuantizationConfig,
                                                            quantization_preserving=True,
                                                            default_weight_attr_config=const_config.default_weight_attr_config.clone_and_edit(
                                                                weights_per_channel_threshold=False))
-    qpreserving_const_config_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([qpreserving_const_config]))
+    qpreserving_const_config_options = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple([qpreserving_const_config]))
 
     mp_cfg_list_16bit = [mp_cfg.clone_and_edit(activation_n_bits=16, signedness=Signedness.SIGNED)
                          for mp_cfg in mixed_precision_cfg_list]
@@ -231,25 +235,25 @@ def generate_tpc(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.FAKE_QUANT, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.SSD_POST_PROCESS, qc_options=no_quantization_config))
 
-    quant_preserving_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False,
-                                                                            quantization_preserving=True)
-                               .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+    quant_preserving_config = (default_configuration_options.clone_and_edit(
+        enable_activation_quantization=False,
+        quantization_preserving=True).clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.UNSTACK, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.DROPOUT, qc_options=quant_preserving_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.SPLIT_CHUNK, qc_options=quant_preserving_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.GET_ITEM, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.MAXPOOL, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.PAD, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.ZERO_PADDING2D, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.CAST, qc_options=quant_preserving_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.STRIDED_SLICE, qc_options=quant_preserving_config))
 
     dim_manipulation_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False,
                                                                             quantization_preserving=True,
                                                                             supported_input_activation_n_bits=(8, 16))
                                .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.SPLIT_CHUNK, qc_options=dim_manipulation_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.GET_ITEM, qc_options=dim_manipulation_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.UNSTACK, qc_options=dim_manipulation_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.STRIDED_SLICE, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.FLATTEN, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.RESHAPE, qc_options=dim_manipulation_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.UNSQUEEZE, qc_options=dim_manipulation_config))

@@ -104,7 +104,6 @@ if FOUND_TORCH:
         if regularization_factor is None:
             regularization_factor = REG_DEFAULT_SLA if use_hessian_sample_attention else REG_DEFAULT
 
-        loss = loss or multiple_tensors_mse_loss
         hessian_weights_config = None
         if use_hessian_sample_attention:
             if not use_hessian_based_weights:    # pragma: no cover
@@ -118,6 +117,9 @@ if FOUND_TORCH:
             hessian_weights_config = GPTQHessianScoresConfig(per_sample=False,
                                                              hessians_num_samples=GPTQ_HESSIAN_NUM_SAMPLES,
                                                              hessian_batch_size=hessian_batch_size)
+            
+        # If a loss was not passed (and was not initialized due to use_hessian_sample_attention), use the default loss
+        loss = loss or multiple_tensors_mse_loss
 
         if isinstance(gradual_activation_quantization, bool):
             gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None

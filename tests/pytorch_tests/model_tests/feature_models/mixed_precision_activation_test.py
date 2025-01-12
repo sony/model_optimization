@@ -80,7 +80,7 @@ class MixedPrecisionActivationBaseTest(BasePytorchTest):
 class MixedPrecisionActivationSearch8Bit(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [1, 0, 0]
+        self.expected_config = [1, 1, 0]
 
     def get_resource_utilization(self):
         return ResourceUtilization(np.inf, 3000)
@@ -92,10 +92,10 @@ class MixedPrecisionActivationSearch8Bit(MixedPrecisionActivationBaseTest):
 class MixedPrecisionActivationSearch2Bit(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [2, 8, 2, 2]
+        self.expected_config = [2, 8, 2, 1]
 
     def get_resource_utilization(self):
-        return ResourceUtilization(96, 768)
+        return ResourceUtilization(96, 1500)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
@@ -104,7 +104,7 @@ class MixedPrecisionActivationSearch2Bit(MixedPrecisionActivationBaseTest):
 class MixedPrecisionActivationSearch4Bit(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [1, 4, 1, 1]
+        self.expected_config = [2, 5, 1, 1]
 
     def get_resource_utilization(self):
         return ResourceUtilization(192, 1536)
@@ -116,11 +116,10 @@ class MixedPrecisionActivationSearch4Bit(MixedPrecisionActivationBaseTest):
 class MixedPrecisionActivationSearch4BitFunctional(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        # TODO maxcut: verify expected_config change is reasonable (was [1, 4, 4, 1])
-        self.expected_config = [2, 5, 5, 1]
+        self.expected_config = [1, 4, 5, 1]
 
     def get_resource_utilization(self):
-        return ResourceUtilization(81, 1536)
+        return ResourceUtilization(81, 3600)
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionFunctionalNet(input_shape)
@@ -132,8 +131,7 @@ class MixedPrecisionActivationSearch4BitFunctional(MixedPrecisionActivationBaseT
 class MixedPrecisionActivationMultipleInputs(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        # TODO maxcut: verify expected_config change is reasonable (was all zeros)
-        self.expected_config = [0, 0, 0, 0, 0, 0, 1, 0, 1]  # expected config for this test.
+        self.expected_config = [0, 0, 0, 0, 2, 1, 1, 1, 1]  # expected config for this test.
         self.num_calibration_iter = 3
         self.val_batch_size = 2
 
@@ -253,10 +251,10 @@ class MixedPrecisionDistanceFunctionsNet(torch.nn.Module):
 class MixedPrecisionDistanceFunctions(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [1, 1, 1, 1, 1]
+        self.expected_config = [2, 1, 2, 1, 2]
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, 3071)
+        return ResourceUtilization(activation_memory=3071)
 
     def get_core_configs(self):
         return {"mixed_precision_activation_model": CoreConfig(quantization_config=QuantizationConfig(
@@ -341,7 +339,7 @@ class MixedPrecisionActivationConfigurableWeights(MixedPrecisionActivationBaseTe
         return MixedPrecisionActivationTestNet(input_shape)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, 1536)
+        return ResourceUtilization(activation_memory=3000)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)

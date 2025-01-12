@@ -49,7 +49,7 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
     it = 0
     while it < n_iter:
         estimate = (u_bound + l_bound) / 2
-        schedule, max_cut_size, cuts = max_cut_astar.solve(estimate_factor=estimate, iter_limit=astar_n_iter)
+        schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter)
         if schedule is None:
             l_bound = estimate
         else:

@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Generator, Callable
-
-import tensorflow as tf
-
-from model_compression_toolkit.core.keras.tf_tensor_numpy import to_tf_tensor
 
 import tensorflow as tf
 from typing import Callable, Generator, Sequence, Any
@@ -58,7 +53,6 @@ def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
 
     return gen
 
-
 class TFDatasetFromGenerator:
     """
     TensorFlow dataset from a data generator function, batched to a specified size.
@@ -77,15 +71,15 @@ class TFDatasetFromGenerator:
 
         # TFDatasetFromGenerator flattens the dataset, thus we ignore the batch dimension
         output_signature = get_tensor_spec(inputs, ignore_batch_dim=True)
-        self.dataset = tf.data.Dataset.from_generator(flat_gen_fn(data_gen_fn), output_signature=output_signature)
+        self.tf_dataset = tf.data.Dataset.from_generator(flat_gen_fn(data_gen_fn), output_signature=output_signature)
 
     def __iter__(self):
-        return iter(self.dataset)
+        return iter(self.tf_dataset)
 
     def __len__(self):
         """ Returns the number of batches. """
         if self._size is None:
-            self._size = sum(1 for _ in self.dataset)
+            self._size = sum(1 for _ in self.tf_dataset)
         return self._size
 
 
@@ -116,6 +110,12 @@ class FixedTFDataset:
             raise ValueError(f'Not enough samples to create a dataset with {n_samples} samples')
         self.samples = samples
 
+        # Use from_generator to keep tuples intact
+        self.tf_dataset = tf.data.Dataset.from_generator(
+            lambda: iter(self.samples),
+            output_signature=tuple(tf.TensorSpec(shape=sample.shape, dtype=sample.dtype) for sample in self.samples[0])
+        )
+
     def __len__(self):
         return len(self.samples)
 
@@ -134,6 +134,12 @@ class FixedSampleInfoDataset:
         self.samples = samples
         self.sample_info = sample_info
 
+        # Create a TensorFlow dataset that holds (sample, sample_info) tuples
+        self.tf_dataset = tf.data.Dataset.from_tensor_slices((
+            tf.convert_to_tensor(self.samples),
+            tuple(tf.convert_to_tensor(info) for info in self.sample_info)
+        ))
+
     def __len__(self):
         return len(self.samples)
 
@@ -150,18 +156,23 @@ class IterableSampleWithConstInfoDataset:
         self.samples_dataset = samples_dataset
         self.info = info
 
+        # Map to ensure the output is always (sample, info) as a tuple
+        self.tf_dataset = self.samples_dataset.map(
+            lambda *x: ((x,) if not isinstance(x, tuple) else x, *self.info)
+        )
+
     def __iter__(self):
         for sample in self.samples_dataset:
-            yield (sample, *self.info)
+            yield ((sample,) if not isinstance(sample, tuple) else sample, *self.info)
 
 
 def data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
     """Create a DataLoader based on samples yielded by data_gen."""
     ds = TFDatasetFromGenerator(data_gen_fn)
-    return create_tf_dataloader(dataset=ds, batch_size=batch_size)
+    return create_tf_dataloader(mct_dataset=ds, batch_size=batch_size)
 
 
-def create_tf_dataloader(dataset, batch_size, shuffle=False, collate_fn=None):
+def create_tf_dataloader(mct_dataset, batch_size, shuffle=False, collate_fn=None):
     """
     Creates a tf.data.Dataset with specified loading options.
 
@@ -174,26 +185,15 @@ def create_tf_dataloader(dataset, batch_size, shuffle=False, collate_fn=None):
     Returns:
         tf.data.Dataset: Configured for batching, shuffling, and custom transformations.
     """
-    def generator():
-        for item in dataset:
-            yield item
-
-    dummy_input_tensors = next(generator())
-
-    output_signature = get_tensor_spec(dummy_input_tensors)
-
-    tf_dataset = tf.data.Dataset.from_generator(
-        generator,
-        output_signature=output_signature
-    )
+    dataset = mct_dataset.tf_dataset
 
     if shuffle:
-        tf_dataset = tf_dataset.shuffle(buffer_size=len(dataset))
+        dataset = dataset.shuffle(buffer_size=len(dataset))
 
-    tf_dataset = tf_dataset.batch(batch_size)
+    dataset = dataset.batch(batch_size)
 
     # Apply collate function if provided
     if collate_fn:
-        tf_dataset = tf_dataset.map(lambda *args: collate_fn(args))
+        dataset = dataset.map(lambda *args: collate_fn(args))
 
-    return tf_dataset
+    return dataset
