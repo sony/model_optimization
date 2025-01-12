@@ -14,7 +14,7 @@
 # ==============================================================================
 import model_compression_toolkit as mct
 import tensorflow as tf
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
@@ -32,11 +32,11 @@ class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest):
                                                          input_shape=(16,16,3))
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 32,
+        tp = generate_test_tpc({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="linear_collapsing_test", tp_model=tp)
+        return generate_keras_tpc(name="linear_collapsing_test", tpc=tp)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,

@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.verify_packages import FOUND_TF
 
 if FOUND_TF:
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
@@ -33,7 +33,7 @@ if FOUND_TF:
 
     from model_compression_toolkit import get_target_platform_capabilities
 
-    KERAS_DEFAULT_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+    KERAS_DEFAULT_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
 
     def keras_resource_utilization_data(in_model: Model,
                                         representative_data_gen: Callable,

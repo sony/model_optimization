@@ -28,7 +28,7 @@ from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     ActivationFinalBitwidthConfigVisualizer
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.logger import Logger
@@ -37,7 +37,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
-from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tpc import generate_tpc_with_activation_mp
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
@@ -139,13 +139,13 @@ class TestFileLogger(unittest.TestCase):
     def plot_tensor_sizes(self, core_config):
         model = SingleOutputNet()
         base_config, _, default_config = get_op_quantization_configs()
-        tpc_model = generate_tp_model_with_activation_mp(
+        tpc_model = generate_tpc_with_activation_mp(
             base_cfg=base_config,
             default_config=default_config,
             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)])
-        tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+        tpc = generate_keras_tpc(name='mp_keras_tpc', tpc=tpc_model)
         fqc =AttachTpcToKeras().attach(tpc, core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP

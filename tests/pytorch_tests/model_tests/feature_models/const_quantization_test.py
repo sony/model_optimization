@@ -22,12 +22,12 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model as get_tp_v4
-from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model as get_tp_v3
+from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import get_tpc as get_tp_v4
+from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc as get_tp_v3
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
 from mct_quantizers import PytorchQuantizationWrapper
 
 tp = mct.target_platform
@@ -254,7 +254,7 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
                                                    weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
         const_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config]))
 
-        tp_model = schema.TargetPlatformCapabilities(
+        tpc = schema.TargetPlatformCapabilities(
             default_qco=default_configuration_options,
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -262,7 +262,7 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
             operator_set=tuple([schema.OperatorsSet(name="WeightQuant", qc_options=const_configuration_options)]),
             add_metadata=False)
 
-        return tp_model
+        return tpc
 
     def create_networks(self):
         return ExpandConstQuantizationNet(self.val_batch_size)

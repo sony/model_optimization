@@ -17,7 +17,7 @@ import torch.nn as nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 
 
@@ -30,11 +30,11 @@ class BasePermuteSubstitutionTest(BasePytorchFeatureNetworkTest):
         super().__init__(unit_test=unit_test)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 32,
+        tp = generate_test_tpc({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_pytorch_tpc(name="permute_substitution_test", tp_model=tp)
+        return generate_pytorch_tpc(name="permute_substitution_test", tpc=tp)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,

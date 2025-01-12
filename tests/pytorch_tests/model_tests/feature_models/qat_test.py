@@ -42,8 +42,8 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quant
     BasePytorchActivationTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.ste.symmetric_ste import \
     STESymmetricActivationTrainableQuantizer
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
-    generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc, \
+    generate_tpc_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 
@@ -111,7 +111,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
     def get_tpc(self):
         return generate_pytorch_tpc(
             name="qat_test",
-            tp_model=generate_test_tp_model({'weights_n_bits': self.weight_bits,
+            tpc=generate_test_tpc({'weights_n_bits': self.weight_bits,
                                              'activation_n_bits': self.activation_bits,
                                              'weights_quantization_method': self.weights_quantization_method,
                                              'activation_quantization_method': self.activation_quantization_method}))
@@ -227,7 +227,7 @@ class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest
     def get_tpc(self):
         return generate_pytorch_tpc(
             name="qat_test",
-            tp_model=generate_test_tp_model({'weights_n_bits': self.weight_bits,
+            tpc=generate_test_tpc({'weights_n_bits': self.weight_bits,
                                              'activation_n_bits': self.activation_bits,
                                              'weights_quantization_method': self.weights_quantization_method,
                                              'activation_quantization_method': self.activation_quantization_method}))
@@ -260,7 +260,7 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
-            tpc_model=generate_tp_model_with_activation_mp(
+            tpc_model=generate_tpc_with_activation_mp(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
@@ -306,7 +306,7 @@ class QuantizationAwareTrainingMixedPrecisionRUCfgTest(QuantizationAwareTraining
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
-            tpc_model=generate_tp_model_with_activation_mp(
+            tpc_model=generate_tpc_with_activation_mp(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),

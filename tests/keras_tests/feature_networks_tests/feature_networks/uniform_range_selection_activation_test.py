@@ -20,7 +20,7 @@ import numpy as np
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
 from tests.keras_tests.utils import get_layers_from_model_by_type
@@ -42,10 +42,10 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return mct.core.QuantizationConfig(activation_error_method=self.activation_threshold_method)
 
     def get_tpc(self):
-        tp_model = generate_test_tp_model({
+        tpc = generate_test_tpc({
             'activation_quantization_method': tp.QuantizationMethod.UNIFORM,
             'activation_n_bits': 8})
-        return generate_keras_tpc(name="uniform_range_test", tp_model=tp_model)
+        return generate_keras_tpc(name="uniform_range_test", tpc=tpc)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

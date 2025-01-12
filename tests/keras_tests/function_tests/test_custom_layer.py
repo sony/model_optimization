@@ -24,7 +24,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     KERNEL_BASE_CONFIG, BIAS_CONFIG
 
 keras = tf.keras
@@ -85,14 +85,14 @@ def get_tpc():
                                         qc_options=default_configuration_options.clone_and_edit(
                                             enable_activation_quantization=False)
                                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))]
-    tp_model = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
+    tpc = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
                                                  operator_set=tuple(operator_set),
                                                  tpc_minor_version=None,
                                                  tpc_patch_version=None,
                                                  tpc_platform_type=None,
                                                  add_metadata=False)
 
-    return tp_model
+    return tpc
 
 
 class TestCustomLayer(unittest.TestCase):

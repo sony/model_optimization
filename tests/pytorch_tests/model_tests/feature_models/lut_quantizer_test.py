@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
@@ -90,7 +90,7 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
 
     def get_tpc(self):
         return get_pytorch_test_tpc_dict(
-            tp_model=generate_test_tp_model({"weights_n_bits": self.weights_n_bits}),
+            tpc=generate_test_tpc({"weights_n_bits": self.weights_n_bits}),
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')
 
@@ -133,7 +133,7 @@ class LUTActivationQuantizerTest(BasePytorchTest):
 
     def get_tpc(self):
         return get_pytorch_test_tpc_dict(
-            tp_model=generate_test_tp_model({"activation_n_bits": self.activation_n_bits,
+            tpc=generate_test_tpc({"activation_n_bits": self.activation_n_bits,
                                              "activation_quantization_method": tp.QuantizationMethod.LUT_POT_QUANTIZER}),
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')

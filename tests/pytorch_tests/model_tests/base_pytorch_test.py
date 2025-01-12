@@ -23,7 +23,7 @@ import numpy as np
 
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 """
 The base test class for the feature networks
@@ -44,21 +44,21 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
     def get_tpc(self):
         return {
-            'no_quantization': generate_test_tp_model({'weights_n_bits': 32,
+            'no_quantization': generate_test_tpc({'weights_n_bits': 32,
                                                        'activation_n_bits': 32,
                                                        'enable_weights_quantization': False,
                                                        'enable_activation_quantization': False
-                                                       }),
-            'all_32bit': generate_test_tp_model({'weights_n_bits': 32,
+                                                  }),
+            'all_32bit': generate_test_tpc({'weights_n_bits': 32,
                                                  'activation_n_bits': 32,
                                                  'enable_weights_quantization': True,
                                                  'enable_activation_quantization': True
-                                                 }),
-            'all_4bit': generate_test_tp_model({'weights_n_bits': 4,
+                                            }),
+            'all_4bit': generate_test_tpc({'weights_n_bits': 4,
                                                 'activation_n_bits': 4,
                                                 'enable_weights_quantization': True,
                                                 'enable_activation_quantization': True
-                                                }),
+                                           }),
         }
 
     def get_core_configs(self):

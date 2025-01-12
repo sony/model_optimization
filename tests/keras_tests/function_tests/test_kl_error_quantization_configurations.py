@@ -20,7 +20,7 @@ import model_compression_toolkit as mct
 import tensorflow as tf
 from tensorflow.keras import layers
 import itertools
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 
 def model_gen():
@@ -55,12 +55,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
         model = model_gen()
         for quantize_method, error_method, per_channel in weights_test_combinations:
 
-            tp_model = generate_test_tp_model({
+            tpc = generate_test_tpc({
                 'weights_quantization_method': quantize_method,
                 'weights_n_bits': 8,
                 'activation_n_bits': 8,
                 'weights_per_channel_threshold': per_channel})
-            tpc = generate_keras_tpc(name="kl_quant_config_weights_test", tp_model=tp_model)
+            tpc = generate_keras_tpc(name="kl_quant_config_weights_test", tpc=tpc)
 
             qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
                                              weights_error_method=error_method, relu_bound_to_power_of_2=False,
@@ -74,12 +74,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2 in activation_test_combinations:
-            tp = generate_test_tp_model({
+            tp = generate_test_tpc({
                 'activation_quantization_method': quantize_method,
                 'weights_n_bits': 8,
                 'activation_n_bits': 8,
                 'enable_weights_quantization': False})
-            tpc = generate_keras_tpc(name="kl_quant_config_activation_test", tp_model=tp)
+            tpc = generate_keras_tpc(name="kl_quant_config_activation_test", tpc=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=error_method,
                                              relu_bound_to_power_of_2=relu_bound_to_power_of_2,

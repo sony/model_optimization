@@ -35,7 +35,7 @@ from model_compression_toolkit.metadata import create_model_metadata
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
     from torch.nn import Module
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
@@ -43,7 +43,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
         AttachTpcToPytorch
 
-    DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
+    DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TPC)
 
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
@@ -149,7 +149,7 @@ if FOUND_TORCH:
                                         fw_info)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_with_stats_correction)
-        if framework_platform_capabilities.tp_model.add_metadata:
+        if framework_platform_capabilities.tpc.add_metadata:
             exportable_model = add_metadata(exportable_model,
                                             create_model_metadata(fqc=framework_platform_capabilities,
                                                                   scheduling_info=scheduling_info))

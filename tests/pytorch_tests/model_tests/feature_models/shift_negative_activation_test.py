@@ -17,7 +17,7 @@ import torch
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 
@@ -57,7 +57,7 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
         return i
 
     def get_tpc(self):
-        return get_pytorch_test_tpc_dict(tp_model=get_tp_model(),
+        return get_pytorch_test_tpc_dict(tpc=get_tpc(),
                                          test_name='all_8bit',
                                          ftp_name='sn_pytorch_test')
 

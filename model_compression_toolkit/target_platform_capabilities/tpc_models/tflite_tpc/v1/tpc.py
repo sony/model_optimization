@@ -17,29 +17,29 @@ from typing import List, Tuple
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR, TFLITE_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR, TFLITE_TPC
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
 
 tp = mct.target_platform
 
 
-def get_tp_model() -> TargetPlatformCapabilities:
+def get_tpc() -> TargetPlatformCapabilities:
     """
     A method that generates a default target platform model, with base 8-bit quantization configuration and 8, 4, 2
     bits configuration list for mixed-precision quantization.
     NOTE: in order to generate a target platform model with different configurations but with the same Operators Sets
     (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
-    'get_op_quantization_configs' method and use its output to call 'generate_tp_model' with your configurations.
+    'get_op_quantization_configs' method and use its output to call 'generate_tpc' with your configurations.
 
     Returns: A TargetPlatformCapabilities object.
 
     """
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    return generate_tp_model(default_config=default_config,
-                             base_config=base_config,
-                             mixed_precision_cfg_list=mixed_precision_cfg_list,
-                             name='tflite_tp_model')
+    return generate_tpc(default_config=default_config,
+                        base_config=base_config,
+                        mixed_precision_cfg_list=mixed_precision_cfg_list,
+                        name='tflite_tpc')
 
 
 def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
@@ -114,10 +114,10 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     return linear_eight_bits, mixed_precision_cfg_list, eight_bits_default
 
 
-def generate_tp_model(default_config: OpQuantizationConfig,
-                      base_config: OpQuantizationConfig,
-                      mixed_precision_cfg_list: List[OpQuantizationConfig],
-                      name: str) -> TargetPlatformCapabilities:
+def generate_tpc(default_config: OpQuantizationConfig,
+                 base_config: OpQuantizationConfig,
+                 mixed_precision_cfg_list: List[OpQuantizationConfig],
+                 name: str) -> TargetPlatformCapabilities:
     """
     Generates TargetPlatformCapabilities with default defined Operators Sets, based on the given base configuration and
     mixed-precision configurations options list.
@@ -218,7 +218,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tpc_patch_version=0,
         operator_set=tuple(operator_set),
         fusing_patterns=tuple(fusing_patterns),
-        tpc_platform_type=TFLITE_TP_MODEL,
+        tpc_platform_type=TFLITE_TPC,
         add_metadata=False,
         name=name)
 

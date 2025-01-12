@@ -20,13 +20,13 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 import json
 
 
-def load_target_platform_model(tp_model_or_path: Union[TargetPlatformCapabilities, str]) -> TargetPlatformCapabilities:
+def load_target_platform_model(tpc_obj_or_path: Union[TargetPlatformCapabilities, str]) -> TargetPlatformCapabilities:
     """
-        Parses the tp_model input, which can be either a TargetPlatformCapabilities object
+        Parses the tpc input, which can be either a TargetPlatformCapabilities object
         or a string path to a JSON file.
 
         Parameters:
-            tp_model_or_path (Union[TargetPlatformModel, str]): Input target platform model or path to .JSON file.
+            tpc_obj_or_path (Union[TargetPlatformModel, str]): Input target platform model or path to .JSON file.
 
         Returns:
             TargetPlatformCapabilities: The parsed TargetPlatformCapabilities.
@@ -36,14 +36,14 @@ def load_target_platform_model(tp_model_or_path: Union[TargetPlatformCapabilitie
             ValueError: If the JSON content is invalid or cannot initialize the TargetPlatformCapabilities.
             TypeError: If the input is neither a TargetPlatformCapabilities nor a valid JSON file path.
         """
-    if isinstance(tp_model_or_path, TargetPlatformCapabilities):
-        return tp_model_or_path
+    if isinstance(tpc_obj_or_path, TargetPlatformCapabilities):
+        return tpc_obj_or_path
 
-    if isinstance(tp_model_or_path, str):
-        path = Path(tp_model_or_path)
+    if isinstance(tpc_obj_or_path, str):
+        path = Path(tpc_obj_or_path)
 
         if not path.exists() or not path.is_file():
-            raise FileNotFoundError(f"The path '{tp_model_or_path}' is not a valid file.")
+            raise FileNotFoundError(f"The path '{tpc_obj_or_path}' is not a valid file.")
         # Verify that the file has a .json extension
         if path.suffix.lower() != '.json':
             raise ValueError(f"The file '{path}' does not have a '.json' extension.")
@@ -51,18 +51,18 @@ def load_target_platform_model(tp_model_or_path: Union[TargetPlatformCapabilitie
             with path.open('r', encoding='utf-8') as file:
                 data = file.read()
         except OSError as e:
-            raise ValueError(f"Error reading the file '{tp_model_or_path}': {e.strerror}.") from e
+            raise ValueError(f"Error reading the file '{tpc_obj_or_path}': {e.strerror}.") from e
 
         try:
             return TargetPlatformCapabilities.parse_raw(data)
         except ValueError as e:
-            raise ValueError(f"Invalid JSON for loading TargetPlatformCapabilities in '{tp_model_or_path}': {e}.") from e
+            raise ValueError(f"Invalid JSON for loading TargetPlatformCapabilities in '{tpc_obj_or_path}': {e}.") from e
         except Exception as e:
             raise ValueError(f"Unexpected error while initializing TargetPlatformCapabilities: {e}.") from e
 
     raise TypeError(
-        f"tp_model_or_path must be either a TargetPlatformCapabilities instance or a string path to a JSON file, "
-        f"but received type '{type(tp_model_or_path).__name__}'."
+        f"tpc_obj_or_path must be either a TargetPlatformCapabilities instance or a string path to a JSON file, "
+        f"but received type '{type(tpc_obj_or_path).__name__}'."
     )
 
 

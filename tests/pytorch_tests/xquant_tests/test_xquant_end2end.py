@@ -34,14 +34,14 @@ from tensorboard.compat.proto.graph_pb2 import GraphDef
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchQuantizationWrapper
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
 from model_compression_toolkit.xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
 from model_compression_toolkit.xquant.common.xquant_config import XQuantConfig
 from model_compression_toolkit.xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
 from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, \
     OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL, \
     XQUANT_REPR, XQUANT_VAL, CUT_MEMORY_ELEMENTS, CUT_TOTAL_SIZE
-from tests.common_tests.helpers.tpcs_for_tests.v2.tp_model import get_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v2.tpc import get_tpc
 
 
 def random_data_gen(shape=(3, 8, 8), use_labels=False, num_inputs=1, batch_size=2, num_iter=2):
@@ -73,7 +73,7 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
         return mct.core.CoreConfig(debug_config=mct.core.DebugConfig(simulate_scheduler=True))
 
     def get_tpc(self):
-        return get_tp_model()
+        return get_tpc()
 
     def get_model_to_test(self):
         class BaseModelTest(torch.nn.Module):

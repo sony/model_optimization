@@ -24,7 +24,7 @@ from keras import Input
 
 import model_compression_toolkit as mct
 import tests.keras_tests.exporter_tests.constants as constants
-from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_int8_tpc
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tpc import get_int8_tpc
 
 
 class TFLiteINT8ExporterBaseTest:

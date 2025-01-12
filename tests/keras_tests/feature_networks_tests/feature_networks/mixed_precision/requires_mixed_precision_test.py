@@ -38,7 +38,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_t
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
     MixedPrecisionBaseTest
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras, get_weights_only_mp_tpc_keras
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 import model_compression_toolkit as mct
 
 

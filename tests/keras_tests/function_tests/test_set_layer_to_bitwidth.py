@@ -42,7 +42,7 @@ from model_compression_toolkit.core.keras.mixed_precision.configurable_activatio
 from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
-from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tpc import get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras, get_weights_only_mp_tpc_keras
 
 

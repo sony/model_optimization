@@ -29,7 +29,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     QuantizationConfigOptions
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
-from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tpc import generate_tpc_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
@@ -46,7 +46,7 @@ class MixedPrecisionActivationBaseTest(BasePytorchTest):
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
-            tpc_model=generate_tp_model_with_activation_mp(
+            tpc_model=generate_tpc_with_activation_mp(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
@@ -148,7 +148,7 @@ class MixedPrecisionActivationMultipleInputs(MixedPrecisionActivationBaseTest):
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
-            tpc_model=generate_tp_model_with_activation_mp(
+            tpc_model=generate_tpc_with_activation_mp(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
@@ -269,13 +269,13 @@ class MixedPrecisionDistanceFunctions(MixedPrecisionActivationBaseTest):
                    (4, 8), (4, 4), (4, 2),
                    (2, 8), (2, 4), (2, 2)]
 
-        tp_model = generate_tp_model_with_activation_mp(
+        tpc = generate_tpc_with_activation_mp(
             base_cfg=base_config,
             default_config=default_config,
             mp_bitwidth_candidates_list=mp_list,
             custom_opsets=['Softmax'])
 
-        return get_mp_activation_pytorch_tpc_dict(tpc_model=tp_model,
+        return get_mp_activation_pytorch_tpc_dict(tpc_model=tpc,
                                                   test_name='mixed_precision_activation_model',
                                                   tpc_name='mixed_precision_distance_fn_test')
 
@@ -324,7 +324,7 @@ class MixedPrecisionActivationConfigurableWeights(MixedPrecisionActivationBaseTe
             base_config=cfg,
         )
 
-        tp_model = TargetPlatformCapabilities(
+        tpc = TargetPlatformCapabilities(
             default_qco=QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -335,7 +335,7 @@ class MixedPrecisionActivationConfigurableWeights(MixedPrecisionActivationBaseTe
             add_metadata=False,
             name="mp_activation_conf_weights_test")
 
-        return {'mixed_precision_activation_model': tp_model}
+        return {'mixed_precision_activation_model': tpc}
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionActivationTestNet(input_shape)

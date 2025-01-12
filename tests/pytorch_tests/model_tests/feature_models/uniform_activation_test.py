@@ -20,7 +20,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -33,10 +33,10 @@ class UniformActivationTest(BasePytorchTest):
         super().__init__(unit_test)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({
+        tp = generate_test_tpc({
             'activation_quantization_method': QuantizationMethod.UNIFORM,
             'activation_n_bits': 2})
-        return {'act_2bit': generate_pytorch_tpc(name="uniform_layer_test", tp_model=tp)}
+        return {'act_2bit': generate_pytorch_tpc(name="uniform_layer_test", tpc=tp)}
 
     def get_core_configs(self):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,

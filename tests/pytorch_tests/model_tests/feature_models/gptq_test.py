@@ -27,7 +27,7 @@ from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEA
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.pytorch_tests.utils import extract_model_weights
 
@@ -92,7 +92,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
     def get_tpc(self):
         return generate_pytorch_tpc(
             name="gptq_test",
-            tp_model=generate_test_tp_model({'weights_n_bits': self.weights_bits,
+            tpc=generate_test_tpc({'weights_n_bits': self.weights_bits,
                                              'weights_quantization_method': self.weights_quant_method}))
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None):

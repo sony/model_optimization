@@ -36,7 +36,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_mo
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 
@@ -89,8 +89,8 @@ class BaseSecondMomentTest(BasePytorchTest):
         return [[self.val_batch_size, 1, 32, 32]]
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
-        return get_pytorch_test_tpc_dict(tp_model=tp,
+        tp = generate_test_tpc({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
+        return get_pytorch_test_tpc_dict(tpc=tp,
                                          test_name='8bit_second_moment_correction',
                                          ftp_name='second_moment_correction_pytorch_test')
 
@@ -316,13 +316,13 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
             tpc = tpc_dict[model_name]
 
             attach2pytorch = AttachTpcToPytorch()
-            tpc = attach2pytorch.attach(tpc)
+            fqc = attach2pytorch.attach(tpc)
 
             tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
                                                                           representative_data_gen,
                                                                           core_config=core_config,
                                                                           fw_info=DEFAULT_PYTORCH_INFO,
-                                                                          target_platform_capabilities=tpc)
+                                                                          framework_quantization_capabilities=fqc)
             for node in graph_after_second_moment_correction.nodes:
                 if node.layer_class == torch.nn.BatchNorm2d:
                     bf_second_moment_node = tg.find_node_by_name(node.name)[0]
@@ -350,7 +350,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                       representative_data_gen: Callable,
                       core_config: CoreConfig = CoreConfig(),
                       fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                      target_platform_capabilities: FrameworkQuantizationCapabilities = DEFAULT_PYTORCH_INFO) -> \
+                      framework_quantization_capabilities: FrameworkQuantizationCapabilities = DEFAULT_PYTORCH_INFO) -> \
             Tuple[Graph, Graph]:
 
         tb_w = init_tensorboard_writer(fw_info)
@@ -363,7 +363,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                                                   core_config=core_config,
                                                   fw_info=fw_info,
                                                   fw_impl=fw_impl,
-                                                  tpc=target_platform_capabilities,
+                                                  fqc=framework_quantization_capabilities,
                                                   tb_w=tb_w)
         graph_to_apply_second_moment = copy.deepcopy(tg)
         semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph_to_apply_second_moment,

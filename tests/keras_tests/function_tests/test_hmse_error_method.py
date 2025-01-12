@@ -39,7 +39,7 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
 tp = mct.target_platform
@@ -69,7 +69,7 @@ def representative_dataset():
 
 
 def get_tpc(quant_method, per_channel):
-    tp = generate_test_tp_model(edit_params_dict={
+    tp = generate_test_tpc(edit_params_dict={
         'weights_quantization_method': quant_method,
         'weights_per_channel_threshold': per_channel})
 
@@ -190,7 +190,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                              {GAMMA: AttributeQuantizationConfig(weights_n_bits=8,
                                                                                  enable_weights_quantization=True)})
 
-            tp_model = schema.TargetPlatformCapabilities(default_qco=conv_qco,
+            tpc = schema.TargetPlatformCapabilities(default_qco=conv_qco,
                                                          tpc_minor_version=None,
                                                          tpc_patch_version=None,
                                                          tpc_platform_type=None,
@@ -199,7 +199,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                        schema.OperatorsSet(name="BN", qc_options=bn_qco)]),
                                                          add_metadata=False)
 
-            return tp_model
+            return tpc
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True,
                               tpc_fn=_generate_bn_quantization_tpc, model_gen_fn=no_bn_fusion_model_gen)

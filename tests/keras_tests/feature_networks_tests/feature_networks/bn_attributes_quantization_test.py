@@ -23,7 +23,7 @@ from model_compression_toolkit.core.keras.constants import GAMMA, BETA
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS, BIAS_ATTR
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type

@@ -27,7 +27,7 @@ from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
 
 
 # Check if PyTorch is available in the environment.
@@ -42,7 +42,7 @@ if FOUND_TORCH:
         AttachTpcToPytorch
 
     # Set the default Target Platform Capabilities (TPC) for PyTorch.
-    DEFAULT_PYOTRCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
+    DEFAULT_PYOTRCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TPC)
 
     def pytorch_pruning_experimental(model: Module,
                                      target_resource_utilization: ResourceUtilization,

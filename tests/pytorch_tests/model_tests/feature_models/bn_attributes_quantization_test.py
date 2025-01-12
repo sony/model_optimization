@@ -24,7 +24,7 @@ from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, \
     BIAS_ATTR
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest

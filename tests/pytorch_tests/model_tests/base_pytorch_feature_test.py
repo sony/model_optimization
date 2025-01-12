@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.ptq import pytorch_post_training_quantization
 from model_compression_toolkit import get_target_platform_capabilities
@@ -38,7 +38,7 @@ class BasePytorchFeatureNetworkTest(BaseFeatureNetworkTest):
                          input_shape=input_shape)
 
     def get_tpc(self):
-        return get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
+        return get_target_platform_capabilities(PYTORCH, DEFAULT_TPC)
 
     def get_ptq_facade(self):
         return pytorch_post_training_quantization

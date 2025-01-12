@@ -27,12 +27,12 @@ from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_expo
 from model_compression_toolkit.trainable_infrastructure.keras.load_model import \
     keras_load_quantized_model
 
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit import get_target_platform_capabilities
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
-DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
 
 _, SAVED_EXPORTABLE_MODEL_PATH_TF = tempfile.mkstemp('.h5')
 _, SAVED_MODEL_PATH_TF = tempfile.mkstemp('.h5')

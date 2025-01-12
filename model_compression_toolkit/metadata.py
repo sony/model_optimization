@@ -53,10 +53,10 @@ def get_versions_dict(fqc) -> Dict:
     @dataclass
     class TPCVersions:
         mct_version: str
-        tpc_minor_version: str = f'{fqc.tp_model.tpc_minor_version}'
-        tpc_patch_version: str = f'{fqc.tp_model.tpc_patch_version}'
-        tpc_platform_type: str = f'{fqc.tp_model.tpc_platform_type}'
-        tpc_schema: str = f'{fqc.tp_model.SCHEMA_VERSION}'
+        tpc_minor_version: str = f'{fqc.tpc.tpc_minor_version}'
+        tpc_patch_version: str = f'{fqc.tpc.tpc_patch_version}'
+        tpc_platform_type: str = f'{fqc.tpc.tpc_platform_type}'
+        tpc_schema: str = f'{fqc.tpc.SCHEMA_VERSION}'
 
     return asdict(TPCVersions(mct_version))
 

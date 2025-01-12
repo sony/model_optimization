@@ -27,7 +27,7 @@ from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KER
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 

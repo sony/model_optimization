@@ -24,7 +24,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.schema_functi
     get_config_options_by_operators_set, is_opset_in_model
 from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_model, \
     export_target_platform_model
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 
 tp = mct.target_platform
 
@@ -45,14 +45,14 @@ class TPModelInputOutputTests(unittest.TestCase):
         op2 = schema.OperatorsSet(name="opset2")
         op3 = schema.OperatorsSet(name="opset3")
         op12 = schema.OperatorSetGroup(operators_set=[op1, op2])
-        self.tp_model = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
-                                                          operator_set=(op1, op2, op3),
-                                                          fusing_patterns=(schema.Fusing(operator_groups=(op12, op3)),
+        self.tpc = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
+                                                     operator_set=(op1, op2, op3),
+                                                     fusing_patterns=(schema.Fusing(operator_groups=(op12, op3)),
                                                                     schema.Fusing(operator_groups=(op1, op2))),
-                                                          tpc_minor_version=1,
-                                                          tpc_patch_version=0,
-                                                          tpc_platform_type="dump_to_json",
-                                                          add_metadata=False)
+                                                     tpc_minor_version=1,
+                                                     tpc_patch_version=0,
+                                                     tpc_platform_type="dump_to_json",
+                                                     add_metadata=False)
 
         # Create invalid JSON file
         with open(self.invalid_json_file, "w") as file:
@@ -66,8 +66,8 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_valid_model_object(self):
         """Test that a valid TargetPlatformCapabilities object is returned unchanged."""
-        result = load_target_platform_model(self.tp_model)
-        self.assertEqual(self.tp_model, result)
+        result = load_target_platform_model(self.tpc)
+        self.assertEqual(self.tpc, result)
 
     def test_invalid_json_parsing(self):
         """Test that invalid JSON content raises a ValueError."""
@@ -102,14 +102,14 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_valid_export(self):
         """Test exporting a valid TargetPlatformCapabilities instance to a file."""
-        export_target_platform_model(self.tp_model, self.valid_export_path)
+        export_target_platform_model(self.tpc, self.valid_export_path)
         # Verify the file exists
         self.assertTrue(os.path.exists(self.valid_export_path))
 
         # Verify the contents match the model's JSON representation
         with open(self.valid_export_path, "r", encoding="utf-8") as file:
             content = file.read()
-        self.assertEqual(content, self.tp_model.json(indent=4))
+        self.assertEqual(content, self.tpc.json(indent=4))
 
     def test_export_with_invalid_model(self):
         """Test that exporting an invalid model raises a ValueError."""
@@ -120,21 +120,21 @@ class TPModelInputOutputTests(unittest.TestCase):
     def test_export_with_invalid_path(self):
         """Test that exporting to an invalid path raises an OSError."""
         with self.assertRaises(OSError) as context:
-            export_target_platform_model(self.tp_model, self.invalid_export_path)
+            export_target_platform_model(self.tpc, self.invalid_export_path)
         self.assertIn("Failed to write to file", str(context.exception))
 
     def test_export_creates_parent_directories(self):
         """Test that exporting creates missing parent directories."""
         nested_path = "nested/directory/exported_model.json"
         try:
-            export_target_platform_model(self.tp_model, nested_path)
+            export_target_platform_model(self.tpc, nested_path)
             # Verify the file exists
             self.assertTrue(os.path.exists(nested_path))
 
             # Verify the contents match the model's JSON representation
             with open(nested_path, "r", encoding="utf-8") as file:
                 content = file.read()
-            self.assertEqual(content, self.tp_model.json(indent=4))
+            self.assertEqual(content, self.tpc.json(indent=4))
         finally:
             # Cleanup created directories
             if os.path.exists(nested_path):
@@ -146,9 +146,9 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_export_then_import(self):
         """Test that a model exported and then imported is identical."""
-        export_target_platform_model(self.tp_model, self.valid_export_path)
+        export_target_platform_model(self.tpc, self.valid_export_path)
         imported_model = load_target_platform_model(self.valid_export_path)
-        self.assertEqual(self.tp_model, imported_model)
+        self.assertEqual(self.tpc, imported_model)
 
 class TargetPlatformModelingTest(unittest.TestCase):
     def test_immutable_tp(self):
@@ -173,7 +173,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
                                               add_metadata=False)
         self.assertEqual('Default QuantizationConfigOptions must contain exactly one option.', str(e.exception))
 
-    def test_tp_model_show(self):
+    def test_tpc_show(self):
         tpm = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
                                                 tpc_minor_version=None,
                                                 tpc_patch_version=None,

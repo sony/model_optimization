@@ -561,7 +561,7 @@ class BaseNode:
                 return matching_qcos[0]
             else:
                 Logger.critical(f"Found duplicate qco types for node '{self.name}' of type '{self.type}'!")  # pragma: no cover
-        return fqc.tp_model.default_qco
+        return fqc.tpc.default_qco
 
     def filter_node_qco_by_graph(self, fqc: FrameworkQuantizationCapabilities,
                                  next_nodes: List, node_qc_options: QuantizationConfigOptions

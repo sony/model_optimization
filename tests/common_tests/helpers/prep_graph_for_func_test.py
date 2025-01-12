@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tpc, \
     get_op_quantization_configs
 
 import model_compression_toolkit as mct
@@ -46,7 +46,7 @@ def prepare_graph_with_configs(in_model,
 
     # To override the default TP in the test - pass a TPC generator function that includes a generation of the TP
     # and doesn't use the TP that is passed from outside.
-    _tp = generate_tp_model(default_config, base_config, op_cfg_list, "function_test")
+    _tp = generate_tpc(default_config, base_config, op_cfg_list, "function_test")
     tpc = get_tpc_func("function_test", _tp)
 
     fqc = attach2fw.attach(tpc, qc.custom_tpc_opset_to_layer)

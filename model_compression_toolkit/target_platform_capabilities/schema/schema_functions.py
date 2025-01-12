@@ -32,31 +32,31 @@ def max_input_activation_n_bits(op_quantization_config: OpQuantizationConfig) ->
     return max(op_quantization_config.supported_input_activation_n_bits)
 
 
-def get_config_options_by_operators_set(tp_model: TargetPlatformCapabilities,
+def get_config_options_by_operators_set(tpc: TargetPlatformCapabilities,
                                         operators_set_name: str) -> QuantizationConfigOptions:
     """
     Get the QuantizationConfigOptions of an OperatorsSet by its name.
 
     Args:
-        tp_model (TargetPlatformCapabilities): The target platform model containing the operator sets and their configurations.
+        tpc (TargetPlatformCapabilities): The target platform model containing the operator sets and their configurations.
         operators_set_name (str): The name of the OperatorsSet whose quantization configuration options are to be retrieved.
 
     Returns:
         QuantizationConfigOptions: The quantization configuration options associated with the specified OperatorsSet,
         or the default quantization configuration options if the OperatorsSet is not found.
     """
-    for op_set in tp_model.operator_set:
+    for op_set in tpc.operator_set:
         if operators_set_name == op_set.name:
             return op_set.qc_options
-    return tp_model.default_qco
+    return tpc.default_qco
 
 
-def get_default_op_quantization_config(tp_model: TargetPlatformCapabilities) -> OpQuantizationConfig:
+def get_default_op_quantization_config(tpc: TargetPlatformCapabilities) -> OpQuantizationConfig:
     """
     Get the default OpQuantizationConfig of the TargetPlatformCapabilities.
 
     Args:
-        tp_model (TargetPlatformCapabilities): The target platform model containing the default quantization configuration.
+        tpc (TargetPlatformCapabilities): The target platform model containing the default quantization configuration.
 
     Returns:
         OpQuantizationConfig: The default quantization configuration.
@@ -64,32 +64,32 @@ def get_default_op_quantization_config(tp_model: TargetPlatformCapabilities) -> 
     Raises:
         AssertionError: If the default quantization configuration list contains more than one configuration option.
     """
-    assert len(tp_model.default_qco.quantization_configurations) == 1, \
+    assert len(tpc.default_qco.quantization_configurations) == 1, \
         f"Default quantization configuration options must contain only one option, " \
-        f"but found {len(tp_model.default_qco.quantization_configurations)} configurations." # pragma: no cover
-    return tp_model.default_qco.quantization_configurations[0]
+        f"but found {len(tpc.default_qco.quantization_configurations)} configurations." # pragma: no cover
+    return tpc.default_qco.quantization_configurations[0]
 
 
-def is_opset_in_model(tp_model: TargetPlatformCapabilities, opset_name: str) -> bool:
+def is_opset_in_model(tpc: TargetPlatformCapabilities, opset_name: str) -> bool:
     """
     Check whether an OperatorsSet is defined in the model.
 
     Args:
-        tp_model (TargetPlatformCapabilities): The target platform model containing the list of operator sets.
+        tpc (TargetPlatformCapabilities): The target platform model containing the list of operator sets.
         opset_name (str): The name of the OperatorsSet to check for existence.
 
     Returns:
         bool: True if an OperatorsSet with the given name exists in the target platform model,
               otherwise False.
     """
-    return tp_model.operator_set is not None and opset_name in [x.name for x in tp_model.operator_set]
+    return tpc.operator_set is not None and opset_name in [x.name for x in tpc.operator_set]
 
-def get_opset_by_name(tp_model: TargetPlatformCapabilities, opset_name: str) -> Optional[OperatorsSetBase]:
+def get_opset_by_name(tpc: TargetPlatformCapabilities, opset_name: str) -> Optional[OperatorsSetBase]:
     """
     Get an OperatorsSet object from the model by its name.
 
     Args:
-        tp_model (TargetPlatformCapabilities): The target platform model containing the list of operator sets.
+        tpc (TargetPlatformCapabilities): The target platform model containing the list of operator sets.
         opset_name (str): The name of the OperatorsSet to be retrieved.
 
     Returns:
@@ -99,7 +99,7 @@ def get_opset_by_name(tp_model: TargetPlatformCapabilities, opset_name: str) -> 
     Raises:
         A critical log message if multiple operator sets with the same name are found.
     """
-    opset_list = [x for x in tp_model.operator_set if x.name == opset_name]
+    opset_list = [x for x in tpc.operator_set if x.name == opset_name]
     if len(opset_list) > 1:
         Logger.critical(f"Found more than one OperatorsSet in TargetPlatformCapabilities with the name {opset_name}.") # pragma: no cover
     return opset_list[0] if opset_list else None

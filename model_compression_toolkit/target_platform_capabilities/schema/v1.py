@@ -644,7 +644,7 @@ class TargetPlatformCapabilities(BaseModel):
     tpc_patch_version: Optional[int]
     tpc_platform_type: Optional[str]
     add_metadata: bool = True
-    name: Optional[str] = "default_tp_model"
+    name: Optional[str] = "default_tpc"
     is_simd_padding: bool = False
 
     SCHEMA_VERSION: int = 1

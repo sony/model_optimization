@@ -144,7 +144,7 @@ class OperationsToLayers:
 
             # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformCapabilities.
             for layer in ops2layers.layers:
-                qco_by_opset_name = get_config_options_by_operators_set(_current_tpc.get().tp_model, ops2layers.name)
+                qco_by_opset_name = get_config_options_by_operators_set(_current_tpc.get().tpc, ops2layers.name)
                 if layer in existing_layers:
                     Logger.critical(f'Found layer {layer.__name__} in more than one '
                                     f'OperatorsSet')  # pragma: no cover

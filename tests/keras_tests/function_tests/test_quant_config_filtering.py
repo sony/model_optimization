@@ -24,8 +24,8 @@ from model_compression_toolkit.target_platform_capabilities.schema.schema_functi
     get_config_options_by_operators_set
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
-from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
-from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_custom_test_tpc
+from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc
 
 if tf.__version__ >= "2.13":
     from keras.src.layers import TFOpLambda
@@ -40,17 +40,17 @@ class TestKerasQuantConfigFiltering(unittest.TestCase):
 
     @staticmethod
     def get_tpc_default_16bit():
-        tpc = get_tp_model()
+        tpc = get_tpc()
         base_cfg_16 = [c for c in get_config_options_by_operators_set(tpc,
                                                                       OperatorSetNames.MUL).quantization_configurations
                        if c.activation_n_bits == 16][0].clone_and_edit()
         qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
                                            quantization_configurations=(tpc.default_qco.base_config,
                                                                         base_cfg_16))
-        tpc = generate_custom_test_tp_model(
+        tpc = generate_custom_test_tpc(
             name="custom_16_bit_tpc",
             base_cfg=tpc.default_qco.base_config,
-            base_tp_model=tpc,
+            base_tpc=tpc,
             operator_sets_dict={
                 OperatorSetNames.MUL: qco_16,
                 OperatorSetNames.GELU: qco_16,

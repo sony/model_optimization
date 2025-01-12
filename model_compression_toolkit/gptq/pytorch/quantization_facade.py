@@ -40,7 +40,7 @@ from model_compression_toolkit.verify_packages import FOUND_TORCH
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
     from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss, sample_layer_attention_loss
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     import torch
@@ -51,7 +51,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
         AttachTpcToPytorch
 
-    DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
+    DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TPC)
 
     def get_pytorch_gptq_config(n_epochs: int,
                                 optimizer: Optimizer = None,
@@ -255,9 +255,9 @@ if FOUND_TORCH:
                                         DEFAULT_PYTORCH_INFO)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_gptq)
-        if framework_quantization_capabilities.tp_model.add_metadata:
+        if framework_quantization_capabilities.tpc.add_metadata:
             exportable_model = add_metadata(exportable_model,
-                                            create_model_metadata(fqc=target_platform_capabilities,
+                                            create_model_metadata(fqc=framework_quantization_capabilities,
                                                                   scheduling_info=scheduling_info))
         return exportable_model, user_info
 

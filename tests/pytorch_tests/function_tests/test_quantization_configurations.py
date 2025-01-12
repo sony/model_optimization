@@ -21,7 +21,7 @@ import torch.nn
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 import torch
 
 class ModelToTest(torch.nn.Module):
@@ -72,12 +72,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, bias_correction, per_channel in weights_test_combinations:
-            tp = generate_test_tp_model({
+            tp = generate_test_tpc({
                 'weights_quantization_method': quantize_method,
                 'weights_n_bits': 8,
                 'activation_n_bits': 16,
                 'weights_per_channel_threshold': per_channel})
-            tpc = generate_pytorch_tpc(name="quant_config_weights_test", tp_model=tp)
+            tpc = generate_pytorch_tpc(name="quant_config_weights_test", tpc=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
                                              weights_error_method=error_method,
@@ -91,11 +91,11 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction in activation_test_combinations:
-            tp = generate_test_tp_model({
+            tp = generate_test_tpc({
                 'activation_quantization_method': quantize_method,
                 'weights_n_bits': 16,
                 'activation_n_bits': 8})
-            tpc = generate_pytorch_tpc(name="quant_config_activation_test", tp_model=tp)
+            tpc = generate_pytorch_tpc(name="quant_config_activation_test", tpc=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=error_method,
                                              weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,

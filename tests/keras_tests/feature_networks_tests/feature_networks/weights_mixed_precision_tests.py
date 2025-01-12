@@ -27,7 +27,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs, generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
@@ -199,7 +199,7 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
             base_config=two_bit_cfg,
         )
 
-        tp_model = schema.TargetPlatformCapabilities(
+        tpc = schema.TargetPlatformCapabilities(
             default_qco=weight_fixed_cfg,
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -209,7 +209,7 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
             add_metadata=False,
             name="mp_part_weights_layers_test")
 
-        return tp_model
+        return tpc
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -522,7 +522,7 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
             base_config=cfg,
         )
 
-        tp_model = schema.TargetPlatformCapabilities(
+        tpc = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -532,7 +532,7 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
             add_metadata=False,
             name="mp_weights_conf_act_test")
 
-        return tp_model
+        return tpc
 
     def get_resource_utilization(self):
         return ResourceUtilization(1535)

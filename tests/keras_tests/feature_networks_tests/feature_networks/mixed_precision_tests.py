@@ -25,8 +25,8 @@ from model_compression_toolkit.core import QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
-from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tpc import get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -676,7 +676,7 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             base_config=cfg,
         )
 
-        tp_model = schema.TargetPlatformCapabilities(
+        tpc = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -686,7 +686,7 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             add_metadata=False,
             name="mp_activation_conf_weights_test")
 
-        return tp_model
+        return tpc
 
     def get_resource_utilization(self):
         return ResourceUtilization(np.inf, 5407)

@@ -35,18 +35,18 @@ from model_compression_toolkit.core.keras.keras_model_validation import KerasMod
 from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
     keras_apply_second_moment_correction
 from model_compression_toolkit.core.runner import core_runner
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
-DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
 from tensorflow.keras.models import Model
 
 keras = tf.keras
@@ -68,10 +68,10 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
                                                    input_shape=(32, 32, 1))
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'weights_quantization_method': QuantizationMethod.SYMMETRIC})
-        return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
+        return generate_keras_tpc(name="second_moment_correction_test", tpc=tp)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(weights_second_moment_correction=True)
@@ -315,10 +315,10 @@ class POTSecondMomentTest(BaseSecondMomentTest):
                          linear_layer=layers.Conv2D)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
-        return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
+        return generate_keras_tpc(name="second_moment_correction_test", tpc=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -454,10 +454,10 @@ class UniformSecondMomentTest(BaseSecondMomentTest):
                          linear_layer=layers.Conv2D)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'weights_quantization_method': QuantizationMethod.UNIFORM})
-        return generate_keras_tpc(name="second_moment_correction_test", tp_model=tp)
+        return generate_keras_tpc(name="second_moment_correction_test", tpc=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
