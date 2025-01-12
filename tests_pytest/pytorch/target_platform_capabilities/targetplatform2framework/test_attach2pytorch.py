@@ -18,6 +18,8 @@ import pytest
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import QuantizationMethod
+from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
@@ -58,12 +60,15 @@ def test_attach2pytorch_init():
 
 
 def test_attach2pytorch_attach_without_attributes():
-    attach2pytorch = AttachTpcToPytorch()
 
+    # Setup TPC with testable configurations
     tested_op_cfg = default_op_cfg.clone_and_edit(activation_n_bits=42)
 
     default_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(default_op_cfg,))
     tested_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(tested_op_cfg,))
+
+    # Test attach to fw for each built-in opset without attributes quantization
+    attach2pytorch = AttachTpcToPytorch()
 
     for op_name, op_list in attach2pytorch._opset2layer.items():
         if op_name not in attach2pytorch._opset2attr_mapping.keys():
@@ -84,36 +89,57 @@ def test_attach2pytorch_attach_without_attributes():
 
                 for qco in all_mapped_ops.values():
                     assert len(qco.quantization_configurations) == 1
-                    assert qco.quantization_configurations[0].activation_n_bits == 42
+                    assert qco.base_config.activation_n_bits == 42
 
-# def test_attach2pytorch_attach_op_with_attributes():
-#     attach2pytorch = AttachTpcToPytorch()
-#
-#     tested_op_cfg = default_op_cfg.clone_and_edit(activation_n_bits=200)
-#
-#     default_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(default_op_cfg,))
-#     tested_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(tested_op_cfg,))
-#
-#     for op_name, op_list in attach2pytorch._opset2layer.items():
-#         if op_name not in attach2pytorch._opset2attr_mapping.keys():
-#             tpc = schema.TargetPlatformModel(
-#                 default_qco=default_qc_options,
-#                 operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
-#
-#             pytorch_quant_capabilities = attach2pytorch.attach(tpc)  # Run 'attach' to test operator attach to framework
-#
-#             assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
-#
-#             all_mapped_ops = pytorch_quant_capabilities.layer2qco.copy()
-#             all_mapped_ops.update(pytorch_quant_capabilities.filterlayer2qco)
-#             if len(op_list) == 0:
-#                 assert len(all_mapped_ops) == 0
-#             else:
-#                 assert len(all_mapped_ops) == len(op_list)
-#
-#                 for qco in all_mapped_ops.values():
-#                     assert len(qco.quantization_configurations) == 1
-#                     assert qco.quantization_configurations[0].activation_n_bits == 200
+
+def test_attach2pytorch_attach_linear_op_with_attributes():
+
+    # Setup TPC with testable configurations
+    default_attr_config = schema.AttributeQuantizationConfig(
+        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        weights_n_bits=8,
+        weights_per_channel_threshold=False,
+        enable_weights_quantization=False,
+        lut_values_bitwidth=None)
+
+    tested_attr_cfg = default_attr_config.clone_and_edit(weights_n_bits=42)
+
+    tested_op_cfg = default_op_cfg.clone_and_edit(default_weight_attr_config=default_attr_config,
+                                                  attr_weights_configs_mapping={KERNEL_ATTR: tested_attr_cfg,
+                                                                                BIAS_ATTR: tested_attr_cfg})
+
+    default_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(default_op_cfg,))
+    tested_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(tested_op_cfg,))
+
+    # Test attach to fw for each built-in opset with attributes quantization
+    attach2pytorch = AttachTpcToPytorch()
+
+    for op_name, op_list in attach2pytorch._opset2layer.items():
+        if op_name in attach2pytorch._opset2attr_mapping.keys():
+            tpc = schema.TargetPlatformModel(
+                default_qco=default_qc_options,
+                operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
+
+            pytorch_quant_capabilities = attach2pytorch.attach(tpc)  # Run 'attach' to test operator attach to framework
+            fw_linear_attr_names = attach2pytorch._opset2attr_mapping[op_name]
+
+            assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
+
+            all_mapped_ops = pytorch_quant_capabilities.layer2qco.copy()
+            all_mapped_ops.update(pytorch_quant_capabilities.filterlayer2qco)
+            if len(op_list) == 0:
+                assert len(all_mapped_ops) == 0
+            else:
+                assert len(all_mapped_ops) == len(op_list)
+
+                for qco in all_mapped_ops.values():
+                    assert len(qco.quantization_configurations) == 1
+                    assert qco.base_config.default_weight_attr_config == default_attr_config
+
+                    for attr_name, fw_layer2attr_mapping in fw_linear_attr_names.items():
+                        assert isinstance(fw_layer2attr_mapping, DefaultDict)
+                        layer_attr_mapping = fw_layer2attr_mapping.get(attr_name)
+                        assert qco.base_config.attr_weights_configs_mapping.get(layer_attr_mapping) == tested_attr_cfg
 
 
 def test_attach2pytorch_attach_to_default_config():
@@ -121,18 +147,21 @@ def test_attach2pytorch_attach_to_default_config():
 
     default_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(default_op_cfg,))
     opset_name = schema.OperatorSetNames.ADD
+    operator_set = schema.OperatorsSet(name=opset_name)
 
     tpc = schema.TargetPlatformModel(default_qco=default_qc_options,
-                                     operator_set=tuple([schema.OperatorsSet(name=opset_name)]))
+                                     operator_set=tuple([operator_set]))
 
     pytorch_quant_capabilities = attach2pytorch.attach(tpc)  # Run 'attach' to test operator attach to framework
 
     assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
-    assert pytorch_quant_capabilities.layer2qco.get(opset_name) is not None
-    assert pytorch_quant_capabilities.layer2qco[opset_name] == default_qc_options
+    opset2layer = pytorch_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
+    assert len(opset2layer) > 0
+    opset_cfg = pytorch_quant_capabilities.layer2qco.get(opset2layer[0])
+    assert opset_cfg is not None
+    assert opset_cfg == default_qc_options
 
 
 # TODO:
-#  1. Test attach to attribute and attach with default config if not defined in TP model
-#  2. Test not existing opset in tp model raise
-#  3. Test custom opset name attach + prioritization over builtin
+#  1. Test not existing opset in tp model raise
+#  2. Test custom opset name attach + prioritization over builtin
