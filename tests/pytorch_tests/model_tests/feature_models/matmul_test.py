@@ -15,7 +15,7 @@
 import torch
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 """
 This test checks the MatMul substitution function.
@@ -60,7 +60,7 @@ class MatMulNetBaseTest(BasePytorchTest):
         return {
             'no_quantization': generate_pytorch_tpc(
                 name="no_quant_pytorch_test",
-                tp_model=generate_test_tp_model(
+                tpc=generate_test_tpc(
                     {
                         'weights_n_bits': 32,
                         'activation_n_bits': 32,
