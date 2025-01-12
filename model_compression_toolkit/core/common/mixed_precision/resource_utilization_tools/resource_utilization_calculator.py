@@ -152,10 +152,10 @@ class ResourceUtilizationCalculator:
         elif w_qcs is not None:    # pragma: no cover
             raise ValueError('Weight configuration passed but no relevant metric requested.')
 
-        if act_qcs and not {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(ru_targets):    # pragma: no cover
-            raise ValueError('Activation configuration passed but no relevant metric requested.')
-        if RUTarget.ACTIVATION in ru_targets:
+        if {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(ru_targets):
             a_total = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
+        elif act_qcs is not None:    # pragma: no cover
+            raise ValueError('Activation configuration passed but no relevant metric requested.')
 
         ru = ResourceUtilization()
         if RUTarget.WEIGHTS in ru_targets:
@@ -163,9 +163,7 @@ class ResourceUtilizationCalculator:
         if RUTarget.ACTIVATION in ru_targets:
             ru.activation_memory = a_total
         if RUTarget.TOTAL in ru_targets:
-            # TODO use maxcut
-            act_tensors_total, *_ = self.compute_activation_tensors_utilization(target_criterion, bitwidth_mode, act_qcs)
-            ru.total_memory = w_total + act_tensors_total
+            ru.total_memory = w_total + a_total
         if RUTarget.BOPS in ru_targets:
             ru.bops, _ = self.compute_bops(target_criterion=target_criterion,
                                            bitwidth_mode=bitwidth_mode, act_qcs=act_qcs, w_qcs=w_qcs)

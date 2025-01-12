@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.graph.virtual_activation_weights_node
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
-    ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
+    TargetInclusionCriterion, BitwidthMode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import \
     MixedPrecisionRUHelper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -67,13 +67,19 @@ class MixedPrecisionSearchManager:
         self.compute_metric_fn = self.get_sensitivity_metric()
         self._cuts = None
 
-        self.ru_metrics = target_resource_utilization.get_restricted_metrics()
+        # To define RU Total constraints we need to compute weights and activations even if they have no constraints
+        # TODO currently this logic is duplicated in linear_programming.py
+        targets = target_resource_utilization.get_restricted_metrics()
+        if RUTarget.TOTAL in targets:
+            targets = targets.union({RUTarget.ACTIVATION, RUTarget.WEIGHTS}) - {RUTarget.TOTAL}
+        self.ru_targets_to_compute = targets
+
         self.ru_helper = MixedPrecisionRUHelper(graph, fw_info, fw_impl)
         self.target_resource_utilization = target_resource_utilization
         self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
         self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
-        self.min_ru = self.ru_helper.compute_utilization(self.ru_metrics, self.min_ru_config)
-        self.non_conf_ru_dict = self._non_configurable_nodes_ru()
+        self.min_ru = self.ru_helper.compute_utilization(self.ru_targets_to_compute, self.min_ru_config)
+        self.non_conf_ru_dict = self.ru_helper.compute_utilization(self.ru_targets_to_compute, None)
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.graph,
                                                                        original_graph=self.original_graph)
@@ -111,18 +117,14 @@ class MixedPrecisionSearchManager:
     def compute_resource_utilization_matrix(self, target: RUTarget) -> np.ndarray:
         """
         Computes and builds a resource utilization matrix, to be used for the mixed-precision search problem formalization.
-        The matrix is constructed as follows (for a given target):
-        - Each row represents the set of resource utilization values for a specific resource utilization 
-            measure (number of rows should be equal to the length of the output of the respective target compute_ru function).
-        - Each entry in a specific column represents the resource utilization value of a given configuration 
-            (single layer is configured with specific candidate, all other layer are at the minimal resource 
-            utilization configuration) for the resource utilization measure of the respective row.
+        Utilization is computed relative to the minimal configuration, i.e. utilization for it will be 0.
 
         Args:
             target: The resource target for which the resource utilization is calculated (a RUTarget value).
 
-        Returns: A resource utilization matrix.
-
+        Returns:
+            A resource utilization matrix of shape (num configurations, num memory elements). Num memory elements
+            depends on the target, e.g. num nodes or num cuts, for which utilization is computed.
         """
         assert isinstance(target, RUTarget), f"{target} is not a valid resource target"
 
@@ -132,21 +134,14 @@ class MixedPrecisionSearchManager:
         for c, c_n in enumerate(configurable_sorted_nodes):
             for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
                 if candidate_idx == self.min_ru_config[c]:
-                    # skip ru computation for min configuration. Since we compute the difference from min_ru it'll
-                    # always be 0 for all entries in the results vector.
-                    candidate_rus = np.zeros(shape=self.min_ru[target].shape)
+                    candidate_rus = self.min_ru[target]
                 else:
-                    candidate_rus = self.compute_node_ru_for_candidate(c, candidate_idx, target) - self.min_ru[target]
+                    candidate_rus = self.compute_node_ru_for_candidate(c, candidate_idx, target)
 
                 ru_matrix.append(np.asarray(candidate_rus))
 
-        # We need to transpose the calculated ru matrix to allow later multiplication with
-        # the indicators' diagonal matrix.
-        # We only move the first axis (num of configurations) to be last,
-        # the remaining axes include the metric specific nodes (rows dimension of the new tensor)
-        # and the ru metric values (if they are non-scalars)
-        np_ru_matrix = np.array(ru_matrix)
-        return np.moveaxis(np_ru_matrix, source=0, destination=len(np_ru_matrix.shape) - 1)
+        np_ru_matrix = np.array(ru_matrix) - self.min_ru[target]    # num configurations X num elements
+        return np_ru_matrix
 
     def compute_node_ru_for_candidate(self, conf_node_idx: int, candidate_idx: int, target: RUTarget) -> np.ndarray:
         """
@@ -162,7 +157,6 @@ class MixedPrecisionSearchManager:
 
         """
         cfg = self.replace_config_in_index(self.min_ru_config, conf_node_idx, candidate_idx)
-        # TODO compute for all targets at once. Currently the way up to add_set_of_ru_constraints is per target.
         return self.ru_helper.compute_utilization({target}, cfg)[target]
 
     @staticmethod
@@ -183,18 +177,6 @@ class MixedPrecisionSearchManager:
         updated_cfg[idx] = value
         return updated_cfg
 
-    def _non_configurable_nodes_ru(self) -> Dict[RUTarget, np.ndarray]:
-        """
-        Computes a resource utilization vector of all non-configurable nodes in the given graph for each of the 
-        resource utilization targets.
-
-        Returns: A mapping between a RUTarget and its non-configurable nodes' resource utilization vector.
-        """
-        ru_metrics = self.ru_metrics - {RUTarget.BOPS}
-        ru = self.ru_helper.compute_utilization(ru_targets=ru_metrics, mp_cfg=None)
-        ru[RUTarget.BOPS] = None
-        return ru
-
     def compute_resource_utilization_for_config(self, config: List[int]) -> ResourceUtilization:
         """
         Computes the resource utilization values for a given mixed-precision configuration.
@@ -206,7 +188,7 @@ class MixedPrecisionSearchManager:
         with the given config.
 
         """
-        act_qcs, w_qcs = self.ru_helper.get_configurable_qcs(config)
+        act_qcs, w_qcs = self.ru_helper.get_quantization_candidates(config)
         ru = self.ru_helper.ru_calculator.compute_resource_utilization(
             target_criterion=TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs,
             w_qcs=w_qcs)

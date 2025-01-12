@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Set, Dict, Optional, Tuple
+from typing import List, Set, Dict, Optional, Tuple, Any
 
 import numpy as np
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
@@ -44,9 +43,8 @@ class MixedPrecisionRUHelper:
     def compute_utilization(self, ru_targets: Set[RUTarget], mp_cfg: Optional[List[int]]) -> Dict[RUTarget, np.ndarray]:
         """
         Compute utilization of requested targets for a specific configuration in the format expected by LP problem
-        formulation, namely an array of ru values corresponding to graph's configurable nodes in the topological order.
-        For activation target, the array contains values for activation cuts in unspecified order (as long as it is
-        consistent between configurations).
+        formulation namely a vector of ru values for relevant memory elements (nodes or cuts) in a constant order
+        (between calls).
 
         Args:
             ru_targets: resource utilization targets to compute.
@@ -57,33 +55,26 @@ class MixedPrecisionRUHelper:
         """
 
         ru = {}
-
-        act_qcs, w_qcs = self.get_configurable_qcs(mp_cfg) if mp_cfg else (None, None)
-        w_util = None
+        act_qcs, w_qcs = self.get_quantization_candidates(mp_cfg) if mp_cfg else (None, None)
         if RUTarget.WEIGHTS in ru_targets:
-            w_util = self._weights_utilization(w_qcs)
-            ru[RUTarget.WEIGHTS] = np.array(list(w_util.values()))
+            wu = self._weights_utilization(w_qcs)
+            ru[RUTarget.WEIGHTS] = np.array(list(wu.values()))
 
-        # TODO make mp agnostic to activation method
         if RUTarget.ACTIVATION in ru_targets:
-            act_util = self._activation_maxcut_utilization(act_qcs)
-            ru[RUTarget.ACTIVATION] = np.array(list(act_util.values()))
-
-        # TODO use maxcut
-        if RUTarget.TOTAL in ru_targets:
-            act_tensors_util = self._activation_tensor_utilization(act_qcs)
-            w_util = w_util or self._weights_utilization(w_qcs)
-            total = {n: (w_util.get(n, 0), act_tensors_util.get(n, 0))
-                     # for n in self.graph.nodes if n in act_tensors_util or n in w_util}
-                     for n in self.graph.get_topo_sorted_nodes() if n in act_tensors_util or n in w_util}
-            ru[RUTarget.TOTAL] = np.array(list(total.values()))
+            au = self._activation_utilization(act_qcs)
+            ru[RUTarget.ACTIVATION] = np.array(list(au.values()))
 
         if RUTarget.BOPS in ru_targets:
             ru[RUTarget.BOPS] = self._bops_utilization(mp_cfg)
 
+        if RUTarget.TOTAL in ru_targets:
+            raise ValueError('Total target should be computed based on weights and activations targets.')
+
+        assert len(ru) == len(ru_targets), (f'Mismatch between the number of computed and requested metrics.'
+                                            f'Requested {ru_targets}')
         return ru
 
-    def get_configurable_qcs(self, mp_cfg) \
+    def get_quantization_candidates(self, mp_cfg) \
             -> Tuple[Dict[BaseNode, NodeActivationQuantizationConfig], Dict[BaseNode, NodeWeightsQuantizationConfig]]:
         """
         Retrieve quantization candidates objects for weights and activations from the configuration list.
@@ -92,15 +83,13 @@ class MixedPrecisionRUHelper:
             mp_cfg: a list of candidates indices for configurable layers.
 
         Returns:
-            Mapping between nodes to weights quantization config, and a mapping between nodes and activation
+            A mapping between nodes to weights quantization config, and a mapping between nodes and activation
             quantization config.
         """
         mp_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
         node_qcs = {n: n.candidates_quantization_cfg[mp_cfg[i]] for i, n in enumerate(mp_nodes)}
-        act_qcs = {n: node_qcs[n].activation_quantization_cfg
-                   for n in self.graph.get_activation_configurable_nodes()}
-        w_qcs = {n: node_qcs[n].weights_quantization_cfg
-                 for n in self.graph.get_weights_configurable_nodes(self.fw_info)}
+        act_qcs = {n: cfg.activation_quantization_cfg for n, cfg in node_qcs.items()}
+        w_qcs = {n: cfg.weights_quantization_cfg for n, cfg in node_qcs.items()}
         return act_qcs, w_qcs
 
     def _weights_utilization(self, w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]]) -> Dict[BaseNode, float]:
@@ -127,8 +116,8 @@ class MixedPrecisionRUHelper:
         nodes_util = {n: u.bytes for n, u in nodes_util.items()}
         return nodes_util
 
-    def _activation_maxcut_utilization(self, act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]]) \
-            -> Optional[Dict[Cut, float]]:
+    def _activation_utilization(self, act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]]) \
+            -> Optional[Dict[Any, float]]:
         """
         Compute activation utilization using MaxCut for all quantized nodes if configuration is passed.
 
@@ -138,41 +127,18 @@ class MixedPrecisionRUHelper:
         Returns:
             Activation utilization per cut, or empty dict if no configuration was passed.
         """
-        if act_qcs:
-            _, cuts_util, _ = self.ru_calculator.compute_cut_activation_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                                                    bitwidth_mode=BitwidthMode.QCustom,
-                                                                                    act_qcs=act_qcs)
-            cuts_util = {c: u.bytes for c, u in cuts_util.items()}
-            return cuts_util
+        # Maxcut activation utilization is computed for all quantized nodes, so non-configurable memory is already
+        # covered by the computation of configurable activations.
+        if not act_qcs:
+            return {}
 
-        # Computing non-configurable nodes resource utilization for max-cut is included in the calculation of the
-        # configurable nodes.
-        return {}
+        _, cuts_util, *_ = self.ru_calculator.compute_cut_activation_utilization(TargetInclusionCriterion.AnyQuantized,
+                                                                                 bitwidth_mode=BitwidthMode.QCustom,
+                                                                                 act_qcs=act_qcs)
+        cuts_util = {c: u.bytes for c, u in cuts_util.items()}
+        return cuts_util
 
-    def _activation_tensor_utilization(self, act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]]):
-        """
-        Compute activation tensors utilization fo configurable nodes if configuration is passed or
-        for non-configurable nodes otherwise.
-
-        Args:
-            act_qcs: activation quantization configuration or None.
-
-        Returns:
-            Activation utilization per node.
-        """
-        if act_qcs:
-            target_criterion = TargetInclusionCriterion.QConfigurable
-            bitwidth_mode = BitwidthMode.QCustom
-        else:
-            target_criterion = TargetInclusionCriterion.QNonConfigurable
-            bitwidth_mode = BitwidthMode.QDefaultSP
-
-        _, nodes_util = self.ru_calculator.compute_activation_tensors_utilization(target_criterion=target_criterion,
-                                                                                  bitwidth_mode=bitwidth_mode,
-                                                                                  act_qcs=act_qcs)
-        return {n: u.bytes for n, u in nodes_util.items()}
-
-    def _bops_utilization(self, mp_cfg: List[int]):
+    def _bops_utilization(self, mp_cfg: List[int]) -> np.ndarray:
         """
         Computes a resource utilization vector with the respective bit-operations (BOPS) count for each configurable node,
         according to the given mixed-precision configuration of a virtual graph with composed nodes.
@@ -180,15 +146,15 @@ class MixedPrecisionRUHelper:
         Args:
             mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
 
-        Returns: A vector of node's BOPS count.
-        Note that the vector is not necessarily of the same length as the given config.
-
+        Returns:
+            A vector of node's BOPS count.
         """
+        # bops is computed for all nodes, so non-configurable memory is already covered by the computation of
+        # configurable nodes
+        if not mp_cfg:
+            return np.array([])
+
         # TODO keeping old implementation for now
-
-        # BOPs utilization method considers non-configurable nodes, therefore, it doesn't need separate implementation
-        # for non-configurable nodes for setting a constraint (no need for separate implementation for len(mp_cfg) = 0).
-
         virtual_bops_nodes = [n for n in self.graph.get_topo_sorted_nodes() if isinstance(n, VirtualActivationWeightsNode)]
 
         mp_nodes = self.graph.get_configurable_sorted_nodes_names(self.fw_info)
