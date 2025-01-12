@@ -28,7 +28,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import \
-    MixPrecisionRUHelper
+    MixedPrecisionRUHelper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.logger import Logger
 
@@ -68,7 +68,7 @@ class MixedPrecisionSearchManager:
         self._cuts = None
 
         self.ru_metrics = target_resource_utilization.get_restricted_metrics()
-        self.ru_helper = MixPrecisionRUHelper(graph, fw_info, fw_impl)
+        self.ru_helper = MixedPrecisionRUHelper(graph, fw_info, fw_impl)
         self.target_resource_utilization = target_resource_utilization
         self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
         self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
@@ -207,10 +207,9 @@ class MixedPrecisionSearchManager:
 
         """
         act_qcs, w_qcs = self.ru_helper.get_configurable_qcs(config)
-        ru = self.ru_helper.ru_calculator.compute_resource_utilization(target_criterion=TargetInclusionCriterion.AnyQuantized,
-                                                                       bitwidth_mode=BitwidthMode.MpCustom,
-                                                                       act_qcs=act_qcs,
-                                                                       w_qcs=w_qcs)
+        ru = self.ru_helper.ru_calculator.compute_resource_utilization(
+            target_criterion=TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs,
+            w_qcs=w_qcs)
         return ru
 
     def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[int, Dict[int, float]]):

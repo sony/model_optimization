@@ -151,11 +151,24 @@ class BaseNode:
         return False
 
     def is_configurable_weight(self, attr_name: str) -> bool:
-        """ Checks whether the specific weight has a configurable quantization. """
+        """
+        Checks whether the specific weight attribute has a configurable quantization.
+
+        Args:
+            attr_name: weight attribute name.
+
+        Returns:
+            Whether the weight attribute is configurable.
+        """
         return self.is_weights_quantization_enabled(attr_name) and not self.is_all_weights_candidates_equal(attr_name)
 
-    def has_configurable_activation(self):
-        """ Checks whether the activation has a configurable quantization. """
+    def has_configurable_activation(self) -> bool:
+        """
+        Checks whether the activation has a configurable quantization.
+
+        Returns:
+            Whether the activation has a configurable quantization.
+        """
         return self.is_activation_quantization_enabled() and not self.is_all_activation_candidates_equal()
 
     def __repr__(self):

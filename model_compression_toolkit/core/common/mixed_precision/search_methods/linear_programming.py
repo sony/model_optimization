@@ -14,10 +14,9 @@
 # ==============================================================================
 
 import numpy as np
-import pulp
 from pulp import *
 from tqdm import tqdm
-from typing import Dict, List, Tuple, Callable
+from typing import Dict, Tuple
 
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ru_target_aggregation_fn, AggregationMethod
@@ -236,13 +235,23 @@ def _add_set_of_ru_constraints(search_manager: MixedPrecisionSearchManager,
             lp_problem += v <= target_resource_utilization_value
 
 
-def _aggregate_for_lp(ru_vec, target) -> list:
+def _aggregate_for_lp(ru_vec, target: RUTarget) -> list:
+    """
+    Aggregate resource utilization values for the LP.
+
+    Args:
+        ru_vec: a vector of resource utilization values.
+        target: resource utilization target.
+
+    Returns:
+        Aggregated resource utilization.
+    """
     if target == RUTarget.TOTAL:
-        w = pulp.lpSum(v[0] for v in ru_vec)
+        w = lpSum(v[0] for v in ru_vec)
         return [w + v[1] for v in ru_vec]
 
     if ru_target_aggregation_fn[target] == AggregationMethod.SUM:
-        return [pulp.lpSum(ru_vec)]
+        return [lpSum(ru_vec)]
 
     if ru_target_aggregation_fn[target] == AggregationMethod.MAX:
         return list(ru_vec)

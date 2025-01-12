@@ -20,8 +20,7 @@ from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
-from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
-    VirtualSplitWeightsNode, VirtualSplitActivationNode
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
@@ -33,7 +32,9 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 # TODO take into account Virtual nodes. Are candidates defined with respect to virtual or original nodes?
 #  Can we use the virtual graph only for bops and the original graph for everything else?
 
-class MixPrecisionRUHelper:
+class MixedPrecisionRUHelper:
+    """ Helper class for resource utilization computations for mixed precision optimization. """
+
     def __init__(self, graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkImplementation):
         self.graph = graph
         self.fw_info = fw_info
@@ -42,7 +43,10 @@ class MixPrecisionRUHelper:
 
     def compute_utilization(self, ru_targets: Set[RUTarget], mp_cfg: Optional[List[int]]) -> Dict[RUTarget, np.ndarray]:
         """
-        Compute utilization of requested targets for a specific configuration
+        Compute utilization of requested targets for a specific configuration in the format expected by LP problem
+        formulation, namely an array of ru values corresponding to graph's configurable nodes in the topological order.
+        For activation target, the array contains values for activation cuts in unspecified order (as long as it is
+        consistent between configurations).
 
         Args:
             ru_targets: resource utilization targets to compute.
@@ -112,10 +116,10 @@ class MixPrecisionRUHelper:
         """
         if w_qcs:
             target_criterion = TargetInclusionCriterion.QConfigurable
-            bitwidth_mode = BitwidthMode.MpCustom
+            bitwidth_mode = BitwidthMode.QCustom
         else:
             target_criterion = TargetInclusionCriterion.QNonConfigurable
-            bitwidth_mode = BitwidthMode.SpDefault
+            bitwidth_mode = BitwidthMode.QDefaultSP
 
         _, nodes_util, _ = self.ru_calculator.compute_weights_utilization(target_criterion=target_criterion,
                                                                           bitwidth_mode=bitwidth_mode,
@@ -136,7 +140,7 @@ class MixPrecisionRUHelper:
         """
         if act_qcs:
             _, cuts_util, _ = self.ru_calculator.compute_cut_activation_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                                                    bitwidth_mode=BitwidthMode.MpCustom,
+                                                                                    bitwidth_mode=BitwidthMode.QCustom,
                                                                                     act_qcs=act_qcs)
             cuts_util = {c: u.bytes for c, u in cuts_util.items()}
             return cuts_util
@@ -158,10 +162,10 @@ class MixPrecisionRUHelper:
         """
         if act_qcs:
             target_criterion = TargetInclusionCriterion.QConfigurable
-            bitwidth_mode = BitwidthMode.MpCustom
+            bitwidth_mode = BitwidthMode.QCustom
         else:
             target_criterion = TargetInclusionCriterion.QNonConfigurable
-            bitwidth_mode = BitwidthMode.SpDefault
+            bitwidth_mode = BitwidthMode.QDefaultSP
 
         _, nodes_util = self.ru_calculator.compute_activation_tensors_utilization(target_criterion=target_criterion,
                                                                                   bitwidth_mode=bitwidth_mode,

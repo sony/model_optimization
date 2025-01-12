@@ -33,7 +33,7 @@ def compute_resource_utilization_data(in_model: Any,
                                       fw_info: FrameworkInfo,
                                       fw_impl: FrameworkImplementation,
                                       transformed_graph: Graph = None,
-                                      mixed_precision_enabled: bool = True) -> ResourceUtilization:
+                                      mixed_precision_enable: bool = True) -> ResourceUtilization:
     """
     Compute Resource Utilization information that can be relevant for defining target ResourceUtilization for mixed precision search.
     Calculates maximal activation tensor size, the sum of the model's weight parameters and the total memory combining both weights
@@ -49,7 +49,7 @@ def compute_resource_utilization_data(in_model: Any,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         transformed_graph: An internal graph representation of the input model. Defaults to None.
                             If no graph is provided, a graph will be constructed using the specified model.
-        mixed_precision_enabled: Indicates if mixed precision is enabled, defaults to True.
+        mixed_precision_enable: Indicates if mixed precision is enabled, defaults to True.
                                 If disabled, computes resource utilization using base quantization
                                 configurations across all layers.
 
@@ -68,13 +68,12 @@ def compute_resource_utilization_data(in_model: Any,
                                                      fw_impl,
                                                      tpc,
                                                      bit_width_config=core_config.bit_width_config,
-                                                     mixed_precision_enable=mixed_precision_enabled,
+                                                     mixed_precision_enable=mixed_precision_enable,
                                                      running_gptq=False)
 
     ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
-    ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                    BitwidthMode.Size,
-                                                    metrics=set(RUTarget) - {RUTarget.BOPS})
+    ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.Q8Bit,
+                                                    ru_targets=set(RUTarget) - {RUTarget.BOPS})
     ru.bops, _ = ru_calculator.compute_bops(TargetInclusionCriterion.AnyQuantized, BitwidthMode.Float)
     return ru
 
@@ -118,9 +117,8 @@ def requires_mixed_precision(in_model: Any,
                                                  running_gptq=False)
 
     ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
-    max_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                        BitwidthMode.MpMax,
-                                                        metrics=target_resource_utilization.get_restricted_metrics())
+    max_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.QMaxBit,
+                                                        ru_targets=target_resource_utilization.get_restricted_metrics())
     return not target_resource_utilization.is_satisfied_by(max_ru)
 
 

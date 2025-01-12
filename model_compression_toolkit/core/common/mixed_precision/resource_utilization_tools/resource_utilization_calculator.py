@@ -1,4 +1,4 @@
-# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2025 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ from collections import defaultdict
 from copy import deepcopy
 from enum import Enum, auto
 from functools import lru_cache
-from typing import Dict, NamedTuple, Optional, Tuple, List, Iterable, Union, Literal
+from typing import Dict, NamedTuple, Optional, Tuple, List, Iterable, Union, Literal, Sequence
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import FrameworkInfo
@@ -36,19 +36,22 @@ class BitwidthMode(Enum):
     """
     Bit-width configuration for resource utilization computation.
 
-    Size: tensors sizes.
-    Float: float.
-    MpMax: maximal bit-width mixed-precision configuration.
-    MpMin: minimal bit-width mixed-precision configuration.
-    MpCustom: explicitly provided bit-width configuration.
-    SpDefault: single-precision configuration (for non-configurable quantization).
+    Float: original un-quantized configuration. Assumed to be 32-bit float.
+    QMaxBit: maximal bit-width configurations. Assigns each node its maximal available precision according to the
+      target platform capabilities.
+    QMinBit: minimal bit-width configuration. Assigns each node its minimal available precision according to the
+      target platform capabilities.
+    QCustom: explicitly provided bit-width configuration.
+    QDefaultSP: default single-precision bit-width configuration. Can be used either in a single-precision mode,
+      or along with TargetInclusionCriterion.QNonConfigurable, which computes the resource utilization only for
+      single-precision nodes. To compute custom single precision configuration, use QCustom.
     """
-    Size = auto()
     Float = auto()
-    MpMax = auto()
-    MpMin = auto()
-    MpCustom = auto()
-    SpDefault = auto()
+    Q8Bit = auto()
+    QMaxBit = auto()
+    QMinBit = auto()
+    QCustom = auto()
+    QDefaultSP = auto()
 
 
 class TargetInclusionCriterion(Enum):
@@ -78,21 +81,8 @@ class Utilization(NamedTuple):
     size: int
     bytes: Optional[float]
 
-    def by_bit_mode(self, bitwidth_mode: BitwidthMode) -> Union[int, float]:
-        """ Retrieve value corresponding to the bit-width mode. """
-        if bitwidth_mode == BitwidthMode.Size:
-            return self.size
-        return self.bytes
-
-    @staticmethod
-    def zero_utilization(bitwidth_mode: BitwidthMode) -> 'Utilization':
-        """ Construct zero utilization object. """
-        return Utilization(0, bytes=None if bitwidth_mode == BitwidthMode.Size else 0)
-
     def __add__(self, other: 'Utilization') -> 'Utilization':
-        self._validate_pair(self, other)
-        bytes_ = None if self.bytes is None else (self.bytes + other.bytes)
-        return Utilization(self.size + other.size, bytes_)
+        return Utilization(self.size + other.size, self.bytes + other.bytes)
 
     def __radd__(self, other: Union['Utilization', Literal[0]]):
         # Needed for sum (with default start_value=0).
@@ -101,23 +91,12 @@ class Utilization(NamedTuple):
         return self + other
 
     def __gt__(self, other: 'Utilization'):
-        # Needed for max. Compare by bytes, if not defined then by size.
-        self._validate_pair(self, other)
-        if self.bytes is not None:
-            return self.bytes > other.bytes
-        return self.size > other.size
+        # Needed for max. Compare by bytes.
+        return self.bytes > other.bytes
 
     def __lt__(self, other: 'Utilization'):
-        self._validate_pair(self, other)
-        # Needed for min. Compare by bytes, if not defined then by size.
-        if self.bytes is not None:
-            return self.bytes < other.bytes
-        return self.size < other.size
-
-    @staticmethod
-    def _validate_pair(u1, u2):
-        if [u1.bytes, u2.bytes].count(None) == 1:
-            raise ValueError('bytes field must be set either by both or by none of the objects.')
+        # Needed for min. Compare by bytes.
+        return self.bytes < other.bytes
 
 
 class AggregationMethod(Enum):
@@ -139,14 +118,13 @@ ru_target_aggregation_fn = {
 }
 
 
-_bitwidth_mode_fn = {
-    BitwidthMode.MpMax: max,
-    BitwidthMode.MpMin: min
-}
-
-
 class ResourceUtilizationCalculator:
     """ Resource utilization calculator. """
+
+    _bitwidth_mode_fn = {
+        BitwidthMode.QMaxBit: max,
+        BitwidthMode.QMinBit: min,
+    }
 
     def __init__(self, graph: Graph, fw_impl: FrameworkImplementation, fw_info: FrameworkInfo):
         self.graph = graph
@@ -167,49 +145,51 @@ class ResourceUtilizationCalculator:
                                      bitwidth_mode: BitwidthMode,
                                      act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None,
                                      w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]] = None,
-                                     metrics: Iterable[RUTarget] = None) -> ResourceUtilization:
+                                     ru_targets: Iterable[RUTarget] = None) -> ResourceUtilization:
         """
-        Compute total resource utilization.
+        Compute network's resource utilization.
 
         Args:
             target_criterion: criterion to include targets for computation (applies to weights, activation).
             bitwidth_mode: bit-width mode for computation.
-            act_qcs: activation quantization candidates for custom bit-width mode. Must provide configuration for all
-              configurable activations.
-            w_qcs: weights quantization candidates for custom bit-width mode. Must provide configuration for all
-              configurable weights.
-            metrics: metrics to include for computation. If None, all metrics are calculated.
+            act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable activations. For non-configurable
+              activations, if not provided, the default configuration will be extracted from the node.
+            w_qcs: custom weights quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable weights. For non-configurable
+              weights, if not provided, the default configuration will be extracted from the node.
+            ru_targets: metrics to include for computation. If None, all metrics are calculated.
 
         Returns:
             Resource utilization object.
         """
-        metrics = set(metrics) if metrics else set(RUTarget)
+        ru_targets = set(ru_targets) if ru_targets else set(RUTarget)
 
         w_total, a_total = None, None
-        if {RUTarget.WEIGHTS, RUTarget.TOTAL}.intersection(metrics):
+        if {RUTarget.WEIGHTS, RUTarget.TOTAL}.intersection(ru_targets):
             w_total, *_ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
         elif w_qcs is not None:    # pragma: no cover
             raise ValueError('Weight configuration passed but no relevant metric requested.')
 
-        if act_qcs and not {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(metrics):    # pragma: no cover
+        if act_qcs and not {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(ru_targets):    # pragma: no cover
             raise ValueError('Activation configuration passed but no relevant metric requested.')
-        if RUTarget.ACTIVATION in metrics:
-            a_total, *_ = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
+        if RUTarget.ACTIVATION in ru_targets:
+            a_total = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
 
         ru = ResourceUtilization()
-        if RUTarget.WEIGHTS in metrics:
+        if RUTarget.WEIGHTS in ru_targets:
             ru.weights_memory = w_total
-        if RUTarget.ACTIVATION in metrics:
+        if RUTarget.ACTIVATION in ru_targets:
             ru.activation_memory = a_total
-        if RUTarget.TOTAL in metrics:
+        if RUTarget.TOTAL in ru_targets:
             # TODO use maxcut
             act_tensors_total, *_ = self.compute_activation_tensors_utilization(target_criterion, bitwidth_mode, act_qcs)
             ru.total_memory = w_total + act_tensors_total
-        if RUTarget.BOPS in metrics:
+        if RUTarget.BOPS in ru_targets:
             ru.bops, _ = self.compute_bops(target_criterion=target_criterion,
                                            bitwidth_mode=bitwidth_mode, act_qcs=act_qcs, w_qcs=w_qcs)
 
-        assert ru.get_restricted_metrics() == set(metrics), 'Mismatch between the number of requested and computed metrics'
+        assert ru.get_restricted_metrics() == set(ru_targets), 'Mismatch between the number of requested and computed metrics'
         return ru
 
     def compute_weights_utilization(self,
@@ -223,15 +203,18 @@ class ResourceUtilizationCalculator:
         Args:
             target_criterion: criterion to include targets for computation.
             bitwidth_mode: bit-width mode for computation.
-            w_qcs: weights quantization config per node for the custom bit mode. Must provide configuration for all
-              configurable weights.
+            w_qcs: custom weights quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable weights. For non-configurable
+              weights, if not provided, the default configuration will be extracted from the node.
 
         Returns:
-            - Total weights utilization.
-            - Per node total utilization. Dict keys are nodes in a topological order.
-            - Detailed per node per weight utilization. Dict keys are nodes in a topological order.
+            - Total weights utilization of the network.
+            - Per node total weights utilization. Dict keys are nodes in a topological order.
+            - Detailed per node per weight attribute utilization. Dict keys are nodes in a topological order.
         """
         nodes = self._get_target_weight_nodes(target_criterion, include_reused=False)
+        if not nodes:
+            return 0, {}, {}
 
         util_per_node: Dict[BaseNode, Utilization] = {}
         util_per_node_per_weight = {}
@@ -244,8 +227,8 @@ class ResourceUtilizationCalculator:
             util_per_node_per_weight[n] = per_weight_util
 
         aggregate_fn = ru_target_aggregation_fn[RUTarget.WEIGHTS]
-        total_util = aggregate_fn(u.by_bit_mode(bitwidth_mode) for u in util_per_node.values())
-        return total_util, util_per_node, util_per_node_per_weight
+        total_util = aggregate_fn(util_per_node.values())
+        return total_util.bytes, util_per_node, util_per_node_per_weight
 
     def compute_node_weights_utilization(self,
                                          n: BaseNode,
@@ -260,34 +243,46 @@ class ResourceUtilizationCalculator:
             n: node.
             target_criterion: criterion to include weights for computation.
             bitwidth_mode: bit-width mode for the computation.
-            qc: weight quantization config for the custom bit mode computation. Must provide configuration for all
-              configurable weights.
+            qc: custom weights quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable weights. For non-configurable
+              weights, if not provided, the default configuration will be extracted from the node.
 
         Returns:
-            - Total utilization.
-            - Detailed per weight utilization.
+            - Node's total weights utilization.
+            - Detailed per weight attribute utilization.
         """
         weight_attrs = self._get_target_weight_attrs(n, target_criterion)
         if not weight_attrs:    # pragma: no cover
-            return Utilization.zero_utilization(bitwidth_mode, ), {}
+            return Utilization(0, 0), {}
 
         attr_util = {}
         for attr in weight_attrs:
             size = self._params_cnt[n][attr]
-            bytes_ = None
-            if bitwidth_mode != BitwidthMode.Size:
-                nbits = self._get_weight_nbits(n, attr, bitwidth_mode, qc)
-                bytes_ = size * nbits / 8
+            nbits = self._get_weight_nbits(n, attr, bitwidth_mode, qc)
+            bytes_ = size * nbits / 8
             attr_util[attr] = Utilization(size, bytes_)
 
-        total_weights = sum(attr_util.values())
+        total_weights: Utilization = sum(attr_util.values())    # type: ignore
         return total_weights, attr_util
 
     def compute_activations_utilization(self,
                                         target_criterion: TargetInclusionCriterion,
                                         bitwidth_mode: BitwidthMode,
                                         act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None):
-        return self.compute_cut_activation_utilization(target_criterion, bitwidth_mode, act_qcs)
+        """
+        Compute total activations utilization in the graph.
+
+        Args:
+            target_criterion: criterion to include weights for computation.
+            bitwidth_mode: bit-width mode for the computation.
+            act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable activations. For non-configurable
+              activations, if not provided, the default configuration will be extracted from the node.
+
+        Returns:
+            Total activation utilization of the network.
+        """
+        return self.compute_cut_activation_utilization(target_criterion, bitwidth_mode, act_qcs)[0]
 
     def compute_cut_activation_utilization(self,
                                            target_criterion: TargetInclusionCriterion,
@@ -295,18 +290,19 @@ class ResourceUtilizationCalculator:
                                            act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]]) \
             -> Tuple[float, Dict[Cut, Utilization], Dict[Cut, Dict[BaseNode, Utilization]]]:
         """
-        Calculate graph activation cuts utilization.
+        Compute graph activation cuts utilization.
 
         Args:
             target_criterion: criterion to include weights for computation.
             bitwidth_mode: bit-width mode for the computation.
-            act_qcs: custom configuration for the custom bit mode. Must provide configuration for all configurable
-              activations.
+            act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable activations. For non-configurable
+              activations, if not provided, the default configuration will be extracted from the node.
 
         Returns:
-            - Total utilization.
-            - Total utilization per cut.
-            - Detailed utilization per cut per node.
+            - Total activation utilization of the network.
+            - Total activation utilization per cut.
+            - Detailed activation utilization per cut per node.
         """
         if target_criterion != TargetInclusionCriterion.AnyQuantized:    # pragma: no cover
             raise NotImplementedError('Computing MaxCut activation utilization is currently only supported for quantized targets.')
@@ -339,8 +335,8 @@ class ResourceUtilizationCalculator:
             util_per_cut[cut] = sum(util_per_cut_per_node[cut].values())    # type: ignore
 
         aggregate_fn = ru_target_aggregation_fn[RUTarget.ACTIVATION]
-        total_util = aggregate_fn(u.by_bit_mode(bitwidth_mode) for u in util_per_cut.values())
-        return total_util, util_per_cut, util_per_cut_per_node
+        total_util = aggregate_fn(util_per_cut.values())
+        return total_util.bytes, util_per_cut, util_per_cut_per_node
 
     def compute_activation_tensors_utilization(self,
                                                target_criterion: TargetInclusionCriterion,
@@ -354,15 +350,19 @@ class ResourceUtilizationCalculator:
         Args:
             target_criterion: criterion to include weights for computation.
             bitwidth_mode: bit-width mode for the computation.
-            act_qcs: custom configuration for the custom bit mode. Must provide configuration for all configurable
-              activations.
+            act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable activations. For non-configurable
+              activations, if not provided, the default configuration will be extracted from the node.
             include_reused: whether to include reused nodes.
         Returns:
-            - Total activation utilization.
+            - Total activation utilization of the network.
             - Detailed utilization per node. Dict keys are nodes in a topological order.
 
         """
         nodes = self._get_target_activation_nodes(target_criterion, include_reused=include_reused)
+        if not nodes:
+            return 0, {}
+
         util_per_node: Dict[BaseNode, Utilization] = {}
         for n in self._topo_sort(nodes):
             qc = act_qcs.get(n) if act_qcs else None
@@ -370,8 +370,8 @@ class ResourceUtilizationCalculator:
             util_per_node[n] = util
 
         aggregate_fn = ru_target_aggregation_fn[RUTarget.ACTIVATION]
-        total_util = aggregate_fn(u.by_bit_mode(bitwidth_mode) for u in util_per_node.values())
-        return total_util, util_per_node
+        total_util = aggregate_fn(util_per_node.values())
+        return total_util.bytes, util_per_node
 
     def compute_node_activation_tensor_utilization(self,
                                                    n: BaseNode,
@@ -385,21 +385,20 @@ class ResourceUtilizationCalculator:
             n: node.
             target_criterion: criterion to include nodes for computation. If None, will skip the check.
             bitwidth_mode: bit-width mode for the computation.
-            qc: activation quantization config for the custom bit mode. Must be provided for a configurable activation.
-
+            qc: activation quantization config for the node. Should be provided only in custom bit mode.
+              In custom mode, must be provided if the activation is configurable. For non-configurable activation, if
+              not passed, the default configuration will be extracted from the node.
         Returns:
             Node's activation utilization.
         """
         if target_criterion:
             nodes = self._get_target_activation_nodes(target_criterion=target_criterion, include_reused=True, nodes=[n])
             if not nodes:    # pragma: no cover
-                return Utilization.zero_utilization(bitwidth_mode)
+                return Utilization(0, 0)
 
         size = self._act_tensors_size[n]
-        bytes_ = None
-        if bitwidth_mode != BitwidthMode.Size:
-            nbits = self._get_activation_nbits(n, bitwidth_mode, qc)
-            bytes_ = size * nbits / 8
+        nbits = self._get_activation_nbits(n, bitwidth_mode, qc)
+        bytes_ = size * nbits / 8
         return Utilization(size, bytes_)
 
     def compute_bops(self,
@@ -410,25 +409,27 @@ class ResourceUtilizationCalculator:
             -> Tuple[int, Dict[BaseNode, int]]:
         """
         Compute bit operations based on nodes with kernel.
+        Note that 'target_criterion' applies to weights, and BOPS are computed for the selected nodes regardless
+        of the input activation quantization or lack thereof.
 
         Args:
             target_criterion: criterion to include nodes for computation.
             bitwidth_mode: bit-width mode for computation.
-            act_qcs: activation quantization candidates for custom bit-width mode. Must provide configuration for all
-              configurable activations.
-            w_qcs: weights quantization candidates for custom bit-width mode. Must provide configuration for all
-              configurable weights.
+            act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable activations. For non-configurable
+              activations, if not provided, the default configuration will be extracted from the node.
+            w_qcs: custom weights quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable weights. For non-configurable
+              weights, if not provided, the default configuration will be extracted from the node.
 
         Returns:
-            - Total BOPS count.
+            - Total BOPS count of the network.
             - Detailed BOPS count per node.
         """
-        # currently we compute bops for all nodes with quantized weights, regardless of whether the input
-        # activation is quantized.
         if target_criterion != TargetInclusionCriterion.AnyQuantized:    # pragma: no cover
             raise NotImplementedError('BOPS computation is currently only supported for quantized targets.')
 
-        nodes = [n for n in self.graph.nodes if n.has_kernel_weight_to_quantize(self.fw_info)]
+        nodes = self._get_target_weight_nodes(target_criterion, include_reused=True)
         nodes_bops = {}
         for n in nodes:
             w_qc = w_qcs.get(n) if w_qcs else None
@@ -441,23 +442,25 @@ class ResourceUtilizationCalculator:
                           n: BaseNode,
                           bitwidth_mode: BitwidthMode,
                           act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None,
-                          w_qc: Optional[NodeWeightsQuantizationConfig] = None) -> int:
+                          w_qc: Optional[NodeWeightsQuantizationConfig] = None) -> Union[float, int]:
         """
         Compute Bit Operations of a node.
 
         Args:
             n: node.
             bitwidth_mode: bit-width mode for the computation.
-            act_qcs: nodes activation quantization configuration for the custom bit mode. Must provide configuration for all
-              configurable activations.
-            w_qc: weights quantization config for the node for the custom bit mode. Must provide configuration for all
-              configurable weights.
+            act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
+              In custom mode, must provide configuration for all configurable activations. For non-configurable
+              activations, if not provided, the default configuration will be extracted from the node.
+            w_qc: weights quantization config for the node. Should be provided only in custom bit mode.
+              Must provide configuration for all configurable weights. For non-configurable weights, will use the
+              provided configuration if found, or extract the default configuration from the node otherwise.
 
         Returns:
-            BOPS count.
+            Node's BOPS count.
         """
         node_mac = self.fw_impl.get_node_mac_operations(n, self.fw_info)
-        if node_mac == 0 or bitwidth_mode == BitwidthMode.Size:    # pragma: no cover
+        if node_mac == 0:    # pragma: no cover
             return node_mac
 
         incoming_edges = self.graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
@@ -549,8 +552,16 @@ class ResourceUtilizationCalculator:
             raise ValueError(f'Unknown {target_criterion}')
         return weight_attrs
 
-    def _topo_sort(self, nodes):
-        """ Sort nodes in a topological order (based on graph's nodes). """
+    def _topo_sort(self, nodes: Sequence[BaseNode]) -> List[BaseNode]:
+        """
+        Sort nodes in a topological order (based on graph's nodes).
+
+        Args:
+            nodes: nodes to sort.
+
+        Returns:
+            Nodes in topological order.
+        """
         graph_topo_nodes = self.graph.get_topo_sorted_nodes()
         topo_nodes = [n for n in graph_topo_nodes if n in nodes]
         if len(topo_nodes) != len(nodes):
@@ -586,8 +597,9 @@ class ResourceUtilizationCalculator:
             nodes = [n for n in nodes if not n.reuse]
         return nodes
 
-    @staticmethod
-    def _get_activation_nbits(n: BaseNode,
+    @classmethod
+    def _get_activation_nbits(cls,
+                              n: BaseNode,
                               bitwidth_mode: BitwidthMode,
                               act_qc: Optional[NodeActivationQuantizationConfig]) -> int:
         """
@@ -596,16 +608,15 @@ class ResourceUtilizationCalculator:
         Args:
             n: node.
             bitwidth_mode: bit-width mode for computation.
-            act_qc: quantization candidate for the custom bit mode. Must be provided for a configurable activation.
+            act_qc: activation quantization config for the node. Should be provided only in custom bit mode.
+              In custom mode, must be provided if the activation is configurable. For non-configurable activation, if
+              not passed, the default configuration will be extracted from the node.
 
         Returns:
             Activation bit-width.
         """
-        if bitwidth_mode == BitwidthMode.Size:
-            raise ValueError(f'nbits is not defined for {bitwidth_mode}.')
-
         if act_qc:
-            if bitwidth_mode != BitwidthMode.MpCustom or not n.is_activation_quantization_enabled():
+            if bitwidth_mode != BitwidthMode.QCustom or not n.is_activation_quantization_enabled():
                 raise ValueError(
                     f'Activation config is not expected for non-custom bit mode or for un-quantized activation.'
                     f'Mode: {bitwidth_mode}, quantized activation: {n.is_activation_quantization_enabled()}'
@@ -616,11 +627,14 @@ class ResourceUtilizationCalculator:
         if bitwidth_mode == BitwidthMode.Float or not n.is_activation_quantization_enabled():
             return FLOAT_BITWIDTH
 
-        if bitwidth_mode in _bitwidth_mode_fn:
-            candidates_nbits = [c.activation_quantization_cfg.activation_n_bits for c in n.candidates_quantization_cfg]
-            return _bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
+        if bitwidth_mode == BitwidthMode.Q8Bit:
+            return 8
 
-        if bitwidth_mode in [BitwidthMode.MpCustom, BitwidthMode.SpDefault]:
+        if bitwidth_mode in cls._bitwidth_mode_fn:
+            candidates_nbits = [c.activation_quantization_cfg.activation_n_bits for c in n.candidates_quantization_cfg]
+            return cls._bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
+
+        if bitwidth_mode in [BitwidthMode.QCustom, BitwidthMode.QDefaultSP]:
             qcs = n.get_unique_activation_candidates()
             if len(qcs) != 1:
                 raise ValueError(f'Could not retrieve the activation quantization candidate for node {n.name} '
@@ -629,8 +643,12 @@ class ResourceUtilizationCalculator:
 
         raise ValueError(f'Unknown mode {bitwidth_mode}')
 
-    @staticmethod
-    def _get_weight_nbits(n, w_attr: str, bitwidth_mode: BitwidthMode, w_qc: Optional[NodeWeightsQuantizationConfig]) -> int:
+    @classmethod
+    def _get_weight_nbits(cls,
+                          n: BaseNode,
+                          w_attr: str,
+                          bitwidth_mode: BitwidthMode,
+                          w_qc: Optional[NodeWeightsQuantizationConfig]) -> int:
         """
         Get the bit-width of a specific weight of a node according to the requested bit-width mode.
 
@@ -638,17 +656,15 @@ class ResourceUtilizationCalculator:
             n: node.
             w_attr: weight attribute.
             bitwidth_mode: bit-width mode for the computation.
-            w_qc: weights quantization config for the node for the custom bit mode. Must provide configuration for all
-              configurable weights.
+            w_qc: weights quantization config for the node. Should be provided only in custom bit mode.
+              Must provide configuration for all configurable weights. For non-configurable weights, will use the
+              provided configuration if found, or extract the default configuration from the node otherwise.
 
         Returns:
             Weight bit-width.
         """
-        if bitwidth_mode == BitwidthMode.Size:
-            raise ValueError(f'nbits is not defined for {bitwidth_mode}.')
-
         if w_qc and w_qc.has_attribute_config(w_attr):
-            if bitwidth_mode != BitwidthMode.MpCustom or not n.is_weights_quantization_enabled(w_attr):
+            if bitwidth_mode != BitwidthMode.QCustom or not n.is_weights_quantization_enabled(w_attr):
                 raise ValueError('Weight config is not expected for non-custom bit mode or for un-quantized weight.'
                                  f'Bit mode: {bitwidth_mode}, quantized attr {w_attr}: '
                                  f'{n.is_weights_quantization_enabled(w_attr)}')
@@ -659,12 +675,15 @@ class ResourceUtilizationCalculator:
         if bitwidth_mode == BitwidthMode.Float or not n.is_weights_quantization_enabled(w_attr):
             return FLOAT_BITWIDTH
 
+        if bitwidth_mode == BitwidthMode.Q8Bit:
+            return 8
+
         node_qcs = n.get_unique_weights_candidates(w_attr)
         w_qcs = [qc.weights_quantization_cfg.get_attr_config(w_attr) for qc in node_qcs]
-        if bitwidth_mode in _bitwidth_mode_fn:
-            return _bitwidth_mode_fn[bitwidth_mode]([qc.weights_n_bits for qc in w_qcs])
+        if bitwidth_mode in cls._bitwidth_mode_fn:
+            return cls._bitwidth_mode_fn[bitwidth_mode]([qc.weights_n_bits for qc in w_qcs])
 
-        if bitwidth_mode in [BitwidthMode.MpCustom, BitwidthMode.SpDefault]:
+        if bitwidth_mode in [BitwidthMode.QCustom, BitwidthMode.QDefaultSP]:
             # if configuration was not passed and the weight has only one candidate, use it
             if len(w_qcs) != 1:
                 raise ValueError(f'Could not retrieve the quantization candidate for attr {w_attr} of node {n.name} '
