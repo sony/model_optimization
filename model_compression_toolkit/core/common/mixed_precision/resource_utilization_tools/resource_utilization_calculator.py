@@ -430,6 +430,9 @@ class ResourceUtilizationCalculator:
             raise NotImplementedError('BOPS computation is currently only supported for quantized targets.')
 
         nodes = self._get_target_weight_nodes(target_criterion, include_reused=True)
+        # filter out nodes with only positional weights # TODO add as arg to get target nodes
+        nodes = [n for n in nodes if n.has_kernel_weight_to_quantize(self.fw_info)]
+
         nodes_bops = {}
         for n in nodes:
             w_qc = w_qcs.get(n) if w_qcs else None
@@ -616,12 +619,9 @@ class ResourceUtilizationCalculator:
             Activation bit-width.
         """
         if act_qc:
-            if bitwidth_mode != BitwidthMode.QCustom or not n.is_activation_quantization_enabled():
-                raise ValueError(
-                    f'Activation config is not expected for non-custom bit mode or for un-quantized activation.'
-                    f'Mode: {bitwidth_mode}, quantized activation: {n.is_activation_quantization_enabled()}'
-                )
-            assert act_qc.enable_activation_quantization
+            if bitwidth_mode != BitwidthMode.QCustom:
+                raise ValueError(f'Activation config is not expected for non-custom bit mode {bitwidth_mode}')
+            assert act_qc.enable_activation_quantization or act_qc.activation_n_bits == FLOAT_BITWIDTH
             return act_qc.activation_n_bits
 
         if bitwidth_mode == BitwidthMode.Float or not n.is_activation_quantization_enabled():
@@ -664,12 +664,10 @@ class ResourceUtilizationCalculator:
             Weight bit-width.
         """
         if w_qc and w_qc.has_attribute_config(w_attr):
-            if bitwidth_mode != BitwidthMode.QCustom or not n.is_weights_quantization_enabled(w_attr):
-                raise ValueError('Weight config is not expected for non-custom bit mode or for un-quantized weight.'
-                                 f'Bit mode: {bitwidth_mode}, quantized attr {w_attr}: '
-                                 f'{n.is_weights_quantization_enabled(w_attr)}')
+            if bitwidth_mode != BitwidthMode.QCustom:
+                raise ValueError('Weight config is not expected for non-custom bit mode {bitwidth_mode}')
             attr_cfg = w_qc.get_attr_config(w_attr)
-            assert attr_cfg.enable_weights_quantization
+            assert attr_cfg.enable_weights_quantization or attr_cfg.weights_n_bits == FLOAT_BITWIDTH
             return attr_cfg.weights_n_bits
 
         if bitwidth_mode == BitwidthMode.Float or not n.is_weights_quantization_enabled(w_attr):
