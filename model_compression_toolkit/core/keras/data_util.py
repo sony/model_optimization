@@ -134,11 +134,30 @@ class FixedSampleInfoDataset:
         self.samples = samples
         self.sample_info = sample_info
 
-        # Create a TensorFlow dataset that holds (sample, sample_info) tuples
-        self.tf_dataset = tf.data.Dataset.from_tensor_slices((
-            tf.convert_to_tensor(self.samples),
-            tuple(tf.convert_to_tensor(info) for info in self.sample_info)
-        ))
+        # Get the number of tensors in each tuple (corresponds to the number of input layers the model has)
+        num_tensors = len(samples[0])
+
+        # Create separate lists: one for each input layer and separate the tuples into lists
+        sample_tensor_lists = [[] for _ in range(num_tensors)]
+        for s in samples:
+            for i, data_tensor in enumerate(s):
+                sample_tensor_lists[i].append(data_tensor)
+
+        # In order to deal with models that have different input shapes for different layers, we need first to
+        # organize the data in a dictionary in order to use tf.data.Dataset.from_tensor_slices
+        samples_dict = {f'tensor_{i}': tensors for i, tensors in enumerate(sample_tensor_lists)}
+        info_dict = {f'info_{i}': tf.convert_to_tensor(info) for i, info in enumerate(self.sample_info)}
+        combined_dict = {**samples_dict, **info_dict}
+
+        tf_dataset = tf.data.Dataset.from_tensor_slices(combined_dict)
+
+        # Map the dataset to return tuples instead of dict
+        def reorganize_ds_outputs(ds_output):
+            tensors = tuple(ds_output[f'tensor_{i}'] for i in range(num_tensors))
+            infos = tuple(ds_output[f'info_{i}'] for i in range(len(sample_info)))
+            return tensors, infos
+
+        self.tf_dataset = tf_dataset.map(reorganize_ds_outputs)
 
     def __len__(self):
         return len(self.samples)
