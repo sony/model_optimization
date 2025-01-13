@@ -21,8 +21,6 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeTypeFilter
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
-tp = mct.target_platform
-
 
 class Identity(torch.nn.Module):
     """

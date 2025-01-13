@@ -29,8 +29,9 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import \
     linear_collapsing_substitute
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 def graph_preparation_runner(in_model: Any,

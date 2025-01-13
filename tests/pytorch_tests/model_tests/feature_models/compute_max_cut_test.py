@@ -21,7 +21,6 @@ from model_compression_toolkit.target_platform_capabilities.constants import IMX
 from model_compression_toolkit.constants import PYTORCH
 from mct_quantizers.pytorch.metadata import get_metadata
 
-tp = mct.target_platform
 
 
 class MaxCutModel(nn.Module):

@@ -19,8 +19,9 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 from model_compression_toolkit.verify_packages import FOUND_TF
 
 if FOUND_TF:
@@ -28,8 +29,6 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
-    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-        AttachTpcToKeras
 
     from model_compression_toolkit import get_target_platform_capabilities
 

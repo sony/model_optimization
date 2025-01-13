@@ -29,7 +29,9 @@ from model_compression_toolkit.core.common.pruning.pruning_framework_implementat
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo, \
     unroll_simd_scores_to_per_channel_scores
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import \
+    FrameworkQuantizationCapabilities
+
 
 class Pruner:
     """

@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.mixed_precision.configurable_quantize
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from mct_quantizers import QuantizationTarget
 from mct_quantizers import mark_quantizer
 

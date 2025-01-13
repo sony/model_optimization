@@ -26,7 +26,6 @@ from model_compression_toolkit.core.pytorch.pytorch_device_config import get_wor
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.pytorch.gptq_loss import sample_layer_attention_loss
 from model_compression_toolkit.target_platform_capabilities import constants as C
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
@@ -416,7 +415,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         values.
         """
         LUTWeightsQuantizerTest(self).run_test()
-        LUTWeightsQuantizerTest(self, quant_method=mct.target_platform.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
+        LUTWeightsQuantizerTest(self, quant_method=mct.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
 
     def test_lut_activation_quantizer(self):
         """
@@ -732,7 +731,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         QuantizationAwareTrainingTest(self).run_test()
         QuantizationAwareTrainingTest(self, finalize=True).run_test()
-        _method = mct.target_platform.QuantizationMethod.SYMMETRIC
+        _method = mct.QuantizationMethod.SYMMETRIC
         QuantizationAwareTrainingTest(self,
                                       weights_quantization_method=_method,
                                       activation_quantization_method=_method
@@ -741,7 +740,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                       weights_quantization_method=_method,
                                       activation_quantization_method=_method,
                                       finalize=True).run_test()
-        _method = mct.target_platform.QuantizationMethod.UNIFORM
+        _method = mct.QuantizationMethod.UNIFORM
         QuantizationAwareTrainingTest(self,
                                       weights_quantization_method=_method,
                                       activation_quantization_method=_method
@@ -751,18 +750,18 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                       activation_quantization_method=_method,
                                       finalize=True).run_test()
         QuantizationAwareTrainingTest(self,
-                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-                                      activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      weights_quantization_method=mct.QuantizationMethod.SYMMETRIC,
+                                      activation_quantization_method=mct.QuantizationMethod.SYMMETRIC,
                                       training_method=TrainingMethod.LSQ,
                                       finalize=True).run_test()
         QuantizationAwareTrainingTest(self,
-                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-                                      activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      weights_quantization_method=mct.QuantizationMethod.UNIFORM,
+                                      activation_quantization_method=mct.QuantizationMethod.UNIFORM,
                                       training_method=TrainingMethod.LSQ,
                                       finalize=True).run_test()
         QuantizationAwareTrainingTest(self,
-                                      weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                                      activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                                      activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                                       training_method=TrainingMethod.LSQ,
                                       finalize=True).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()

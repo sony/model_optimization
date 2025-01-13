@@ -3,10 +3,10 @@ from typing import Dict, Optional
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, \
     OperatorsSet
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, \
-    OperationsSetToLayers
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import \
+    FrameworkQuantizationCapabilities, OperationsSetToLayers
 
 
 class AttachTpcToFramework:

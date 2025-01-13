@@ -23,8 +23,6 @@ from model_compression_toolkit.core.common.mixed_precision.distance_weighting im
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, \
-    OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OperatorsSet, \
     QuantizationConfigOptions
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
@@ -35,7 +33,6 @@ from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 
-tp = mct.target_platform
 
 """
 This test checks the Mixed Precision feature.

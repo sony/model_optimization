@@ -32,7 +32,6 @@ from mct_quantizers import KerasQuantizationWrapper
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def create_const_quant_tpc(qmethod):
@@ -73,7 +72,7 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwargs=False,
                  error_method: mct.core.QuantizationErrorMethod = mct.core.QuantizationErrorMethod.MSE,
-                 qmethod: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
+                 qmethod: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                  input_shape=(32, 32, 16)):
         super(ConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
         self.layer = layer

@@ -31,7 +31,6 @@ from tests.keras_tests.tpc_keras import get_16bit_tpc
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 QUANTIZATION_CONFIG = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
                                                   weights_error_method=mct.core.QuantizationErrorMethod.MSE,

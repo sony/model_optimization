@@ -21,15 +21,15 @@ from typing import List, Any, Dict, Tuple
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set, get_default_op_quantization_config, get_opset_by_name
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
-    OperationsToLayers, OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.framework_quantization_capabilities_component import FrameworkQuantizationCapabilitiesComponent
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.operations_to_layers import OperationsToLayers, \
+    OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities_component import \
+    FrameworkQuantizationCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OperatorsSetBase, \
     OpQuantizationConfig, QuantizationConfigOptions
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
-
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.current_tpc import  _current_tpc
 
 class FrameworkQuantizationCapabilities(ImmutableClass):
     """

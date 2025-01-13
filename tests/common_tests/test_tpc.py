@@ -26,7 +26,6 @@ from model_compression_toolkit.target_platform_capabilities.tpc_io_handler impor
     export_target_platform_model
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 
-tp = mct.target_platform
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
 TEST_QCO = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))

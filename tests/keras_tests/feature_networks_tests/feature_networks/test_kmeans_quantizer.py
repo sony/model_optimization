@@ -15,7 +15,7 @@
 
 import unittest
 
-from model_compression_toolkit import target_platform
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer
@@ -53,7 +53,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
+                 quantization_method: QuantizationMethod.LUT_POT_QUANTIZER,
                  weight_fn=get_uniform_weights,
                  weights_n_bits: int = 3):
 
@@ -94,7 +94,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
                                                                  attr_name=KERNEL,
-                                                                 weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO)),
+                                                                 weights_quantization_method=QuantizationMethod.POWER_OF_TWO)),
                                                     EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
                                                                  attr_name=KERNEL,
@@ -120,7 +120,7 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
+                 quantization_method: QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
@@ -141,7 +141,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
+                 quantization_method: QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
@@ -163,7 +163,7 @@ class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
     This test checks the chosen quantization method is different that symmetric uniform
     '''
 
-    def __init__(self, unit_test, quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER, weights_n_bits: int = 8):
+    def __init__(self, unit_test, quantization_method: QuantizationMethod.LUT_POT_QUANTIZER, weights_n_bits: int = 8):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -180,7 +180,7 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
     '''
 
     def __init__(self, unit_test,
-                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
+                 quantization_method: QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_zero_as_weights, weights_n_bits)
 

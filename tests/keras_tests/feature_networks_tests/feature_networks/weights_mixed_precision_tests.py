@@ -39,7 +39,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class MixedPrecisionBaseTest(BaseKerasFeatureNetworkTest):

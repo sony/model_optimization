@@ -39,7 +39,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def get_base_mp_nbits_candidates():
@@ -567,7 +566,7 @@ class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
             custom_tpc_opset_to_layer={"Softmax": CustomOpsetLayers([layers.Softmax, tf.nn.softmax, softmax,
-                                                    tp.LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
+                                                    LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
                                        "Input": CustomOpsetLayers([layers.InputLayer])}))
 
     def get_tpc(self):

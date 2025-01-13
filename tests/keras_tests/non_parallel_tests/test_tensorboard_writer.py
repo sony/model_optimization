@@ -33,7 +33,7 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs

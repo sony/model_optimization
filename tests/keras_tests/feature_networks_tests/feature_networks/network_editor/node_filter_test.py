@@ -31,7 +31,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):
@@ -58,7 +57,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         tpc = generate_test_tpc({
-            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+            'weights_quantization_method': QuantizationMethod.POWER_OF_TWO,
             'activation_n_bits': 16,
             'weights_n_bits': 16})
         return generate_keras_tpc(name="scope_filter_test", tpc=tpc)
@@ -140,7 +139,7 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         tpc = generate_test_tpc({
-            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+            'weights_quantization_method': QuantizationMethod.POWER_OF_TWO,
             'activation_n_bits': 16,
             'weights_n_bits': 16})
         return generate_keras_tpc(name="name_filter_test", tpc=tpc)
@@ -205,14 +204,14 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test )
 
     def weights_params_fn(self):
-        return get_weights_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
+        return get_weights_quantization_params_fn(QuantizationMethod.POWER_OF_TWO)
 
     def activations_params_fn(self):
-        return get_activation_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
+        return get_activation_quantization_params_fn(QuantizationMethod.POWER_OF_TWO)
 
     def get_tpc(self):
         tpc = generate_test_tpc({
-            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+            'weights_quantization_method': QuantizationMethod.POWER_OF_TWO,
             'activation_n_bits': 16,
             'weights_n_bits': 16})
         return generate_keras_tpc(name="type_filter_test", tpc=tpc)

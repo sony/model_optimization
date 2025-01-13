@@ -28,7 +28,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def update_kernel_for_bn_folding_fn(conv_layer: layers.Conv2D,

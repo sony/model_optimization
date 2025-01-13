@@ -23,6 +23,8 @@ from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE, GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig, \
@@ -33,7 +35,6 @@ from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.metadata import create_model_metadata
 
 
@@ -48,8 +49,6 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.keras.metadata import add_metadata
-    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-        AttachTpcToKeras
 
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):

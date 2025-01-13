@@ -27,7 +27,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
@@ -43,7 +42,7 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         tpc = generate_test_tpc({
-            'activation_quantization_method': tp.QuantizationMethod.UNIFORM,
+            'activation_quantization_method': QuantizationMethod.UNIFORM,
             'activation_n_bits': 8})
         return generate_keras_tpc(name="uniform_range_test", tpc=tpc)
 

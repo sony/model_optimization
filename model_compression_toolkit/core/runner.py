@@ -44,12 +44,13 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
     finalize_bitwidth_in_tb
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 def core_runner(in_model: Any,

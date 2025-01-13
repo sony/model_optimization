@@ -16,16 +16,18 @@ import copy
 from typing import Dict, List, Any
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH, ACTIVATION_N_BITS_ATTRIBUTE, \
     SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE
 from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR, \
     WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness, OpQuantizationConfig, \
     QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import \
+    FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tpc
 import model_compression_toolkit as mct
 
-tp = mct.target_platform
 
 DEFAULT_WEIGHT_ATTR_CONFIG = 'default_weight_attr_config'
 KERNEL_BASE_CONFIG = 'kernel_base_config'
@@ -168,7 +170,7 @@ def generate_custom_test_tpc(name: str,
 
 def generate_test_fqc(name: str,
                       tpc: schema.TargetPlatformCapabilities,
-                      base_fqc: tp.FrameworkQuantizationCapabilities,
+                      base_fqc: FrameworkQuantizationCapabilities,
                       op_sets_to_layer_add: Dict[str, List[Any]] = None,
                       op_sets_to_layer_drop: Dict[str, List[Any]] = None,
                       attr_mapping: Dict[str, Dict] = {}):
@@ -189,20 +191,20 @@ def generate_test_fqc(name: str,
         # Remove empty op sets
         merged_dict = {op_set_name: layers for op_set_name, layers in merged_dict.items() if len(layers) == 0}
 
-    fqc = tp.FrameworkQuantizationCapabilities(tpc)
+    fqc = FrameworkQuantizationCapabilities(tpc)
 
     with fqc:
         for op_set_name, layers in merged_dict.items():
             am = attr_mapping.get(op_set_name)
-            tp.OperationsSetToLayers(op_set_name, layers, attr_mapping=am)
+            OperationsSetToLayers(op_set_name, layers, attr_mapping=am)
 
     return fqc
 
 
 def generate_test_attr_configs(default_cfg_nbits: int = 8,
-                               default_cfg_quantizatiom_method: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
+                               default_cfg_quantizatiom_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                                kernel_cfg_nbits: int = 8,
-                               kernel_cfg_quantizatiom_method: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
+                               kernel_cfg_quantizatiom_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                                enable_kernel_weights_quantization: bool = True,
                                kernel_lut_values_bitwidth: int = None):
     default_weight_attr_config = schema.AttributeQuantizationConfig(
@@ -220,7 +222,7 @@ def generate_test_attr_configs(default_cfg_nbits: int = 8,
         lut_values_bitwidth=kernel_lut_values_bitwidth)
 
     bias_config = schema.AttributeQuantizationConfig(
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=FLOAT_BITWIDTH,
         weights_per_channel_threshold=False,
         enable_weights_quantization=False,
@@ -236,7 +238,7 @@ def generate_test_op_qc(default_weight_attr_config: schema.AttributeQuantization
                         bias_config: schema.AttributeQuantizationConfig,
                         enable_activation_quantization: bool = True,
                         activation_n_bits: int = 8,
-                        activation_quantization_method: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO):
+                        activation_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO):
     return schema.OpQuantizationConfig(enable_activation_quantization=enable_activation_quantization,
                                           default_weight_attr_config=default_weight_attr_config,
                                           attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config,

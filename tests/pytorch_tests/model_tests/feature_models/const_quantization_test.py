@@ -28,9 +28,7 @@ from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
-from mct_quantizers import PytorchQuantizationWrapper
-
-tp = mct.target_platform
+from mct_quantizers import PytorchQuantizationWrapper, QuantizationMethod
 
 
 class ConstQuantizationNet(nn.Module):
@@ -231,9 +229,8 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
                                                                  {"WeightQuant": CustomOpsetLayers([torch.Tensor.expand, torch.cat])}))
 
     def get_tpc(self):
-        tp = mct.target_platform
         attr_cfg = generate_test_attr_configs()
-        base_cfg = schema.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        base_cfg = schema.OpQuantizationConfig(activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                                                enable_activation_quantization=True,
                                                activation_n_bits=32,
                                                supported_input_activation_n_bits=32,
@@ -251,7 +248,7 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
                                                default_weight_attr_config=base_cfg.default_weight_attr_config.clone_and_edit(
                                                    enable_weights_quantization=True,
                                                    weights_per_channel_threshold=False,
-                                                   weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
+                                                   weights_quantization_method=QuantizationMethod.POWER_OF_TWO))
         const_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config]))
 
         tpc = schema.TargetPlatformCapabilities(

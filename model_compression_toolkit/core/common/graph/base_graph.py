@@ -32,8 +32,9 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    FrameworkQuantizationCapabilities, LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 

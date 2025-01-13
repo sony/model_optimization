@@ -30,7 +30,6 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 
-tp = mct.target_platform
 
 
 def _generate_bn_quantized_tpm(quantize_linear):

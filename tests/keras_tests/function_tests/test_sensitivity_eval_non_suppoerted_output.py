@@ -20,7 +20,7 @@ import tensorflow as tf
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters

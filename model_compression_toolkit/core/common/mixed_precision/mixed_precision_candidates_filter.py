@@ -17,7 +17,8 @@ import numpy as np
 from model_compression_toolkit.core import ResourceUtilization, FrameworkInfo
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 def filter_candidates_for_mixed_precision(graph: Graph,

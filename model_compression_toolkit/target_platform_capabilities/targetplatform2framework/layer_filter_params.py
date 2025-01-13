@@ -14,7 +14,6 @@
 # ==============================================================================
 
 from typing import Any
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import AttributeFilter
 
 
 class LayerFilterParams:

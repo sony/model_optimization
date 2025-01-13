@@ -26,7 +26,6 @@ from model_compression_toolkit.target_platform_capabilities.constants import IMX
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class MetadataTest(BaseKerasFeatureNetworkTest):

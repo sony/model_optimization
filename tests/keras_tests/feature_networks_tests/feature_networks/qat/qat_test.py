@@ -45,8 +45,8 @@ layers = keras.layers
 
 class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=False,
-                 weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                 activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                  test_loading=False):
         self.layer = layer
         self.weight_bits = weight_bits
@@ -163,8 +163,8 @@ class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest
 
 class QATWrappersTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=True,
-                 weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                 activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                  training_method=TrainingMethod.STE,
                  per_channel=True,
                  test_loading=False):

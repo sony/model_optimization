@@ -22,7 +22,6 @@ from model_compression_toolkit.constants import TENSORFLOW
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class TpcTest(BaseKerasFeatureNetworkTest):

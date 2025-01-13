@@ -21,6 +21,8 @@ from keras import Input
 from keras.layers import Conv2D
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 
 if tf.__version__ >= "2.13":
     from keras.src.engine.input_layer import InputLayer
@@ -29,8 +31,6 @@ else:
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import QuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpcToKeras
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth

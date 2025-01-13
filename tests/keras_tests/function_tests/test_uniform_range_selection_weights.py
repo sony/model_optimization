@@ -22,7 +22,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.keras.constants import KERNEL
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -57,7 +57,7 @@ def representative_dataset():
 
 def get_tpc(per_channel):
     tp = generate_test_tpc({
-        'weights_quantization_method': mct.target_platform.QuantizationMethod.UNIFORM,
+        'weights_quantization_method': mct.QuantizationMethod.UNIFORM,
         'weights_per_channel_threshold': per_channel})
     tpc = generate_keras_tpc(name="uniform_range_selection_test", tpc=tp)
 

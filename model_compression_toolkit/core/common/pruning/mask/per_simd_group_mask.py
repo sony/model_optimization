@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common.pruning.mask.per_channel_mask import 
 from model_compression_toolkit.core.common.pruning.memory_calculator import MemoryCalculator
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 
 class PerSIMDGroupMask:
     def __init__(self,

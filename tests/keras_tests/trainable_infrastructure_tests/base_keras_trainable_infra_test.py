@@ -17,8 +17,7 @@ from typing import Dict, Any
 import numpy as np
 import tensorflow as tf
 from tensorflow import TensorShape
-
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from mct_quantizers import QuantizationTarget, mark_quantizer
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer

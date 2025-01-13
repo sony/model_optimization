@@ -23,7 +23,8 @@ from model_compression_toolkit.core.graph_prep_runner import graph_preparation_r
 from typing import Any, Callable
 
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import \
+    FrameworkQuantizationCapabilities
 
 
 class ModelFoldingUtils:

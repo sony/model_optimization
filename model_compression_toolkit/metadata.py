@@ -18,7 +18,8 @@ from typing import Dict, Any
 from model_compression_toolkit.constants import OPERATORS_SCHEDULING, FUSED_NODES_MAPPING, CUTS, MAX_CUT, OP_ORDER, \
     OP_RECORD, SHAPE, NODE_OUTPUT_INDEX, NODE_NAME, TOTAL_SIZE, MEM_ELEMENTS
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import SchedulerInfo
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 def create_model_metadata(fqc: FrameworkQuantizationCapabilities,

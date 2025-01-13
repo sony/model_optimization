@@ -22,11 +22,11 @@ import tensorflow as tf
 from sklearn.metrics.pairwise import distance_metrics
 from tensorflow.keras.layers import PReLU, ELU
 
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.gptq.keras.gptq_loss import sample_layer_attention_loss
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_bias_correction_test import \

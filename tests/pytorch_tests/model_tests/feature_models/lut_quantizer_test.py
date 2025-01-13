@@ -24,7 +24,6 @@ from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
-tp = mct.target_platform
 
 
 def get_uniform_weights(out_channels, in_channels, kernel):
@@ -80,7 +79,7 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
     We check that the weights have different values for conv1 and conv2, and that conv2 and conv3 have the same
     values.
     """
-    def __init__(self, unit_test, weights_n_bits=4, quant_method=tp.QuantizationMethod.LUT_POT_QUANTIZER):
+    def __init__(self, unit_test, weights_n_bits=4, quant_method=QuantizationMethod.LUT_POT_QUANTIZER):
         super().__init__(unit_test)
         self.weights_n_bits = weights_n_bits
         self.quant_method = quant_method
@@ -134,7 +133,7 @@ class LUTActivationQuantizerTest(BasePytorchTest):
     def get_tpc(self):
         return get_pytorch_test_tpc_dict(
             tpc=generate_test_tpc({"activation_n_bits": self.activation_n_bits,
-                                             "activation_quantization_method": tp.QuantizationMethod.LUT_POT_QUANTIZER}),
+                                             "activation_quantization_method": QuantizationMethod.LUT_POT_QUANTIZER}),
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')
 

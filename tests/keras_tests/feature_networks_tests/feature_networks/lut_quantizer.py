@@ -34,7 +34,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):
@@ -59,7 +58,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_tpc(self):
-        qmethod = tp.QuantizationMethod.LUT_SYM_QUANTIZER if self.is_symmetric else tp.QuantizationMethod.LUT_POT_QUANTIZER
+        qmethod = QuantizationMethod.LUT_SYM_QUANTIZER if self.is_symmetric else QuantizationMethod.LUT_POT_QUANTIZER
         tpc = generate_test_tpc({'weights_n_bits': self.weights_n_bits,
                                            'weights_quantization_method': qmethod})
         return generate_keras_tpc(name='lut_quantizer_test', tpc=tpc)
@@ -69,7 +68,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
             network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                      action=ChangeCandidatesWeightsQuantizationMethod(
                                          weights_quantization_method=
-                                         mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                         mct.QuantizationMethod.POWER_OF_TWO,
                                          attr_name=KERNEL))])
 
     def get_input_shapes(self):
@@ -105,7 +104,7 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32)
 
     def get_tpc(self):
-        tpc = generate_test_tpc({'activation_quantization_method': tp.QuantizationMethod.LUT_POT_QUANTIZER,
+        tpc = generate_test_tpc({'activation_quantization_method': QuantizationMethod.LUT_POT_QUANTIZER,
                                            'activation_n_bits': self.activation_n_bits})
         return generate_keras_tpc(name='lut_quantizer_test', tpc=tpc)
 

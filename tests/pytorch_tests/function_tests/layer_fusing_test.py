@@ -19,10 +19,10 @@ from torch.nn.functional import relu, relu6
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import QuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
@@ -32,7 +32,6 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 import model_compression_toolkit as mct
 
-tp = mct.target_platform
 
 
 class BaseLayerFusingTest(BasePytorchTest):

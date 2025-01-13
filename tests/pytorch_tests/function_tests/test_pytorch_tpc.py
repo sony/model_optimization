@@ -28,18 +28,17 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
-    Greater, Smaller, Eq
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL, KERNEL_ATTR, WEIGHTS_N_BITS, PYTORCH_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Greater, \
+    Smaller, Eq
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
 
-tp = mct.target_platform
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
 TEST_QCO = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
@@ -113,7 +112,7 @@ class TestPytorchTPModel(unittest.TestCase):
                                                 add_metadata=False,
                                                 name='test')
 
-        tpc_pytorch = tp.FrameworkQuantizationCapabilities(tpm)
+        tpc_pytorch = FrameworkQuantizationCapabilities(tpm)
         with tpc_pytorch:
             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d],
                                      attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),

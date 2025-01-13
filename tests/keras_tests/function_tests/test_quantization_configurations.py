@@ -41,9 +41,9 @@ class TestQuantizationConfigurations(unittest.TestCase):
         def representative_data_gen():
             yield [x]
 
-        quantizer_methods = [mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                             mct.target_platform.QuantizationMethod.SYMMETRIC,
-                             mct.target_platform.QuantizationMethod.UNIFORM]
+        quantizer_methods = [mct.QuantizationMethod.POWER_OF_TWO,
+                             mct.QuantizationMethod.SYMMETRIC,
+                             mct.QuantizationMethod.UNIFORM]
 
         quantization_error_methods = [mct.core.QuantizationErrorMethod.MSE,
                                       mct.core.QuantizationErrorMethod.NOCLIPPING,

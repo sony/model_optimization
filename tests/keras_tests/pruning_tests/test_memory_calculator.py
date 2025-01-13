@@ -24,7 +24,7 @@ from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 
 import keras
 
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
 layers = keras.layers

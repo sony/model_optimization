@@ -25,6 +25,13 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Greater, \
+    Smaller, GreaterEq, Eq, SmallerEq, Contains
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.operations_to_layers import \
+    OperationsSetToLayers
 from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -36,17 +43,10 @@ else:
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
-    Greater, \
-    Smaller, GreaterEq, Eq, SmallerEq, Contains
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     QNNPACK_TP_MODEL, TFLITE_TP_MODEL, KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS, WEIGHTS_N_BITS
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 
-tp = mct.target_platform
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
 TEST_QCO = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
@@ -116,7 +116,7 @@ class TestKerasTPModel(unittest.TestCase):
         fw_tp = FrameworkQuantizationCapabilities(hm)
         with fw_tp:
             opset_layers = [Conv2D, LayerFilterParams(ReLU, max_value=2)]
-            tp.OperationsSetToLayers('opsetA', opset_layers)
+            OperationsSetToLayers('opsetA', opset_layers)
         self.assertEqual(fw_tp.get_layers_by_opset_name('opsetA'), opset_layers)
         self.assertEqual(fw_tp.get_layers_by_opset(op_obj), opset_layers)
         self.assertEqual(fw_tp.get_layers_by_opset_name('nonExistingOpsetName'), None)
@@ -137,8 +137,8 @@ class TestKerasTPModel(unittest.TestCase):
         with fw_tp:
             opset_layers_a = [Conv2D]
             opset_layers_b = [LayerFilterParams(ReLU, max_value=2)]
-            tp.OperationsSetToLayers('opsetA', opset_layers_a)
-            tp.OperationsSetToLayers('opsetB', opset_layers_b)
+            OperationsSetToLayers('opsetA', opset_layers_a)
+            OperationsSetToLayers('opsetB', opset_layers_b)
 
         self.assertEqual(fw_tp.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
 
@@ -156,8 +156,8 @@ class TestKerasTPModel(unittest.TestCase):
         fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
-                tp.OperationsSetToLayers('opsetA', [Conv2D])
-                tp.OperationsSetToLayers('opsetB', [Conv2D])
+                OperationsSetToLayers('opsetA', [Conv2D])
+                OperationsSetToLayers('opsetB', [Conv2D])
         self.assertEqual('Found layer Conv2D in more than one OperatorsSet', str(e.exception))
 
     def test_filter_layer_attached_to_multiple_opsets(self):
@@ -172,8 +172,8 @@ class TestKerasTPModel(unittest.TestCase):
         fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
-                tp.OperationsSetToLayers('opsetA', [LayerFilterParams(Activation, activation="relu")])
-                tp.OperationsSetToLayers('opsetB', [LayerFilterParams(Activation, activation="relu")])
+                OperationsSetToLayers('opsetA', [LayerFilterParams(Activation, activation="relu")])
+                OperationsSetToLayers('opsetB', [LayerFilterParams(Activation, activation="relu")])
         self.assertEqual('Found layer Activation(activation=relu) in more than one OperatorsSet', str(e.exception))
 
     def test_qco_by_keras_layer(self):
@@ -200,13 +200,13 @@ class TestKerasTPModel(unittest.TestCase):
                                                 add_metadata=False,
                                                 name='test')
 
-        tpc_keras = tp.FrameworkQuantizationCapabilities(tpm)
+        tpc_keras = FrameworkQuantizationCapabilities(tpm)
         with tpc_keras:
-            tp.OperationsSetToLayers("conv", [Conv2D],
+            OperationsSetToLayers("conv", [Conv2D],
                                      attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)})
-            tp.OperationsSetToLayers("tanh", [tf.nn.tanh])
-            tp.OperationsSetToLayers("relu", [LayerFilterParams(Activation, activation="relu")])
+            OperationsSetToLayers("tanh", [tf.nn.tanh])
+            OperationsSetToLayers("relu", [LayerFilterParams(Activation, activation="relu")])
 
         conv_node = get_node(Conv2D(1, 1))
         tanh_node = get_node(tf.nn.tanh)
@@ -234,7 +234,7 @@ class TestKerasTPModel(unittest.TestCase):
     #                                     tpc_platform_type=None,
     #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
     #                                     add_metadata=False)
-    #     hm_keras = tp.FrameworkQuantizationCapabilities(hm)
+    #     hm_keras = FrameworkQuantizationCapabilities(hm)
     #     with self.assertRaises(Exception) as e:
     #         with hm_keras:
     #             tp.OperationsSetToLayers("conv", [Conv2D])
@@ -259,11 +259,11 @@ class TestKerasTPModel(unittest.TestCase):
                                                fusing_patterns=tuple(fusing_patterns),
                                                add_metadata=False)
 
-        hm_keras = tp.FrameworkQuantizationCapabilities(hm)
+        hm_keras = FrameworkQuantizationCapabilities(hm)
         with hm_keras:
-            tp.OperationsSetToLayers("opA", [Conv2D])
-            tp.OperationsSetToLayers("opB", [tf.nn.tanh])
-            tp.OperationsSetToLayers("opC", [LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0)])
+            OperationsSetToLayers("opA", [Conv2D])
+            OperationsSetToLayers("opB", [tf.nn.tanh])
+            OperationsSetToLayers("opC", [LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0)])
 
         fusings = hm_keras.get_fusing_patterns()
         self.assertEqual(len(fusings), 2)
@@ -287,9 +287,9 @@ class TestKerasTPModel(unittest.TestCase):
                                                 operator_set=tuple([schema.OperatorsSet(name="opA")]),
                                                 add_metadata=False)
 
-        tpc = tp.FrameworkQuantizationCapabilities(tpm)
+        tpc = FrameworkQuantizationCapabilities(tpm)
         with tpc:
-            tp.OperationsSetToLayers("opA", [Conv2D])
+            OperationsSetToLayers("opA", [Conv2D])
 
         d_qco = tpc.get_default_op_qc()
         self.assertEqual(d_qco, TEST_QC)

@@ -24,7 +24,6 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import model_compression_toolkit as mct
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
-tp = mct.target_platform
 keras = tf.keras
 layers = keras.layers
 
@@ -39,7 +38,7 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         tpc = generate_test_tpc({
-            'activation_quantization_method': tp.QuantizationMethod.SYMMETRIC,
+            'activation_quantization_method': QuantizationMethod.SYMMETRIC,
             'activation_n_bits': 8})
         return generate_keras_tpc(name="symmetric_threshold_test", tpc=tpc)
 

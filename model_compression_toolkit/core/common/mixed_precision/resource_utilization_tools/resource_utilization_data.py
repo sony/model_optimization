@@ -25,9 +25,10 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import calc_graph_cuts
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 def compute_resource_utilization_data(in_model: Any,

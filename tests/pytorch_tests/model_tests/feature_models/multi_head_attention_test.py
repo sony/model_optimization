@@ -20,7 +20,6 @@ import torch.nn as nn
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 

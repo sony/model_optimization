@@ -32,7 +32,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL, GAMMA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -42,7 +42,6 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
-tp = mct.target_platform
 
 
 def model_gen():
@@ -137,44 +136,44 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
         _run_node_verification(layers.Dense)
 
     def test_pot_threshold_selection_hmse_per_channel(self):
-        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, per_channel=True)
+        self._setup_with_args(quant_method=mct.QuantizationMethod.POWER_OF_TWO, per_channel=True)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_pot_threshold_selection_hmse_per_tensor(self):
-        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, per_channel=False)
+        self._setup_with_args(quant_method=mct.QuantizationMethod.POWER_OF_TWO, per_channel=False)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_symmetric_threshold_selection_hmse_per_channel(self):
-        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True)
+        self._setup_with_args(quant_method=mct.QuantizationMethod.SYMMETRIC, per_channel=True)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_symmetric_threshold_selection_hmse_per_tensor(self):
-        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=False)
+        self._setup_with_args(quant_method=mct.QuantizationMethod.SYMMETRIC, per_channel=False)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_usniform_threshold_selection_hmse_per_channel(self):
-        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.UNIFORM, per_channel=True)
+        self._setup_with_args(quant_method=mct.QuantizationMethod.UNIFORM, per_channel=True)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(RANGE_MAX)
 
     def test_uniform_threshold_selection_hmse_per_tensor(self):
-        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.UNIFORM, per_channel=False)
+        self._setup_with_args(quant_method=mct.QuantizationMethod.UNIFORM, per_channel=False)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(RANGE_MAX)
 
     def test_threshold_selection_hmse_no_gptq(self):
         with self.assertRaises(ValueError) as e:
-            self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True,
+            self._setup_with_args(quant_method=mct.QuantizationMethod.SYMMETRIC, per_channel=True,
                                   running_gptq=False)
         self.assertTrue('The HMSE error method for parameters selection is only supported when running GPTQ '
                         'optimization due to long execution time that is not suitable for basic PTQ.' in
@@ -201,7 +200,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
             return tpc
 
-        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True,
+        self._setup_with_args(quant_method=mct.QuantizationMethod.SYMMETRIC, per_channel=True,
                               tpc_fn=_generate_bn_quantization_tpc, model_gen_fn=no_bn_fusion_model_gen)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)

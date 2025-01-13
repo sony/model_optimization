@@ -16,8 +16,6 @@
 import model_compression_toolkit as mct
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
-tp = mct.target_platform
-
 
 def get_pytorch_test_tpc_dict(tpc, test_name, ftp_name):
     return {

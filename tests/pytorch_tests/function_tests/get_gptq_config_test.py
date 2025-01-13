@@ -17,16 +17,15 @@ import torch
 from torch import nn
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.gptq import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization, RoundingType
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit import DefaultDict
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
-tp = mct.target_platform
 
 
 class TestModel(nn.Module):

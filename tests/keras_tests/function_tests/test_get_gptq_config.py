@@ -18,13 +18,13 @@ from typing import List
 import numpy as np
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 
 from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization, GradientPTQConfig, RoundingType
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod, CoreConfig
 from model_compression_toolkit import DefaultDict
 import tensorflow as tf
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_config import GPTQHessianScoresConfig
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss

@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import get_tensor_max, \
     get_tensor_min
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor
 

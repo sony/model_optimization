@@ -29,8 +29,6 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 
 import model_compression_toolkit as mct
 
-tp = mct.target_platform
-
 
 def prepare_graph_with_configs(in_model,
                                fw_impl,

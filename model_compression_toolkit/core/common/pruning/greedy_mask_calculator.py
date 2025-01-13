@@ -24,7 +24,8 @@ from model_compression_toolkit.core.common.pruning.memory_calculator import Memo
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.mask.per_simd_group_mask import PerSIMDGroupMask
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 class GreedyMaskCalculator:

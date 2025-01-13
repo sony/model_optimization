@@ -25,7 +25,9 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
     OpQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities, LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 class BaseNode:

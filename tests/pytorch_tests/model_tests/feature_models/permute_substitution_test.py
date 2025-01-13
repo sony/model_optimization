@@ -21,9 +21,6 @@ from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 
 
-tp = mct.target_platform
-
-
 class BasePermuteSubstitutionTest(BasePytorchFeatureNetworkTest):
 
     def __init__(self, unit_test):

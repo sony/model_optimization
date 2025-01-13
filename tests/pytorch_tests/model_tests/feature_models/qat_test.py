@@ -94,8 +94,8 @@ def repr_datagen():
 
 class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
     def __init__(self, unit_test, weight_bits=2, activation_bits=4,
-                 weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                 activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
                  training_method=TrainingMethod.STE,
                  finalize=False, test_loading=False):
 

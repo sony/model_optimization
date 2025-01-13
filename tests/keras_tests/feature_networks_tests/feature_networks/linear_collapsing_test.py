@@ -31,7 +31,6 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):

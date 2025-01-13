@@ -23,7 +23,6 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
 
-tp = mct.target_platform
 
 
 def get_tpc() -> TargetPlatformCapabilities:
@@ -56,7 +55,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # We define a default quantization config for all non-specified weights attributes.
     default_weight_attr_config = AttributeQuantizationConfig(
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=8,
         weights_per_channel_threshold=False,
         enable_weights_quantization=False,
@@ -64,7 +63,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # We define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
     kernel_base_config = AttributeQuantizationConfig(
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=8,
         weights_per_channel_threshold=True,
         enable_weights_quantization=True,
@@ -72,7 +71,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # We define a quantization config to quantize the bias (for layers where there is a bias attribute).
     bias_config = AttributeQuantizationConfig(
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=FLOAT_BITWIDTH,
         weights_per_channel_threshold=False,
         enable_weights_quantization=False,
@@ -87,7 +86,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     eight_bits_default = schema.OpQuantizationConfig(
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={},
-        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,
         supported_input_activation_n_bits=8,
         enable_activation_quantization=True,
@@ -99,7 +98,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
     linear_eight_bits = schema.OpQuantizationConfig(
-        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
         activation_n_bits=8,

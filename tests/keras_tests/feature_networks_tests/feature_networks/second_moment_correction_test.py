@@ -20,6 +20,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
@@ -37,9 +38,7 @@ from model_compression_toolkit.core.keras.statistics_correction.apply_second_mom
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
@@ -51,7 +50,6 @@ from tensorflow.keras.models import Model
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):

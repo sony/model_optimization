@@ -22,8 +22,8 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     KERNEL_BASE_CONFIG, BIAS_CONFIG
 
@@ -65,9 +65,8 @@ def get_tpc():
     Returns:
          FrameworkQuantizationCapabilities object
     """
-    tp = mct.target_platform
     attr_cfg = generate_test_attr_configs(kernel_lut_values_bitwidth=0)
-    base_cfg = schema.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+    base_cfg = schema.OpQuantizationConfig(activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                                            enable_activation_quantization=True,
                                            activation_n_bits=32,
                                            supported_input_activation_n_bits=32,

@@ -28,8 +28,6 @@ from mct_quantizers.pytorch.metadata import add_metadata, get_metadata, add_onnx
 import tempfile
 import os
 
-tp = mct.target_platform
-
 
 class DummyNet(nn.Module):
     def __init__(self):

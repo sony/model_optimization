@@ -16,6 +16,9 @@
 import tensorflow as tf
 from packaging import version
 
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2fw import \
+    AttachTpcToFramework
 from model_compression_toolkit.verify_packages import FOUND_SONY_CUSTOM_LAYERS
 
 if FOUND_SONY_CUSTOM_LAYERS:
@@ -34,9 +37,6 @@ from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS, \
     BIAS_ATTR, KERAS_KERNEL, KERAS_DEPTHWISE_KERNEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
-from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    AttachTpcToFramework
 
 
 class AttachTpcToKeras(AttachTpcToFramework):
