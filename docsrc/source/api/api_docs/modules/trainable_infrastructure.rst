@@ -55,7 +55,7 @@ For example, we can set a trainable weights quantizer with the following configu
 
 .. code-block:: python
 
-    from model_compression_toolkit.target_platform_capabilities import QuantizationMethod
+    from model_compression_toolkit.target_platform_capabilities.target_platform_capabilities import QuantizationMethod
     from model_compression_toolkit.constants import THRESHOLD, MIN_THRESHOLD
 
     TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.SYMMETRIC,
@@ -79,7 +79,7 @@ For example, we can set a trainable activation quantizer with the following conf
 
 .. code-block:: python
 
-    from model_compression_toolkit.target_platform_capabilities import QuantizationMethod
+    from model_compression_toolkit.target_platform_capabilities.target_platform_capabilities import QuantizationMethod
     from model_compression_toolkit.constants import THRESHOLD, MIN_THRESHOLD
 
     TrainableQuantizerActivationConfig(activation_quantization_method=QuantizationMethod.UNIFORM,

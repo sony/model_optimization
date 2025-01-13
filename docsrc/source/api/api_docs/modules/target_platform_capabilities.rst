@@ -3,9 +3,9 @@
 .. _ug-target_platform_capabilities:
 
 
-=================================
+=====================================
 target_platform_capabilities Module
-=================================
+=====================================
 
 MCT can be configured to quantize and optimize models for different hardware settings.
 For example, when using qnnpack backend for Pytorch model inference, Pytorch `quantization
@@ -24,7 +24,7 @@ Models for IMX500, TFLite and qnnpack can be observed `here <https://github.com/
 
 |
 
-The object MCT should get called FrameworkQuantizationCapabilities (or shortly TPC).
+The object MCT should get called TargetPlatformCapabilities (or shortly TPC).
 This diagram demonstrates the main components:
 
 .. image:: ../../../../images/tpc.jpg
@@ -42,62 +42,37 @@ QuantizationMethod
 
 OpQuantizationConfig
 ======================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.OpQuantizationConfig
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OpQuantizationConfig
 
 
 
 AttributeQuantizationConfig
 ============================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.AttributeQuantizationConfig
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig
 
 
 QuantizationConfigOptions
 ============================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.QuantizationConfigOptions
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions
 
 
 TargetPlatformCapabilities
-=======================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.TargetPlatformCapabilities
+============================
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities
 
 
 OperatorsSet
 ================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.OperatorsSet
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet
 
 
 
 Fusing
 ==============
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.Fusing
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing
 
 
 
 OperatorSetGroup
 ====================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.OperatorSetGroup
-
-
-OperationsToLayers
-=====================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.OperationsToLayers
-
-
-OperationsSetToLayers
-=========================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.OperationsSetToLayers
-
-
-LayerFilterParams
-=========================
-.. autoclass:: model_compression_toolkit.target_platform_capabilities.LayerFilterParams
-
-More filters and usage examples are detailed :ref:`here<ug-layer_filters>`.
-
-
-FrameworkQuantizationCapabilities
-=============================
-.. autoclass:: model_compression_toolkit.target_platform.FrameworkQuantizationCapabilities
-
-
-
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup
