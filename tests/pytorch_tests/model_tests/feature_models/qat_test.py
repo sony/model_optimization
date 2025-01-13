@@ -23,7 +23,8 @@ import torch.utils.data as data
 from torch import Tensor
 
 import model_compression_toolkit as mct
-from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarget, PytorchQuantizationWrapper
+from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarget, PytorchQuantizationWrapper, \
+    QuantizationMethod
 from mct_quantizers.common.base_inferable_quantizer import QuantizerID
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
@@ -94,8 +95,8 @@ def repr_datagen():
 
 class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
     def __init__(self, unit_test, weight_bits=2, activation_bits=4,
-                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                 weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                 activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                  training_method=TrainingMethod.STE,
                  finalize=False, test_loading=False):
 

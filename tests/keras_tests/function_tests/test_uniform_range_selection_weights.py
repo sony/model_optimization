@@ -19,6 +19,7 @@ from keras import Input, Model
 from keras.layers import Conv2D, Conv2DTranspose
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.keras.constants import KERNEL
@@ -57,7 +58,7 @@ def representative_dataset():
 
 def get_tpc(per_channel):
     tp = generate_test_tpc({
-        'weights_quantization_method': mct.QuantizationMethod.UNIFORM,
+        'weights_quantization_method': QuantizationMethod.UNIFORM,
         'weights_per_channel_threshold': per_channel})
     tpc = generate_keras_tpc(name="uniform_range_selection_test", tpc=tp)
 

@@ -19,7 +19,8 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, KerasQuantizationWrapper
+from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, KerasQuantizationWrapper, \
+    QuantizationMethod
 from mct_quantizers.common.base_inferable_quantizer import QuantizerID
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
@@ -45,8 +46,8 @@ layers = keras.layers
 
 class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=False,
-                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                 weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                 activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                  test_loading=False):
         self.layer = layer
         self.weight_bits = weight_bits
@@ -163,8 +164,8 @@ class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest
 
 class QATWrappersTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=True,
-                 weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-                 activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+                 weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                 activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                  training_method=TrainingMethod.STE,
                  per_channel=True,
                  test_loading=False):

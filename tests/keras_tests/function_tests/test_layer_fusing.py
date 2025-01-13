@@ -8,6 +8,7 @@ from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
@@ -199,14 +200,14 @@ class TestLayerFusing(unittest.TestCase):
 
         qc = QuantizationConfig(custom_tpc_opset_to_layer={"Conv": CustomOpsetLayers([Conv2D]),
                                                            "AnyReLU": CustomOpsetLayers([tf.nn.relu,
-                                                                        tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                                                        tp.LayerFilterParams(Activation,
+                                                                        LayerFilterParams(ReLU, negative_slope=0.0),
+                                                                        LayerFilterParams(Activation,
                                                                                              activation="relu")]),
-                                                           "Swish": CustomOpsetLayers([tf.nn.swish, tp.LayerFilterParams(Activation,
+                                                           "Swish": CustomOpsetLayers([tf.nn.swish, LayerFilterParams(Activation,
                                                                                                         activation="swish")]),
-                                                           "Sigmoid": CustomOpsetLayers([tf.nn.sigmoid, tp.LayerFilterParams(Activation,
+                                                           "Sigmoid": CustomOpsetLayers([tf.nn.sigmoid, LayerFilterParams(Activation,
                                                                                                             activation="sigmoid")]),
-                                                           "Tanh": CustomOpsetLayers([tf.nn.tanh, tp.LayerFilterParams(Activation,
+                                                           "Tanh": CustomOpsetLayers([tf.nn.tanh, LayerFilterParams(Activation,
                                                                                                       activation="tanh")])})
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
@@ -221,8 +222,8 @@ class TestLayerFusing(unittest.TestCase):
 
         qc = QuantizationConfig(custom_tpc_opset_to_layer={"Conv": CustomOpsetLayers([Conv2D]),
                                                            "AnyReLU": CustomOpsetLayers([tf.nn.relu,
-                                                                        tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                                                        tp.LayerFilterParams(Activation,
+                                                                        LayerFilterParams(ReLU, negative_slope=0.0),
+                                                                        LayerFilterParams(Activation,
                                                                                              activation="relu")])})
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
@@ -240,11 +241,11 @@ class TestLayerFusing(unittest.TestCase):
             "Conv": CustomOpsetLayers([Conv2D]),
             "FullyConnected": CustomOpsetLayers([Dense]),
             "AnyReLU": CustomOpsetLayers([tf.nn.relu,
-                         tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                         tp.LayerFilterParams(Activation,
+                         LayerFilterParams(ReLU, negative_slope=0.0),
+                         LayerFilterParams(Activation,
                                               activation="relu")]),
             "Add": CustomOpsetLayers([tf.add, Add]),
-            "Swish": CustomOpsetLayers([tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")]),
+            "Swish": CustomOpsetLayers([tf.nn.swish, LayerFilterParams(Activation, activation="swish")]),
         })
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,

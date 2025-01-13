@@ -21,6 +21,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
@@ -41,9 +42,9 @@ class TestQuantizationConfigurations(unittest.TestCase):
         def representative_data_gen():
             yield [x]
 
-        quantizer_methods = [mct.QuantizationMethod.POWER_OF_TWO,
-                             mct.QuantizationMethod.SYMMETRIC,
-                             mct.QuantizationMethod.UNIFORM]
+        quantizer_methods = [QuantizationMethod.POWER_OF_TWO,
+                             QuantizationMethod.SYMMETRIC,
+                             QuantizationMethod.UNIFORM]
 
         quantization_error_methods = [mct.core.QuantizationErrorMethod.MSE,
                                       mct.core.QuantizationErrorMethod.NOCLIPPING,

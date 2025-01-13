@@ -19,7 +19,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from mct_quantizers import KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder, QuantizationMethod
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
@@ -68,7 +68,7 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
             network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                      action=ChangeCandidatesWeightsQuantizationMethod(
                                          weights_quantization_method=
-                                         mct.QuantizationMethod.POWER_OF_TWO,
+                                         QuantizationMethod.POWER_OF_TWO,
                                          attr_name=KERNEL))])
 
     def get_input_shapes(self):

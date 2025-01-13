@@ -19,6 +19,7 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR

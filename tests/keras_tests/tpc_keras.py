@@ -15,6 +15,7 @@
 from packaging import version
 import tensorflow as tf
 
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
     KERAS_DEPTHWISE_KERNEL
@@ -35,8 +36,8 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 
 
 def get_tpc(name, weight_bits=8, activation_bits=8,
-            weights_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
-            activation_quantization_method=mct.QuantizationMethod.POWER_OF_TWO,
+            weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
             per_channel=True):
     tpc = generate_test_tpc({'weights_n_bits': weight_bits,
                                        'activation_n_bits': activation_bits,

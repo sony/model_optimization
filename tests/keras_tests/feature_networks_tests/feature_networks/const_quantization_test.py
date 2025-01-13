@@ -27,8 +27,7 @@ from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import generate_tpc, get_o
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.utils import get_layers_from_model_by_type
-from mct_quantizers import KerasQuantizationWrapper
-
+from mct_quantizers import KerasQuantizationWrapper, QuantizationMethod
 
 keras = tf.keras
 layers = keras.layers
