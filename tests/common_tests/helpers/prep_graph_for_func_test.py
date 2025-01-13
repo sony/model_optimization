@@ -27,8 +27,6 @@ from model_compression_toolkit.core.quantization_prep_runner import quantization
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tpc, \
     get_op_quantization_configs
 
-import model_compression_toolkit as mct
-
 
 def prepare_graph_with_configs(in_model,
                                fw_impl,

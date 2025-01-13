@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.defaultdict import DefaultDict
+from model_compression_toolkit import target_platform_capabilities as target_platform
 from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import get_target_platform_capabilities
 from model_compression_toolkit import core
 from model_compression_toolkit.logger import set_log_folder
