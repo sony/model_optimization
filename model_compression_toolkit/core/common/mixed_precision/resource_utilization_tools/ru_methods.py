@@ -132,9 +132,8 @@ class MixedPrecisionRUHelper:
         if not act_qcs:
             return {}
 
-        _, cuts_util, *_ = self.ru_calculator.compute_cut_activation_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                                                 bitwidth_mode=BitwidthMode.QCustom,
-                                                                                 act_qcs=act_qcs)
+        _, cuts_util, *_ = self.ru_calculator.compute_activation_utilization_by_cut(
+            TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs)
         cuts_util = {c: u.bytes for c, u in cuts_util.items()}
         return cuts_util
 
