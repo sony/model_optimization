@@ -150,6 +150,27 @@ class BaseNode:
 
         return False
 
+    def is_configurable_weight(self, attr_name: str) -> bool:
+        """
+        Checks whether the specific weight attribute has a configurable quantization.
+
+        Args:
+            attr_name: weight attribute name.
+
+        Returns:
+            Whether the weight attribute is configurable.
+        """
+        return self.is_weights_quantization_enabled(attr_name) and not self.is_all_weights_candidates_equal(attr_name)
+
+    def has_configurable_activation(self) -> bool:
+        """
+        Checks whether the activation has a configurable quantization.
+
+        Returns:
+            Whether the activation has a configurable quantization.
+        """
+        return self.is_activation_quantization_enabled() and not self.is_all_activation_candidates_equal()
+
     def __repr__(self):
         """
 
@@ -420,11 +441,15 @@ class BaseNode:
 
         Returns: Output size.
         """
-        output_shapes = self.output_shape if isinstance(self.output_shape, List) else [self.output_shape]
+        # shape can be tuple or list, and multiple shapes can be packed in list or tuple
+        if self.output_shape and isinstance(self.output_shape[0], (tuple, list)):
+            output_shapes = self.output_shape
+        else:
+            output_shapes = [self.output_shape]
 
         # remove batch size (first element) from output shape
         output_shapes = [s[1:] for s in output_shapes]
-
+        # for scalar shape (None,) prod returns 1
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
     def find_min_candidates_indices(self) -> List[int]:
