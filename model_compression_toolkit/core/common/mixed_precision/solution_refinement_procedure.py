@@ -80,8 +80,8 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 updated_ru.append(node_updated_ru)
 
             # filter out new configs that don't hold the resource utilization restrictions
-            node_filtered_ru = [(node_idx, ru) for node_idx, ru in zip(valid_candidates, updated_ru) if
-                                target_resource_utilization.holds_constraints(ru)]
+            node_filtered_ru = [(node_idx, ru) for node_idx, ru in zip(valid_candidates, updated_ru)
+                                if target_resource_utilization.is_satisfied_by(ru)]
 
             if len(node_filtered_ru) > 0:
                 sorted_by_ru = sorted(node_filtered_ru, key=lambda node_ru: (node_ru[1].total_memory,

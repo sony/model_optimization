@@ -12,43 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from collections import namedtuple
 
 import copy
-
-from typing import Callable, Tuple, Any, List, Dict
-
-import numpy as np
+from typing import Callable, Any, List
 
 from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
-
+from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut, \
     SchedulerInfo
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
+from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_candidates_filter import \
     filter_candidates_for_mixed_precision
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
+    ResourceUtilization
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
+    ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
     requires_mixed_precision
+from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
+from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
+    finalize_bitwidth_in_tb
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_aggregation_methods import MpRuAggregation
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import ru_functions_mapping
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
-from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
-from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
-    WeightsFinalBitwidthConfigVisualizer, \
-    ActivationFinalBitwidthConfigVisualizer
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
-    finalize_bitwidth_in_tb
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
 
@@ -89,7 +81,7 @@ def core_runner(in_model: Any,
     """
 
     # Warn is representative dataset has batch-size == 1
-    batch_data = iter(representative_data_gen()).__next__()
+    batch_data = next(iter(representative_data_gen()))
     if isinstance(batch_data, list):
         batch_data = batch_data[0]
     if batch_data.shape[0] == 1:
@@ -97,7 +89,7 @@ def core_runner(in_model: Any,
                        ' consider increasing the batch size')
 
     # Checking whether to run mixed precision quantization
-    if target_resource_utilization is not None:
+    if target_resource_utilization is not None and target_resource_utilization.is_any_restricted():
         if core_config.mixed_precision_config is None:
             Logger.critical("Provided an initialized target_resource_utilization, that means that mixed precision quantization is "
                             "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
@@ -178,7 +170,6 @@ def core_runner(in_model: Any,
 
     _set_final_resource_utilization(graph=tg,
                                     final_bit_widths_config=bit_widths_config,
-                                    ru_functions_dict=ru_functions_mapping,
                                     fw_info=fw_info,
                                     fw_impl=fw_impl)
 
@@ -216,7 +207,6 @@ def core_runner(in_model: Any,
 
 def _set_final_resource_utilization(graph: Graph,
                                     final_bit_widths_config: List[int],
-                                    ru_functions_dict: Dict[RUTarget, Tuple[MpRuMetric, MpRuAggregation]],
                                     fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation):
     """
@@ -226,39 +216,21 @@ def _set_final_resource_utilization(graph: Graph,
     Args:
         graph: Graph to compute the resource utilization for.
         final_bit_widths_config: The final bit-width configuration to quantize the model accordingly.
-        ru_functions_dict: A mapping between a RUTarget and a pair of resource utilization method and resource utilization aggregation functions.
         fw_info: A FrameworkInfo object.
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
 
     """
+    w_qcs = {n: n.final_weights_quantization_cfg for n in graph.nodes}
+    a_qcs = {n: n.final_activation_quantization_cfg for n in graph.nodes}
+    ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
+    final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.QCustom,
+                                                          act_qcs=a_qcs, w_qcs=w_qcs)
 
-    final_ru_dict = {}
-    for ru_target, ru_funcs in ru_functions_dict.items():
-        ru_method, ru_aggr = ru_funcs
-        if ru_target == RUTarget.BOPS:
-            final_ru_dict[ru_target] = \
-            ru_aggr(ru_method(final_bit_widths_config, graph, fw_info, fw_impl, False), False)[0]
-        else:
-            non_conf_ru = ru_method([], graph, fw_info, fw_impl)
-            conf_ru = ru_method(final_bit_widths_config, graph, fw_info, fw_impl)
-            if len(final_bit_widths_config) > 0 and len(non_conf_ru) > 0:
-                final_ru_dict[ru_target] = ru_aggr(np.concatenate([conf_ru, non_conf_ru]), False)[0]
-            elif len(final_bit_widths_config) > 0 and len(non_conf_ru) == 0:
-                final_ru_dict[ru_target] = ru_aggr(conf_ru, False)[0]
-            elif len(final_bit_widths_config) == 0 and len(non_conf_ru) > 0:
-                # final_bit_widths_config == 0 ==> no configurable nodes,
-                # thus, ru can be computed from non_conf_ru alone
-                final_ru_dict[ru_target] = ru_aggr(non_conf_ru, False)[0]
-            else:
-                # No relevant nodes have been quantized with affect on the given target - since we only consider
-                # in the model's final size the quantized layers size, this means that the final size for this target
-                # is zero.
-                Logger.warning(f"No relevant quantized layers for the ru target {ru_target} were found, the recorded "
-                               f"final ru for this target would be 0.")
-                final_ru_dict[ru_target] = 0
+    for ru_target, ru in final_ru.get_resource_utilization_dict().items():
+        if ru == 0:
+            Logger.warning(f"No relevant quantized layers for the resource utilization target {ru_target} were found, "
+                           f"the recorded final ru for this target would be 0.")
 
-    final_ru = ResourceUtilization()
-    final_ru.set_resource_utilization_by_target(final_ru_dict)
-    print(final_ru)
+    Logger.info(f'Resource utilization (of quantized targets):\n {str(final_ru)}.')
     graph.user_info.final_resource_utilization = final_ru
     graph.user_info.mixed_precision_cfg = final_bit_widths_config
