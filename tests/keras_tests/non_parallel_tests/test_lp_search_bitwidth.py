@@ -79,7 +79,7 @@ class MockMixedPrecisionSearchManager:
             ru_matrix = [np.flip(np.array([ru.bops - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         else:
             raise ValueError('Not supposed to get here')
-        return np.array(ru_matrix)
+        return np.array(ru_matrix).T
 
     def finalize_distance_metric(self, d):
         return d
