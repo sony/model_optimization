@@ -14,17 +14,23 @@
 # ==============================================================================
 
 import pytest
-import torch.nn
+from packaging import version
+import tensorflow as tf
+
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import Conv2D, Identity
+else:
+    from keras.layers import Conv2D, Identity
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import CustomOpsetLayers
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
     LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpcToPytorch
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 
 
 default_op_cfg = schema.OpQuantizationConfig(
@@ -39,29 +45,29 @@ default_op_cfg = schema.OpQuantizationConfig(
     )
 
 
-def test_attach2pytorch_init():
-    attach2pytorch = AttachTpcToPytorch()
+def test_attach2keras_init():
+    attach2keras = AttachTpcToKeras()
 
     # verify built-in opset to operator mapping structure
-    assert all(isinstance(key, schema.OperatorSetNames) for key in attach2pytorch._opset2layer.keys()), \
+    assert all(isinstance(key, schema.OperatorSetNames) for key in attach2keras._opset2layer.keys()), \
         ("Keys in the operator set-to-layers mapping within the attach-to-framework module must be of the enum "
          "type OperatorSetNames.")
 
-    assert all(isinstance(value, list) for value in attach2pytorch._opset2layer.values()), \
+    assert all(isinstance(value, list) for value in attach2keras._opset2layer.values()), \
         ("All values in the operator set-to-layers mapping within the attach-to-framework module must be of "
          "type 'list'.")
 
     # verify built-in opset to attributes mapping structure
-    assert all(isinstance(key, schema.OperatorSetNames) for key in attach2pytorch._opset2attr_mapping.keys()), \
+    assert all(isinstance(key, schema.OperatorSetNames) for key in attach2keras._opset2attr_mapping.keys()), \
         ("Keys in the operator set-to-attributes mapping within the attach-to-framework module must be of the enum "
          "type OperatorSetNames.")
 
-    assert all(isinstance(value, dict) for value in attach2pytorch._opset2attr_mapping.values()), \
+    assert all(isinstance(value, dict) for value in attach2keras._opset2attr_mapping.values()), \
         ("All values in the operator set-to-layers mapping within the attach-to-framework module must be of "
          "type 'dict'.")
 
 
-def test_attach2pytorch_attach_without_attributes():
+def test_attach2keras_attach_without_attributes():
 
     # Setup TPC with testable configurations
     tested_op_cfg = default_op_cfg.clone_and_edit(activation_n_bits=42)
@@ -70,20 +76,20 @@ def test_attach2pytorch_attach_without_attributes():
     tested_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(tested_op_cfg,))
 
     # Test attach to fw for each built-in opset without attributes quantization
-    attach2pytorch = AttachTpcToPytorch()
+    attach2keras = AttachTpcToKeras()
 
-    for op_name, op_list in attach2pytorch._opset2layer.items():
-        if op_name not in attach2pytorch._opset2attr_mapping.keys():
+    for op_name, op_list in attach2keras._opset2layer.items():
+        if op_name not in attach2keras._opset2attr_mapping.keys():
             tpc = schema.TargetPlatformModel(
                 default_qco=default_qc_options,
                 operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
 
-            pytorch_quant_capabilities = attach2pytorch.attach(tpc)  # Run 'attach' to test operator attach to framework
+            keras_quant_capabilities = attach2keras.attach(tpc)  # Run 'attach' to test operator attach to framework
 
-            assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
+            assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
 
-            all_mapped_ops = pytorch_quant_capabilities.layer2qco.copy()
-            all_mapped_ops.update(pytorch_quant_capabilities.filterlayer2qco)
+            all_mapped_ops = keras_quant_capabilities.layer2qco.copy()
+            all_mapped_ops.update(keras_quant_capabilities.filterlayer2qco)
             if len(op_list) == 0:
                 assert len(all_mapped_ops) == 0
             else:
@@ -94,7 +100,7 @@ def test_attach2pytorch_attach_without_attributes():
                     assert qco.base_config.activation_n_bits == 42
 
 
-def test_attach2pytorch_attach_linear_op_with_attributes():
+def test_attach2keras_attach_linear_op_with_attributes():
 
     # Setup TPC with testable configurations
     default_attr_config = schema.AttributeQuantizationConfig(
@@ -114,21 +120,21 @@ def test_attach2pytorch_attach_linear_op_with_attributes():
     tested_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(tested_op_cfg,))
 
     # Test attach to fw for each built-in opset with attributes quantization
-    attach2pytorch = AttachTpcToPytorch()
+    attach2keras = AttachTpcToKeras()
 
-    for op_name, op_list in attach2pytorch._opset2layer.items():
-        if op_name in attach2pytorch._opset2attr_mapping.keys():
+    for op_name, op_list in attach2keras._opset2layer.items():
+        if op_name in attach2keras._opset2attr_mapping.keys():
             tpc = schema.TargetPlatformModel(
                 default_qco=default_qc_options,
                 operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
 
-            pytorch_quant_capabilities = attach2pytorch.attach(tpc)  # Run 'attach' to test operator attach to framework
-            fw_linear_attr_names = attach2pytorch._opset2attr_mapping[op_name]
+            keras_quant_capabilities = attach2keras.attach(tpc)  # Run 'attach' to test operator attach to framework
+            fw_linear_attr_names = attach2keras._opset2attr_mapping[op_name]
 
-            assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
+            assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
 
-            all_mapped_ops = pytorch_quant_capabilities.layer2qco.copy()
-            all_mapped_ops.update(pytorch_quant_capabilities.filterlayer2qco)
+            all_mapped_ops = keras_quant_capabilities.layer2qco.copy()
+            all_mapped_ops.update(keras_quant_capabilities.filterlayer2qco)
             if len(op_list) == 0:
                 assert len(all_mapped_ops) == 0
             else:
@@ -144,8 +150,8 @@ def test_attach2pytorch_attach_linear_op_with_attributes():
                         assert qco.base_config.attr_weights_configs_mapping.get(layer_attr_mapping) == tested_attr_cfg
 
 
-def test_attach2pytorch_attach_to_default_config():
-    attach2pytorch = AttachTpcToPytorch()
+def test_attach2keras_attach_to_default_config():
+    attach2keras = AttachTpcToKeras()
 
     default_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(default_op_cfg,))
     opset_name = schema.OperatorSetNames.ADD
@@ -154,19 +160,19 @@ def test_attach2pytorch_attach_to_default_config():
     tpc = schema.TargetPlatformModel(default_qco=default_qc_options,
                                      operator_set=tuple([operator_set]))
 
-    pytorch_quant_capabilities = attach2pytorch.attach(tpc)
+    keras_quant_capabilities = attach2keras.attach(tpc)
 
-    assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
-    opset2layer = pytorch_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
+    assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
+    opset2layer = keras_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
     assert len(opset2layer) > 0
-    opset_cfg = pytorch_quant_capabilities.layer2qco.get(opset2layer[0])
+    opset_cfg = keras_quant_capabilities.layer2qco.get(opset2layer[0])
     assert opset_cfg is not None
     assert opset_cfg == default_qc_options
 
 
-def test_attach2pytorch_attach_with_custom_opset():
+def test_attach2keras_attach_with_custom_opset():
     test_bit = 42
-    attach2pytorch = AttachTpcToPytorch()
+    attach2keras = AttachTpcToKeras()
     cfg = default_op_cfg.clone_and_edit(attr_weights_configs_mapping=
                                         {KERNEL_ATTR: schema.AttributeQuantizationConfig(weights_n_bits=test_bit)})
     qc_options = schema.QuantizationConfigOptions(quantization_configurations=(cfg,))
@@ -179,45 +185,45 @@ def test_attach2pytorch_attach_with_custom_opset():
                                      operator_set=tuple([operator_set]))
 
     with pytest.raises(Exception) as e_info:
-        _ = attach2pytorch.attach(tpc)
+        _ = attach2keras.attach(tpc)
     assert f'{opset_name} is defined in TargetPlatformModel' in str(e_info)
 
     # Setting a layers mapping for the custom opset with a regular operator and a filter.
     # We also test the option of passing an attributes mapping for the operator to set a specific attribute config.
     custom_attr_name = 'CustomAttr'
-    filter_op = LayerFilterParams(torch.nn.Conv2d, stride=2)
-    pytorch_quant_capabilities = attach2pytorch.attach(
+    filter_op = LayerFilterParams(Conv2D, stride=2)
+    keras_quant_capabilities = attach2keras.attach(
         tpc,
-        custom_opset2layer={opset_name: CustomOpsetLayers(operators=[torch.nn.Identity,
+        custom_opset2layer={opset_name: CustomOpsetLayers(operators=[Identity,
                                                                      filter_op],
                                                           attr_mapping={KERNEL_ATTR: DefaultDict(
                                                               {filter_op: custom_attr_name},
-                                                              default_value=PYTORCH_KERNEL)})
+                                                              default_value=KERAS_KERNEL)})
         })
 
-    assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
-    opset_to_layers = pytorch_quant_capabilities.op_sets_to_layers.op_sets_to_layers
+    assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
+    opset_to_layers = keras_quant_capabilities.op_sets_to_layers.op_sets_to_layers
     assert len(opset_to_layers) == 1
     assert opset_to_layers[0].name == opset_name
     assert len(opset_to_layers[0].layers) == 2
 
-    op_cfg = pytorch_quant_capabilities.layer2qco[torch.nn.Identity].base_config
+    op_cfg = keras_quant_capabilities.layer2qco[Identity].base_config
     assert op_cfg.activation_n_bits == test_bit
-    assert PYTORCH_KERNEL in op_cfg.attr_weights_configs_mapping
-    assert op_cfg.attr_weights_configs_mapping[PYTORCH_KERNEL].weights_n_bits == test_bit
+    assert KERAS_KERNEL in op_cfg.attr_weights_configs_mapping
+    assert op_cfg.attr_weights_configs_mapping[KERAS_KERNEL].weights_n_bits == test_bit
 
-    op_cfg = pytorch_quant_capabilities.filterlayer2qco[filter_op].base_config
+    op_cfg = keras_quant_capabilities.filterlayer2qco[filter_op].base_config
     assert op_cfg.activation_n_bits == test_bit
     assert custom_attr_name in op_cfg.attr_weights_configs_mapping
     assert op_cfg.attr_weights_configs_mapping[custom_attr_name].weights_n_bits == test_bit
 
 
-def test_attach2pytorch_prioritize_custom_opset():
-    attach2pytorch = AttachTpcToPytorch()
+def test_attach2keras_prioritize_custom_opset():
+    attach2keras = AttachTpcToKeras()
     opset_name = schema.OperatorSetNames.CONV
 
     # setting a custom opset layer mapping to the built-in opset name 'CONV'.
-    # we expect the return pytorch platform capabilities to include the custom operator defined for
+    # we expect the return keras platform capabilities to include the custom operator defined for
     # the opset instead of the built-in list of layers (filter op instead of nn.Conv2d)
     operator_set = schema.OperatorsSet(name=opset_name)
 
@@ -225,18 +231,18 @@ def test_attach2pytorch_prioritize_custom_opset():
         quantization_configurations=(default_op_cfg,)),
         operator_set=tuple([operator_set]))
 
-    filter_op = LayerFilterParams(torch.nn.Conv2d, kernel_size=1)
-    pytorch_quant_capabilities = attach2pytorch.attach(tpc,
-                                                       custom_opset2layer={opset_name:
-                                                                            CustomOpsetLayers(operators=[filter_op])})
+    filter_op = LayerFilterParams(Conv2D, kernel_size=1)
+    keras_quant_capabilities = attach2keras.attach(tpc,
+                                                   custom_opset2layer={opset_name:
+                                                                           CustomOpsetLayers(operators=[filter_op])})
 
-    opset_layers = pytorch_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
-    assert torch.nn.Conv2d not in opset_layers
+    opset_layers = keras_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
+    assert Conv2D not in opset_layers
     assert filter_op in opset_layers
 
 
 def test_not_existing_opset_with_layers_to_attach():
-    attach2pytorch = AttachTpcToPytorch()
+    attach2keras = AttachTpcToKeras()
     opset_name = "NotExisting"
     operator_set = schema.OperatorsSet(name=opset_name)
 
@@ -245,5 +251,5 @@ def test_not_existing_opset_with_layers_to_attach():
         operator_set=tuple([operator_set]))
 
     with pytest.raises(Exception) as e_info:
-        _ = attach2pytorch.attach(tpc)
+        _ = attach2keras.attach(tpc)
     assert f'{opset_name} is defined in TargetPlatformModel' in str(e_info)
