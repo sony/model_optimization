@@ -17,7 +17,7 @@
 import tensorflow as tf
 import numpy as np
 
-from mct_quantizers import KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder, QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest

@@ -18,8 +18,6 @@ from typing import Callable, Tuple
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
-    AttachTpcToKeras
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
@@ -32,6 +30,8 @@ from model_compression_toolkit.core.common.quantization.quantization_config impo
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
 if FOUND_TF:
+    from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+        AttachTpcToKeras
     from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
     from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO

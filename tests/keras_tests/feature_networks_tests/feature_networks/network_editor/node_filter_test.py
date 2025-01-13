@@ -16,7 +16,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from mct_quantizers import KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder, QuantizationMethod
 from model_compression_toolkit.core.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \

@@ -31,7 +31,8 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL, KERNEL_ATTR, WEIGHTS_N_BITS, PYTORCH_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams, \
+    OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Greater, \
     Smaller, Eq
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
@@ -114,13 +115,13 @@ class TestPytorchTPModel(unittest.TestCase):
 
         tpc_pytorch = FrameworkQuantizationCapabilities(tpm)
         with tpc_pytorch:
-            tp.OperationsSetToLayers("conv", [torch.nn.Conv2d],
+            OperationsSetToLayers("conv", [torch.nn.Conv2d],
                                      attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)})
-            tp.OperationsSetToLayers("tanh", [torch.tanh])
-            tp.OperationsSetToLayers("avg_pool2d_kernel_2",
+            OperationsSetToLayers("tanh", [torch.tanh])
+            OperationsSetToLayers("avg_pool2d_kernel_2",
                                      [LayerFilterParams(torch.nn.functional.avg_pool2d, kernel_size=2)])
-            tp.OperationsSetToLayers("avg_pool2d",
+            OperationsSetToLayers("avg_pool2d",
                                      [torch.nn.functional.avg_pool2d])
 
         conv_node = get_node(torch.nn.Conv2d(3, 3, (1, 1)))
@@ -157,7 +158,7 @@ class TestPytorchTPModel(unittest.TestCase):
         fw_tp = FrameworkQuantizationCapabilities(hm)
         with fw_tp:
             opset_layers = [torch.nn.Conv2d, LayerFilterParams(torch.nn.Softmax, dim=1)]
-            tp.OperationsSetToLayers('opsetA', opset_layers)
+            OperationsSetToLayers('opsetA', opset_layers)
         self.assertEqual(fw_tp.get_layers_by_opset_name('opsetA'), opset_layers)
         self.assertEqual(fw_tp.get_layers_by_opset(op_obj), opset_layers)
 
@@ -178,8 +179,8 @@ class TestPytorchTPModel(unittest.TestCase):
         with fw_tp:
             opset_layers_a = [torch.nn.Conv2d]
             opset_layers_b = [LayerFilterParams(torch.nn.Softmax, dim=1)]
-            tp.OperationsSetToLayers('opsetA', opset_layers_a)
-            tp.OperationsSetToLayers('opsetB', opset_layers_b)
+            OperationsSetToLayers('opsetA', opset_layers_a)
+            OperationsSetToLayers('opsetB', opset_layers_b)
 
         self.assertEqual(fw_tp.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
 
@@ -197,8 +198,8 @@ class TestPytorchTPModel(unittest.TestCase):
         fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
-                tp.OperationsSetToLayers('opsetA', [torch.nn.Conv2d])
-                tp.OperationsSetToLayers('opsetB', [torch.nn.Conv2d])
+                OperationsSetToLayers('opsetA', [torch.nn.Conv2d])
+                OperationsSetToLayers('opsetB', [torch.nn.Conv2d])
         self.assertEqual('Found layer Conv2d in more than one OperatorsSet', str(e.exception))
 
     def test_filter_layer_attached_to_multiple_opsets(self):
@@ -214,8 +215,8 @@ class TestPytorchTPModel(unittest.TestCase):
         fw_tp = FrameworkQuantizationCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with fw_tp:
-                tp.OperationsSetToLayers('opsetA', [LayerFilterParams(torch.nn.Softmax, dim=2)])
-                tp.OperationsSetToLayers('opsetB', [LayerFilterParams(torch.nn.Softmax, dim=2)])
+                OperationsSetToLayers('opsetA', [LayerFilterParams(torch.nn.Softmax, dim=2)])
+                OperationsSetToLayers('opsetB', [LayerFilterParams(torch.nn.Softmax, dim=2)])
         self.assertEqual('Found layer Softmax(dim=2) in more than one OperatorsSet', str(e.exception))
 
     # TODO: need to test as part of attach to fw tests
@@ -227,10 +228,10 @@ class TestPytorchTPModel(unittest.TestCase):
     #                                     tpc_platform_type=None,
     #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
     #                                     add_metadata=False)
-    #     hm_pytorch = tp.FrameworkQuantizationCapabilities(hm)
+    #     hm_pytorch = FrameworkQuantizationCapabilities(hm)
     #     with self.assertRaises(Exception) as e:
     #         with hm_pytorch:
-    #             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
+    #             OperationsSetToLayers("conv", [torch.nn.Conv2d])
     #     self.assertEqual(
     #         'conv is not defined in the target platform model that is associated with the target platform capabilities.',
     #         str(e.exception))
@@ -252,11 +253,11 @@ class TestPytorchTPModel(unittest.TestCase):
                                                fusing_patterns=tuple(fusing_patterns),
                                                add_metadata=False)
 
-        hm_keras = tp.FrameworkQuantizationCapabilities(hm)
+        hm_keras = FrameworkQuantizationCapabilities(hm)
         with hm_keras:
-            tp.OperationsSetToLayers("opA", [torch.conv2d])
-            tp.OperationsSetToLayers("opB", [torch.tanh])
-            tp.OperationsSetToLayers("opC", [LayerFilterParams(torch.relu, Greater("max_value", 7), negative_slope=0)])
+            OperationsSetToLayers("opA", [torch.conv2d])
+            OperationsSetToLayers("opB", [torch.tanh])
+            OperationsSetToLayers("opC", [LayerFilterParams(torch.relu, Greater("max_value", 7), negative_slope=0)])
 
         fusings = hm_keras.get_fusing_patterns()
         self.assertEqual(len(fusings), 2)
