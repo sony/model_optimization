@@ -695,15 +695,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+                         weights_quant_method=mct.QuantizationMethod.UNIFORM).run_test()
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
+                         weights_quant_method=mct.QuantizationMethod.UNIFORM, per_channel=False,
                          params_learning=False).run_test()
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         weights_quant_method=QuantizationMethod.UNIFORM,
+                         weights_quant_method=mct.QuantizationMethod.UNIFORM,
                          per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
-                              weights_quant_method=QuantizationMethod.UNIFORM,
+                              weights_quant_method=mct.QuantizationMethod.UNIFORM,
                               params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
 
     def test_gptq_with_gradual_activation(self):
