@@ -219,22 +219,6 @@ class TestPytorchTPModel(unittest.TestCase):
                 tp.OperationsSetToLayers('opsetB', [LayerFilterParams(torch.nn.Softmax, dim=2)])
         self.assertEqual('Found layer Softmax(dim=2) in more than one OperatorsSet', str(e.exception))
 
-    # TODO: need to test as part of attach to fw tests
-    # def test_opset_not_in_tp(self):
-    #     default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
-    #     hm = schema.TargetPlatformModel(default_qco=default_qco,
-    #                                     tpc_minor_version=None,
-    #                                     tpc_patch_version=None,
-    #                                     tpc_platform_type=None,
-    #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
-    #                                     add_metadata=False)
-    #     hm_pytorch = tp.TargetPlatformCapabilities(hm)
-    #     with self.assertRaises(Exception) as e:
-    #         with hm_pytorch:
-    #             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
-    #     self.assertEqual(
-    #         'conv is not defined in the target platform model that is associated with the target platform capabilities.',
-    #         str(e.exception))
 
     def test_pytorch_fusing_patterns(self):
         default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple(

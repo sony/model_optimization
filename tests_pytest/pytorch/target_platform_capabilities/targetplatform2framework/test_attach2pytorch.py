@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from unittest.mock import MagicMock, PropertyMock, Mock
 
 import pytest
+import torch.nn
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit import DefaultDict
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.core import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
+    LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 
@@ -152,7 +154,7 @@ def test_attach2pytorch_attach_to_default_config():
     tpc = schema.TargetPlatformModel(default_qco=default_qc_options,
                                      operator_set=tuple([operator_set]))
 
-    pytorch_quant_capabilities = attach2pytorch.attach(tpc)  # Run 'attach' to test operator attach to framework
+    pytorch_quant_capabilities = attach2pytorch.attach(tpc)
 
     assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
     opset2layer = pytorch_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
@@ -162,6 +164,86 @@ def test_attach2pytorch_attach_to_default_config():
     assert opset_cfg == default_qc_options
 
 
-# TODO:
-#  1. Test not existing opset in tp model raise
-#  2. Test custom opset name attach + prioritization over builtin
+def test_attach2pytorch_attach_with_custom_opset():
+    test_bit = 42
+    attach2pytorch = AttachTpcToPytorch()
+    cfg = default_op_cfg.clone_and_edit(attr_weights_configs_mapping=
+                                        {KERNEL_ATTR: schema.AttributeQuantizationConfig(weights_n_bits=test_bit)})
+    qc_options = schema.QuantizationConfigOptions(quantization_configurations=(cfg,))
+    opset_name = "Custom"
+    operator_set = schema.OperatorsSet(name=opset_name,
+                                       qc_options=qc_options.clone_and_edit(activation_n_bits=test_bit))
+
+    tpc = schema.TargetPlatformModel(default_qco=schema.QuantizationConfigOptions(
+        quantization_configurations=(default_op_cfg,)),
+                                     operator_set=tuple([operator_set]))
+
+    with pytest.raises(Exception) as e_info:
+        _ = attach2pytorch.attach(tpc)
+    assert f'{opset_name} is defined in TargetPlatformModel' in str(e_info)
+
+    # Setting a layers mapping for the custom opset with a regular operator and a filter.
+    # We also test the option of passing an attributes mapping for the operator to set a specific attribute config.
+    custom_attr_name = 'CustomAttr'
+    filter_op = LayerFilterParams(torch.nn.Conv2d, stride=2)
+    pytorch_quant_capabilities = attach2pytorch.attach(
+        tpc,
+        custom_opset2layer={opset_name: CustomOpsetLayers(operators=[torch.nn.Identity,
+                                                                     filter_op],
+                                                          attr_mapping={KERNEL_ATTR: DefaultDict(
+                                                              {filter_op: custom_attr_name},
+                                                              default_value=PYTORCH_KERNEL)})
+        })
+
+    assert isinstance(pytorch_quant_capabilities, TargetPlatformCapabilities)
+    opset_to_layers = pytorch_quant_capabilities.op_sets_to_layers.op_sets_to_layers
+    assert len(opset_to_layers) == 1
+    assert opset_to_layers[0].name == opset_name
+    assert len(opset_to_layers[0].layers) == 2
+
+    op_cfg = pytorch_quant_capabilities.layer2qco[torch.nn.Identity].base_config
+    assert op_cfg.activation_n_bits == test_bit
+    assert PYTORCH_KERNEL in op_cfg.attr_weights_configs_mapping
+    assert op_cfg.attr_weights_configs_mapping[PYTORCH_KERNEL].weights_n_bits == test_bit
+
+    op_cfg = pytorch_quant_capabilities.filterlayer2qco[filter_op].base_config
+    assert op_cfg.activation_n_bits == test_bit
+    assert custom_attr_name in op_cfg.attr_weights_configs_mapping
+    assert op_cfg.attr_weights_configs_mapping[custom_attr_name].weights_n_bits == test_bit
+
+
+def test_attach2pytorch_prioritize_custom_opset():
+    attach2pytorch = AttachTpcToPytorch()
+    opset_name = schema.OperatorSetNames.CONV
+
+    # setting a custom opset layer mapping to the built-in opset name 'CONV'.
+    # we expect the return pytorch platform capabilities to include the custom operator defined for
+    # the opset instead of the built-in list of layers (filter op instead of nn.Conv2d)
+    operator_set = schema.OperatorsSet(name=opset_name)
+
+    tpc = schema.TargetPlatformModel(default_qco=schema.QuantizationConfigOptions(
+        quantization_configurations=(default_op_cfg,)),
+        operator_set=tuple([operator_set]))
+
+    filter_op = LayerFilterParams(torch.nn.Conv2d, kernel_size=1)
+    pytorch_quant_capabilities = attach2pytorch.attach(tpc,
+                                                       custom_opset2layer={opset_name:
+                                                                            CustomOpsetLayers(operators=[filter_op])})
+
+    opset_layers = pytorch_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
+    assert torch.nn.Conv2d not in opset_layers
+    assert filter_op in opset_layers
+
+
+def test_not_existing_opset_with_layers_to_attach():
+    attach2pytorch = AttachTpcToPytorch()
+    opset_name = "NotExisting"
+    operator_set = schema.OperatorsSet(name=opset_name)
+
+    tpc = schema.TargetPlatformModel(default_qco=schema.QuantizationConfigOptions(
+        quantization_configurations=(default_op_cfg,)),
+        operator_set=tuple([operator_set]))
+
+    with pytest.raises(Exception) as e_info:
+        _ = attach2pytorch.attach(tpc)
+    assert f'{opset_name} is defined in TargetPlatformModel' in str(e_info)
