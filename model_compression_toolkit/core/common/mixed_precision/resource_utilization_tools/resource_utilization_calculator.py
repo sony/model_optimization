@@ -295,7 +295,7 @@ class ResourceUtilizationCalculator:
         if self._cuts is None:
             memory_graph = MemoryGraph(deepcopy(self.graph))
             _, _, cuts = compute_graph_max_cut(memory_graph)
-            if cuts is None:
+            if cuts is None:    # pragma: no cover
                 raise RuntimeError("Failed to calculate activation memory cuts for graph.")  # pragma: no cover
             cuts = [cut for cut in cuts if cut.mem_elements.elements]
             # cache cuts nodes for future use, so do not filter by target
@@ -454,7 +454,7 @@ class ResourceUtilizationCalculator:
         a_nbits = self._get_activation_nbits(input_act_node, bitwidth_mode, act_qc)
 
         kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
-        if len(kernel_attrs) > 1:
+        if len(kernel_attrs) > 1:    # pragma: no cover
             raise NotImplementedError('Multiple kernel attributes are not supported for BOPS computation.')
         kernel_attr = kernel_attrs[0]
         w_nbits = self._get_weight_nbits(n, kernel_attr, bitwidth_mode, w_qc)
@@ -495,13 +495,14 @@ class ResourceUtilizationCalculator:
         elif target_criterion == TargetInclusionCriterion.AnyQuantized:
             nodes = [n for n in self.graph if n.has_any_weight_attr_to_quantize()]
         elif target_criterion == TargetInclusionCriterion.QNonConfigurable:
-            # TODO this is wrong. Need to look at specific weights and not the whole node
+            # TODO this is wrong. Need to look at specific weights and not the whole node (if w1 is configurable and w2
+            #  is non-configurable we want to discover the node both as configurable and non-configurable)
             quantized = [n for n in self.graph if n.has_any_weight_attr_to_quantize()]
             configurable = self.graph.get_weights_configurable_nodes(self.fw_info, include_reused_nodes=include_reused)
             nodes = [n for n in quantized if n not in configurable]
         elif target_criterion == TargetInclusionCriterion.Any:
             nodes = list(self.graph.nodes)
-        else:
+        else:    # pragma: no cover
             raise ValueError(f'Unknown {target_criterion}.')
 
         if not include_reused:
@@ -528,7 +529,7 @@ class ResourceUtilizationCalculator:
             quantized = [attr for attr in weight_attrs if n.is_weights_quantization_enabled(attr)]
             configurable = [attr for attr in weight_attrs if n.is_configurable_weight(attr)]
             weight_attrs = [attr for attr in quantized if attr not in configurable]
-        elif target_criterion != TargetInclusionCriterion.Any:
+        elif target_criterion != TargetInclusionCriterion.Any:    # pragma: no cover
             raise ValueError(f'Unknown {target_criterion}')
         return weight_attrs
 
@@ -544,7 +545,7 @@ class ResourceUtilizationCalculator:
         """
         graph_topo_nodes = self.graph.get_topo_sorted_nodes()
         topo_nodes = [n for n in graph_topo_nodes if n in nodes]
-        if len(topo_nodes) != len(nodes):
+        if len(topo_nodes) != len(nodes):    # pragma: no cover
             missing_nodes = [n for n in nodes if n not in topo_nodes]
             raise ValueError(f'Could not topo-sort, nodes {missing_nodes} do not match the graph nodes.')
         return topo_nodes
@@ -571,7 +572,7 @@ class ResourceUtilizationCalculator:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled()]
         elif target_criterion == TargetInclusionCriterion.QNonConfigurable:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled() and not n.has_configurable_activation()]
-        elif target_criterion != TargetInclusionCriterion.Any:
+        elif target_criterion != TargetInclusionCriterion.Any:    # pragma: no cover
             raise ValueError(f'Unknown {target_criterion}.')
         if not include_reused:
             nodes = [n for n in nodes if not n.reuse]
@@ -596,7 +597,7 @@ class ResourceUtilizationCalculator:
             Activation bit-width.
         """
         if act_qc:
-            if bitwidth_mode != BitwidthMode.QCustom:
+            if bitwidth_mode != BitwidthMode.QCustom:    # pragma: no cover
                 raise ValueError(f'Activation config is not expected for non-custom bit mode {bitwidth_mode}')
             return act_qc.activation_n_bits if act_qc.enable_activation_quantization else FLOAT_BITWIDTH
 
@@ -612,12 +613,12 @@ class ResourceUtilizationCalculator:
 
         if bitwidth_mode in [BitwidthMode.QCustom, BitwidthMode.QDefaultSP]:
             qcs = n.get_unique_activation_candidates()
-            if len(qcs) != 1:
+            if len(qcs) != 1:    # pragma: no cover
                 raise ValueError(f'Could not retrieve the activation quantization candidate for node {n.name} '
                                  f'as it has {len(qcs)}!=1 unique candidates .')
             return qcs[0].activation_quantization_cfg.activation_n_bits
 
-        raise ValueError(f'Unknown mode {bitwidth_mode}')
+        raise ValueError(f'Unknown mode {bitwidth_mode}')    # pragma: no cover
 
     @classmethod
     def _get_weight_nbits(cls,
@@ -640,7 +641,7 @@ class ResourceUtilizationCalculator:
             Weight bit-width.
         """
         if w_qc and w_qc.has_attribute_config(w_attr):
-            if bitwidth_mode != BitwidthMode.QCustom:
+            if bitwidth_mode != BitwidthMode.QCustom:    # pragma: no cover
                 raise ValueError('Weight config is not expected for non-custom bit mode {bitwidth_mode}')
             attr_cfg = w_qc.get_attr_config(w_attr)
             return attr_cfg.weights_n_bits if attr_cfg.enable_weights_quantization else FLOAT_BITWIDTH
@@ -658,7 +659,7 @@ class ResourceUtilizationCalculator:
 
         if bitwidth_mode in [BitwidthMode.QCustom, BitwidthMode.QDefaultSP]:
             # if configuration was not passed and the weight has only one candidate, use it
-            if len(w_qcs) != 1:
+            if len(w_qcs) != 1:    # pragma: no cover
                 raise ValueError(f'Could not retrieve the quantization candidate for attr {w_attr} of node {n.name} '
                                  f'as it {len(w_qcs)}!=1 unique candidates.')
             return w_qcs[0].weights_n_bits
