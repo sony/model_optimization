@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     TargetInclusionCriterion, BitwidthMode
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import \
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_ru_helper import \
     MixedPrecisionRUHelper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.logger import Logger
