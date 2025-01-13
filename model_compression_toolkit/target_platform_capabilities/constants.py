@@ -21,10 +21,10 @@ LATEST = 'latest'
 
 
 # Supported TP models names:
-DEFAULT_TPC = 'default'
-IMX500_TPC = 'imx500'
-TFLITE_TPC = 'tflite'
-QNNPACK_TPC = 'qnnpack'
+DEFAULT_TP_MODEL= 'default'
+IMX500_TP_MODEL = 'imx500'
+TFLITE_TP_MODEL = 'tflite'
+QNNPACK_TP_MODEL = 'qnnpack'
 
 # TP Attributes
 KERNEL_ATTR = "kernel_attr"

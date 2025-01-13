@@ -18,7 +18,7 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from mct_quantizers.keras.activation_quantization_holder import KerasActivationQuantizationHolder
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames, \
     QuantizationConfigOptions

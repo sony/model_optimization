@@ -18,7 +18,7 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS, \
-    WEIGHTS_QUANTIZATION_METHOD, IMX500_TPC
+    WEIGHTS_QUANTIZATION_METHOD, IMX500_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, \
     Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
@@ -274,7 +274,7 @@ def generate_tpc(default_config: OpQuantizationConfig,
         default_qco=default_configuration_options,
         tpc_minor_version=2,
         tpc_patch_version=0,
-        tpc_platform_type=IMX500_TPC,
+        tpc_platform_type=IMX500_TP_MODEL,
         operator_set=tuple(operator_set),
         fusing_patterns=tuple(fusing_patterns),
         add_metadata=True,

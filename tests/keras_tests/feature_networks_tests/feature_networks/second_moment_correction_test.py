@@ -35,7 +35,7 @@ from model_compression_toolkit.core.keras.keras_model_validation import KerasMod
 from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
     keras_apply_second_moment_correction
 from model_compression_toolkit.core.runner import core_runner
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import FrameworkQuantizationCapabilities
@@ -46,7 +46,7 @@ from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
-DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 from tensorflow.keras.models import Model
 
 keras = tf.keras

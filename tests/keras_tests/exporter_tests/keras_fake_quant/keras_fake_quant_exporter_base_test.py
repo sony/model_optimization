@@ -23,7 +23,7 @@ import numpy as np
 import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import DEFAULT_KERAS_EXPORT_EXTENTION
 
 def get_minmax_from_qparams(qparams):
@@ -82,7 +82,7 @@ class KerasFakeQuantExporterBaseTest(ABC):
         return [(16, 16, 3)]
 
     def get_tpc(self):
-        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig()

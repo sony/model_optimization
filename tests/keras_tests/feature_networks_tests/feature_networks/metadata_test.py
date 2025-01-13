@@ -22,7 +22,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 from mct_quantizers.keras.metadata import add_metadata, get_metadata
 
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 
 keras = tf.keras
 layers = keras.layers

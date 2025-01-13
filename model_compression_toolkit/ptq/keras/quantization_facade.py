@@ -37,7 +37,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
 
     from model_compression_toolkit import get_target_platform_capabilities
@@ -45,7 +45,7 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
         AttachTpcToKeras
 
-    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
     def keras_post_training_quantization(in_model: Model,

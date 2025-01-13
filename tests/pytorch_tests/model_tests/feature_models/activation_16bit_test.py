@@ -18,7 +18,7 @@ import torch
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \

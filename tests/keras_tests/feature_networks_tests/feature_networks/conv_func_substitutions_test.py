@@ -23,7 +23,7 @@ else:
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc

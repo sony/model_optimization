@@ -28,7 +28,7 @@ from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
 if FOUND_TF:
     from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
@@ -38,7 +38,7 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
         AttachTpcToKeras
 
-    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def keras_pruning_experimental(model: Model,
                                    target_resource_utilization: ResourceUtilization,

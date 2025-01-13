@@ -14,7 +14,7 @@
 # ==============================================================================
 import copy
 import random
-from typing import Callable, List, Tuple
+from typing import Callable, Tuple
 
 import numpy as np
 import torch
@@ -34,7 +34,7 @@ from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_m
     pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model
 from model_compression_toolkit.core.runner import core_runner
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest

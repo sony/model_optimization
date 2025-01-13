@@ -44,7 +44,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss, sample_layer_attention_loss
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.keras.metadata import add_metadata
@@ -59,7 +59,7 @@ if FOUND_TF:
     else:
         from tensorflow.python.keras.optimizer_v2.optimizer_v2 import OptimizerV2
 
-    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_keras_gptq_config(n_epochs: int,
                               optimizer: OptimizerV2 = None,

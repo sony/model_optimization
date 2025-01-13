@@ -42,8 +42,8 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
     Greater, \
     Smaller, GreaterEq, Eq, SmallerEq, Contains
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC, IMX500_TPC, \
-    QNNPACK_TPC, TFLITE_TPC, KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS, WEIGHTS_N_BITS
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
+    QNNPACK_TP_MODEL, TFLITE_TP_MODEL, KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS, WEIGHTS_N_BITS
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 
 tp = mct.target_platform
@@ -297,7 +297,7 @@ class TestKerasTPModel(unittest.TestCase):
 
 class TestGetKerasTPC(unittest.TestCase):
     def test_get_keras_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
         input_shape = (1, 8, 8, 3)
         input_tensor = Input(shape=input_shape[1:])
         conv = Conv2D(3, 3)(input_tensor)
@@ -322,16 +322,16 @@ class TestGetKerasTPC(unittest.TestCase):
                                                                       target_platform_capabilities=tpc)
 
     def test_get_keras_supported_version(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)  # Latest
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest
         self.assertTrue(tpc.tpc_minor_version == 1)
 
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TPC, "v1")
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1")
         self.assertTrue(tpc.tpc_minor_version == 1)
 
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TPC, "v1")
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TP_MODEL, "v1")
         self.assertTrue(tpc.tpc_minor_version == 1)
 
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, QNNPACK_TPC, "v1")
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, QNNPACK_TP_MODEL, "v1")
         self.assertTrue(tpc.tpc_minor_version == 1)
 
     def test_get_keras_not_supported_platform(self):
@@ -341,10 +341,10 @@ class TestGetKerasTPC(unittest.TestCase):
 
     def test_get_keras_not_supported_fw(self):
         with self.assertRaises(Exception) as e:
-            mct.get_target_platform_capabilities("ONNX", DEFAULT_TPC)
+            mct.get_target_platform_capabilities("ONNX", DEFAULT_TP_MODEL)
         self.assertTrue(e.exception)
 
     def test_get_keras_not_supported_version(self):
         with self.assertRaises(Exception) as e:
-            mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TPC, "v0")
+            mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v0")
         self.assertTrue(e.exception)

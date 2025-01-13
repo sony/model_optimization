@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 from model_compression_toolkit.constants import TENSORFLOW, PYTORCH
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC, IMX500_TPC, \
-    TFLITE_TPC, QNNPACK_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
+    TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc import get_tpc as get_tpc_imx500_v1
@@ -42,17 +42,17 @@ def get_target_platform_capabilities(fw_name: str,
 
     assert fw_name in [TENSORFLOW, PYTORCH], f"Unsupported framework {fw_name}."
 
-    if target_platform_name == DEFAULT_TPC:
+    if target_platform_name == DEFAULT_TP_MODEL:
         return get_tpc_imx500_v1()
 
     assert target_platform_version == 'v1' or target_platform_version is None, \
         "The usage of get_target_platform_capabilities API is supported only with the default TPC ('v1')."
 
-    if target_platform_name == IMX500_TPC:
+    if target_platform_name == IMX500_TP_MODEL:
         return get_tpc_imx500_v1()
-    elif target_platform_name == TFLITE_TPC:
+    elif target_platform_name == TFLITE_TP_MODEL:
         return get_tpc_tflite_v1()
-    elif target_platform_name == QNNPACK_TPC:
+    elif target_platform_name == QNNPACK_TP_MODEL:
         return get_tpc_qnnpack_v1()
 
     raise ValueError(f"Unsupported target platform name {target_platform_name}.")

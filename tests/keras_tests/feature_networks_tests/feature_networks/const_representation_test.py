@@ -18,7 +18,7 @@ import numpy as np
 import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -90,7 +90,7 @@ class ConstRepresentationListTypeArgsTest(BaseKerasFeatureNetworkTest):
         return [1 + np.random.random(in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

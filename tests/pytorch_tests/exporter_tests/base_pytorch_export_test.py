@@ -23,7 +23,7 @@ from model_compression_toolkit.core.pytorch.pytorch_device_config import get_wor
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import DEFAULT_ONNX_OPSET_VERSION
 
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
@@ -41,7 +41,7 @@ class BasePytorchExportTest(unittest.TestCase):
         yield [to_torch_tensor(np.random.rand(*shape)).to(get_working_device()) for shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TPC)
+        return mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
     def get_serialization_format(self):
         raise NotImplemented

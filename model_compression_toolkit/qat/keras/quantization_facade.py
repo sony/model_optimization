@@ -38,7 +38,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 
@@ -50,7 +50,7 @@ if FOUND_TF:
     from model_compression_toolkit.constants import TENSORFLOW
     from model_compression_toolkit.core.common.framework_info import FrameworkInfo
     from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder, \
     get_activation_quantizer_holder
@@ -58,7 +58,7 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
         AttachTpcToKeras
 
-    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+    DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
     def qat_wrapper(n: common.BaseNode,

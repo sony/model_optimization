@@ -22,7 +22,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from tests.common_tests.helpers.generate_test_tpc import generate_custom_test_tpc
 from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc

@@ -17,7 +17,7 @@ from typing import List, Tuple
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, QNNPACK_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, QNNPACK_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, \
     Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
@@ -178,7 +178,7 @@ def generate_tpc(default_config: OpQuantizationConfig,
         default_qco=default_configuration_options,
         tpc_minor_version=1,
         tpc_patch_version=0,
-        tpc_platform_type=QNNPACK_TPC,
+        tpc_platform_type=QNNPACK_TP_MODEL,
         operator_set=tuple(operator_set),
         fusing_patterns=tuple(fusing_patterns),
         add_metadata=False,

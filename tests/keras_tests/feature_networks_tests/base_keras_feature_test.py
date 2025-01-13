@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq import keras_gradient_post_training_quantization
 from model_compression_toolkit.core import FrameworkInfo
@@ -39,7 +39,7 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
                          input_shape=input_shape)
 
     def get_tpc(self):
-        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TPC)
+        return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_ptq_facade(self):
         return keras_post_training_quantization

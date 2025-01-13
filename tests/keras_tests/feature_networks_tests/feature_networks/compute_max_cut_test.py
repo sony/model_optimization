@@ -18,7 +18,7 @@ import tensorflow as tf
 
 from mct_quantizers.keras.metadata import get_metadata
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from tests.common_tests.helpers.tpcs_for_tests.v2.tpc import get_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 

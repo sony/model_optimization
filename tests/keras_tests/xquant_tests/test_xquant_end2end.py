@@ -28,7 +28,7 @@ import tempfile
 import model_compression_toolkit as mct
 from mct_quantizers import KerasQuantizationWrapper
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from model_compression_toolkit.xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
 from model_compression_toolkit.xquant.common.xquant_config import XQuantConfig
 

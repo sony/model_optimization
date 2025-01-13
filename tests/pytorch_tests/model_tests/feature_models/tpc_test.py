@@ -20,7 +20,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from model_compression_toolkit.constants import PYTORCH
 from mct_quantizers import PytorchQuantizationWrapper
 from mct_quantizers.pytorch.metadata import add_metadata, get_metadata, add_onnx_metadata, get_onnx_metadata

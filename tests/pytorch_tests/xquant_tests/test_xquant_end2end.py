@@ -34,7 +34,7 @@ from tensorboard.compat.proto.graph_pb2 import GraphDef
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchQuantizationWrapper
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TPC
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from model_compression_toolkit.xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
 from model_compression_toolkit.xquant.common.xquant_config import XQuantConfig
 from model_compression_toolkit.xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
