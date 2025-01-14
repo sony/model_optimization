@@ -18,7 +18,7 @@ import numpy as np
 
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from mct_quantizers import QuantizationTarget
 from model_compression_toolkit.gptq.common.gptq_constants import \
     SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR

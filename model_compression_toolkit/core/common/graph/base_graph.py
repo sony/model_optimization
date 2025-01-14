@@ -32,8 +32,9 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    TargetPlatformCapabilities, LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
@@ -86,29 +87,29 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         self.fw_info = fw_info
 
-    def set_tpc(self,
-                tpc: TargetPlatformCapabilities):
+    def set_fqc(self,
+                fqc: FrameworkQuantizationCapabilities):
         """
-        Set the graph's TPC.
+        Set the graph's FQC.
         Args:
-            tpc: TargetPlatformCapabilities object.
+            fqc: FrameworkQuantizationCapabilities object.
         """
-        # validate graph nodes are either from the framework or a custom layer defined in the TPC
-        # Validate graph nodes are either built-in layers from the framework or custom layers defined in the TPC
-        tpc_layers = tpc.op_sets_to_layers.get_layers()
-        tpc_filtered_layers = [layer for layer in tpc_layers if isinstance(layer, LayerFilterParams)]
+        # validate graph nodes are either from the framework or a custom layer defined in the FQC
+        # Validate graph nodes are either built-in layers from the framework or custom layers defined in the FQC
+        fqc_layers = fqc.op_sets_to_layers.get_layers()
+        fqc_filtered_layers = [layer for layer in fqc_layers if isinstance(layer, LayerFilterParams)]
         for n in self.nodes:
-            is_node_in_tpc = any([n.is_match_type(_type) for _type in tpc_layers]) or \
-                             any([n.is_match_filter_params(filtered_layer) for filtered_layer in tpc_filtered_layers])
+            is_node_in_fqc = any([n.is_match_type(_type) for _type in fqc_layers]) or \
+                             any([n.is_match_filter_params(filtered_layer) for filtered_layer in fqc_filtered_layers])
             if n.is_custom:
-                if not is_node_in_tpc:
+                if not is_node_in_fqc:
                     Logger.critical(f'MCT does not support optimizing Keras custom layers. Found a layer of type {n.type}. '
-                                    ' Please add the custom layer to Target Platform Capabilities (TPC), or file a feature '
+                                    ' Please add the custom layer to Framework Quantization Capabilities (FQC), or file a feature '
                                     'request or an issue if you believe this should be supported.')  # pragma: no cover
-                if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(tpc).quantization_configurations]):
+                if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(fqc).quantization_configurations]):
                     Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')  # pragma: no cover
 
-        self.tpc = tpc
+        self.fqc = fqc
 
     def get_topo_sorted_nodes(self):
         """

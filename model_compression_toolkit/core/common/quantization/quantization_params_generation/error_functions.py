@@ -16,11 +16,11 @@ from copy import deepcopy
 from typing import Tuple, Callable, List, Iterable, Optional
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianScoresGranularity, \
     HessianInfoService
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_32, NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor, \
     reshape_tensor_for_per_channel_search

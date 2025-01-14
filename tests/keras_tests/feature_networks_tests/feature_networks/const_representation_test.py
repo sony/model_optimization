@@ -19,14 +19,13 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
@@ -45,11 +44,11 @@ class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
         return [1 + np.random.random(in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="const_representation_test", tp_model=tp)
+        return generate_keras_tpc(name="const_representation_test", tpc=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -110,11 +109,11 @@ class ConstRepresentationMatMulTest(BaseKerasFeatureNetworkTest):
         super(ConstRepresentationMatMulTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="const_representation_test", tp_model=tp)
+        return generate_keras_tpc(name="const_representation_test", tpc=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -146,11 +145,11 @@ class ConstRepresentationMultiInputTest(BaseKerasFeatureNetworkTest):
         super(ConstRepresentationMultiInputTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="const_representation_test", tp_model=tp)
+        return generate_keras_tpc(name="const_representation_test", tpc=tp)
 
     def create_networks(self):
         as_const = lambda v: np.random.random(v.shape.as_list()).astype(np.float32)

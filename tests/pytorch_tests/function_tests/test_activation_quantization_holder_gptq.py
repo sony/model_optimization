@@ -14,7 +14,7 @@ from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import G
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
     GradualActivationQuantizerWrapper
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod

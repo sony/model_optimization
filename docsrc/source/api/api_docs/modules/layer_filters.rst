@@ -15,30 +15,30 @@ one may use the next filters to check if a layer configuration holds the created
 Attribute Filters
 ==================
 
-.. autoclass:: model_compression_toolkit.target_platform.AttributeFilter
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.AttributeFilter
 
 |
 
-.. autoclass:: model_compression_toolkit.target_platform.Eq
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.Eq
 
 |
 
-.. autoclass:: model_compression_toolkit.target_platform.NotEq
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.NotEq
 
 |
 
-.. autoclass:: model_compression_toolkit.target_platform.Greater
-
-|
-
-
-.. autoclass:: model_compression_toolkit.target_platform.GreaterEq
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.Greater
 
 |
 
 
-.. autoclass:: model_compression_toolkit.target_platform.Smaller
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.GreaterEq
 
 |
 
-.. autoclass:: model_compression_toolkit.target_platform.SmallerEq
+
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.Smaller
+
+|
+
+.. autoclass:: model_compression_toolkit.target_platform_capabilities.SmallerEq

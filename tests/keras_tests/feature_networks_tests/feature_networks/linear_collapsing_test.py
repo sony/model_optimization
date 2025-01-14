@@ -23,7 +23,7 @@ else:
     from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
@@ -31,7 +31,6 @@ from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
@@ -40,11 +39,11 @@ class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
         super(BaseConv2DCollapsingTest, self).__init__(unit_test=unit_test, input_shape=(32,32,16))
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 32,
+        tp = generate_test_tpc({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="linear_collapsing_test", tp_model=tp)
+        return generate_keras_tpc(name="linear_collapsing_test", tpc=tp)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,

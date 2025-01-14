@@ -24,13 +24,12 @@ from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, \
     BIAS_ATTR
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 
-tp = mct.target_platform
 
 
 def _generate_bn_quantized_tpm(quantize_linear):
@@ -82,7 +81,7 @@ def _generate_bn_quantized_tpm(quantize_linear):
     linear_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([linear_op_qc]))
     bn_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([bn_op_qc]))
 
-    generated_tpm = schema.TargetPlatformModel(
+    generated_tpm = schema.TargetPlatformCapabilities(
         default_qco=default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,

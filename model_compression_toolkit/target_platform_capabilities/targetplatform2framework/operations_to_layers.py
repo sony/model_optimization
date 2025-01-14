@@ -18,13 +18,13 @@ from typing import List, Any, Dict
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set, is_opset_in_model
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import  _current_tpc
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorsSetBase, OperatorSetConcat
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.current_tpc import  _current_tpc
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities_component import FrameworkQuantizationCapabilitiesComponent
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorsSetBase, OperatorSetGroup
 from model_compression_toolkit import DefaultDict
 
 
-class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
+class OperationsSetToLayers(FrameworkQuantizationCapabilitiesComponent):
     """
     Associate an OperatorsSet to a list of framework's layers.
     """
@@ -57,7 +57,7 @@ class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
 
 class OperationsToLayers:
     """
-    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to TargetPlatformModel OperatorsSet.
+    Gather multiple OperationsSetToLayers to represent mapping of framework's layers to TargetPlatformCapabilities OperatorsSet.
     """
     def __init__(self,
                  op_sets_to_layers: List[OperationsSetToLayers]=None):
@@ -88,7 +88,7 @@ class OperationsToLayers:
         for o in self.op_sets_to_layers:
             if op.name == o.name:
                 return o.layers
-        if isinstance(op, OperatorSetConcat):  # If its a concat - return all layers from all OperatorsSets that in the OperatorSetConcat
+        if isinstance(op, OperatorSetGroup):  # If its a concat - return all layers from all OperatorsSets that in the OperatorSetGroup
             layers = []
             for o in op.operators_set:
                 layers.extend(self.get_layers_by_op(o))
@@ -142,9 +142,9 @@ class OperationsToLayers:
             assert ops2layers.name not in existing_opset_names, f'OperationsSetToLayers names should be unique, but {ops2layers.name} appears to violate it.'
             existing_opset_names.append(ops2layers.name)
 
-            # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformModel.
+            # Assert that a layer does not appear in more than a single OperatorsSet in the TargetPlatformCapabilities.
             for layer in ops2layers.layers:
-                qco_by_opset_name = get_config_options_by_operators_set(_current_tpc.get().tp_model, ops2layers.name)
+                qco_by_opset_name = get_config_options_by_operators_set(_current_tpc.get().tpc, ops2layers.name)
                 if layer in existing_layers:
                     Logger.critical(f'Found layer {layer.__name__} in more than one '
                                     f'OperatorsSet')  # pragma: no cover

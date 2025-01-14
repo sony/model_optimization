@@ -14,7 +14,6 @@
 # ==============================================================================
 
 import copy
-import numpy as np
 from typing import Callable, Any, List
 
 from model_compression_toolkit.core.common import FrameworkInfo
@@ -42,8 +41,8 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 def core_runner(in_model: Any,
@@ -51,7 +50,7 @@ def core_runner(in_model: Any,
                 core_config: CoreConfig,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
-                tpc: TargetPlatformCapabilities,
+                fqc: FrameworkQuantizationCapabilities,
                 target_resource_utilization: ResourceUtilization = None,
                 running_gptq: bool = False,
                 tb_w: TensorboardWriter = None):
@@ -71,7 +70,7 @@ def core_runner(in_model: Any,
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.).
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         target_resource_utilization: ResourceUtilization to constraint the search of the mixed-precision configuration for the model.
         tb_w: TensorboardWriter object for logging
@@ -99,7 +98,7 @@ def core_runner(in_model: Any,
                                     target_resource_utilization,
                                     representative_data_gen,
                                     core_config,
-                                    tpc,
+                                    fqc,
                                     fw_info,
                                     fw_impl):
             core_config.mixed_precision_config.set_mixed_precision_enable()
@@ -110,7 +109,7 @@ def core_runner(in_model: Any,
                                      core_config.quantization_config,
                                      fw_info,
                                      fw_impl,
-                                     tpc,
+                                     fqc,
                                      core_config.bit_width_config,
                                      tb_w,
                                      mixed_precision_enable=core_config.is_mixed_precision_enabled,
@@ -132,7 +131,7 @@ def core_runner(in_model: Any,
     if core_config.is_mixed_precision_enabled:
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
-            filter_candidates_for_mixed_precision(graph, target_resource_utilization, fw_info, tpc)
+            filter_candidates_for_mixed_precision(graph, target_resource_utilization, fw_info, fqc)
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
                                                  fw_impl,

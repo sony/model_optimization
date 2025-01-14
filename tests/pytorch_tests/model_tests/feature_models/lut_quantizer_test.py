@@ -15,16 +15,16 @@
 import torch
 import numpy as np
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
-tp = mct.target_platform
 
 
 def get_uniform_weights(out_channels, in_channels, kernel):
@@ -80,7 +80,7 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
     We check that the weights have different values for conv1 and conv2, and that conv2 and conv3 have the same
     values.
     """
-    def __init__(self, unit_test, weights_n_bits=4, quant_method=tp.QuantizationMethod.LUT_POT_QUANTIZER):
+    def __init__(self, unit_test, weights_n_bits=4, quant_method=QuantizationMethod.LUT_POT_QUANTIZER):
         super().__init__(unit_test)
         self.weights_n_bits = weights_n_bits
         self.quant_method = quant_method
@@ -90,7 +90,7 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
 
     def get_tpc(self):
         return get_pytorch_test_tpc_dict(
-            tp_model=generate_test_tp_model({"weights_n_bits": self.weights_n_bits}),
+            tpc=generate_test_tpc({"weights_n_bits": self.weights_n_bits}),
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')
 
@@ -133,8 +133,8 @@ class LUTActivationQuantizerTest(BasePytorchTest):
 
     def get_tpc(self):
         return get_pytorch_test_tpc_dict(
-            tp_model=generate_test_tp_model({"activation_n_bits": self.activation_n_bits,
-                                             "activation_quantization_method": tp.QuantizationMethod.LUT_POT_QUANTIZER}),
+            tpc=generate_test_tpc({"activation_n_bits": self.activation_n_bits,
+                                             "activation_quantization_method": QuantizationMethod.LUT_POT_QUANTIZER}),
             test_name='lut_quantizer_test',
             ftp_name='lut_quantizer_pytorch_test')
 

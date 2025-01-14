@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 from typing import Callable
 from functools import partial
 
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
@@ -26,12 +25,9 @@ from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 
@@ -82,7 +78,7 @@ if FOUND_TORCH:
                                                               target_resource_utilization: ResourceUtilization = None,
                                                               core_config: CoreConfig = CoreConfig(),
                                                               qat_config: QATConfig = QATConfig(),
-                                                              target_platform_capabilities: TargetPlatformModel = DEFAULT_PYTORCH_TPC):
+                                                              target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
          Prepare a trained Pytorch model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -159,7 +155,7 @@ if FOUND_TORCH:
 
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
-        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
+        framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
                                                              core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore hessian scores service as we do not use it here
@@ -168,7 +164,7 @@ if FOUND_TORCH:
                                                   core_config=core_config,
                                                   fw_info=DEFAULT_PYTORCH_INFO,
                                                   fw_impl=fw_impl,
-                                                  tpc=target_platform_capabilities,
+                                                  fqc=framework_platform_capabilities,
                                                   target_resource_utilization=target_resource_utilization,
                                                   tb_w=tb_w)
 

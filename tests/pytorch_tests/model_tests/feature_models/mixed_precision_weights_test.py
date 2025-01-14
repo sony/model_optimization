@@ -23,19 +23,16 @@ from model_compression_toolkit.core.common.mixed_precision.distance_weighting im
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
-    OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OperatorsSet, \
     QuantizationConfigOptions
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, \
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tpc, \
     get_op_quantization_configs
-from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_mixed_precision_test_tpc
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
 
-tp = mct.target_platform
 
 """
 This test checks the Mixed Precision feature.
@@ -47,7 +44,7 @@ class MixedPrecisionBaseTest(BasePytorchTest):
         super().__init__(unit_test, num_calibration_iter=num_calibration_iter)
 
     def get_tpc(self):
-        return get_pytorch_test_tpc_dict(tp_model=get_tp_model(),
+        return get_pytorch_test_tpc_dict(tpc=get_tpc(),
                                          test_name='mixed_precision_model',
                                          ftp_name='mixed_precision_pytorch_test')
 
@@ -162,7 +159,7 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
             base_config=two_bit_cfg,
         )
 
-        tp_model = schema.TargetPlatformModel(
+        tpc = schema.TargetPlatformCapabilities(
             default_qco=weight_fixed_cfg,
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -171,7 +168,7 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
                           schema.OperatorsSet(name="Weights_fixed", qc_options=weight_fixed_cfg)]),
             name="mp_part_weights_layers_test")
 
-        return {'mixed_precision_model': tp_model}
+        return {'mixed_precision_model': tpc}
 
     def create_feature_network(self, input_shape):
         class ConvLinearModel(torch.nn.Module):
@@ -235,7 +232,7 @@ class MixedPrecisionActivationDisabledTest(MixedPrecisionBaseTest):
     def get_fw_hw_model(self):
         base_config, _, default_config = get_op_quantization_configs()
         return get_pytorch_test_tpc_dict(
-            tp_model=generate_mixed_precision_test_tp_model(
+            tpc=generate_mixed_precision_test_tpc(
                 base_cfg=base_config.clone_and_edit(enable_activation_quantization=False),
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
@@ -319,7 +316,7 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
             base_config=cfg,
         )
 
-        tp_model = TargetPlatformModel(
+        tpc = TargetPlatformCapabilities(
             default_qco=QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -329,7 +326,7 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
                 OperatorsSet(name="Weights", qc_options=weight_mixed_cfg)]),
             name="mp_weights_conf_act_test")
 
-        return {'mixed_precision_model': tp_model}
+        return {'mixed_precision_model': tpc}
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionWeightsTestNet(input_shape)

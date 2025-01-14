@@ -19,7 +19,7 @@ import torch
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.exporter_tests.base_pytorch_onnx_export_test import BasePytorchONNXCustomOpsExportTest
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_pot_onnx_quantizers import OneLayer
 
@@ -32,11 +32,11 @@ class TestExportONNXWeightUniform2BitsQuantizers(BasePytorchONNXCustomOpsExportT
         return OneLayer(torch.nn.Conv2d, in_channels=3, out_channels=4, kernel_size=5)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'activation_n_bits': 2,
+        tp = generate_test_tpc({'activation_n_bits': 2,
                                      'weights_n_bits': 2,
                                      'weights_quantization_method': QuantizationMethod.UNIFORM,
                                      'activation_quantization_method': QuantizationMethod.UNIFORM})
-        return generate_pytorch_tpc(name="test_conv2d_2bit_fq_weight", tp_model=tp)
+        return generate_pytorch_tpc(name="test_conv2d_2bit_fq_weight", tpc=tp)
 
     def compare(self, exported_model, wrapped_quantized_model, quantization_info):
         pot_q_nodes = self._get_onnx_node_by_type(exported_model, "ActivationUniformQuantizer")

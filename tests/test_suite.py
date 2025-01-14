@@ -28,7 +28,7 @@ from tests.common_tests.function_tests.test_logger import TestLogger
 from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
-from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest, \
+from tests.common_tests.test_tpc import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest, \
     TPModelInputOutputTests
 
 found_tf = importlib.util.find_spec("tensorflow") is not None
@@ -62,7 +62,7 @@ if found_tf:
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
-    from tests.keras_tests.non_parallel_tests.test_keras_tp_model import TestKerasTPModel
+    from tests.keras_tests.non_parallel_tests.test_keras_tpc import TestKerasTPModel
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
     from tests.keras_tests.function_tests.test_weights_activation_split_substitution import TestWeightsActivationSplit
@@ -99,7 +99,7 @@ if found_pytorch:
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
-    from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
+    from tests.pytorch_tests.function_tests.test_pytorch_tpc import TestPytorchTPModel
     from tests.pytorch_tests.trainable_infrastructure_tests.test_pytorch_trainable_infra_runner import PytorchTrainableInfrastructureTestRunner
     from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as pytorch_gptq_soft_quantier_test
     from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \

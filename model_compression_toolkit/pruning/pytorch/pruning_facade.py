@@ -16,7 +16,7 @@
 from typing import Callable, Tuple
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
@@ -25,7 +25,6 @@ from model_compression_toolkit.core.common.pruning.pruning_info import PruningIn
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
@@ -38,7 +37,7 @@ if FOUND_TORCH:
         PruningPytorchImplementation
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from torch.nn import Module
-    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
         AttachTpcToPytorch
 
     # Set the default Target Platform Capabilities (TPC) for PyTorch.
@@ -48,7 +47,7 @@ if FOUND_TORCH:
                                      target_resource_utilization: ResourceUtilization,
                                      representative_data_gen: Callable,
                                      pruning_config: PruningConfig = PruningConfig(),
-                                     target_platform_capabilities: TargetPlatformModel = DEFAULT_PYOTRCH_TPC) -> \
+                                     target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYOTRCH_TPC) -> \
             Tuple[Module, PruningInfo]:
         """
         Perform structured pruning on a Pytorch model to meet a specified target resource utilization.
@@ -121,12 +120,12 @@ if FOUND_TORCH:
 
         # Attach TPC to framework
         attach2pytorch = AttachTpcToPytorch()
-        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)
+        framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)
 
         # Convert the original Pytorch model to an internal graph representation.
         float_graph = read_model_to_graph(model,
                                           representative_data_gen,
-                                          target_platform_capabilities,
+                                          framework_platform_capabilities,
                                           DEFAULT_PYTORCH_INFO,
                                           fw_impl)
 
@@ -143,7 +142,7 @@ if FOUND_TORCH:
                         target_resource_utilization,
                         representative_data_gen,
                         pruning_config,
-                        target_platform_capabilities)
+                        framework_platform_capabilities)
 
         # Apply the pruning process.
         pruned_graph = pruner.prune_graph()

@@ -24,9 +24,8 @@ from model_compression_toolkit.target_platform_capabilities.schema.schema_functi
     get_config_options_by_operators_set, is_opset_in_model
 from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_model, \
     export_target_platform_model
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 
-tp = mct.target_platform
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
 TEST_QCO = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
@@ -44,15 +43,15 @@ class TPModelInputOutputTests(unittest.TestCase):
         op1 = schema.OperatorsSet(name="opset1")
         op2 = schema.OperatorsSet(name="opset2")
         op3 = schema.OperatorsSet(name="opset3")
-        op12 = schema.OperatorSetConcat(operators_set=[op1, op2])
-        self.tp_model = schema.TargetPlatformModel(default_qco=TEST_QCO,
-                                                   operator_set=(op1, op2, op3),
-                                                   fusing_patterns=(schema.Fusing(operator_groups=(op12, op3)),
+        op12 = schema.OperatorSetGroup(operators_set=[op1, op2])
+        self.tpc = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
+                                                     operator_set=(op1, op2, op3),
+                                                     fusing_patterns=(schema.Fusing(operator_groups=(op12, op3)),
                                                                     schema.Fusing(operator_groups=(op1, op2))),
-                                                   tpc_minor_version=1,
-                                                   tpc_patch_version=0,
-                                                   tpc_platform_type="dump_to_json",
-                                                   add_metadata=False)
+                                                     tpc_minor_version=1,
+                                                     tpc_patch_version=0,
+                                                     tpc_platform_type="dump_to_json",
+                                                     add_metadata=False)
 
         # Create invalid JSON file
         with open(self.invalid_json_file, "w") as file:
@@ -65,15 +64,15 @@ class TPModelInputOutputTests(unittest.TestCase):
                 os.remove(file)
 
     def test_valid_model_object(self):
-        """Test that a valid TargetPlatformModel object is returned unchanged."""
-        result = load_target_platform_model(self.tp_model)
-        self.assertEqual(self.tp_model, result)
+        """Test that a valid TargetPlatformCapabilities object is returned unchanged."""
+        result = load_target_platform_model(self.tpc)
+        self.assertEqual(self.tpc, result)
 
     def test_invalid_json_parsing(self):
         """Test that invalid JSON content raises a ValueError."""
         with self.assertRaises(ValueError) as context:
             load_target_platform_model(self.invalid_json_file)
-        self.assertIn("Invalid JSON for loading TargetPlatformModel in", str(context.exception))
+        self.assertIn("Invalid JSON for loading TargetPlatformCapabilities in", str(context.exception))
 
     def test_nonexistent_file(self):
         """Test that a nonexistent file raises FileNotFoundError."""
@@ -95,46 +94,46 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_invalid_input_type(self):
         """Test that an unsupported input type raises TypeError."""
-        invalid_input = 123  # Not a string or TargetPlatformModel
+        invalid_input = 123  # Not a string or TargetPlatformCapabilities
         with self.assertRaises(TypeError) as context:
             load_target_platform_model(invalid_input)
-        self.assertIn("must be either a TargetPlatformModel instance or a string path", str(context.exception))
+        self.assertIn("must be either a TargetPlatformCapabilities instance or a string path", str(context.exception))
 
     def test_valid_export(self):
-        """Test exporting a valid TargetPlatformModel instance to a file."""
-        export_target_platform_model(self.tp_model, self.valid_export_path)
+        """Test exporting a valid TargetPlatformCapabilities instance to a file."""
+        export_target_platform_model(self.tpc, self.valid_export_path)
         # Verify the file exists
         self.assertTrue(os.path.exists(self.valid_export_path))
 
         # Verify the contents match the model's JSON representation
         with open(self.valid_export_path, "r", encoding="utf-8") as file:
             content = file.read()
-        self.assertEqual(content, self.tp_model.json(indent=4))
+        self.assertEqual(content, self.tpc.json(indent=4))
 
     def test_export_with_invalid_model(self):
         """Test that exporting an invalid model raises a ValueError."""
         with self.assertRaises(ValueError) as context:
             export_target_platform_model("not_a_model", self.valid_export_path)
-        self.assertIn("not a valid TargetPlatformModel instance", str(context.exception))
+        self.assertIn("not a valid TargetPlatformCapabilities instance", str(context.exception))
 
     def test_export_with_invalid_path(self):
         """Test that exporting to an invalid path raises an OSError."""
         with self.assertRaises(OSError) as context:
-            export_target_platform_model(self.tp_model, self.invalid_export_path)
+            export_target_platform_model(self.tpc, self.invalid_export_path)
         self.assertIn("Failed to write to file", str(context.exception))
 
     def test_export_creates_parent_directories(self):
         """Test that exporting creates missing parent directories."""
         nested_path = "nested/directory/exported_model.json"
         try:
-            export_target_platform_model(self.tp_model, nested_path)
+            export_target_platform_model(self.tpc, nested_path)
             # Verify the file exists
             self.assertTrue(os.path.exists(nested_path))
 
             # Verify the contents match the model's JSON representation
             with open(nested_path, "r", encoding="utf-8") as file:
                 content = file.read()
-            self.assertEqual(content, self.tp_model.json(indent=4))
+            self.assertEqual(content, self.tpc.json(indent=4))
         finally:
             # Cleanup created directories
             if os.path.exists(nested_path):
@@ -146,42 +145,42 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_export_then_import(self):
         """Test that a model exported and then imported is identical."""
-        export_target_platform_model(self.tp_model, self.valid_export_path)
+        export_target_platform_model(self.tpc, self.valid_export_path)
         imported_model = load_target_platform_model(self.valid_export_path)
-        self.assertEqual(self.tp_model, imported_model)
+        self.assertEqual(self.tpc, imported_model)
 
 class TargetPlatformModelingTest(unittest.TestCase):
     def test_immutable_tp(self):
 
         with self.assertRaises(Exception) as e:
-            model = schema.TargetPlatformModel(default_qco=TEST_QCO,
-                                               operator_set=tuple([schema.OperatorsSet(name="opset")]),
-                                               tpc_minor_version=None,
-                                               tpc_patch_version=None,
-                                               tpc_platform_type=None,
-                                               add_metadata=False)
+            model = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
+                                                      operator_set=tuple([schema.OperatorsSet(name="opset")]),
+                                                      tpc_minor_version=None,
+                                                      tpc_patch_version=None,
+                                                      tpc_platform_type=None,
+                                                      add_metadata=False)
             model.operator_set = tuple()
-        self.assertEqual('"TargetPlatformModel" is immutable and does not support item assignment', str(e.exception))
+        self.assertEqual('"TargetPlatformCapabilities" is immutable and does not support item assignment', str(e.exception))
 
     def test_default_options_more_than_single_qc(self):
         test_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC, TEST_QC]), base_config=TEST_QC)
         with self.assertRaises(Exception) as e:
-            schema.TargetPlatformModel(default_qco=test_qco,
-                                       tpc_minor_version=None,
-                                       tpc_patch_version=None,
-                                       tpc_platform_type=None,
-                                       add_metadata=False)
+            schema.TargetPlatformCapabilities(default_qco=test_qco,
+                                              tpc_minor_version=None,
+                                              tpc_patch_version=None,
+                                              tpc_platform_type=None,
+                                              add_metadata=False)
         self.assertEqual('Default QuantizationConfigOptions must contain exactly one option.', str(e.exception))
 
-    def test_tp_model_show(self):
-        tpm = schema.TargetPlatformModel(default_qco=TEST_QCO,
-                                         tpc_minor_version=None,
-                                         tpc_patch_version=None,
-                                         tpc_platform_type=None,
-                                         operator_set=tuple([schema.OperatorsSet(name="opA"), schema.OperatorsSet(name="opB")]),
-                                         fusing_patterns=tuple(
+    def test_tpc_show(self):
+        tpm = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
+                                                tpc_minor_version=None,
+                                                tpc_patch_version=None,
+                                                tpc_platform_type=None,
+                                                operator_set=tuple([schema.OperatorsSet(name="opA"), schema.OperatorsSet(name="opB")]),
+                                                fusing_patterns=tuple(
                                              [schema.Fusing(operator_groups=(schema.OperatorsSet(name="opA"), schema.OperatorsSet(name="opB")))]),
-                                         add_metadata=False)
+                                                add_metadata=False)
         tpm.show()
 
 class OpsetTest(unittest.TestCase):
@@ -190,13 +189,13 @@ class OpsetTest(unittest.TestCase):
         opset_name = "ops_3bit"
         qco_3bit = TEST_QCO.clone_and_edit(activation_n_bits=3)
         operator_set = [schema.OperatorsSet(name=opset_name, qc_options=qco_3bit)]
-        hm = schema.TargetPlatformModel(default_qco=TEST_QCO,
-                                        operator_set=tuple(operator_set),
-                                        tpc_minor_version=None,
-                                        tpc_patch_version=None,
-                                        tpc_platform_type=None,
-                                        add_metadata=False,
-                                        name='test')
+        hm = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
+                                               operator_set=tuple(operator_set),
+                                               tpc_minor_version=None,
+                                               tpc_patch_version=None,
+                                               tpc_platform_type=None,
+                                               add_metadata=False,
+                                               name='test')
         for op_qc in get_config_options_by_operators_set(hm, opset_name).quantization_configurations:
             self.assertEqual(op_qc.activation_n_bits, 3)
 
@@ -214,19 +213,19 @@ class OpsetTest(unittest.TestCase):
                                 qc_options=TEST_QCO.clone_and_edit(activation_n_bits=2))
         c = schema.OperatorsSet(name='opset_C')  # Just add it without using it in concat
         operator_set.extend([a, b, c])
-        hm = schema.TargetPlatformModel(default_qco=TEST_QCO,
-                                        operator_set=tuple(operator_set),
-                                        tpc_minor_version=None,
-                                        tpc_patch_version=None,
-                                        tpc_platform_type=None,
-                                        add_metadata=False,
-                                        name='test')
+        hm = schema.TargetPlatformCapabilities(default_qco=TEST_QCO,
+                                               operator_set=tuple(operator_set),
+                                               tpc_minor_version=None,
+                                               tpc_patch_version=None,
+                                               tpc_platform_type=None,
+                                               add_metadata=False,
+                                               name='test')
         self.assertEqual(len(hm.operator_set), 3)
         self.assertFalse(is_opset_in_model(hm, "opset_A_opset_B"))
 
     def test_non_unique_opset(self):
         with self.assertRaises(Exception) as e:
-            hm = schema.TargetPlatformModel(
+            hm = schema.TargetPlatformCapabilities(
                 default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
                 operator_set=tuple([schema.OperatorsSet(name="conv"), schema.OperatorsSet(name="conv")]),
                 tpc_minor_version=None,
@@ -274,7 +273,7 @@ class QCOptionsTest(unittest.TestCase):
         mock_node = BaseNode(name="", framework_attr={}, input_shape=(), output_shape=(), weights={}, layer_class=None)
         with self.assertRaises(Exception) as e:
             mock_node.get_qco(None)
-        self.assertEqual('Can not retrieve QC options for None TPC', str(e.exception))
+        self.assertEqual('Can not retrieve QC options for None FQC', str(e.exception))
 
 
 class FusingTest(unittest.TestCase):
@@ -282,7 +281,7 @@ class FusingTest(unittest.TestCase):
     def test_fusing_single_opset(self):
         add = schema.OperatorsSet(name="add")
         with self.assertRaises(Exception) as e:
-            hm = schema.TargetPlatformModel(
+            hm = schema.TargetPlatformCapabilities(
                 default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
                 operator_set=tuple([add]),
                 fusing_patterns=tuple([schema.Fusing(operator_groups=tuple([add]))]),
@@ -304,7 +303,7 @@ class FusingTest(unittest.TestCase):
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add)))
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add, tanh)))
 
-        hm = schema.TargetPlatformModel(
+        hm = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             operator_set=tuple(operator_set),
             fusing_patterns=tuple(fusing_patterns),
@@ -327,12 +326,12 @@ class FusingTest(unittest.TestCase):
         tanh = schema.OperatorsSet(name="tanh")
         operator_set.extend([conv, add, tanh])
 
-        add_tanh = schema.OperatorSetConcat(operators_set=[add, tanh])
+        add_tanh = schema.OperatorSetGroup(operators_set=[add, tanh])
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add)))
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add_tanh)))
         fusing_patterns.append(schema.Fusing(operator_groups=(conv, add, tanh)))
 
-        hm = schema.TargetPlatformModel(
+        hm = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             operator_set=tuple(operator_set),
             fusing_patterns=tuple(fusing_patterns),

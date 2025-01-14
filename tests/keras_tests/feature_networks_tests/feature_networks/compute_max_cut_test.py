@@ -19,7 +19,7 @@ import tensorflow as tf
 from mct_quantizers.keras.metadata import get_metadata
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from tests.common_tests.helpers.tpcs_for_tests.v2.tp_model import get_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v2.tpc import get_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -42,7 +42,7 @@ class ComputeMaxCutTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def get_tpc(self):
-        return get_tp_model()
+        return get_tpc()
 
     def get_debug_config(self):
         return mct.core.DebugConfig(simulate_scheduler=True)

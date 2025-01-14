@@ -19,13 +19,14 @@ from functools import partial
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from mct_quantizers import KerasActivationQuantizationHolder
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 
@@ -55,8 +56,6 @@ if FOUND_TF:
     from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder, \
     get_activation_quantizer_holder
     from model_compression_toolkit.qat.common.qat_config import QATConfig
-    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-        AttachTpcToKeras
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
@@ -93,7 +92,7 @@ if FOUND_TF:
                                                             target_resource_utilization: ResourceUtilization = None,
                                                             core_config: CoreConfig = CoreConfig(),
                                                             qat_config: QATConfig = QATConfig(),
-                                                            target_platform_capabilities: TargetPlatformModel = DEFAULT_KERAS_TPC):
+                                                            target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
          Prepare a trained Keras model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -200,7 +199,7 @@ if FOUND_TF:
                                                   core_config=core_config,
                                                   fw_info=DEFAULT_KERAS_INFO,
                                                   fw_impl=fw_impl,
-                                                  tpc=target_platform_capabilities,
+                                                  fqc=target_platform_capabilities,
                                                   target_resource_utilization=target_resource_utilization,
                                                   tb_w=tb_w)
 

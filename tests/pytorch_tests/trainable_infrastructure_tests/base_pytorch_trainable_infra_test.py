@@ -19,7 +19,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from mct_quantizers import mark_quantizer, QuantizationTarget, PytorchQuantizationWrapper
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig

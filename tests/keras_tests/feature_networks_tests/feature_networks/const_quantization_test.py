@@ -20,28 +20,26 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 
-from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
-from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model as get_tp_v3
-from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model as get_tp_v4
-from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import generate_tp_model, get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_custom_test_tpc
+from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc as get_tp_v3
+from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import get_tpc as get_tp_v4
+from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import generate_tpc, get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.utils import get_layers_from_model_by_type
-from mct_quantizers import KerasQuantizationWrapper
-
+from mct_quantizers import KerasQuantizationWrapper, QuantizationMethod
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def create_const_quant_tpc(qmethod):
     name = "const_quant_tpc"
     base_cfg, mp_op_cfg_list, default_cfg = get_op_quantization_configs()
-    base_tp_model = generate_tp_model(default_config=default_cfg,
-                                      base_config=base_cfg,
-                                      mixed_precision_cfg_list=mp_op_cfg_list,
-                                      name=name)
+    base_tpc = generate_tpc(default_config=default_cfg,
+                                 base_config=base_cfg,
+                                 mixed_precision_cfg_list=mp_op_cfg_list,
+                                 name=name)
 
     const_config = default_cfg.clone_and_edit(
         default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
@@ -61,19 +59,19 @@ def create_const_quant_tpc(qmethod):
     operator_sets_dict[schema.OperatorSetNames.STACK] = const_merge_configuration_options
     operator_sets_dict[schema.OperatorSetNames.CONCATENATE] = const_merge_configuration_options
 
-    tp_model = generate_custom_test_tp_model(name=name,
-                                             base_cfg=base_cfg,
-                                             base_tp_model=base_tp_model,
-                                             operator_sets_dict=operator_sets_dict)
+    tpc = generate_custom_test_tpc(name=name,
+                                        base_cfg=base_cfg,
+                                        base_tpc=base_tpc,
+                                        operator_sets_dict=operator_sets_dict)
 
-    return tp_model
+    return tpc
 
 
 class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwargs=False,
                  error_method: mct.core.QuantizationErrorMethod = mct.core.QuantizationErrorMethod.MSE,
-                 qmethod: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
+                 qmethod: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                  input_shape=(32, 32, 16)):
         super(ConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
         self.layer = layer

@@ -14,8 +14,8 @@
 # ==============================================================================
 import unittest
 
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCollectionTest, \
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest

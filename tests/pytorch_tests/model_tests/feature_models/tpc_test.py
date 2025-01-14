@@ -27,8 +27,6 @@ from mct_quantizers.pytorch.metadata import add_metadata, get_metadata, add_onnx
 import tempfile
 import os
 
-tp = mct.target_platform
-
 
 class DummyNet(nn.Module):
     def __init__(self):
@@ -45,8 +43,8 @@ class TpcTest(BasePytorchFeatureNetworkTest):
         self.tpc_name = tpc_name
 
     def get_tpc(self):
-        tp_model_name, tp_version = self.tpc_name.split('.')
-        return mct.get_target_platform_capabilities(PYTORCH, tp_model_name, tp_version)
+        tpc_name, tp_version = self.tpc_name.split('.')
+        return mct.get_target_platform_capabilities(PYTORCH, tpc_name, tp_version)
 
     def create_networks(self):
         return DummyNet()

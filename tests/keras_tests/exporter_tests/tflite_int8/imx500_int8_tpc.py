@@ -21,7 +21,7 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
     KERAS_DEPTHWISE_KERNEL, WEIGHTS_N_BITS
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
@@ -33,23 +33,22 @@ else:
         Conv2DTranspose
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OpQuantizationConfig
-from tests.common_tests.helpers.tpcs_for_tests.v1.tp_model import generate_tp_model
-
-tp = mct.target_platform
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OpQuantizationConfig
+from tests.common_tests.helpers.tpcs_for_tests.v1.tpc import generate_tpc
 
 
-def get_tp_model(edit_weights_params_dict, edit_act_params_dict) -> TargetPlatformModel:
+
+def get_tpc(edit_weights_params_dict, edit_act_params_dict) -> TargetPlatformCapabilities:
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
 
     updated_config = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: edit_weights_params_dict},
                                                 **edit_act_params_dict)
     op_cfg_list = [updated_config]
 
-    return generate_tp_model(default_config=updated_config,
-                             base_config=updated_config,
-                             mixed_precision_cfg_list=op_cfg_list,
-                             name='int8_tp_model')
+    return generate_tpc(default_config=updated_config,
+                        base_config=updated_config,
+                        mixed_precision_cfg_list=op_cfg_list,
+                        name='int8_tpc')
 
 
 def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
@@ -63,16 +62,16 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     return eight_bits, mixed_precision_cfg_list, default_config
 
 
-def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.TargetPlatformModel:
-    default_tp_model = get_tp_model(edit_weights_params_dict, edit_act_params_dict)
-    return default_tp_model
+def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> TargetPlatformCapabilities:
+    default_tpc = get_tpc(edit_weights_params_dict, edit_act_params_dict)
+    return default_tpc
 
 
-def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model)
+def generate_keras_tpc(name: str, tpc: schema.TargetPlatformCapabilities):
+    keras_tpc = FrameworkQuantizationCapabilities(tpc)
 
     with keras_tpc:
-        tp.OperationsSetToLayers("NoQuantization", [Reshape,
+        OperationsSetToLayers("NoQuantization", [Reshape,
                                                     tf.reshape,
                                                     Permute,
                                                     tf.transpose,
@@ -92,7 +91,7 @@ def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
                                                     tf.nn.top_k,
                                                     tf.__operators__.getitem,
                                                     tf.compat.v1.shape])
-        tp.OperationsSetToLayers("Conv",
+        OperationsSetToLayers("Conv",
                                  [Conv2D,
                                   DepthwiseConv2D,
                                   Conv2DTranspose,
@@ -104,22 +103,22 @@ def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
                                          DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
                                          tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
                                      BIAS_ATTR: DefaultDict(default_value=BIAS)})
-        tp.OperationsSetToLayers("FullyConnected", [Dense],
+        OperationsSetToLayers("FullyConnected", [Dense],
                                  attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
                                                BIAS_ATTR: DefaultDict(default_value=BIAS)})
-        tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
+        OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
                                              tf.nn.leaky_relu,
                                              ReLU,
                                              LeakyReLU,
-                                             tp.LayerFilterParams(Activation, activation="relu"),
-                                             tp.LayerFilterParams(Activation, activation="leaky_relu")])
-        tp.OperationsSetToLayers("Add", [tf.add, Add])
-        tp.OperationsSetToLayers("Sub", [tf.subtract, Subtract])
-        tp.OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
-        tp.OperationsSetToLayers("Div", [tf.math.divide])
-        tp.OperationsSetToLayers("PReLU", [PReLU])
-        tp.OperationsSetToLayers("Swish", [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
-        tp.OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])
-        tp.OperationsSetToLayers("Tanh", [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])
+                                             LayerFilterParams(Activation, activation="relu"),
+                                             LayerFilterParams(Activation, activation="leaky_relu")])
+        OperationsSetToLayers("Add", [tf.add, Add])
+        OperationsSetToLayers("Sub", [tf.subtract, Subtract])
+        OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
+        OperationsSetToLayers("Div", [tf.math.divide])
+        OperationsSetToLayers("PReLU", [PReLU])
+        OperationsSetToLayers("Swish", [tf.nn.swish, LayerFilterParams(Activation, activation="swish")])
+        OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid, LayerFilterParams(Activation, activation="sigmoid")])
+        OperationsSetToLayers("Tanh", [tf.nn.tanh, LayerFilterParams(Activation, activation="tanh")])
     return keras_tpc

@@ -16,7 +16,7 @@ from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 
 from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
@@ -44,12 +44,12 @@ class PytorchReportUtils(FrameworkReportUtils):
         # Set the default Target Platform Capabilities (TPC) for PyTorch.
         default_tpc = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
         attach2pytorch = AttachTpcToPytorch()
-        target_platform_capabilities = attach2pytorch.attach(default_tpc)
+        framework_quantization_capabilities = attach2pytorch.attach(default_tpc)
 
         dataset_utils = PytorchDatasetUtils()
         model_folding = ModelFoldingUtils(fw_info=fw_info,
                                           fw_impl=fw_impl,
-                                          fw_default_tpc=target_platform_capabilities)
+                                          fw_default_fqc=framework_quantization_capabilities)
 
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
                                                      model_folding=model_folding,

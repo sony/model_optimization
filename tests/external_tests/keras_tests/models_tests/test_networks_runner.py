@@ -25,24 +25,23 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 QUANTIZATION_CONFIG = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
                                                   weights_error_method=mct.core.QuantizationErrorMethod.MSE,
                                                   relu_bound_to_power_of_2=False, weights_bias_correction=False)
 
 TWO_BIT_QUANTIZATION = generate_keras_tpc(name="two_bit_network_test",
-                                          tp_model=generate_test_tp_model({'weights_n_bits': 2,
+                                          tpc=generate_test_tpc({'weights_n_bits': 2,
                                                                            'activation_n_bits': 2}))
 
 EIGHT_BIT_QUANTIZATION = generate_keras_tpc(name="eight_bit_network_test",
-                                            tp_model=generate_test_tp_model({'weights_n_bits': 8,
+                                            tpc=generate_test_tpc({'weights_n_bits': 8,
                                                                              'activation_n_bits': 8}))
 
 FLOAT_QUANTIZATION = get_16bit_tpc("float_network_test")

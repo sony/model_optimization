@@ -18,7 +18,7 @@ import tensorflow as tf
 
 from model_compression_toolkit.constants import THRESHOLD
 from model_compression_toolkit.core.keras.constants import KERNEL
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.utils import get_layers_from_model_by_type
@@ -32,8 +32,8 @@ class PerTensorWeightQuantizationTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test )
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_per_channel_threshold': False})
-        return generate_keras_tpc(name="per_tensor_weight_quantization", tp_model=tp)
+        tp = generate_test_tpc({'weights_per_channel_threshold': False})
+        return generate_keras_tpc(name="per_tensor_weight_quantization", tpc=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

@@ -20,8 +20,8 @@ from keras.models import clone_model
 from tensorflow.keras.layers import Conv2D, Input
 import numpy as np
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import THRESHOLD, MIN_THRESHOLD
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft_quantizer import \
     SymmetricSoftRoundingGPTQ
@@ -30,7 +30,6 @@ from model_compression_toolkit.trainable_infrastructure import KerasTrainableQua
 
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
-tp = mct.target_platform
 
 
 def model_test(input_shape, num_channels=3, kernel_size=1):

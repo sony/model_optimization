@@ -28,9 +28,10 @@ from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, \
     BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
-from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams, Eq
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2fw import \
     AttachTpcToFramework
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Eq
 
 
 class AttachTpcToPytorch(AttachTpcToFramework):

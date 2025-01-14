@@ -25,8 +25,9 @@ from model_compression_toolkit.core import QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
-from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tpc import get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -39,7 +40,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def get_base_mp_nbits_candidates():
@@ -567,7 +567,7 @@ class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
             custom_tpc_opset_to_layer={"Softmax": CustomOpsetLayers([layers.Softmax, tf.nn.softmax, softmax,
-                                                    tp.LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
+                                                    LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
                                        "Input": CustomOpsetLayers([layers.InputLayer])}))
 
     def get_tpc(self):
@@ -681,7 +681,7 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             base_config=cfg,
         )
 
-        tp_model = schema.TargetPlatformModel(
+        tpc = schema.TargetPlatformCapabilities(
             default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -691,7 +691,7 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             add_metadata=False,
             name="mp_activation_conf_weights_test")
 
-        return tp_model
+        return tpc
 
     def get_resource_utilization(self):
         return ResourceUtilization(np.inf, 5410)

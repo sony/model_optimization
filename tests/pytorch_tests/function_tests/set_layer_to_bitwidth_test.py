@@ -25,10 +25,10 @@ from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activat
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
-from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_mixed_precision_test_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -76,7 +76,7 @@ class TestSetLayerToBitwidthWeights(BasePytorchTest):
     def run_test(self, seed=0, **kwargs):
         base_config, _, default_config = get_op_quantization_configs()
         tpc = get_pytorch_test_tpc_dict(
-            tp_model=generate_mixed_precision_test_tp_model(
+            tpc=generate_mixed_precision_test_tpc(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
@@ -126,7 +126,7 @@ class TestSetLayerToBitwidthActivation(BasePytorchTest):
     def run_test(self, seed=0, **kwargs):
         base_config, _, default_config = get_op_quantization_configs()
         tpc = get_pytorch_test_tpc_dict(
-            tp_model=generate_mixed_precision_test_tp_model(
+            tpc=generate_mixed_precision_test_tpc(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2)]),

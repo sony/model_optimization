@@ -17,14 +17,13 @@
 import tensorflow as tf
 import numpy as np
 
-from mct_quantizers import KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder, QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
-tp = mct.target_platform
 keras = tf.keras
 layers = keras.layers
 
@@ -38,10 +37,10 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
         return [np.random.uniform(low=-7, high=7, size=in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        tp_model = generate_test_tp_model({
-            'activation_quantization_method': tp.QuantizationMethod.SYMMETRIC,
+        tpc = generate_test_tpc({
+            'activation_quantization_method': QuantizationMethod.SYMMETRIC,
             'activation_n_bits': 8})
-        return generate_keras_tpc(name="symmetric_threshold_test", tp_model=tp_model)
+        return generate_keras_tpc(name="symmetric_threshold_test", tpc=tpc)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(activation_error_method=self.activation_threshold_method)

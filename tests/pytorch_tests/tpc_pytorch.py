@@ -14,22 +14,20 @@
 # ==============================================================================
 
 import model_compression_toolkit as mct
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-
-tp = mct.target_platform
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 
-def get_pytorch_test_tpc_dict(tp_model, test_name, ftp_name):
+def get_pytorch_test_tpc_dict(tpc, test_name, ftp_name):
     return {
-        test_name: tp_model
+        test_name: tpc
     }
 
 def get_activation_quantization_disabled_pytorch_tpc(name):
-    tp = generate_test_tp_model({'enable_activation_quantization': False})
+    tp = generate_test_tpc({'enable_activation_quantization': False})
     return get_pytorch_test_tpc_dict(tp, name, name)
 
 def get_weights_quantization_disabled_pytorch_tpc(name):
-    tp = generate_test_tp_model({'enable_weights_quantization': False})
+    tp = generate_test_tpc({'enable_weights_quantization': False})
     return get_pytorch_test_tpc_dict(tp, name, name)
 
 

@@ -21,38 +21,38 @@ from typing import List, Any, Dict, Tuple
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set, get_default_op_quantization_config, get_opset_by_name
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
-    OperationsToLayers, OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.operations_to_layers import OperationsToLayers, \
+    OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities_component import \
+    FrameworkQuantizationCapabilitiesComponent
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSetBase, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OperatorsSetBase, \
     OpQuantizationConfig, QuantizationConfigOptions
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.current_tpc import  _current_tpc
 
-
-class TargetPlatformCapabilities(ImmutableClass):
+class FrameworkQuantizationCapabilities(ImmutableClass):
     """
     Attach framework information to a modeled hardware.
     """
     def __init__(self,
-                 tp_model: TargetPlatformModel,
+                 tpc: TargetPlatformCapabilities,
                  name: str = "base"):
         """
 
         Args:
-            tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
-            name (str): Name of the TargetPlatformCapabilities.
+            tpc (TargetPlatformCapabilities): Modeled hardware to attach framework information to.
+            name (str): Name of the FrameworkQuantizationCapabilities.
         """
 
         super().__init__()
         self.name = name
-        assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
-        self.tp_model = tp_model
+        assert isinstance(tpc, TargetPlatformCapabilities), f'Target platform model that was passed to FrameworkQuantizationCapabilities must be of type TargetPlatformCapabilities, but has type of {type(tpc)}'
+        self.tpc = tpc
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
         # Track the unused opsets for warning purposes.
-        self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
+        self.__tpc_opsets_not_used = [s.name for s in tpc.operator_set]
         self.remove_fusing_names_from_not_used_list()
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
@@ -66,9 +66,9 @@ class TargetPlatformCapabilities(ImmutableClass):
         Returns:
             List of layers/LayerFilterParams that are attached to the opset name.
         """
-        opset = get_opset_by_name(self.tp_model, opset_name)
+        opset = get_opset_by_name(self.tpc, opset_name)
         if opset is None:
-            Logger.warning(f'{opset_name} was not found in TargetPlatformCapabilities.')
+            Logger.warning(f'{opset_name} was not found in FrameworkQuantizationCapabilities.')
             return None
         return self.get_layers_by_opset(opset)
 
@@ -100,9 +100,9 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         res = []
-        if self.tp_model.fusing_patterns is None:
+        if self.tpc.fusing_patterns is None:
             return res
-        for p in self.tp_model.fusing_patterns:
+        for p in self.tpc.fusing_patterns:
             ops = [self.get_layers_by_opset(x) for x in p.operator_groups]
             res.extend(itertools.product(*ops))
         return [list(x) for x in res]
@@ -111,47 +111,47 @@ class TargetPlatformCapabilities(ImmutableClass):
     def get_info(self) -> Dict[str, Any]:
         """
 
-        Returns: Summarization of information in the TargetPlatformCapabilities.
+        Returns: Summarization of information in the FrameworkQuantizationCapabilities.
 
         """
         return {"Target Platform Capabilities": self.name,
-                "Minor version": self.tp_model.tpc_minor_version,
-                "Patch version": self.tp_model.tpc_patch_version,
-                "Platform type": self.tp_model.tpc_platform_type,
-                "Target Platform Model": self.tp_model.get_info(),
+                "Minor version": self.tpc.tpc_minor_version,
+                "Patch version": self.tpc.tpc_patch_version,
+                "Platform type": self.tpc.tpc_platform_type,
+                "Target Platform Model": self.tpc.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 
     def show(self):
         """
 
-        Display the TargetPlatformCapabilities.
+        Display the FrameworkQuantizationCapabilities.
 
         """
         pprint.pprint(self.get_info(), sort_dicts=False, width=110)
 
-    def append_component(self, tpc_component: TargetPlatformCapabilitiesComponent):
+    def append_component(self, tpc_component: FrameworkQuantizationCapabilitiesComponent):
         """
-        Append a Component (like OperationsSetToLayers) to the TargetPlatformCapabilities.
+        Append a Component (like OperationsSetToLayers) to the FrameworkQuantizationCapabilities.
 
         Args:
-            tpc_component: Component to append to TargetPlatformCapabilities.
+            tpc_component: Component to append to FrameworkQuantizationCapabilities.
 
         """
         if isinstance(tpc_component, OperationsSetToLayers):
             self.op_sets_to_layers += tpc_component
         else:
-            Logger.critical(f"Attempt to append an unrecognized 'TargetPlatformCapabilitiesComponent' of type: '{type(tpc_component)}'. Ensure the component is compatible.")  # pragma: no cover
+            Logger.critical(f"Attempt to append an unrecognized 'FrameworkQuantizationCapabilitiesComponent' of type: '{type(tpc_component)}'. Ensure the component is compatible.")  # pragma: no cover
 
     def __enter__(self):
         """
-        Init a TargetPlatformCapabilities object.
+        Init a FrameworkQuantizationCapabilities object.
         """
         _current_tpc.set(self)
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
         """
-        Finalize a TargetPlatformCapabilities object.
+        Finalize a FrameworkQuantizationCapabilities object.
         """
         if exc_value is not None:
             print(exc_value, exc_value.args)
@@ -164,11 +164,11 @@ class TargetPlatformCapabilities(ImmutableClass):
     def get_default_op_qc(self) -> OpQuantizationConfig:
         """
 
-        Returns: The default OpQuantizationConfig of the TargetPlatformModel that is attached
-        to the TargetPlatformCapabilities.
+        Returns: The default OpQuantizationConfig of the TargetPlatformCapabilities that is attached
+        to the FrameworkQuantizationCapabilities.
 
         """
-        return get_default_op_quantization_config(self.tp_model)
+        return get_default_op_quantization_config(self.tpc)
 
 
     def _get_config_options_mapping(self) -> Tuple[Dict[Any, QuantizationConfigOptions],
@@ -184,9 +184,9 @@ class TargetPlatformCapabilities(ImmutableClass):
         filterlayer2qco = {}
         for op2layers in self.op_sets_to_layers.op_sets_to_layers:
             for l in op2layers.layers:
-                qco = get_config_options_by_operators_set(self.tp_model, op2layers.name)
+                qco = get_config_options_by_operators_set(self.tpc, op2layers.name)
                 if qco is None:
-                    qco = self.tp_model.default_qco
+                    qco = self.tpc.default_qco
 
                 # here, we need to take care of mapping a general attribute name into a framework and
                 # layer type specific attribute name.
@@ -208,8 +208,8 @@ class TargetPlatformCapabilities(ImmutableClass):
         Remove OperatorSets names from the list of the unused sets (so a warning
         will not be displayed).
         """
-        if self.tp_model.fusing_patterns is not None:
-            for f in self.tp_model.fusing_patterns:
+        if self.tpc.fusing_patterns is not None:
+            for f in self.tpc.fusing_patterns:
                 for s in f.operator_groups:
                     self.remove_opset_from_not_used_list(s.name)
 
@@ -222,8 +222,8 @@ class TargetPlatformCapabilities(ImmutableClass):
             opset_to_remove: OperatorsSet name to remove.
 
         """
-        if opset_to_remove in self.__tp_model_opsets_not_used:
-            self.__tp_model_opsets_not_used.remove(opset_to_remove)
+        if opset_to_remove in self.__tpc_opsets_not_used:
+            self.__tpc_opsets_not_used.remove(opset_to_remove)
 
     @property
     def is_simd_padding(self) -> bool:
@@ -232,4 +232,4 @@ class TargetPlatformCapabilities(ImmutableClass):
         Returns: Check if the TP model defines that padding due to SIMD constrains occurs.
 
         """
-        return self.tp_model.is_simd_padding
+        return self.tpc.is_simd_padding

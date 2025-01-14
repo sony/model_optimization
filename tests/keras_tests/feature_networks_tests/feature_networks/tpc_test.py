@@ -22,7 +22,6 @@ from model_compression_toolkit.constants import TENSORFLOW
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 class TpcTest(BaseKerasFeatureNetworkTest):
@@ -32,8 +31,8 @@ class TpcTest(BaseKerasFeatureNetworkTest):
         self.tpc_name = tpc_name
 
     def get_tpc(self):
-        tp_model_name, tp_version = self.tpc_name.split('.')
-        return mct.get_target_platform_capabilities(TENSORFLOW, tp_model_name, tp_version)
+        tpc_name, tp_version = self.tpc_name.split('.')
+        return mct.get_target_platform_capabilities(TENSORFLOW, tpc_name, tp_version)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

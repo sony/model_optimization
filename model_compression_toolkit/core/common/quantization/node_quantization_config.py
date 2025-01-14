@@ -401,9 +401,9 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 # therefore, we need to look for the attribute in the op_cfg that is contained in the node attribute's name.
                 attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if k in attr}
                 if len(attrs_included_in_name) > 1:  # pragma: no cover
-                    Logger.critical(f"Found multiple attribute in TPC OpConfig that are contained "
+                    Logger.critical(f"Found multiple attribute in FQC OpConfig that are contained "
                                     f"in the attribute name '{attr}'."
-                                    f"Please fix the TPC attribute names mapping such that each operator's attribute would "
+                                    f"Please fix the FQC attribute names mapping such that each operator's attribute would "
                                     f"have a unique matching name.")
                 if len(attrs_included_in_name) == 0:
                     attr_cfg = op_cfg.default_weight_attr_config

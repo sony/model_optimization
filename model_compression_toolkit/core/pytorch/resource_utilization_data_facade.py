@@ -17,8 +17,7 @@ from typing import Callable
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
@@ -30,7 +29,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from torch.nn import Module
-    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
         AttachTpcToPytorch
 
     from model_compression_toolkit import get_target_platform_capabilities
@@ -41,7 +40,7 @@ if FOUND_TORCH:
     def pytorch_resource_utilization_data(in_model: Module,
                                           representative_data_gen: Callable,
                                           core_config: CoreConfig = CoreConfig(),
-                                          target_platform_capabilities: TargetPlatformModel= PYTORCH_DEFAULT_TPC
+                                          target_platform_capabilities: TargetPlatformCapabilities= PYTORCH_DEFAULT_TPC
                                           ) -> ResourceUtilization:
         """
         Computes resource utilization data that can be used to calculate the desired target resource utilization for mixed-precision quantization.
@@ -51,7 +50,7 @@ if FOUND_TORCH:
             in_model (Model): PyTorch model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
             core_config (CoreConfig): CoreConfig containing parameters for quantization and mixed precision
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
+            target_platform_capabilities (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to optimize the PyTorch model according to.
 
         Returns:
 

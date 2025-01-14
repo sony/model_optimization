@@ -16,7 +16,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from mct_quantizers import KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder, QuantizationMethod
 from model_compression_toolkit.core.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
@@ -25,13 +25,12 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
     get_weights_quantization_params_fn, get_activation_quantization_params_fn
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def get_uniform_weights(kernel, in_channels, out_channels):
@@ -57,11 +56,11 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test )
 
     def get_tpc(self):
-        tp_model = generate_test_tp_model({
-            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+        tpc = generate_test_tpc({
+            'weights_quantization_method': QuantizationMethod.POWER_OF_TWO,
             'activation_n_bits': 16,
             'weights_n_bits': 16})
-        return generate_keras_tpc(name="scope_filter_test", tp_model=tp_model)
+        return generate_keras_tpc(name="scope_filter_test", tpc=tpc)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
@@ -139,11 +138,11 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test )
 
     def get_tpc(self):
-        tp_model = generate_test_tp_model({
-            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+        tpc = generate_test_tpc({
+            'weights_quantization_method': QuantizationMethod.POWER_OF_TWO,
             'activation_n_bits': 16,
             'weights_n_bits': 16})
-        return generate_keras_tpc(name="name_filter_test", tp_model=tp_model)
+        return generate_keras_tpc(name="name_filter_test", tpc=tpc)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
@@ -205,17 +204,17 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test )
 
     def weights_params_fn(self):
-        return get_weights_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
+        return get_weights_quantization_params_fn(QuantizationMethod.POWER_OF_TWO)
 
     def activations_params_fn(self):
-        return get_activation_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
+        return get_activation_quantization_params_fn(QuantizationMethod.POWER_OF_TWO)
 
     def get_tpc(self):
-        tp_model = generate_test_tp_model({
-            'weights_quantization_method': tp.QuantizationMethod.POWER_OF_TWO,
+        tpc = generate_test_tpc({
+            'weights_quantization_method': QuantizationMethod.POWER_OF_TWO,
             'activation_n_bits': 16,
             'weights_n_bits': 16})
-        return generate_keras_tpc(name="type_filter_test", tp_model=tp_model)
+        return generate_keras_tpc(name="type_filter_test", tpc=tpc)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,

@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import  _current_tpc
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.current_tpc import  _current_tpc
 
 
-class TargetPlatformCapabilitiesComponent:
+class FrameworkQuantizationCapabilitiesComponent:
     def __init__(self, name: str):
         self.name = name
         _current_tpc.get().append_component(self)

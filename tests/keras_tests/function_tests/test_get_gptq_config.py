@@ -18,18 +18,18 @@ from typing import List
 import numpy as np
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 
 from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization, GradientPTQConfig, RoundingType
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod, CoreConfig
 from model_compression_toolkit import DefaultDict
 import tensorflow as tf
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_config import GPTQHessianScoresConfig
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 layers = tf.keras.layers
 SHAPE = [1, 16, 16, 3]
@@ -131,11 +131,11 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                           optimizer=tf.keras.optimizers.Adam(),
                                                           regularization_factor=0.001)]
 
-        pot_tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
-        self.pot_weights_tpc = generate_keras_tpc(name="gptq_pot_config_test", tp_model=pot_tp)
+        pot_tp = generate_test_tpc({'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
+        self.pot_weights_tpc = generate_keras_tpc(name="gptq_pot_config_test", tpc=pot_tp)
 
-        symmetric_tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
-        self.symmetric_weights_tpc = generate_keras_tpc(name="gptq_symmetric_config_test", tp_model=symmetric_tp)
+        symmetric_tp = generate_test_tpc({'weights_quantization_method': QuantizationMethod.SYMMETRIC})
+        self.symmetric_weights_tpc = generate_keras_tpc(name="gptq_symmetric_config_test", tpc=symmetric_tp)
 
     def test_get_keras_gptq_config_pot(self):
         # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which

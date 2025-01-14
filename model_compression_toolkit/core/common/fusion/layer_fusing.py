@@ -16,8 +16,9 @@ import copy
 from typing import Any, List
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.layer_filter_params import LayerFilterParams
 
 
 def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx: int = 0) -> List[List[Any]]:
@@ -77,18 +78,18 @@ def disable_nodes_activation_quantization(nodes: List[BaseNode]):
             qc.activation_quantization_cfg.enable_activation_quantization = False
 
 
-def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
+def fusion(graph: Graph, fqc: FrameworkQuantizationCapabilities) -> Graph:
     """
     Fusing defines a list of operators that should be combined and treated as a single operator,
     hence no quantization is applied between them when they appear in the graph.
     This function search and disable quantization for such patterns.
     Args:
         graph: Graph we apply the fusion on.
-        tpc: TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
+        fqc: FrameworkQuantizationCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
     Returns:
         Graph after applying fusion activation marking.
     """
-    fusing_patterns = tpc.get_fusing_patterns()
+    fusing_patterns = fqc.get_fusing_patterns()
     if len(fusing_patterns) == 0:
         return graph
 

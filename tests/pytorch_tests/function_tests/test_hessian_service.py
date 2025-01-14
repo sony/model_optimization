@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import unittest
-
 from torch import nn
 import numpy as np
 
@@ -23,7 +21,7 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService, He
 from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs

@@ -18,10 +18,8 @@ from collections.abc import Callable
 from enum import Enum
 from typing import Dict, Any, List
 
-
-
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
 class ChannelAxis(Enum):

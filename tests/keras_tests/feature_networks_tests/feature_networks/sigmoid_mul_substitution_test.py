@@ -22,7 +22,7 @@ else:
     from keras.activations import sigmoid
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.utils import get_layers_from_model_by_type
@@ -34,9 +34,9 @@ layers = keras.layers
 class SigMulSubstitutionTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'enable_weights_quantization': False,
+        tp = generate_test_tpc({'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="test_no_quant", tp_model=tp)
+        return generate_keras_tpc(name="test_no_quant", tpc=tp)
 
     def create_networks(self):
         _in = tf.keras.layers.Input(self.input_shape[1:])

@@ -18,7 +18,7 @@ import torch.nn as nn
 import numpy as np
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
-from tests.common_tests.helpers.tpcs_for_tests.v2.tp_model import get_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v2.tpc import get_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
@@ -27,8 +27,6 @@ from mct_quantizers import PytorchQuantizationWrapper
 from mct_quantizers.pytorch.metadata import add_metadata, get_metadata, add_onnx_metadata, get_onnx_metadata
 import tempfile
 import os
-
-tp = mct.target_platform
 
 
 class DummyNet(nn.Module):
@@ -43,7 +41,7 @@ class DummyNet(nn.Module):
 class MetadataTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
-        return get_tp_model()
+        return get_tpc()
 
     def create_networks(self):
         return DummyNet()

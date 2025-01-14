@@ -19,11 +19,11 @@ from torch.nn.functional import relu, relu6
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import QuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
@@ -32,7 +32,6 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 import model_compression_toolkit as mct
 
-tp = mct.target_platform
 
 
 class BaseLayerFusingTest(BasePytorchTest):
@@ -76,13 +75,13 @@ class LayerFusingTest1(BaseLayerFusingTest):
         operator_set = [conv, any_relu]
         # Define fusions
         fusing_patterns = [schema.Fusing(operator_groups=(conv, any_relu))]
-        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
-                                                  tpc_minor_version=None,
-                                                  tpc_patch_version=None,
-                                                  tpc_platform_type=None,
-                                                  operator_set=tuple(operator_set),
-                                                  fusing_patterns=tuple(fusing_patterns),
-                                                  name='layer_fusing_test')
+        generated_tp = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
+                                                         tpc_minor_version=None,
+                                                         tpc_patch_version=None,
+                                                         tpc_platform_type=None,
+                                                         operator_set=tuple(operator_set),
+                                                         fusing_patterns=tuple(fusing_patterns),
+                                                         name='layer_fusing_test')
 
         return generated_tp
 
@@ -124,13 +123,13 @@ class LayerFusingTest2(BaseLayerFusingTest):
         operator_set = [conv, any_act]
         # Define fusions
         fusing_patterns = [schema.Fusing(operator_groups=(conv, any_act))]
-        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
-                                                  tpc_minor_version=None,
-                                                  tpc_patch_version=None,
-                                                  tpc_platform_type=None,
-                                                  operator_set=tuple(operator_set),
-                                                  fusing_patterns=tuple(fusing_patterns),
-                                                  name='layer_fusing_test')
+        generated_tp = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
+                                                         tpc_minor_version=None,
+                                                         tpc_patch_version=None,
+                                                         tpc_platform_type=None,
+                                                         operator_set=tuple(operator_set),
+                                                         fusing_patterns=tuple(fusing_patterns),
+                                                         name='layer_fusing_test')
 
         return generated_tp
 
@@ -186,13 +185,13 @@ class LayerFusingTest3(BaseLayerFusingTest):
         operator_set = [conv, any_act]
         # Define fusions
         fusing_patterns = [schema.Fusing(operator_groups=(conv, any_act))]
-        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
-                                                  tpc_minor_version=None,
-                                                  tpc_patch_version=None,
-                                                  tpc_platform_type=None,
-                                                  operator_set=tuple(operator_set),
-                                                  fusing_patterns=tuple(fusing_patterns),
-                                                  name='layer_fusing_test')
+        generated_tp = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
+                                                         tpc_minor_version=None,
+                                                         tpc_patch_version=None,
+                                                         tpc_platform_type=None,
+                                                         operator_set=tuple(operator_set),
+                                                         fusing_patterns=tuple(fusing_patterns),
+                                                         name='layer_fusing_test')
         return generated_tp
 
     def run_test(self, seed=0):
@@ -248,20 +247,20 @@ class LayerFusingTest4(BaseLayerFusingTest):
         add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD)
         swish = schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)
         operator_set = [conv, fc, relu, add, swish]
-        activations_to_fuse = schema.OperatorSetConcat(operators_set=[relu, swish])
+        activations_to_fuse = schema.OperatorSetGroup(operators_set=[relu, swish])
         # Define fusions
         fusing_patterns = [schema.Fusing(operator_groups=(conv, activations_to_fuse)),
                            schema.Fusing(operator_groups=(conv, add, activations_to_fuse)),
                            schema.Fusing(operator_groups=(conv, activations_to_fuse, add)),
                            schema.Fusing(operator_groups=(fc, activations_to_fuse))]
 
-        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
-                                                  tpc_minor_version=None,
-                                                  tpc_patch_version=None,
-                                                  tpc_platform_type=None,
-                                                  operator_set=tuple(operator_set),
-                                                  fusing_patterns=tuple(fusing_patterns),
-                                                  name='layer_fusing_test')
+        generated_tp = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
+                                                         tpc_minor_version=None,
+                                                         tpc_patch_version=None,
+                                                         tpc_platform_type=None,
+                                                         operator_set=tuple(operator_set),
+                                                         fusing_patterns=tuple(fusing_patterns),
+                                                         name='layer_fusing_test')
 
         return generated_tp
 

@@ -20,7 +20,7 @@ from torch import Tensor
 from model_compression_toolkit.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from mct_quantizers import QuantizationTarget, PytorchQuantizationWrapper
 
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import BasePytorchQATWeightTrainableQuantizer

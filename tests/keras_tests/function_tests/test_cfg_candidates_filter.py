@@ -27,12 +27,11 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
-tp = mct.target_platform
 
 
 def get_full_bitwidth_candidates():
@@ -52,14 +51,14 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph = keras_impl.model_reader(in_model, None)  # model reading
 
     attach2keras = AttachTpcToKeras()
-    tpc = attach2keras.attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
+    fqc = attach2keras.attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
 
-    graph.set_tpc(tpc)
+    graph.set_fqc(fqc)
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, tpc)
+    graph = fusion(graph, fqc)
 
     return graph
 
