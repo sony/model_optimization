@@ -27,9 +27,9 @@ from mct_quantizers import QuantizationMethod
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
+from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities, \
     LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
 
@@ -80,13 +80,13 @@ def test_attach2keras_attach_without_attributes():
 
     for op_name, op_list in attach2keras._opset2layer.items():
         if op_name not in attach2keras._opset2attr_mapping.keys():
-            tpc = schema.TargetPlatformModel(
+            tpc = schema.TargetPlatformCapabilities(
                 default_qco=default_qc_options,
                 operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
 
             keras_quant_capabilities = attach2keras.attach(tpc)  # Run 'attach' to test operator attach to framework
 
-            assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
+            assert isinstance(keras_quant_capabilities, FrameworkQuantizationCapabilities)
 
             all_mapped_ops = keras_quant_capabilities.layer2qco.copy()
             all_mapped_ops.update(keras_quant_capabilities.filterlayer2qco)
@@ -124,14 +124,14 @@ def test_attach2keras_attach_linear_op_with_attributes():
 
     for op_name, op_list in attach2keras._opset2layer.items():
         if op_name in attach2keras._opset2attr_mapping.keys():
-            tpc = schema.TargetPlatformModel(
+            tpc = schema.TargetPlatformCapabilities(
                 default_qco=default_qc_options,
                 operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
 
             keras_quant_capabilities = attach2keras.attach(tpc)  # Run 'attach' to test operator attach to framework
             fw_linear_attr_names = attach2keras._opset2attr_mapping[op_name]
 
-            assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
+            assert isinstance(keras_quant_capabilities, FrameworkQuantizationCapabilities)
 
             all_mapped_ops = keras_quant_capabilities.layer2qco.copy()
             all_mapped_ops.update(keras_quant_capabilities.filterlayer2qco)
@@ -157,12 +157,12 @@ def test_attach2keras_attach_to_default_config():
     opset_name = schema.OperatorSetNames.ADD
     operator_set = schema.OperatorsSet(name=opset_name)
 
-    tpc = schema.TargetPlatformModel(default_qco=default_qc_options,
-                                     operator_set=tuple([operator_set]))
+    tpc = schema.TargetPlatformCapabilities(default_qco=default_qc_options,
+                                            operator_set=tuple([operator_set]))
 
     keras_quant_capabilities = attach2keras.attach(tpc)
 
-    assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
+    assert isinstance(keras_quant_capabilities, FrameworkQuantizationCapabilities)
     opset2layer = keras_quant_capabilities.op_sets_to_layers.get_layers_by_op(operator_set)
     assert len(opset2layer) > 0
     opset_cfg = keras_quant_capabilities.layer2qco.get(opset2layer[0])
@@ -180,13 +180,13 @@ def test_attach2keras_attach_with_custom_opset():
     operator_set = schema.OperatorsSet(name=opset_name,
                                        qc_options=qc_options.clone_and_edit(activation_n_bits=test_bit))
 
-    tpc = schema.TargetPlatformModel(default_qco=schema.QuantizationConfigOptions(
+    tpc = schema.TargetPlatformCapabilities(default_qco=schema.QuantizationConfigOptions(
         quantization_configurations=(default_op_cfg,)),
                                      operator_set=tuple([operator_set]))
 
     with pytest.raises(Exception) as e_info:
         _ = attach2keras.attach(tpc)
-    assert f'{opset_name} is defined in TargetPlatformModel' in str(e_info)
+    assert f'{opset_name} is defined in TargetPlatformCapabilities' in str(e_info)
 
     # Setting a layers mapping for the custom opset with a regular operator and a filter.
     # We also test the option of passing an attributes mapping for the operator to set a specific attribute config.
@@ -199,9 +199,9 @@ def test_attach2keras_attach_with_custom_opset():
                                                           attr_mapping={KERNEL_ATTR: DefaultDict(
                                                               {filter_op: custom_attr_name},
                                                               default_value=KERAS_KERNEL)})
-        })
+                            })
 
-    assert isinstance(keras_quant_capabilities, TargetPlatformCapabilities)
+    assert isinstance(keras_quant_capabilities, FrameworkQuantizationCapabilities)
     opset_to_layers = keras_quant_capabilities.op_sets_to_layers.op_sets_to_layers
     assert len(opset_to_layers) == 1
     assert opset_to_layers[0].name == opset_name
@@ -227,7 +227,7 @@ def test_attach2keras_prioritize_custom_opset():
     # the opset instead of the built-in list of layers (filter op instead of nn.Conv2d)
     operator_set = schema.OperatorsSet(name=opset_name)
 
-    tpc = schema.TargetPlatformModel(default_qco=schema.QuantizationConfigOptions(
+    tpc = schema.TargetPlatformCapabilities(default_qco=schema.QuantizationConfigOptions(
         quantization_configurations=(default_op_cfg,)),
         operator_set=tuple([operator_set]))
 
@@ -246,10 +246,10 @@ def test_not_existing_opset_with_layers_to_attach():
     opset_name = "NotExisting"
     operator_set = schema.OperatorsSet(name=opset_name)
 
-    tpc = schema.TargetPlatformModel(default_qco=schema.QuantizationConfigOptions(
+    tpc = schema.TargetPlatformCapabilities(default_qco=schema.QuantizationConfigOptions(
         quantization_configurations=(default_op_cfg,)),
         operator_set=tuple([operator_set]))
 
     with pytest.raises(Exception) as e_info:
         _ = attach2keras.attach(tpc)
-    assert f'{opset_name} is defined in TargetPlatformModel' in str(e_info)
+    assert f'{opset_name} is defined in TargetPlatformCapabilities' in str(e_info)
