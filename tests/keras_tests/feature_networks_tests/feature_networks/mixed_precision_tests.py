@@ -498,7 +498,6 @@ class MixedPrecisionMultipleResourcesTightUtilizationSearchTest(MixedPrecisionAc
 
     def get_resource_utilization(self):
         weights = 17920 * 4 / 8
-        # activation = 4000
         activation = 6176 * 4 / 8
         return ResourceUtilization(weights, activation, total_memory=weights + activation)
 
@@ -506,10 +505,6 @@ class MixedPrecisionMultipleResourcesTightUtilizationSearchTest(MixedPrecisionAc
         # verify chosen activation bitwidth config
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        # TODO maxcut: restore activation_bits == [4, 4] and unique_tensor_values=16 when maxcut calculates tensor sizes
-        #              of fused nodes correctly.
-        # TODO: maxcut Test updated but lowered activation ru (how can 4000 enforce 4,4??). Not sure what the fused nodes
-        #  comment is about so I might be missing something. Elad?
         self.unit_test.assertTrue((activation_bits == [4, 4]))
 
         self.verify_quantization(quantized_model, input_x,
