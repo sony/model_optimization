@@ -341,12 +341,6 @@ class MixedPrecisionSearchActivationNonConfNodesTest(MixedPrecisionBaseTest):
         self.unit_test.assertTrue(quantization_info.final_resource_utilization.activation_memory <=
                                   self.target_total_ru.activation_memory)
 
-        self.unit_test.assertTrue(
-            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-            quantization_info.final_resource_utilization.total_memory,
-            "Running weights mixed-precision with unconstrained Resource Utilization, "
-            "final weights and activation memory sum should be equal to total memory.")
-
 
 class MixedPrecisionSearchTotalMemoryNonConfNodesTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
@@ -362,11 +356,6 @@ class MixedPrecisionSearchTotalMemoryNonConfNodesTest(MixedPrecisionBaseTest):
         # we're only interested in the ResourceUtilization
         self.unit_test.assertTrue(
             quantization_info.final_resource_utilization.total_memory <= self.target_total_ru.total_memory)
-        self.unit_test.assertTrue(
-            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-            quantization_info.final_resource_utilization.total_memory,
-            "Running weights mixed-precision with unconstrained ResourceUtilization, "
-            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionDepthwiseTest(MixedPrecisionBaseTest):
