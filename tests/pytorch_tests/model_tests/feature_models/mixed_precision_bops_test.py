@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common.quantization.quantization_config impo
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
-from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tpc import generate_tpc_with_activation_mp
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 
 import model_compression_toolkit as mct
@@ -108,7 +108,7 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
-            tpc_model=generate_tp_model_with_activation_mp(
+            tpc_model=generate_tpc_with_activation_mp(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=self.mixed_precision_candidates_list),

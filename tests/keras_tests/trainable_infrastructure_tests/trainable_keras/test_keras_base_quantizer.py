@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import List, Any
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \

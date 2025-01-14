@@ -19,9 +19,8 @@ import torch
 import torch.nn as nn
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -54,6 +53,22 @@ class MHABaseTest(BasePytorchTest):
         return [[self.val_batch_size] + list(self.query_input_shape),
                 [self.val_batch_size] + list(self.key_input_shape),
                 [self.val_batch_size] + list(self.value_input_shape)]
+
+    def get_tpc(self):
+        tpc = {
+            'no_quantization': generate_test_tpc({
+                'weights_n_bits': 32,
+                'activation_n_bits': 32,
+                'enable_weights_quantization': False,
+                'enable_activation_quantization': False
+            })
+        }
+        if self.num_heads < 5:
+            tpc['all_4bit'] = generate_test_tpc({'weights_n_bits': 4,
+                                                 'activation_n_bits': 4,
+                                                 'enable_weights_quantization': True,
+                                                 'enable_activation_quantization': True})
+        return tpc
 
 
 class MHANet(nn.Module):
@@ -105,7 +120,7 @@ class MHALayerNetFeatureTest(MHALayerNetTest):
         assert isinstance(tpc_dict, dict), "Pytorch tests get_tpc should return a dictionary " \
                                            "mapping the test model name to a TPC object."
         for model_name, tpc in tpc_dict.items():
-            assert isinstance(tpc, TargetPlatformModel)
+            assert isinstance(tpc, TargetPlatformCapabilities)
             assert model_name in core_configs_dict
             core_config = core_configs_dict[model_name]
 

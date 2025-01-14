@@ -18,7 +18,7 @@ import torch
 from torch.nn.functional import softmax
 
 import model_compression_toolkit
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tpc
 from model_compression_toolkit.core.pytorch.utils import set_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -36,7 +36,7 @@ class SoftmaxBaseTest(BasePytorchTest):
         return [[self.val_batch_size, 3, 32, 32]]
 
     def get_tpc(self):
-        return get_pytorch_test_tpc_dict(tp_model=get_tp_model(),
+        return get_pytorch_test_tpc_dict(tpc=get_tpc(),
                                          test_name='8bit_softmax_shift',
                                          ftp_name='softmax_shift_pytorch_test')
 

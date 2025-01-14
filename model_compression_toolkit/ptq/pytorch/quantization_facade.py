@@ -19,9 +19,8 @@ from typing import Callable
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -40,7 +39,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.pytorch.metadata import add_metadata
-    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
         AttachTpcToPytorch
 
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
@@ -49,11 +48,11 @@ if FOUND_TORCH:
                                            representative_data_gen: Callable,
                                            target_resource_utilization: ResourceUtilization = None,
                                            core_config: CoreConfig = CoreConfig(),
-                                           target_platform_capabilities: TargetPlatformModel = DEFAULT_PYTORCH_TPC):
+                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
-        (power of two) as defined in the default TargetPlatformCapabilities.
+        (power of two) as defined in the default FrameworkQuantizationCapabilities.
         The module is first optimized using several transformations (e.g. BatchNormalization folding to
         preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
         being collected for each layer's output (and input, depends on the quantization configuration).
@@ -112,7 +111,7 @@ if FOUND_TORCH:
 
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
-        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
+        framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
                                                              core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore hessian info service as it is not used here yet.
@@ -121,7 +120,7 @@ if FOUND_TORCH:
                                                                 core_config=core_config,
                                                                 fw_info=fw_info,
                                                                 fw_impl=fw_impl,
-                                                                tpc=target_platform_capabilities,
+                                                                fqc=framework_platform_capabilities,
                                                                 target_resource_utilization=target_resource_utilization,
                                                                 tb_w=tb_w)
 
@@ -149,9 +148,9 @@ if FOUND_TORCH:
                                         fw_info)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_with_stats_correction)
-        if target_platform_capabilities.tp_model.add_metadata:
+        if framework_platform_capabilities.tpc.add_metadata:
             exportable_model = add_metadata(exportable_model,
-                                            create_model_metadata(tpc=target_platform_capabilities,
+                                            create_model_metadata(fqc=framework_platform_capabilities,
                                                                   scheduling_info=scheduling_info))
         return exportable_model, user_info
 

@@ -24,7 +24,8 @@ from model_compression_toolkit.core.common.pruning.memory_calculator import Memo
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.mask.per_simd_group_mask import PerSIMDGroupMask
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 class GreedyMaskCalculator:
@@ -42,7 +43,7 @@ class GreedyMaskCalculator:
                  target_resource_utilization: ResourceUtilization,
                  graph: Graph,
                  fw_impl: PruningFrameworkImplementation,
-                 tpc: TargetPlatformCapabilities,
+                 fqc: FrameworkQuantizationCapabilities,
                  simd_groups_indices: Dict[BaseNode, List[List[int]]]):
         """
         Args:
@@ -52,7 +53,7 @@ class GreedyMaskCalculator:
             target_resource_utilization (ResourceUtilization): The target resource utilization to achieve.
             graph (Graph): The computational graph of the model.
             fw_impl (PruningFrameworkImplementation): Framework-specific implementation details.
-            tpc (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
+            fqc (FrameworkQuantizationCapabilities): Platform-specific constraints and capabilities.
             simd_groups_indices (Dict[BaseNode, List[List[int]]]): Indices of SIMD groups in each node.
         """
         self.prunable_nodes = prunable_nodes
@@ -60,7 +61,7 @@ class GreedyMaskCalculator:
         self.target_resource_utilization = target_resource_utilization
         self.graph = graph
         self.fw_impl = fw_impl
-        self.tpc = tpc
+        self.fqc = fqc
 
         self.simd_groups_indices = simd_groups_indices
         self.simd_groups_scores = simd_groups_scores
@@ -90,7 +91,7 @@ class GreedyMaskCalculator:
         """
         # Iteratively unprune the graph while monitoring the memory footprint.
         current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.oc_pruning_mask.get_mask(),
-                                                                        include_padded_channels=self.tpc.is_simd_padding)
+                                                                        include_padded_channels=self.fqc.is_simd_padding)
         if current_memory > self.target_resource_utilization.weights_memory:
             Logger.critical(f"Insufficient memory for the target resource utilization: current memory {current_memory}, "
                             f"target memory {self.target_resource_utilization.weights_memory}.")
@@ -105,7 +106,7 @@ class GreedyMaskCalculator:
                                                                group_index=group_to_remain_idx,
                                                                mask_indicator=MaskIndicator.REMAINED)
             current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.oc_pruning_mask.get_mask(),
-                                                                            include_padded_channels=self.tpc.is_simd_padding)
+                                                                            include_padded_channels=self.fqc.is_simd_padding)
 
         # If the target memory is exceeded, revert the last addition.
         if current_memory > self.target_resource_utilization.weights_memory:

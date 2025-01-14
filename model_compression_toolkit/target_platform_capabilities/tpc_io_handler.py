@@ -16,34 +16,34 @@ from pathlib import Path
 from typing import Union
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 import json
 
 
-def load_target_platform_model(tp_model_or_path: Union[TargetPlatformModel, str]) -> TargetPlatformModel:
+def load_target_platform_model(tpc_obj_or_path: Union[TargetPlatformCapabilities, str]) -> TargetPlatformCapabilities:
     """
-        Parses the tp_model input, which can be either a TargetPlatformModel object
+        Parses the tpc input, which can be either a TargetPlatformCapabilities object
         or a string path to a JSON file.
 
         Parameters:
-            tp_model_or_path (Union[TargetPlatformModel, str]): Input target platform model or path to .JSON file.
+            tpc_obj_or_path (Union[TargetPlatformModel, str]): Input target platform model or path to .JSON file.
 
         Returns:
-            TargetPlatformModel: The parsed TargetPlatformModel.
+            TargetPlatformCapabilities: The parsed TargetPlatformCapabilities.
 
         Raises:
             FileNotFoundError: If the JSON file does not exist.
-            ValueError: If the JSON content is invalid or cannot initialize the TargetPlatformModel.
-            TypeError: If the input is neither a TargetPlatformModel nor a valid JSON file path.
+            ValueError: If the JSON content is invalid or cannot initialize the TargetPlatformCapabilities.
+            TypeError: If the input is neither a TargetPlatformCapabilities nor a valid JSON file path.
         """
-    if isinstance(tp_model_or_path, TargetPlatformModel):
-        return tp_model_or_path
+    if isinstance(tpc_obj_or_path, TargetPlatformCapabilities):
+        return tpc_obj_or_path
 
-    if isinstance(tp_model_or_path, str):
-        path = Path(tp_model_or_path)
+    if isinstance(tpc_obj_or_path, str):
+        path = Path(tpc_obj_or_path)
 
         if not path.exists() or not path.is_file():
-            raise FileNotFoundError(f"The path '{tp_model_or_path}' is not a valid file.")
+            raise FileNotFoundError(f"The path '{tpc_obj_or_path}' is not a valid file.")
         # Verify that the file has a .json extension
         if path.suffix.lower() != '.json':
             raise ValueError(f"The file '{path}' does not have a '.json' extension.")
@@ -51,35 +51,35 @@ def load_target_platform_model(tp_model_or_path: Union[TargetPlatformModel, str]
             with path.open('r', encoding='utf-8') as file:
                 data = file.read()
         except OSError as e:
-            raise ValueError(f"Error reading the file '{tp_model_or_path}': {e.strerror}.") from e
+            raise ValueError(f"Error reading the file '{tpc_obj_or_path}': {e.strerror}.") from e
 
         try:
-            return TargetPlatformModel.parse_raw(data)
+            return TargetPlatformCapabilities.parse_raw(data)
         except ValueError as e:
-            raise ValueError(f"Invalid JSON for loading TargetPlatformModel in '{tp_model_or_path}': {e}.") from e
+            raise ValueError(f"Invalid JSON for loading TargetPlatformCapabilities in '{tpc_obj_or_path}': {e}.") from e
         except Exception as e:
-            raise ValueError(f"Unexpected error while initializing TargetPlatformModel: {e}.") from e
+            raise ValueError(f"Unexpected error while initializing TargetPlatformCapabilities: {e}.") from e
 
     raise TypeError(
-        f"tp_model_or_path must be either a TargetPlatformModel instance or a string path to a JSON file, "
-        f"but received type '{type(tp_model_or_path).__name__}'."
+        f"tpc_obj_or_path must be either a TargetPlatformCapabilities instance or a string path to a JSON file, "
+        f"but received type '{type(tpc_obj_or_path).__name__}'."
     )
 
 
-def export_target_platform_model(model: TargetPlatformModel, export_path: Union[str, Path]) -> None:
+def export_target_platform_model(model: TargetPlatformCapabilities, export_path: Union[str, Path]) -> None:
     """
-    Exports a TargetPlatformModel instance to a JSON file.
+    Exports a TargetPlatformCapabilities instance to a JSON file.
 
     Parameters:
-        model (TargetPlatformModel): The TargetPlatformModel instance to export.
+        model (TargetPlatformCapabilities): The TargetPlatformCapabilities instance to export.
         export_path (Union[str, Path]): The file path to export the model to.
 
     Raises:
-        ValueError: If the model is not an instance of TargetPlatformModel.
+        ValueError: If the model is not an instance of TargetPlatformCapabilities.
         OSError: If there is an issue writing to the file.
     """
-    if not isinstance(model, TargetPlatformModel):
-        raise ValueError("The provided model is not a valid TargetPlatformModel instance.")
+    if not isinstance(model, TargetPlatformCapabilities):
+        raise ValueError("The provided model is not a valid TargetPlatformCapabilities instance.")
 
     path = Path(export_path)
     try:

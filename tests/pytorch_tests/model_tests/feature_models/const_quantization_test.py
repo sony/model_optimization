@@ -22,15 +22,13 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model as get_tp_v4
-from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model as get_tp_v3
+from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import get_tpc as get_tp_v4
+from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc as get_tp_v3
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
-from mct_quantizers import PytorchQuantizationWrapper
-
-tp = mct.target_platform
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
+from mct_quantizers import PytorchQuantizationWrapper, QuantizationMethod
 
 
 class ConstQuantizationNet(nn.Module):
@@ -231,9 +229,8 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
                                                                  {"WeightQuant": CustomOpsetLayers([torch.Tensor.expand, torch.cat])}))
 
     def get_tpc(self):
-        tp = mct.target_platform
         attr_cfg = generate_test_attr_configs()
-        base_cfg = schema.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        base_cfg = schema.OpQuantizationConfig(activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                                                enable_activation_quantization=True,
                                                activation_n_bits=32,
                                                supported_input_activation_n_bits=32,
@@ -251,10 +248,10 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
                                                default_weight_attr_config=base_cfg.default_weight_attr_config.clone_and_edit(
                                                    enable_weights_quantization=True,
                                                    weights_per_channel_threshold=False,
-                                                   weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
+                                                   weights_quantization_method=QuantizationMethod.POWER_OF_TWO))
         const_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config]))
 
-        tp_model = schema.TargetPlatformModel(
+        tpc = schema.TargetPlatformCapabilities(
             default_qco=default_configuration_options,
             tpc_minor_version=None,
             tpc_patch_version=None,
@@ -262,7 +259,7 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
             operator_set=tuple([schema.OperatorsSet(name="WeightQuant", qc_options=const_configuration_options)]),
             add_metadata=False)
 
-        return tp_model
+        return tpc
 
     def create_networks(self):
         return ExpandConstQuantizationNet(self.val_batch_size)

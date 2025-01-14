@@ -21,9 +21,9 @@ from packaging import version
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add, InputLayer
@@ -50,7 +50,6 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 import model_compression_toolkit as mct
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
-tp = mct.target_platform
 
 INPUT_SHAPE = (8, 8, 3)
 
@@ -110,10 +109,10 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
                                            name="activation_weights_composition_test")
 
     attach2keras = AttachTpcToKeras()
-    tpc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
+    fqc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
 
     graph.set_fw_info(fw_info)
-    graph.set_tpc(tpc)
+    graph.set_fqc(fqc)
 
     # Standard graph substitutions
     graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
@@ -125,7 +124,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, tpc)
+    graph = fusion(graph, fqc)
     graph = filter_nodes_candidates(graph)
 
     return graph

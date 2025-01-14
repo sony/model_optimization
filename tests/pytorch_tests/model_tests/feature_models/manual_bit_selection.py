@@ -25,8 +25,8 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
-from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_custom_test_tpc
+from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationBaseTest
 from tests.pytorch_tests.utils import get_layer_type_from_activation_quantizer
@@ -200,7 +200,7 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
 class Manual16BitTest(ManualBitWidthByLayerNameTest):
 
     def get_tpc(self):
-        tpc = get_tp_model()
+        tpc = get_tpc()
 
         mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.MUL)
         base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
@@ -209,10 +209,10 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
         qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
                                            quantization_configurations=quantization_configurations)
 
-        tpc = generate_custom_test_tp_model(
+        tpc = generate_custom_test_tpc(
             name="custom_16_bit_tpc",
             base_cfg=tpc.default_qco.base_config,
-            base_tp_model=tpc,
+            base_tpc=tpc,
             operator_sets_dict={
                 OperatorSetNames.MUL: qco_16,
             })
@@ -226,7 +226,7 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
 class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
 
     def get_tpc(self):
-        tpc = get_tp_model()
+        tpc = get_tpc()
 
         mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.MUL)
         base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
@@ -238,10 +238,10 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
         qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
                                            quantization_configurations=quantization_configurations)
 
-        tpc = generate_custom_test_tp_model(
+        tpc = generate_custom_test_tpc(
             name="custom_16_bit_tpc",
             base_cfg=tpc.default_qco.base_config,
-            base_tp_model=tpc,
+            base_tpc=tpc,
             operator_sets_dict={
                 OperatorSetNames.MUL: qco_16,
             })

@@ -25,7 +25,7 @@ from model_compression_toolkit.core.pytorch.pytorch_device_config import get_wor
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.model_tests.feature_models.qat_test import dummy_train
 
 
@@ -38,8 +38,8 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         yield [to_torch_tensor(np.random.rand(1, 3, 224, 224)).to(get_working_device())]
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 2})
-        return generate_pytorch_tpc(name="test_conv2d_2bit_fq_weight", tp_model=tp)
+        tp = generate_test_tpc({'weights_n_bits': 2})
+        return generate_pytorch_tpc(name="test_conv2d_2bit_fq_weight", tpc=tp)
 
     def get_serialization_format(self):
         return mct.exporter.PytorchExportSerializationFormat.TORCHSCRIPT

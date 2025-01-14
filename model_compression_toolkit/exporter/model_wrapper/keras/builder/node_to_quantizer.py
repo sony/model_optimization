@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from mct_quantizers import QuantizationTarget
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer

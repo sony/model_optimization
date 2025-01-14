@@ -27,7 +27,6 @@ from torchvision.models import mobilenet_v2
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
-tp = mct.target_platform
 
 
 class TestFullyQuantizedExporter(unittest.TestCase):

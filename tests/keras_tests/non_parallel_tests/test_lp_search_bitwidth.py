@@ -24,8 +24,6 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import \
-    RuFunctions
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
 from model_compression_toolkit.core.common.model_collector import ModelCollector
@@ -39,7 +37,7 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_ms
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
@@ -65,13 +63,9 @@ class MockMixedPrecisionSearchManager:
         self.compute_metric_fn = lambda x, y=None, z=None: {0: 2, 1: 1, 2: 0}[x[0]]
         self.min_ru = {RUTarget.WEIGHTS: [[1], [1], [1]],
                        RUTarget.ACTIVATION: [[1], [1], [1]],
-                       RUTarget.TOTAL: [[2], [2], [2]],
+                       RUTarget.TOTAL: [[1, 1], [1, 1], [1, 1]],
                        RUTarget.BOPS: [[1], [1], [1]]}  # minimal resource utilization in the tests layer_to_ru_mapping
 
-        self.compute_ru_functions = {RUTarget.WEIGHTS: RuFunctions(None, lambda v: [lpSum(v)]),
-                                     RUTarget.ACTIVATION: RuFunctions(None, lambda v: [i for i in v]),
-                                     RUTarget.TOTAL: RuFunctions(None, lambda v: [lpSum(v[0]) + i for i in v[1]]),
-                                     RUTarget.BOPS: RuFunctions(None, lambda v: [lpSum(v)])}
         self.max_ru_config = [0]
         self.config_reconstruction_helper = MockReconstructionHelper()
         self.non_conf_ru_dict = None
@@ -83,8 +77,8 @@ class MockMixedPrecisionSearchManager:
         elif target == RUTarget.ACTIVATION:
             ru_matrix = [np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         elif target == RUTarget.TOTAL:
-            ru_matrix = [np.flip(np.array([ru.weights_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()])),
-                         np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
+            ru_matrix = [[np.flip(np.array([ru.weights_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()])),
+                         np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]]
         elif target == RUTarget.BOPS:
             ru_matrix = [np.flip(np.array([ru.bops - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         else:
@@ -233,10 +227,10 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
 
-        tpc = AttachTpcToKeras().attach(tpc)
+        fqc = AttachTpcToKeras().attach(tpc)
 
         graph.set_fw_info(fw_info)
-        graph.set_tpc(tpc)
+        graph.set_fqc(fqc)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=core_config.quantization_config,
                                                         mixed_precision_enable=True)

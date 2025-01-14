@@ -21,7 +21,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_test im
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def build_model(in_input_shape: List[int], group: int = 1, dilation_rate=(1, 1)) -> keras.Model:

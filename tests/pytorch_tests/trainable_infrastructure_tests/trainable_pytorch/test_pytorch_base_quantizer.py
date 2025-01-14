@@ -24,7 +24,7 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_qua
     BasePytorchTrainableQuantizer
 from tests.pytorch_tests.trainable_infrastructure_tests.base_pytorch_trainable_infra_test import \
     BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import (
     STESymmetricActivationTrainableQuantizer, STEUniformActivationTrainableQuantizer)
 

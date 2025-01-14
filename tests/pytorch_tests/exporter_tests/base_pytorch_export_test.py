@@ -26,7 +26,7 @@ from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_fa
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 
 class BasePytorchExportTest(unittest.TestCase):

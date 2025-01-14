@@ -16,7 +16,7 @@
 import numpy as np
 from pulp import *
 from tqdm import tqdm
-from typing import Dict, List, Tuple, Callable
+from typing import Dict, Tuple
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
@@ -218,13 +218,11 @@ def _add_set_of_ru_constraints(search_manager: MixedPrecisionSearchManager,
         np.sum(indicated_ru_matrix[i], axis=0) +  # sum of metric values over all configurations in a row
         search_manager.min_ru[target][i] for i in range(indicated_ru_matrix.shape[0])])
 
-    # search_manager.compute_ru_functions contains a pair of ru_metric and ru_aggregation for each ru target
-    # get aggregated ru, considering both configurable and non-configurable nodes
-    if non_conf_ru_vector is None or len(non_conf_ru_vector) == 0:
-        aggr_ru = search_manager.compute_ru_functions[target].aggregate_fn(ru_sum_vector)
-    else:
-        aggr_ru = search_manager.compute_ru_functions[target].aggregate_fn(np.concatenate([ru_sum_vector, non_conf_ru_vector]))
+    ru_vec = ru_sum_vector
+    if non_conf_ru_vector is not None and non_conf_ru_vector.size:
+        ru_vec = np.concatenate([ru_vec, non_conf_ru_vector])
 
+    aggr_ru = _aggregate_for_lp(ru_vec, target)
     for v in aggr_ru:
         if isinstance(v, float):
             if v > target_resource_utilization_value:
@@ -233,6 +231,31 @@ def _add_set_of_ru_constraints(search_manager: MixedPrecisionSearchManager,
                     f"with the value {target_resource_utilization_value}.")  # pragma: no cover
         else:
             lp_problem += v <= target_resource_utilization_value
+
+
+def _aggregate_for_lp(ru_vec, target: RUTarget) -> list:
+    """
+    Aggregate resource utilization values for the LP.
+
+    Args:
+        ru_vec: a vector of resource utilization values.
+        target: resource utilization target.
+
+    Returns:
+        Aggregated resource utilization.
+    """
+    if target == RUTarget.TOTAL:
+        w = lpSum(v[0] for v in ru_vec)
+        return [w + v[1] for v in ru_vec]
+
+    if target in [RUTarget.WEIGHTS, RUTarget.BOPS]:
+        return [lpSum(ru_vec)]
+
+    if target == RUTarget.ACTIVATION:
+        # for max aggregation, each value constitutes a separate constraint
+        return list(ru_vec)
+
+    raise ValueError(f'Unexpected target {target}.')
 
 
 def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,

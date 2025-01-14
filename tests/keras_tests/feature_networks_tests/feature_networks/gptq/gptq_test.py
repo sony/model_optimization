@@ -18,11 +18,11 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfig, \
     GPTQHessianScoresConfig, GradualActivationQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
@@ -32,7 +32,6 @@ from tests.keras_tests.tpc_keras import get_tpc
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def build_model(in_input_shape: List[int]) -> keras.Model:
@@ -62,6 +61,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  quant_method=QuantizationMethod.SYMMETRIC,
                  rounding_type=RoundingType.STE,
                  per_channel=True,
+                 val_batch_size=1,
                  input_shape=(16, 16, 3),
                  hessian_weights=True,
                  log_norm_weights=True,
@@ -80,7 +80,8 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
 
         super().__init__(unit_test,
                          input_shape=input_shape,
-                         num_calibration_iter=num_calibration_iter)
+                         num_calibration_iter=num_calibration_iter,
+                         val_batch_size=val_batch_size)
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type

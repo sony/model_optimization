@@ -414,7 +414,7 @@ class QuantizationConfigOptions(BaseModel):
 
 class TargetPlatformModelComponent(BaseModel):
     """
-    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.).
+    Component of TargetPlatformCapabilities (Fusing, OperatorsSet, etc.).
     """
     class Config:
         frozen = True
@@ -433,7 +433,7 @@ class OperatorsSet(OperatorsSetBase):
     Set of operators that are represented by a unique label.
 
     Attributes:
-        name (Union[str, OperatorSetNames]): The set's label (must be unique within a TargetPlatformModel).
+        name (Union[str, OperatorSetNames]): The set's label (must be unique within a TargetPlatformCapabilities).
         qc_options (Optional[QuantizationConfigOptions]): Configuration options to use for this set of operations.
             If None, it represents a fusing set.
         type (Literal["OperatorsSet"]): Fixed type identifier.
@@ -457,7 +457,7 @@ class OperatorsSet(OperatorsSetBase):
         return {"name": self.name}
 
 
-class OperatorSetConcat(OperatorsSetBase):
+class OperatorSetGroup(OperatorsSetBase):
     """
     Concatenate a tuple of operator sets to treat them similarly in different places (like fusing).
 
@@ -469,7 +469,7 @@ class OperatorSetConcat(OperatorsSetBase):
     name: Optional[str] = None  # Will be set in the validator if not given
 
     # Define a private attribute _type
-    type: Literal["OperatorSetConcat"] = "OperatorSetConcat"
+    type: Literal["OperatorSetGroup"] = "OperatorSetGroup"
 
     class Config:
         frozen = True
@@ -518,11 +518,11 @@ class Fusing(TargetPlatformModelComponent):
     hence no quantization is applied between them.
 
     Attributes:
-        operator_groups (Tuple[Union[OperatorsSet, OperatorSetConcat], ...]): A tuple of operator groups,
-                                                                              each being either an OperatorSetConcat or an OperatorsSet.
+        operator_groups (Tuple[Union[OperatorsSet, OperatorSetGroup], ...]): A tuple of operator groups,
+                                                                              each being either an OperatorSetGroup or an OperatorsSet.
         name (Optional[str]): The name for the Fusing instance. If not provided, it is generated from the operator groups' names.
     """
-    operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetConcat], Field(discriminator='type')], ...]
+    operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetGroup], Field(discriminator='type')], ...]
     name: Optional[str] = None  # Will be set in the validator if not given.
 
     class Config:
@@ -591,7 +591,7 @@ class Fusing(TargetPlatformModelComponent):
         for i in range(len(self.operator_groups) - len(other.operator_groups) + 1):
             for j in range(len(other.operator_groups)):
                 if self.operator_groups[i + j] != other.operator_groups[j] and not (
-                        isinstance(self.operator_groups[i + j], OperatorSetConcat) and (
+                        isinstance(self.operator_groups[i + j], OperatorSetGroup) and (
                         other.operator_groups[j] in self.operator_groups[i + j].operators_set)):
                     break
             else:
@@ -621,7 +621,7 @@ class Fusing(TargetPlatformModelComponent):
             for x in self.operator_groups
         ])
 
-class TargetPlatformModel(BaseModel):
+class TargetPlatformCapabilities(BaseModel):
     """
     Represents the hardware configuration used for quantized model inference.
 
@@ -644,7 +644,7 @@ class TargetPlatformModel(BaseModel):
     tpc_patch_version: Optional[int]
     tpc_platform_type: Optional[str]
     add_metadata: bool = True
-    name: Optional[str] = "default_tp_model"
+    name: Optional[str] = "default_tpc"
     is_simd_padding: bool = False
 
     SCHEMA_VERSION: int = 1
@@ -682,10 +682,10 @@ class TargetPlatformModel(BaseModel):
 
     def get_info(self) -> Dict[str, Any]:
         """
-        Get a dictionary summarizing the TargetPlatformModel properties.
+        Get a dictionary summarizing the TargetPlatformCapabilities properties.
 
         Returns:
-            Dict[str, Any]: Summary of the TargetPlatformModel properties.
+            Dict[str, Any]: Summary of the TargetPlatformCapabilities properties.
         """
         return {
             "Model name": self.name,
@@ -695,6 +695,6 @@ class TargetPlatformModel(BaseModel):
 
     def show(self):
         """
-        Display the TargetPlatformModel.
+        Display the TargetPlatformCapabilities.
         """
         pprint.pprint(self.get_info(), sort_dicts=False)

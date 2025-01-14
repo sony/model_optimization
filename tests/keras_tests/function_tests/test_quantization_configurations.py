@@ -21,9 +21,10 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 
 def model_gen():
@@ -41,9 +42,9 @@ class TestQuantizationConfigurations(unittest.TestCase):
         def representative_data_gen():
             yield [x]
 
-        quantizer_methods = [mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                             mct.target_platform.QuantizationMethod.SYMMETRIC,
-                             mct.target_platform.QuantizationMethod.UNIFORM]
+        quantizer_methods = [QuantizationMethod.POWER_OF_TWO,
+                             QuantizationMethod.SYMMETRIC,
+                             QuantizationMethod.UNIFORM]
 
         quantization_error_methods = [mct.core.QuantizationErrorMethod.MSE,
                                       mct.core.QuantizationErrorMethod.NOCLIPPING,
@@ -65,12 +66,12 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, bias_correction, per_channel, input_scaling in weights_test_combinations:
-            tp = generate_test_tp_model({
+            tp = generate_test_tpc({
                 'weights_quantization_method': quantize_method,
                 'weights_n_bits': 8,
                 'activation_n_bits': 16,
                 'weights_per_channel_threshold': per_channel})
-            tpc = generate_keras_tpc(name="quant_config_weights_test", tp_model=tp)
+            tpc = generate_keras_tpc(name="quant_config_weights_test", tpc=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
                                              weights_error_method=error_method, relu_bound_to_power_of_2=False,
@@ -83,11 +84,11 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction in activation_test_combinations:
-            tp = generate_test_tp_model({
+            tp = generate_test_tpc({
                 'activation_quantization_method': quantize_method,
                 'weights_n_bits': 16,
                 'activation_n_bits': 8})
-            tpc = generate_keras_tpc(name="quant_config_activation_test", tp_model=tp)
+            tpc = generate_keras_tpc(name="quant_config_activation_test", tpc=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=error_method,
                                              weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,

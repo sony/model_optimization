@@ -26,7 +26,6 @@ from model_compression_toolkit.core.common.graph.memory_graph.memory_graph impor
 from model_compression_toolkit.core.keras.reader.reader import model_reader
 
 import model_compression_toolkit as mct
-tp = mct.target_platform
 
 
 def simple_model(input_shape):

@@ -21,7 +21,7 @@ LATEST = 'latest'
 
 
 # Supported TP models names:
-DEFAULT_TP_MODEL = 'default'
+DEFAULT_TP_MODEL= 'default'
 IMX500_TP_MODEL = 'imx500'
 TFLITE_TP_MODEL = 'tflite'
 QNNPACK_TP_MODEL = 'qnnpack'

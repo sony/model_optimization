@@ -16,6 +16,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core import DebugConfig
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
@@ -34,10 +35,9 @@ from model_compression_toolkit.core.common.statistics_correction.statistics_corr
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.keras.constants import KERNEL
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
 keras = tf.keras
@@ -51,14 +51,14 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
         core_config.mixed_precision_config.set_mixed_precision_enable()
 
     attach2keras = AttachTpcToKeras()
-    tpc = attach2keras.attach(tpc)
+    fqc = attach2keras.attach(tpc)
 
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
                                                  fw_info,
                                                  fw_impl,
-                                                 tpc,
+                                                 fqc,
                                                  core_config.bit_width_config,
                                                  tb_w,
                                                  mixed_precision_enable=core_config.is_mixed_precision_enabled)

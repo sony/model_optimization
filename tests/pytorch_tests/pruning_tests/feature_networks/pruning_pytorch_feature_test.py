@@ -21,7 +21,7 @@ import numpy as np
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.pytorch_tests.utils import count_model_prunable_params
 
@@ -46,8 +46,8 @@ class PruningPytorchFeatureTest(BasePytorchFeatureNetworkTest):
         return PruningConfig(num_score_approximations=2)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'simd_size': self.simd})
-        return generate_pytorch_tpc(name="simd_test", tp_model=tp)
+        tp = generate_test_tpc({'simd_size': self.simd})
+        return generate_pytorch_tpc(name="simd_test", tpc=tp)
 
     def get_resource_utilization(self, dense_model_num_params, model):
         if not self.use_bn and torch.nn.BatchNorm2d in [type(m) for m in model.modules()]:

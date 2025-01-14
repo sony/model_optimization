@@ -72,7 +72,7 @@ import tensorflow as tf
 
 from mct_quantizers.keras.quantizers import ActivationUniformInferableQuantizer
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod, TrainableQuantizerActivationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from mct_quantizers import mark_quantizer, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_weight_quantizer import BaseKerasQATWeightTrainableQuantizer
 

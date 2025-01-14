@@ -18,6 +18,9 @@ import numpy as np
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
 
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
+
 if tf.__version__ >= "2.13":
     from keras.src.engine.input_layer import InputLayer
     from keras.src.layers.core import TFOpLambda
@@ -26,8 +29,6 @@ else:
     from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpcToKeras
 
 from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
@@ -67,9 +68,9 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                                                       c.activation_n_bits) for c in mixed_precision_cfg_list],
                                         name="sem_test")
 
-    tpc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": ([InputLayer],)})
+    fqc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": ([InputLayer],)})
 
-    graph.set_tpc(tpc)
+    graph.set_fqc(fqc)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=DEFAULTCONFIG,
                                                     mixed_precision_enable=True)

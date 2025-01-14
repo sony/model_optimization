@@ -18,11 +18,10 @@ import numpy as np
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
-tp = mct.target_platform
 
 
 class ConstRepresentationNet(nn.Module):
@@ -54,10 +53,10 @@ class ConstRepresentationTest(BasePytorchFeatureNetworkTest):
         self.input_reverse_order = input_reverse_order
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 32,
+        tp = generate_test_tpc({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
                                      'enable_activation_quantization': False})
-        return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
+        return generate_pytorch_tpc(name="linear_collapsing_test", tpc=tp)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
@@ -126,11 +125,11 @@ class ConstRepresentationLinearLayerTest(ConstRepresentationTest):
         self.enable_weights_quantization = enable_weights_quantization
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 32,
+        tp = generate_test_tpc({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
                                      'enable_weights_quantization': self.enable_weights_quantization,
                                      'enable_activation_quantization': False})
-        return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
+        return generate_pytorch_tpc(name="linear_collapsing_test", tpc=tp)
 
     def create_networks(self):
         return ConstRepresentationLinearLayerNet(self.func, self.const)
@@ -206,10 +205,10 @@ class ConstRepresentationCodeTest(BasePytorchFeatureNetworkTest):
         return ConstRepresentationCodeNet(self.input_shape[2:])
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 32,
+        tp = generate_test_tpc({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
                                      'enable_activation_quantization': False})
-        return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
+        return generate_pytorch_tpc(name="linear_collapsing_test", tpc=tp)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         in_torch_tensor = to_torch_tensor(input_x[0])

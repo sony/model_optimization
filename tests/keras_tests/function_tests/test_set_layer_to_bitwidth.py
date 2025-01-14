@@ -21,6 +21,8 @@ from keras import Input
 from keras.layers import Conv2D
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 
 if tf.__version__ >= "2.13":
     from keras.src.engine.input_layer import InputLayer
@@ -29,8 +31,6 @@ else:
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import QuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpcToKeras
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
@@ -42,7 +42,7 @@ from model_compression_toolkit.core.keras.mixed_precision.configurable_activatio
 from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
-from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tpc import get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras, get_weights_only_mp_tpc_keras
 
 

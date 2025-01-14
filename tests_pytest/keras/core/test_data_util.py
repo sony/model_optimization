@@ -65,6 +65,8 @@ class TestTFDataUtil:
 
         for i, sample in enumerate(dataset):
             assert np.array_equal(sample[0].cpu().numpy(), np.full((3, 30, 20), i))
+            assert np.array_equal(sample[1].cpu().numpy(), np.full((10,), i+10))
+
 
         batch_size = 16
         dataloader = create_tf_dataloader(dataset, batch_size=batch_size)
@@ -86,13 +88,15 @@ class TestTFDataUtil:
     def test_create_tf_dataloader_fixed_tfdataset_with_info(self, fixed_gen):
         samples = []
         for b in list(fixed_gen()):
-            samples.extend(tf.unstack(b[0], axis=0))
-            break # Take one batch only (since this tests fixed,small dataset)
+            for sample in zip(tf.unstack(b[0], axis=0), tf.unstack(b[1], axis=0)):
+                samples.append(sample)
+            break  # Take one batch only (since this tests fixed,small dataset)
         dataset = FixedSampleInfoDataset(samples, [tf.range(32)])
 
         for i, sample_with_info in enumerate(dataset):
             sample, info = sample_with_info
-            assert np.array_equal(sample.cpu().numpy(), np.full((3, 30, 20), i))
+            assert np.array_equal(sample[0].cpu().numpy(), np.full((3, 30, 20), i))
+            assert np.array_equal(sample[1].cpu().numpy(), np.full((10, ), i+10))
             assert info == (i,)
 
         batch_size = 16
@@ -103,7 +107,8 @@ class TestTFDataUtil:
 
         for batch in dataloader:
             samples, additional_info = batch
-            assert samples.shape == (batch_size, 3, 30, 20)
+            assert samples[0].shape == (batch_size, 3, 30, 20)
+            assert samples[1].shape == (batch_size, 10)
             assert additional_info[0].shape == (batch_size,)
 
     def test_create_tf_dataloader_iterable_tfdataset_with_const_info(self, fixed_gen):
@@ -113,6 +118,7 @@ class TestTFDataUtil:
         for i, sample_with_info in enumerate(dataset):
             sample, info = sample_with_info
             assert np.array_equal(sample[0].cpu().numpy(), np.full((3, 30, 20), i))
+            assert np.array_equal(sample[1].cpu().numpy(), np.full((10,), i+10))
             assert info == tf.constant("some_string")
 
         batch_size = 16
@@ -124,5 +130,6 @@ class TestTFDataUtil:
         for batch in dataloader:
             samples, additional_info = batch
             assert samples[0].shape == (batch_size, 3, 30, 20)
+            assert samples[1].shape == (batch_size, 10)
             assert additional_info.shape == (batch_size,)
             assert all(additional_info == tf.constant("some_string"))

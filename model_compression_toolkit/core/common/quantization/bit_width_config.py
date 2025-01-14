@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from dataclasses import dataclass, field
 from typing import List, Union, Dict
 
 from model_compression_toolkit.core.common import Graph
@@ -19,6 +20,7 @@ from model_compression_toolkit.core.common.matchers.node_matcher import BaseNode
 from model_compression_toolkit.logger import Logger
 
 
+@dataclass
 class ManualBitWidthSelection:
     """
    Class to encapsulate the manual bit width selection configuration for a specific filter.
@@ -27,13 +29,11 @@ class ManualBitWidthSelection:
        filter (BaseNodeMatcher): The filter used to select nodes for bit width manipulation.
        bit_width (int): The bit width to be applied to the selected nodes.
    """
-    def __init__(self,
-                 filter: BaseNodeMatcher,
-                 bit_width: int):
-        self.filter = filter
-        self.bit_width = bit_width
+    filter: BaseNodeMatcher
+    bit_width: int
 
 
+@dataclass
 class BitWidthConfig:
     """
     Class to manage manual bit-width configurations.
@@ -41,13 +41,7 @@ class BitWidthConfig:
     Attributes:
         manual_activation_bit_width_selection_list (List[ManualBitWidthSelection]): A list of ManualBitWidthSelection objects defining manual bit-width configurations.
     """
-    def __init__(self,
-                 manual_activation_bit_width_selection_list: List[ManualBitWidthSelection] = None):
-        self.manual_activation_bit_width_selection_list = [] if manual_activation_bit_width_selection_list is None else manual_activation_bit_width_selection_list
-
-    def __repr__(self):
-        # Used for debugging, thus no cover.
-        return str(self.__dict__)  # pragma: no cover
+    manual_activation_bit_width_selection_list: List[ManualBitWidthSelection] = field(default_factory=list)
 
     def set_manual_activation_bit_width(self,
                                         filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],

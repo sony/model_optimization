@@ -27,7 +27,7 @@ auto:qat:
 - model_compression_toolkit/qat/**
 
 auto:target_platform_capabilities:
-- model_compression_toolkit/target_platform_capabilities/**
+- model_compression_toolkit/framework_quantization_capabilities/**
 
 auto:trainable_infrastructure:
 - model_compression_toolkit/trainable_infrastructure/**

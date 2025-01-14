@@ -13,27 +13,23 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from collections import defaultdict
+from typing import Callable, Any
 
-import numpy as np
-from typing import Callable, Any, Dict, Tuple
-
-from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import FLOAT_BITWIDTH, BITS_TO_BYTES
 from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization, CoreConfig, QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
+    RUTarget
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
+    ResourceUtilizationCalculator, BitwidthMode, TargetInclusionCriterion
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import calc_graph_cuts
+from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities
 
 
 def compute_resource_utilization_data(in_model: Any,
                                       representative_data_gen: Callable,
                                       core_config: CoreConfig,
-                                      tpc: TargetPlatformCapabilities,
+                                      fqc: FrameworkQuantizationCapabilities,
                                       fw_info: FrameworkInfo,
                                       fw_impl: FrameworkImplementation,
                                       transformed_graph: Graph = None,
@@ -47,7 +43,7 @@ def compute_resource_utilization_data(in_model: Any,
         in_model:  Model to build graph from (the model that intended to be quantized).
         representative_data_gen: Dataset used for calibration.
         core_config: CoreConfig containing parameters of how the model should be quantized.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -70,183 +66,23 @@ def compute_resource_utilization_data(in_model: Any,
                                                      core_config.quantization_config,
                                                      fw_info,
                                                      fw_impl,
-                                                     tpc,
+                                                     fqc,
                                                      bit_width_config=core_config.bit_width_config,
-                                                     mixed_precision_enable=mixed_precision_enable)
+                                                     mixed_precision_enable=mixed_precision_enable,
+                                                     running_gptq=False)
 
-    # Compute parameters sum
-    weights_memory_bytes, weights_params = compute_nodes_weights_params(graph=transformed_graph, fw_info=fw_info)
-    total_weights_params = 0 if len(weights_params) == 0 else sum(weights_params)
-
-    # Compute max activation tensor
-    activation_output_sizes_bytes, activation_output_sizes = compute_activation_output_maxcut_sizes(graph=transformed_graph)
-    max_activation_tensor_size = 0 if len(activation_output_sizes) == 0 else max(activation_output_sizes)
-
-    # Compute total memory utilization - parameters sum + max activation tensor
-    total_size = total_weights_params + max_activation_tensor_size
-
-    # Compute BOPS utilization - total count of bit-operations for all configurable layers with kernel
-    bops_count = compute_total_bops(graph=transformed_graph, fw_info=fw_info, fw_impl=fw_impl)
-    bops_count = np.inf if len(bops_count) == 0 else sum(bops_count)
-
-    return ResourceUtilization(weights_memory=total_weights_params,
-                               activation_memory=max_activation_tensor_size,
-                               total_memory=total_size,
-                               bops=bops_count)
-
-
-def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Calculates the memory usage in bytes and the number of weight parameters for each node within a graph.
-    Memory calculations are based on the maximum bit-width used for quantization per node.
-
-    Args:
-        graph: A finalized Graph object, representing the model structure.
-        fw_info: FrameworkInfo object containing details about the specific framework's
-                 quantization attributes for different layers' weights.
-
-    Returns:
-        A tuple containing two arrays:
-            - The first array represents the memory in bytes for each node's weights when quantized at the maximal bit-width.
-            - The second array represents the total number of weight parameters for each node.
-    """
-    weights_params = []
-    weights_memory_bytes = []
-    for n in graph.nodes:
-        # TODO: when enabling multiple attribute quantization by default (currently,
-        #  only kernel quantization is enabled) we should include other attributes memory in the sum of all
-        #  weights memory.
-        #  When implementing this, we should just go over all attributes in the node instead of counting only kernels.
-        kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-        if kernel_attr is not None and not n.reuse:
-            kernel_candidates = n.get_all_weights_attr_candidates(kernel_attr)
-
-            if len(kernel_candidates) > 0 and any([c.enable_weights_quantization for c in kernel_candidates]):
-                max_weight_bits = max([kc.weights_n_bits for kc in kernel_candidates])
-                node_num_weights_params = 0
-                for attr in fw_info.get_kernel_op_attributes(n.type):
-                    if attr is not None:
-                        node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
-
-                weights_params.append(node_num_weights_params)
-
-                # multiply num params by num bits and divide by BITS_TO_BYTES to convert from bits to bytes
-                weights_memory_bytes.append(node_num_weights_params * max_weight_bits / BITS_TO_BYTES)
-
-    return np.array(weights_memory_bytes), np.array(weights_params)
-
-
-def compute_activation_output_maxcut_sizes(graph: Graph) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Computes an array of the respective output tensor maxcut size and an array of the output tensor
-    cut size in bytes for each cut.
-
-    Args:
-        graph: A finalized Graph object, representing the model structure.
-
-    Returns:
-    A tuple containing two arrays:
-        - The first is an array of the size of each activation max-cut size in bytes, calculated
-          using the maximal bit-width for quantization.
-        - The second array an array of the size of each activation max-cut activation size in number of parameters.
-
-    """
-    cuts = calc_graph_cuts(graph)
-
-    # map nodes to cuts.
-    node_to_cat_mapping = defaultdict(list)
-    for i, cut in enumerate(cuts):
-        mem_element_names = [m.node_name for m in cut.mem_elements.elements]
-        for m_name in mem_element_names:
-            if len(graph.find_node_by_name(m_name)) > 0:
-                node_to_cat_mapping[m_name].append(i)
-            else:
-                Logger.critical(f"Missing node: {m_name}")  # pragma: no cover
-
-    activation_outputs = np.zeros(len(cuts))
-    activation_outputs_bytes = np.zeros(len(cuts))
-    for n in graph.nodes:
-        # Go over all nodes that have activation quantization enabled.
-        if n.has_activation_quantization_enabled_candidate():
-            # Fetch maximum bits required for activations quantization.
-            max_activation_bits = max([qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg])
-            node_output_size = n.get_total_output_params()
-            for cut_index in node_to_cat_mapping[n.name]:
-                activation_outputs[cut_index] += node_output_size
-                # Calculate activation size in bytes and append to list
-                activation_outputs_bytes[cut_index] += node_output_size * max_activation_bits / BITS_TO_BYTES
-
-    return activation_outputs_bytes, activation_outputs
-
-
-# TODO maxcut: add test for this function and remove no cover
-def compute_activation_output_sizes(graph: Graph) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
-    """
-    Computes an array of the respective output tensor size and an array of the output tensor size in bytes for
-    each node.
-
-    Args:
-        graph: A finalized Graph object, representing the model structure.
-
-    Returns:
-    A tuple containing two arrays:
-        - The first array represents the size of each node's activation output tensor size in bytes,
-          calculated using the maximal bit-width for quantization.
-        - The second array represents the size of each node's activation output tensor size.
-
-    """
-    activation_outputs = []
-    activation_outputs_bytes = []
-    for n in graph.nodes:
-        # Go over all nodes that have configurable activation.
-        if n.has_activation_quantization_enabled_candidate():
-            # Fetch maximum bits required for quantizing activations
-            max_activation_bits = max([qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg])
-            node_output_size = n.get_total_output_params()
-            activation_outputs.append(node_output_size)
-            # Calculate activation size in bytes and append to list
-            activation_outputs_bytes.append(node_output_size * max_activation_bits / BITS_TO_BYTES)
-
-    return np.array(activation_outputs_bytes), np.array(activation_outputs)
-
-
-def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkImplementation) -> np.ndarray:
-    """
-    Computes a vector with the respective Bit-operations count for each configurable node that includes MAC operations.
-    The computation assumes that the graph is a representation of a float model, thus, BOPs computation uses 32-bit.
-
-    Args:
-        graph: Finalized Graph object.
-        fw_info: FrameworkInfo object about the specific framework
-            (e.g., attributes of different layers' weights to quantize).
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-
-    Returns: A vector of nodes' Bit-operations count.
-
-    """
-
-    bops = []
-
-    # Go over all configurable nodes that have kernels.
-    for n in graph.get_topo_sorted_nodes():
-        if n.has_kernel_weight_to_quantize(fw_info):
-            # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
-            incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
-            assert len(incoming_edges) == 1, f"Can't compute BOPS metric for node {n.name} with multiple inputs."
-
-            node_mac = fw_impl.get_node_mac_operations(n, fw_info)
-
-            node_bops = (FLOAT_BITWIDTH ** 2) * node_mac
-            bops.append(node_bops)
-
-    return np.array(bops)
+    ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
+    ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.Q8Bit,
+                                                    ru_targets=set(RUTarget) - {RUTarget.BOPS})
+    ru.bops, _ = ru_calculator.compute_bops(TargetInclusionCriterion.AnyQuantized, BitwidthMode.Float)
+    return ru
 
 
 def requires_mixed_precision(in_model: Any,
                              target_resource_utilization: ResourceUtilization,
                              representative_data_gen: Callable,
                              core_config: CoreConfig,
-                             tpc: TargetPlatformCapabilities,
+                             fqc: FrameworkQuantizationCapabilities,
                              fw_info: FrameworkInfo,
                              fw_impl: FrameworkImplementation) -> bool:
     """
@@ -261,14 +97,13 @@ def requires_mixed_precision(in_model: Any,
         target_resource_utilization: The resource utilization of the target device.
         representative_data_gen: A function that generates representative data for the model.
         core_config: CoreConfig containing parameters of how the model should be quantized.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns: A boolean indicating if mixed precision is needed.
     """
-    is_mixed_precision = False
     core_config = _create_core_config_for_ru(core_config)
 
     transformed_graph = graph_preparation_runner(in_model,
@@ -276,27 +111,15 @@ def requires_mixed_precision(in_model: Any,
                                                  core_config.quantization_config,
                                                  fw_info,
                                                  fw_impl,
-                                                 tpc,
+                                                 fqc,
                                                  bit_width_config=core_config.bit_width_config,
-                                                 mixed_precision_enable=False)
-    # Compute max weights memory in bytes
-    weights_memory_by_layer_bytes, _ = compute_nodes_weights_params(transformed_graph, fw_info)
-    total_weights_memory_bytes = 0 if len(weights_memory_by_layer_bytes) == 0 else sum(weights_memory_by_layer_bytes)
+                                                 mixed_precision_enable=False,
+                                                 running_gptq=False)
 
-    # Compute max activation tensor in bytes
-    activation_memory_estimation_bytes, _ = compute_activation_output_maxcut_sizes(transformed_graph)
-    max_activation_memory_estimation_bytes = 0 if len(activation_memory_estimation_bytes) == 0 \
-        else max(activation_memory_estimation_bytes)
-
-    # Compute BOPS utilization - total count of bit-operations for all configurable layers with kernel
-    bops_count = compute_total_bops(graph=transformed_graph, fw_info=fw_info, fw_impl=fw_impl)
-    bops_count = np.inf if len(bops_count) == 0 else sum(bops_count)
-
-    is_mixed_precision |= target_resource_utilization.weights_memory < total_weights_memory_bytes
-    is_mixed_precision |= target_resource_utilization.activation_memory < max_activation_memory_estimation_bytes
-    is_mixed_precision |= target_resource_utilization.total_memory < total_weights_memory_bytes + max_activation_memory_estimation_bytes
-    is_mixed_precision |= target_resource_utilization.bops < bops_count
-    return is_mixed_precision
+    ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
+    max_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.QMaxBit,
+                                                        ru_targets=target_resource_utilization.get_restricted_metrics())
+    return not target_resource_utilization.is_satisfied_by(max_ru)
 
 
 def _create_core_config_for_ru(core_config: CoreConfig) -> CoreConfig:

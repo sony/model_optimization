@@ -19,7 +19,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 

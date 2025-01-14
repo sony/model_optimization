@@ -33,9 +33,10 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
     get_weights_quantization_fn
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
     QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
+    FrameworkQuantizationCapabilities
 
 
 def set_quantization_configuration_to_graph(graph: Graph,
@@ -71,14 +72,14 @@ def set_quantization_configuration_to_graph(graph: Graph,
                                          graph=graph,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
-                                         tpc=graph.tpc,
+                                         fqc=graph.fqc,
                                          mixed_precision_enable=mixed_precision_enable,
                                          manual_bit_width_override=nodes_to_manipulate_bit_widths.get(n))
     return graph
 
 
 def filter_node_qco_by_graph(node: BaseNode,
-                             tpc: TargetPlatformCapabilities,
+                             fqc: FrameworkQuantizationCapabilities,
                              graph: Graph,
                              node_qc_options: QuantizationConfigOptions
                              ) -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
@@ -90,7 +91,7 @@ def filter_node_qco_by_graph(node: BaseNode,
 
     Args:
         node: Node for filtering.
-        tpc: TPC to extract the QuantizationConfigOptions for the next nodes.
+        fqc: FQC to extract the QuantizationConfigOptions for the next nodes.
         graph: Graph object.
         node_qc_options: Node's QuantizationConfigOptions.
 
@@ -108,7 +109,7 @@ def filter_node_qco_by_graph(node: BaseNode,
     next_nodes = []
     while len(_next_nodes):
         n = _next_nodes.pop(0)
-        qco = n.get_qco(tpc)
+        qco = n.get_qco(fqc)
         qp = [qc.quantization_preserving for qc in qco.quantization_configurations]
         if not all(qp) and any(qp):
             Logger.error(f'Attribute "quantization_preserving" should be the same for all QuantizaionConfigOptions in {n}.')
@@ -117,7 +118,7 @@ def filter_node_qco_by_graph(node: BaseNode,
         next_nodes.append(n)
 
     if len(next_nodes):
-        next_nodes_qc_options = [_node.get_qco(tpc) for _node in next_nodes]
+        next_nodes_qc_options = [_node.get_qco(fqc) for _node in next_nodes]
         next_nodes_supported_input_bitwidth = min([max_input_activation_n_bits(op_cfg)
                                                    for qc_opts in next_nodes_qc_options
                                                    for op_cfg in qc_opts.quantization_configurations])
@@ -126,7 +127,7 @@ def filter_node_qco_by_graph(node: BaseNode,
         _node_qc_options = [_option for _option in _node_qc_options
                             if _option.activation_n_bits <= next_nodes_supported_input_bitwidth]
         if len(_node_qc_options) == 0:
-            Logger.critical(f"Graph doesn't match TPC bit configurations: {node} -> {next_nodes}.")
+            Logger.critical(f"Graph doesn't match FQC bit configurations: {node} -> {next_nodes}.")
 
         # Verify base config match
         if any([node_qc_options.base_config.activation_n_bits > max_input_activation_n_bits(qc_opt.base_config)
@@ -136,9 +137,9 @@ def filter_node_qco_by_graph(node: BaseNode,
             if len(_node_qc_options) > 0:
                 output_act_bitwidth = {qco.activation_n_bits: i for i, qco in enumerate(_node_qc_options)}
                 _base_config = _node_qc_options[output_act_bitwidth[max(output_act_bitwidth)]]
-                Logger.warning(f"Node {node} base quantization config changed to match Graph and TPC configuration.\nCause: {node} -> {next_nodes}.")
+                Logger.warning(f"Node {node} base quantization config changed to match Graph and FQC configuration.\nCause: {node} -> {next_nodes}.")
             else:
-                Logger.critical(f"Graph doesn't match TPC bit configurations: {node} -> {next_nodes}.")  # pragma: no cover
+                Logger.critical(f"Graph doesn't match FQC bit configurations: {node} -> {next_nodes}.")  # pragma: no cover
 
     return _base_config, _node_qc_options
 
@@ -147,7 +148,7 @@ def set_quantization_configs_to_node(node: BaseNode,
                                      graph: Graph,
                                      quant_config: QuantizationConfig,
                                      fw_info: FrameworkInfo,
-                                     tpc: TargetPlatformCapabilities,
+                                     fqc: FrameworkQuantizationCapabilities,
                                      mixed_precision_enable: bool = False,
                                      manual_bit_width_override: Optional[int] = None):
     """
@@ -158,12 +159,12 @@ def set_quantization_configs_to_node(node: BaseNode,
         graph (Graph): Model's internal representation graph.
         quant_config (QuantizationConfig): Quantization configuration to generate the node's configurations from.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework.
-        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to get default OpQuantizationConfig.
+        fqc (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to get default OpQuantizationConfig.
         mixed_precision_enable (bool): Whether mixed precision is enabled. Defaults to False.
         manual_bit_width_override (Optional[int]): Specifies a custom bit-width to override the node's activation bit-width. Defaults to None.
     """
-    node_qc_options = node.get_qco(tpc)
-    base_config, node_qc_options_list = filter_node_qco_by_graph(node, tpc, graph, node_qc_options)
+    node_qc_options = node.get_qco(fqc)
+    base_config, node_qc_options_list = filter_node_qco_by_graph(node, fqc, graph, node_qc_options)
 
     # If a manual_bit_width_override is given, filter node_qc_options_list to retain only the options with activation bits equal to manual_bit_width_override,
     # and update base_config accordingly.
@@ -257,7 +258,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
     attrs_with_enabled_quantization = [attr for attr, cfg in op_cfg.attr_weights_configs_mapping.items()
                                        if cfg.enable_weights_quantization]
     if len(attrs_with_enabled_quantization) > 1:
-        Logger.warning(f"Multiple weights attributes quantization is enabled via the provided TPC."
+        Logger.warning(f"Multiple weights attributes quantization is enabled via the provided FQC."
                        f"Quantizing any attribute other than the kernel is experimental "
                        f"and may be subject to unstable behavior."
                        f"Attributes with enabled weights quantization: {attrs_with_enabled_quantization}.")

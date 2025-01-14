@@ -19,7 +19,7 @@ import tensorflow as tf
 from packaging import version
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -38,7 +38,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_t
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
     MixedPrecisionBaseTest
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras, get_weights_only_mp_tpc_keras
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.common_tests.helpers.generate_test_tpc import generate_test_op_qc, generate_test_attr_configs
 import model_compression_toolkit as mct
 
 
@@ -69,15 +69,11 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
         tpc = self.get_tpc()
         cc = self.get_core_config()
         attach2keras = AttachTpcToKeras()
-        tpc = attach2keras.attach(tpc, cc.quantization_config.custom_tpc_opset_to_layer)
+        fqc = attach2keras.attach(tpc, cc.quantization_config.custom_tpc_opset_to_layer)
 
-        return compute_resource_utilization_data(in_model=model,
-                                                 representative_data_gen=self.representative_data_gen(),
-                                                 core_config=cc,
-                                                 tpc=tpc,
-                                                 fw_info=DEFAULT_KERAS_INFO,
-                                                 fw_impl=KerasImplementation(),
-                                                 transformed_graph=None,
+        return compute_resource_utilization_data(in_model=model, representative_data_gen=self.representative_data_gen(),
+                                                 core_config=cc, fqc=fqc, fw_info=DEFAULT_KERAS_INFO,
+                                                 fw_impl=KerasImplementation(), transformed_graph=None,
                                                  mixed_precision_enable=False)
 
     def get_quantization_config(self):

@@ -20,7 +20,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity, normalized_mse
@@ -28,7 +28,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-tp = mct.target_platform
 
 
 def update_kernel_for_bn_folding_fn(conv_layer: layers.Conv2D,
@@ -59,11 +58,11 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
         super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="bn_folding_test", tp_model=tp)
+        return generate_keras_tpc(name="bn_folding_test", tpc=tp)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
@@ -264,11 +263,11 @@ class BNForwardFoldingTest(BaseKerasFeatureNetworkTest):
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'weights_n_bits': 16,
+        tp = generate_test_tpc({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="bn_folding_test", tp_model=tp)
+        return generate_keras_tpc(name="bn_folding_test", tpc=tp)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         if self.is_dwconv:

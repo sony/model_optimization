@@ -18,6 +18,8 @@ import keras
 import unittest
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 
 if tf.__version__ >= "2.13":
     from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
@@ -36,15 +38,12 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weig
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 
 import model_compression_toolkit as mct
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
-tp = mct.target_platform
 
 INPUT_SHAPE = (8, 8, 3)
 

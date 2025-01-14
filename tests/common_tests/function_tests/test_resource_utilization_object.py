@@ -49,9 +49,5 @@ class TestResourceUtilizationObject(unittest.TestCase):
                                           f"BOPS: {4}")
 
     def test_ru_hold_constraints(self):
-        self.assertTrue(default_ru.holds_constraints(custom_ru))
-        self.assertFalse(custom_ru.holds_constraints(default_ru))
-        self.assertFalse(custom_ru.holds_constraints({RUTarget.WEIGHTS: 1,
-                                                      RUTarget.ACTIVATION: 1,
-                                                      RUTarget.TOTAL: 1,
-                                                      RUTarget.BOPS: 1}))
+        self.assertTrue(default_ru.is_satisfied_by(custom_ru))
+        self.assertFalse(custom_ru.is_satisfied_by(default_ru))

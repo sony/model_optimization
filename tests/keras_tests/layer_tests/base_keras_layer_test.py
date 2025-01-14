@@ -7,7 +7,7 @@ from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.ptq import keras_post_training_quantization
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from packaging import version
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -75,9 +75,9 @@ class BaseKerasLayerTest(BaseLayerTest):
             # Disable all features that are enabled by default:
             return get_quantization_disabled_keras_tpc("float_layer_test")
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
-            tp = generate_test_tp_model({'weights_n_bits': 8,
+            tp = generate_test_tpc({'weights_n_bits': 8,
                                          'activation_n_bits': 8})
-            return generate_keras_tpc(name="8bit_layer_test", tp_model=tp)
+            return generate_keras_tpc(name="8bit_layer_test", tpc=tp)
         else:
             raise NotImplemented
 

@@ -19,12 +19,13 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
+from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     KERNEL_BASE_CONFIG, BIAS_CONFIG
 
 keras = tf.keras
@@ -60,14 +61,13 @@ def get_tpc():
     Assuming a target hardware that uses power-of-2 thresholds and quantizes weights and activations
     to 2 and 3 bits, accordingly. Our assumed hardware does not require quantization of some layers
     (e.g. Flatten & Droupout).
-    This function generates a TargetPlatformCapabilities with the above specification.
+    This function generates a FrameworkQuantizationCapabilities with the above specification.
 
     Returns:
-         TargetPlatformCapabilities object
+         FrameworkQuantizationCapabilities object
     """
-    tp = mct.target_platform
     attr_cfg = generate_test_attr_configs(kernel_lut_values_bitwidth=0)
-    base_cfg = schema.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+    base_cfg = schema.OpQuantizationConfig(activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                                            enable_activation_quantization=True,
                                            activation_n_bits=32,
                                            supported_input_activation_n_bits=32,
@@ -85,14 +85,14 @@ def get_tpc():
                                         qc_options=default_configuration_options.clone_and_edit(
                                             enable_activation_quantization=False)
                                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))]
-    tp_model = schema.TargetPlatformModel(default_qco=default_configuration_options,
-                                          operator_set=tuple(operator_set),
-                                          tpc_minor_version=None,
-                                          tpc_patch_version=None,
-                                          tpc_platform_type=None,
-                                          add_metadata=False)
+    tpc = schema.TargetPlatformCapabilities(default_qco=default_configuration_options,
+                                                 operator_set=tuple(operator_set),
+                                                 tpc_minor_version=None,
+                                                 tpc_patch_version=None,
+                                                 tpc_platform_type=None,
+                                                 add_metadata=False)
 
-    return tp_model
+    return tpc
 
 
 class TestCustomLayer(unittest.TestCase):

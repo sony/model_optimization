@@ -22,7 +22,9 @@ from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR
     LR_BIAS_DEFAULT, GPTQ_MOMENTUM, REG_DEFAULT_SLA
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE, GPTQ_HESSIAN_NUM_SAMPLES
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
+    AttachTpcToKeras
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig, \
@@ -33,7 +35,6 @@ from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.metadata import create_model_metadata
 
 
@@ -48,8 +49,6 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.keras.metadata import add_metadata
-    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-        AttachTpcToKeras
 
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):
@@ -157,7 +156,7 @@ if FOUND_TF:
                                                   gptq_representative_data_gen: Callable = None,
                                                   target_resource_utilization: ResourceUtilization = None,
                                                   core_config: CoreConfig = CoreConfig(),
-                                                  target_platform_capabilities: TargetPlatformModel = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
+                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -244,7 +243,7 @@ if FOUND_TF:
 
         # Attach tpc model to framework
         attach2keras = AttachTpcToKeras()
-        target_platform_capabilities = attach2keras.attach(
+        framework_platform_capabilities = attach2keras.attach(
             target_platform_capabilities,
             custom_opset2layer=core_config.quantization_config.custom_tpc_opset_to_layer)
 
@@ -253,7 +252,7 @@ if FOUND_TF:
                                                                                    core_config=core_config,
                                                                                    fw_info=DEFAULT_KERAS_INFO,
                                                                                    fw_impl=fw_impl,
-                                                                                   tpc=target_platform_capabilities,
+                                                                                   fqc=framework_platform_capabilities,
                                                                                    target_resource_utilization=target_resource_utilization,
                                                                                    tb_w=tb_w,
                                                                                    running_gptq=True)
@@ -281,9 +280,9 @@ if FOUND_TF:
                                         DEFAULT_KERAS_INFO)
 
         exportable_model, user_info = get_exportable_keras_model(tg_gptq)
-        if target_platform_capabilities.tp_model.add_metadata:
+        if framework_platform_capabilities.tpc.add_metadata:
             exportable_model = add_metadata(exportable_model,
-                                            create_model_metadata(tpc=target_platform_capabilities,
+                                            create_model_metadata(fqc=framework_platform_capabilities,
                                                                   scheduling_info=scheduling_info))
         return exportable_model, user_info
 

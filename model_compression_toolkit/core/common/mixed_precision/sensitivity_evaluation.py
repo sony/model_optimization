@@ -113,11 +113,9 @@ class SensitivityEvaluation:
         # in the new built MP model.
         self.baseline_model, self.model_mp, self.conf_node2layers = self._build_models()
 
-        # Build images batches for inference comparison
-        self.images_batches = self._get_images_batches(quant_config.num_of_images)
-
-        # Casting images tensors to the framework tensor type.
-        self.images_batches = [self.fw_impl.to_tensor(img) for img in self.images_batches]
+        # Build images batches for inference comparison and cat to framework type
+        images_batches = self._get_images_batches(quant_config.num_of_images)
+        self.images_batches = [self.fw_impl.to_tensor(img) for img in images_batches]
 
         # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
         self.baseline_tensors_list = self._init_baseline_tensors_list()

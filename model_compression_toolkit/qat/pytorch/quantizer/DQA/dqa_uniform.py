@@ -20,7 +20,7 @@ import torch.nn as nn
 from mct_quantizers.pytorch.quantizers import WeightsUniformInferableQuantizer
 from torch import Tensor
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from mct_quantizers import QuantizationTarget, PytorchQuantizationWrapper, mark_quantizer
 from model_compression_toolkit.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod

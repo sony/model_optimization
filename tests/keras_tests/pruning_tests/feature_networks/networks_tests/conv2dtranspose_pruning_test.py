@@ -18,7 +18,7 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 from tests.common_tests.pruning.constant_importance_metric import add_const_importance_metric, \
     ConstImportanceMetric
 
@@ -61,8 +61,8 @@ class Conv2DTransposePruningTest(PruningKerasFeatureTest):
         return model
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'simd_size': self.simd})
-        return generate_keras_tpc(name="simd_test", tp_model=tp)
+        tp = generate_test_tpc({'simd_size': self.simd})
+        return generate_keras_tpc(name="simd_test", tpc=tp)
 
     def get_pruning_config(self):
         if self.use_constant_importance_metric:

@@ -5,8 +5,7 @@ from torch.nn import Conv2d
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import THRESHOLD, MIN_THRESHOLD
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from mct_quantizers import PytorchQuantizationWrapper
+from mct_quantizers import PytorchQuantizationWrapper, QuantizationMethod
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.symmetric_soft_quantizer import \
@@ -14,7 +13,6 @@ from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.symmetric_so
 
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 
-tp = mct.target_platform
 
 
 class model_test(torch.nn.Module):

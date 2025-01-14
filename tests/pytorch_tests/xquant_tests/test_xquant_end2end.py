@@ -41,7 +41,7 @@ from model_compression_toolkit.xquant.pytorch.facade_xquant_report import xquant
 from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, \
     OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL, \
     XQUANT_REPR, XQUANT_VAL, CUT_MEMORY_ELEMENTS, CUT_TOTAL_SIZE
-from tests.common_tests.helpers.tpcs_for_tests.v2.tp_model import get_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v2.tpc import get_tpc
 
 
 def random_data_gen(shape=(3, 8, 8), use_labels=False, num_inputs=1, batch_size=2, num_iter=2):
@@ -73,7 +73,7 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
         return mct.core.CoreConfig(debug_config=mct.core.DebugConfig(simulate_scheduler=True))
 
     def get_tpc(self):
-        return get_tp_model()
+        return get_tpc()
 
     def get_model_to_test(self):
         class BaseModelTest(torch.nn.Module):
