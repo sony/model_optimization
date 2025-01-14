@@ -86,15 +86,31 @@ class ResourceUtilization:
                     ru.total_memory <= self.total_memory and \
                     ru.bops <= self.bops)
 
-    def get_restricted_metrics(self) -> Set[RUTarget]:
+    def get_restricted_targets(self) -> Set[RUTarget]:
         d = self.get_resource_utilization_dict()
         return {k for k, v in d.items() if v < np.inf}
 
     def is_any_restricted(self) -> bool:
-        return bool(self.get_restricted_metrics())
+        return bool(self.get_restricted_targets())
 
-    def __repr__(self):
-        return f"Weights_memory: {self.weights_memory}, " \
-               f"Activation_memory: {self.activation_memory}, " \
-               f"Total_memory: {self.total_memory}, " \
-               f"BOPS: {self.bops}"
+    def get_summary_str(self, restricted: bool):
+        """
+        Generate summary string.
+
+        Args:
+            restricted: whether to include non-restricted targets.
+
+        Returns:
+            Summary string.
+        """
+        targets = self.get_restricted_targets() if restricted else list(RUTarget)
+        summary = []
+        if RUTarget.WEIGHTS in targets:
+            summary.append(f"Weights memory: {self.weights_memory}")
+        if RUTarget.ACTIVATION in targets:
+            summary.append(f"Activation memory: {self.activation_memory}")
+        if RUTarget.TOTAL in targets:
+            summary.append(f"Total memory: {self.total_memory}")
+        if RUTarget.BOPS in targets:
+            summary.append(f"BOPS: {self.bops}")
+        return ', '.join(summary)

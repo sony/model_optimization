@@ -118,7 +118,7 @@ def requires_mixed_precision(in_model: Any,
 
     ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
     max_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.QMaxBit,
-                                                        ru_targets=target_resource_utilization.get_restricted_metrics())
+                                                        ru_targets=target_resource_utilization.get_restricted_targets())
     return not target_resource_utilization.is_satisfied_by(max_ru)
 
 

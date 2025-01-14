@@ -484,13 +484,6 @@ class MixedPrecisionTotalMemoryUtilizationSearchTest(MixedPrecisionActivationBas
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
-        # Verify final ResourceUtilization
-        self.unit_test.assertTrue(
-            quantization_info.final_resource_utilization.total_memory ==
-            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
-            "Running weights and activation mixed-precision, "
-            "final total memory should be equal to sum of weights and activation memory.")
-
 
 class MixedPrecisionMultipleResourcesTightUtilizationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):

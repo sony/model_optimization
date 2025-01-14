@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import copy
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Optional
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -170,6 +170,7 @@ def core_runner(in_model: Any,
 
     _set_final_resource_utilization(graph=tg,
                                     final_bit_widths_config=bit_widths_config,
+                                    target_resource_utilization=target_resource_utilization,
                                     fw_info=fw_info,
                                     fw_impl=fw_impl)
 
@@ -207,6 +208,7 @@ def core_runner(in_model: Any,
 
 def _set_final_resource_utilization(graph: Graph,
                                     final_bit_widths_config: List[int],
+                                    target_resource_utilization: Optional[ResourceUtilization],
                                     fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation):
     """
@@ -216,21 +218,24 @@ def _set_final_resource_utilization(graph: Graph,
     Args:
         graph: Graph to compute the resource utilization for.
         final_bit_widths_config: The final bit-width configuration to quantize the model accordingly.
+        target_resource_utilization: Requested target resource utilization if relevant.
         fw_info: A FrameworkInfo object.
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
 
     """
-    w_qcs = {n: n.final_weights_quantization_cfg for n in graph.nodes}
-    a_qcs = {n: n.final_activation_quantization_cfg for n in graph.nodes}
-    ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
-    final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.QCustom,
-                                                          act_qcs=a_qcs, w_qcs=w_qcs)
-
-    for ru_target, ru in final_ru.get_resource_utilization_dict().items():
-        if ru == 0:
-            Logger.warning(f"No relevant quantized layers for the resource utilization target {ru_target} were found, "
-                           f"the recorded final ru for this target would be 0.")
-
-    Logger.info(f'Resource utilization (of quantized targets):\n {str(final_ru)}.')
+    ru_targets = target_resource_utilization.get_restricted_targets() if target_resource_utilization else None
+    final_ru = None
+    if ru_targets:
+        ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
+        w_qcs, a_qcs = None, None
+        if ru_calculator.is_custom_weights_config_applicable(ru_targets):
+            w_qcs = {n: n.final_weights_quantization_cfg for n in graph.nodes}
+        if ru_calculator.is_custom_activation_config_applicable(ru_targets):
+            a_qcs = {n: n.final_activation_quantization_cfg for n in graph.nodes}
+        final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
+                                                              BitwidthMode.QCustom,
+                                                              act_qcs=a_qcs, w_qcs=w_qcs, ru_targets=ru_targets)
+        summary = final_ru.get_summary_str(restricted=True)
+        Logger.info(f'Resource utilization for quantized mixed-precision targets:\n {summary}.')
     graph.user_info.final_resource_utilization = final_ru
     graph.user_info.mixed_precision_cfg = final_bit_widths_config

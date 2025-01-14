@@ -69,7 +69,7 @@ class MixedPrecisionSearchManager:
 
         # To define RU Total constraints we need to compute weights and activations even if they have no constraints
         # TODO currently this logic is duplicated in linear_programming.py
-        targets = target_resource_utilization.get_restricted_metrics()
+        targets = target_resource_utilization.get_restricted_targets()
         if RUTarget.TOTAL in targets:
             targets = targets.union({RUTarget.ACTIVATION, RUTarget.WEIGHTS}) - {RUTarget.TOTAL}
         self.ru_targets_to_compute = targets
