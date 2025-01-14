@@ -61,6 +61,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  quant_method=QuantizationMethod.SYMMETRIC,
                  rounding_type=RoundingType.STE,
                  per_channel=True,
+                 val_batch_size=1,
                  input_shape=(16, 16, 3),
                  hessian_weights=True,
                  log_norm_weights=True,
@@ -79,7 +80,8 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
 
         super().__init__(unit_test,
                          input_shape=input_shape,
-                         num_calibration_iter=num_calibration_iter)
+                         num_calibration_iter=num_calibration_iter,
+                         val_batch_size=val_batch_size)
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type
