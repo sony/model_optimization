@@ -126,13 +126,12 @@ class MixedPrecisionSearchTest(MixedPrecisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # # Verify final ResourceUtilization
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained ResourceUtilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        # Verify final ResourceUtilization
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionWithHessianScoresTest(MixedPrecisionBaseTest):
@@ -160,13 +159,12 @@ class MixedPrecisionWithHessianScoresTest(MixedPrecisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # # Verify final ResourceUtilization
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained ResourceUtilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        # Verify final ResourceUtilization
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
@@ -254,13 +252,12 @@ class MixedPrecisionSearch4BitsAvgTest(MixedPrecisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
 
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # # Verify final ResourceUtilization
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained ResourceUtilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        # Verify final ResourceUtilization
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionCombinedNMSTest(MixedPrecisionBaseTest):
@@ -295,13 +292,12 @@ class MixedPrecisionCombinedNMSTest(MixedPrecisionBaseTest):
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16 or
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
 
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # # Verify final ResourceUtilization
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained ResourceUtilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        # Verify final ResourceUtilization
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionSearch2BitsAvgTest(MixedPrecisionBaseTest):
@@ -322,13 +318,12 @@ class MixedPrecisionSearch2BitsAvgTest(MixedPrecisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 4)
 
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # # Verify final ResourceUtilization
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained ResourceUtilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        # Verify final ResourceUtilization
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionSearchActivationNonConfNodesTest(MixedPrecisionBaseTest):
@@ -346,19 +341,18 @@ class MixedPrecisionSearchActivationNonConfNodesTest(MixedPrecisionBaseTest):
         self.unit_test.assertTrue(quantization_info.final_resource_utilization.activation_memory <=
                                   self.target_total_ru.activation_memory)
 
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained Resource Utilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained Resource Utilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionSearchTotalMemoryNonConfNodesTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         # Total ResourceUtilization for weights in 2 bit avg and non-configurable activation in 8 bit
-        self.target_total_ru = ResourceUtilization(total_memory=17920 * 2 / 8 + 5408)
+        self.target_total_ru = ResourceUtilization(total_memory=17920 * 2 / 8 + 6176)
 
     def get_resource_utilization(self):
         return self.target_total_ru
@@ -368,12 +362,11 @@ class MixedPrecisionSearchTotalMemoryNonConfNodesTest(MixedPrecisionBaseTest):
         # we're only interested in the ResourceUtilization
         self.unit_test.assertTrue(
             quantization_info.final_resource_utilization.total_memory <= self.target_total_ru.total_memory)
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained ResourceUtilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionDepthwiseTest(MixedPrecisionBaseTest):
@@ -478,13 +471,12 @@ class MixedPrecisionSearchLastLayerDistanceTest(MixedPrecisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # # Verify final Resource Utilization
-        # self.unit_test.assertTrue(
-        #     quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
-        #     quantization_info.final_resource_utilization.total_memory,
-        #     "Running weights mixed-precision with unconstrained Resource Utilization, "
-        #     "final weights and activation memory sum should be equal to total memory.")
+        # Verify final Resource Utilization
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained Resource Utilization, "
+            "final weights and activation memory sum should be equal to total memory.")
 
 
 class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTest):

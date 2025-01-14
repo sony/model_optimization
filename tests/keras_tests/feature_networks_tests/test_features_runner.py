@@ -246,11 +246,10 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_weights_only_activation_conf(self):
         MixedPrecisionWeightsOnlyConfigurableActivationsTest(self).run_test()
 
-    def test_requires_mixed_recision(self):
+    def test_requires_mixed_precision(self):
         RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
         RequiresMixedPrecision(self, activation_memory=True).run_test()
-        # TODO maxcut: restore this test after total_memory is fixed to be the sum of weight & activation metrics.
-        # RequiresMixedPrecision(self, total_memory=True).run_test()
+        RequiresMixedPrecision(self, total_memory=True).run_test()
         RequiresMixedPrecision(self, bops=True).run_test()
         RequiresMixedPrecision(self).run_test()
 
