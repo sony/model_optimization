@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from typing import NamedTuple
 
 import pytest
 
@@ -35,6 +35,8 @@ default_op_cfg = schema.OpQuantizationConfig(
     quantization_preserving=False,
     signedness=schema.Signedness.AUTO
 )
+
+OpSet = NamedTuple("OpSet", [('op_name', str), ('op_list', list)])
 
 
 class BaseTpcAttach2FrameworkTest:
@@ -63,26 +65,31 @@ class BaseTpcAttach2FrameworkTest:
         default_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(default_op_cfg,))
         tested_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(tested_op_cfg,))
 
-        for op_name, op_list in self.attach2fw._opset2layer.items():
-            if op_name not in self.attach2fw._opset2attr_mapping.keys():
-                tpc = schema.TargetPlatformCapabilities(
-                    default_qco=default_qc_options,
-                    operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
+        opsets_without_attrs = [OpSet(op_name=op_name, op_list=op_list)
+                                for op_name, op_list in self.attach2fw._opset2layer.items()
+                                if op_name not in self.attach2fw._opset2attr_mapping.keys()]
 
-                fw_quant_capabilities = self.attach2fw.attach(tpc)  # Run 'attach' to test operator attach to framework
+        assert len(opsets_without_attrs) > 0
 
-                assert isinstance(fw_quant_capabilities, FrameworkQuantizationCapabilities)
+        for opset in opsets_without_attrs:
+            tpc = schema.TargetPlatformCapabilities(
+                default_qco=default_qc_options,
+                operator_set=tuple([schema.OperatorsSet(name=opset.op_name, qc_options=tested_qc_options)]))
 
-                all_mapped_ops = fw_quant_capabilities.layer2qco.copy()
-                all_mapped_ops.update(fw_quant_capabilities.filterlayer2qco)
-                if len(op_list) == 0:
-                    assert len(all_mapped_ops) == 0
-                else:
-                    assert len(all_mapped_ops) == len(op_list)
+            fw_quant_capabilities = self.attach2fw.attach(tpc)  # Run 'attach' to test operator attach to framework
 
-                    for qco in all_mapped_ops.values():
-                        assert len(qco.quantization_configurations) == 1
-                        assert qco.base_config.activation_n_bits == 42
+            assert isinstance(fw_quant_capabilities, FrameworkQuantizationCapabilities)
+
+            all_mapped_ops = fw_quant_capabilities.layer2qco.copy()
+            all_mapped_ops.update(fw_quant_capabilities.filterlayer2qco)
+            if len(opset.op_list) == 0:
+                assert len(all_mapped_ops) == 0
+            else:
+                assert len(all_mapped_ops) == len(opset.op_list)
+
+                for qco in all_mapped_ops.values():
+                    assert len(qco.quantization_configurations) == 1
+                    assert qco.base_config.activation_n_bits == 42
 
 
     def test_attach2fw_attach_linear_op_with_attributes(self):
@@ -103,32 +110,37 @@ class BaseTpcAttach2FrameworkTest:
         default_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(default_op_cfg,))
         tested_qc_options = schema.QuantizationConfigOptions(quantization_configurations=(tested_op_cfg,))
 
-        for op_name, op_list in self.attach2fw._opset2layer.items():
-            if op_name in self.attach2fw._opset2attr_mapping.keys():
-                tpc = schema.TargetPlatformCapabilities(
-                    default_qco=default_qc_options,
-                    operator_set=tuple([schema.OperatorsSet(name=op_name, qc_options=tested_qc_options)]))
+        opsets_with_attrs = [OpSet(op_name=op_name, op_list=op_list)
+                             for op_name, op_list in self.attach2fw._opset2layer.items()
+                             if op_name in self.attach2fw._opset2attr_mapping.keys()]
 
-                fw_quant_capabilities = self.attach2fw.attach(tpc)  # Run 'attach' to test operator attach to framework
-                fw_linear_attr_names = self.attach2fw._opset2attr_mapping[op_name]
+        assert len(opsets_with_attrs) > 0
 
-                assert isinstance(fw_quant_capabilities, FrameworkQuantizationCapabilities)
+        for opset in opsets_with_attrs:
+            tpc = schema.TargetPlatformCapabilities(
+                default_qco=default_qc_options,
+                operator_set=tuple([schema.OperatorsSet(name=opset.op_name, qc_options=tested_qc_options)]))
 
-                all_mapped_ops = fw_quant_capabilities.layer2qco.copy()
-                all_mapped_ops.update(fw_quant_capabilities.filterlayer2qco)
-                if len(op_list) == 0:
-                    assert len(all_mapped_ops) == 0
-                else:
-                    assert len(all_mapped_ops) == len(op_list)
+            fw_quant_capabilities = self.attach2fw.attach(tpc)  # Run 'attach' to test operator attach to framework
+            fw_linear_attr_names = self.attach2fw._opset2attr_mapping[opset.op_name]
 
-                    for qco in all_mapped_ops.values():
-                        assert len(qco.quantization_configurations) == 1
-                        assert qco.base_config.default_weight_attr_config == default_attr_config
+            assert isinstance(fw_quant_capabilities, FrameworkQuantizationCapabilities)
 
-                        for attr_name, fw_layer2attr_mapping in fw_linear_attr_names.items():
-                            assert isinstance(fw_layer2attr_mapping, DefaultDict)
-                            layer_attr_mapping = fw_layer2attr_mapping.get(op_list[0])
-                            assert qco.base_config.attr_weights_configs_mapping.get(layer_attr_mapping) == tested_attr_cfg
+            all_mapped_ops = fw_quant_capabilities.layer2qco.copy()
+            all_mapped_ops.update(fw_quant_capabilities.filterlayer2qco)
+            if len(opset.op_list) == 0:
+                assert len(all_mapped_ops) == 0
+            else:
+                assert len(all_mapped_ops) == len(opset.op_list)
+
+                for qco in all_mapped_ops.values():
+                    assert len(qco.quantization_configurations) == 1
+                    assert qco.base_config.default_weight_attr_config == default_attr_config
+
+                    for attr_name, fw_layer2attr_mapping in fw_linear_attr_names.items():
+                        assert isinstance(fw_layer2attr_mapping, DefaultDict)
+                        layer_attr_mapping = fw_layer2attr_mapping.get(opset.op_list[0])
+                        assert qco.base_config.attr_weights_configs_mapping.get(layer_attr_mapping) == tested_attr_cfg
 
 
     def test_attach2fw_attach_to_default_config(self):
