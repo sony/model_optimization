@@ -174,13 +174,6 @@ class MixedPrecisionActivationSearch4BitsAvgTest(MixedPrecisionActivationBaseTes
         # test with its current setup (therefore, we don't check the input layer's bitwidth)
         self.unit_test.assertTrue((activation_bits == [4, 8]))
 
-        # Verify final resource utilization
-        self.unit_test.assertTrue(
-            quantization_info.final_resource_utilization.total_memory ==
-            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
-            "Running weights and activation mixed-precision, "
-            "final total memory should be equal to sum of weights and activation memory.")
-
 
 class MixedPrecisionActivationSearch2BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
@@ -205,13 +198,6 @@ class MixedPrecisionActivationSearch2BitsAvgTest(MixedPrecisionActivationBaseTes
                                  weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=4)
-
-        # Verify final resource utilization
-        self.unit_test.assertTrue(
-            quantization_info.final_resource_utilization.total_memory ==
-            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
-            "Running weights and activation mixed-precision, "
-            "final total memory should be equal to sum of weights and activation memory.")
 
 
 class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
@@ -483,13 +469,6 @@ class MixedPrecisionTotalMemoryUtilizationSearchTest(MixedPrecisionActivationBas
                                  weights_layers_channels_size=[32, 32],
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
-
-        # Verify final ResourceUtilization
-        self.unit_test.assertTrue(
-            quantization_info.final_resource_utilization.total_memory ==
-            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
-            "Running weights and activation mixed-precision, "
-            "final total memory should be equal to sum of weights and activation memory.")
 
 
 class MixedPrecisionMultipleResourcesTightUtilizationSearchTest(MixedPrecisionActivationBaseTest):

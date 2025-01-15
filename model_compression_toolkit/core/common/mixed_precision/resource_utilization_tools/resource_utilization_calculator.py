@@ -15,8 +15,7 @@
 from collections import defaultdict
 from copy import deepcopy
 from enum import Enum, auto
-from functools import lru_cache
-from typing import Dict, NamedTuple, Optional, Tuple, List, Iterable, Union, Literal, Sequence
+from typing import Dict, NamedTuple, Optional, Tuple, List, Iterable, Union, Literal, Sequence, Set
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import FrameworkInfo
@@ -160,16 +159,17 @@ class ResourceUtilizationCalculator:
         """
         ru_targets = set(ru_targets) if ru_targets else set(RUTarget)
 
+        if w_qcs is not None and not self.is_custom_weights_config_applicable(ru_targets):
+            raise ValueError('Weight configuration passed but no relevant metric requested.')
+        if act_qcs is not None and not self.is_custom_activation_config_applicable(ru_targets):
+            raise ValueError('Activation configuration passed but no relevant metric requested.')
+
         w_total, a_total = None, None
         if {RUTarget.WEIGHTS, RUTarget.TOTAL}.intersection(ru_targets):
             w_total, *_ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
-        elif w_qcs is not None:    # pragma: no cover
-            raise ValueError('Weight configuration passed but no relevant metric requested.')
 
         if {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(ru_targets):
             a_total = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
-        elif act_qcs is not None:    # pragma: no cover
-            raise ValueError('Activation configuration passed but no relevant metric requested.')
 
         ru = ResourceUtilization()
         if RUTarget.WEIGHTS in ru_targets:
@@ -182,7 +182,7 @@ class ResourceUtilizationCalculator:
             ru.bops, _ = self.compute_bops(target_criterion=target_criterion,
                                            bitwidth_mode=bitwidth_mode, act_qcs=act_qcs, w_qcs=w_qcs)
 
-        assert ru.get_restricted_metrics() == set(ru_targets), 'Mismatch between the number of requested and computed metrics'
+        assert ru.get_restricted_targets() == set(ru_targets), 'Mismatch between the number of requested and computed metrics'
         return ru
 
     def compute_weights_utilization(self,
@@ -463,6 +463,14 @@ class ResourceUtilizationCalculator:
 
         node_bops = a_nbits * w_nbits * node_mac
         return node_bops
+
+    def is_custom_weights_config_applicable(self, ru_targets: Set[RUTarget]) -> bool:
+        """ Whether custom configuration for weights is compatible with the requested targets."""
+        return bool({RUTarget.WEIGHTS, RUTarget.TOTAL, RUTarget.BOPS}.intersection(ru_targets))
+
+    def is_custom_activation_config_applicable(self, ru_targets: Set[RUTarget]) -> bool:
+        """ Whether custom configuration for activations is compatible with the requested targets."""
+        return bool({RUTarget.ACTIVATION, RUTarget.TOTAL, RUTarget.BOPS}.intersection(ru_targets))
 
     def _get_cut_target_nodes(self, cut: Cut, target_criterion: TargetInclusionCriterion) -> List[BaseNode]:
         """
