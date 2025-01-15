@@ -52,7 +52,7 @@ class BaseTpcAttach2FrameworkTest(abc.ABC):
     def test_attach2fw_init(self):
         # verify built-in opset to operator mapping structure
         assert len(self.attach2fw._opset2layer) == 57  # number of built-in operator sets
-        assert all(opset in self.attach2fw._opset2layer for opset in schema.OperatorSetNames.get_values())
+        assert all(opset in self.attach2fw._opset2layer for opset in list(schema.OperatorSetNames))
         assert all(isinstance(key, schema.OperatorSetNames) for key in self.attach2fw._opset2layer.keys())
         assert all(isinstance(value, list) for value in self.attach2fw._opset2layer.values())
 
@@ -168,7 +168,7 @@ class BaseTpcAttach2FrameworkTest(abc.ABC):
         with pytest.raises(Exception, match=f'{opset_name} is defined in TargetPlatformCapabilities'):
             _ = self.attach2fw.attach(tpc)
 
-    def _test_attach2fw_attach_with_custom_opset(self, operators_list, filter_op, kernel_attr_name):
+    def _test_attach2fw_attach_with_custom_opset(self, operators_list, filter_op, fw_attr_name):
         test_bit = 42
         opset_name = "Custom"
         attr_name = "CustomAttr"
@@ -183,9 +183,8 @@ class BaseTpcAttach2FrameworkTest(abc.ABC):
             quantization_configurations=(default_op_cfg,)),
             operator_set=(operator_set,))
 
-        with pytest.raises(Exception) as e_info:
+        with pytest.raises(Exception, match=f'{opset_name} is defined in TargetPlatformCapabilities'):
             _ = self.attach2fw.attach(tpc)
-        assert f'{opset_name} is defined in TargetPlatformCapabilities' in str(e_info)
 
         # Setting a layers mapping for the custom opset with a regular operator and a filter.
         # We also test the option of passing an attributes mapping for the operator to set a specific attribute config.
@@ -193,24 +192,25 @@ class BaseTpcAttach2FrameworkTest(abc.ABC):
 
         assert len(operators_list) == 1
         non_filter_op = operators_list[0]
+        layers = [non_filter_op, filter_op]
         fw_quant_capabilities = self.attach2fw.attach(
             tpc,
-            custom_opset2layer={opset_name: CustomOpsetLayers(operators=[non_filter_op, filter_op],
+            custom_opset2layer={opset_name: CustomOpsetLayers(operators=layers,
                                                               attr_mapping={attr_name: DefaultDict(
                                                                   {filter_op: fw_custom_attr_name},
-                                                                  default_value=kernel_attr_name)})
+                                                                  default_value=fw_attr_name)})
                                 })
 
         assert isinstance(fw_quant_capabilities, FrameworkQuantizationCapabilities)
         opset_to_layers = fw_quant_capabilities.op_sets_to_layers.op_sets_to_layers
         assert len(opset_to_layers) == 1
         assert opset_to_layers[0].name == opset_name
-        assert len(opset_to_layers[0].layers) == 2
+        assert opset_to_layers[0].layers == layers
 
         op_cfg = fw_quant_capabilities.layer2qco[non_filter_op].base_config
         assert op_cfg.activation_n_bits == test_bit
-        assert kernel_attr_name in op_cfg.attr_weights_configs_mapping
-        assert op_cfg.attr_weights_configs_mapping[kernel_attr_name].weights_n_bits == test_bit
+        assert fw_attr_name in op_cfg.attr_weights_configs_mapping
+        assert op_cfg.attr_weights_configs_mapping[fw_attr_name].weights_n_bits == test_bit
 
         op_cfg = fw_quant_capabilities.filterlayer2qco[filter_op].base_config
         assert op_cfg.activation_n_bits == test_bit

@@ -23,7 +23,6 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
 else:
     from keras.layers import Conv2D, Identity
 
-from model_compression_toolkit.target_platform_capabilities.constants import KERAS_KERNEL
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -46,12 +45,12 @@ class TestAttachTpc2Keras(BaseTpcAttach2FrameworkTest):
         super().test_attach2fw_attach_to_default_config()
 
     def test_not_existing_opset_with_layers_to_attach(self):
-        super().test_attach2fw_attach_to_default_config()
+        super().test_not_existing_opset_with_layers_to_attach()
 
     def test_attach2pytorch_attach_with_custom_opset(self):
         self._test_attach2fw_attach_with_custom_opset([Identity],
                                                       LayerFilterParams(Conv2D, stride=2),
-                                                      KERAS_KERNEL)
+                                                      "CustomAttr")
 
     def test_attach2pytorch_prioritize_custom_opset(self):
         self._test_attach2fw_prioritize_custom_opset(Conv2D)

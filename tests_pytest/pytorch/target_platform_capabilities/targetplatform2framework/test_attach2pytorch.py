@@ -15,7 +15,6 @@
 
 import torch.nn
 
-from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
@@ -39,12 +38,12 @@ class TestAttachTpc2Pytorch(BaseTpcAttach2FrameworkTest):
         super().test_attach2fw_attach_to_default_config()
 
     def test_not_existing_opset_with_layers_to_attach(self):
-        super().test_attach2fw_attach_to_default_config()
+        super().test_not_existing_opset_with_layers_to_attach()
 
     def test_attach2pytorch_attach_with_custom_opset(self):
         self._test_attach2fw_attach_with_custom_opset([torch.nn.Identity],
                                                       LayerFilterParams(torch.nn.Conv2d, stride=2),
-                                                      PYTORCH_KERNEL)
+                                                      "CustomAttr")
 
     def test_attach2pytorch_prioritize_custom_opset(self):
         self._test_attach2fw_prioritize_custom_opset(torch.nn.Conv2d)
