@@ -16,7 +16,7 @@
 import numpy as np
 from pulp import *
 from tqdm import tqdm
-from typing import Dict, Tuple, Set, Any
+from typing import Dict, Tuple, Any, Optional
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
