@@ -47,11 +47,6 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
     l_bound = memory_graph.memory_lbound_single_op
     u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
     it = 0
-
-    @timeout_decorator.timeout(300)
-    def solver_wrapper(*args, **kwargs):
-        return max_cut_astar.solve(*args, **kwargs)
-
     while it < n_iter:
         estimate = (u_bound + l_bound) / 2
         # Add a timeout of 5 minutes to the solver from the 2nd iteration.
