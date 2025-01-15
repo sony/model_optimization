@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Set
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.constants import DUMMY_TENSOR, DUMMY_NODE
@@ -139,8 +139,8 @@ class MaxCutAstar:
 
         """
 
-        open_list = [self.src_cut]
-        closed_list = []
+        open_list = {self.src_cut}
+        closed_list = set()
         costs = {self.src_cut: self.src_cut.memory_size()}
         routes = {self.src_cut: [self.src_cut]}
 
@@ -159,22 +159,21 @@ class MaxCutAstar:
 
             if self.is_pivot(next_cut):
                 # Can clear all search history
-                open_list = []
-                closed_list = []
+                open_list.clear()
+                closed_list.clear()
                 routes = {}
             else:
                 # Can remove only next_cut and put it in closed_list
                 open_list.remove(next_cut)
                 del routes[next_cut]
-                closed_list.append(next_cut)
+                closed_list.add(next_cut)
 
             # Expand the chosen cut
             expanded_cuts = self.expand(next_cut)
             expansion_count += 1
 
             # Only consider nodes that where not already visited
-            expanded_cuts = [_c for _c in expanded_cuts if _c not in closed_list]
-            for c in expanded_cuts:
+            for c in filter(lambda _c: _c not in closed_list, expanded_cuts):
                 cost = self.accumulate(cut_cost, c.memory_size())
                 if c not in open_list:
                     self._update_expanded_node(c, cost, cut_route, open_list, costs, routes)
@@ -192,7 +191,7 @@ class MaxCutAstar:
         return None, 0, None  # pragma: no cover
 
     @staticmethod
-    def _update_expanded_node(cut: Cut, cost: float, route: List[Cut], open_list: List[Cut],
+    def _update_expanded_node(cut: Cut, cost: float, route: List[Cut], open_list: Set[Cut],
                               costs: Dict[Cut, float], routes: Dict[Cut, List[Cut]]):
         """
         An auxiliary method for updating search data structures according to an expanded node.
@@ -201,16 +200,16 @@ class MaxCutAstar:
             cut: A cut to expand the search to.
             cost: The cost of the cut.
             route: The rout to the cut.
-            open_list: The search open list.
+            open_list: The search open set.
             costs: The search utility mapping between cuts and their cost.
             routes: The search utility mapping between cuts and their routes.
 
         """
-        open_list.append(cut)
+        open_list.add(cut)
         costs.update({cut: cost})
         routes.update({cut: [cut] + route})
 
-    def _get_cut_to_expand(self, open_list: List[Cut], costs: Dict[Cut, float], routes: Dict[Cut, List[Cut]],
+    def _get_cut_to_expand(self, open_list: Set[Cut], costs: Dict[Cut, float], routes: Dict[Cut, List[Cut]],
                            estimate: float) -> Cut:
         """
         An auxiliary method for finding a cut for expanding the search out of a set of potential cuts for expansion.

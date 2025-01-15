@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 from collections import namedtuple
-
 from typing import Tuple, List
+import timeout_decorator
 
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import OPERATORS_SCHEDULING, MAX_CUT, CUTS, FUSED_NODES_MAPPING
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -47,9 +48,25 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
     l_bound = memory_graph.memory_lbound_single_op
     u_bound = 2 * sum([t.total_size for t in memory_graph.b_nodes]) - l_bound
     it = 0
+
+    @timeout_decorator.timeout(300)
+    def solver_wrapper(_estimate, _iter_limit):
+        return max_cut_astar.solve(estimate=_estimate, iter_limit=_iter_limit)
+
     while it < n_iter:
         estimate = (u_bound + l_bound) / 2
-        schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter)
+        if it == 0:
+            schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter)
+        else:
+            try:
+                schedule, max_cut_size, cuts = solver_wrapper(estimate=estimate, iter_limit=astar_n_iter)
+            except timeout_decorator.TimeoutError:
+                if last_result[0] is None:
+                    Logger.critical(f"Max-cut solver stopped on timeout in iteration {it} before finding a solution.")  # pragma: no cover
+                else:
+                    Logger.warning(f"Max-cut solver stopped on timeout in iteration {it}.")
+                    return last_result
+
         if schedule is None:
             l_bound = estimate
         else:
