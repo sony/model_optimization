@@ -50,8 +50,8 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
     it = 0
 
     @timeout_decorator.timeout(300)
-    def solver_wrapper(_estimate, _iter_limit):
-        return max_cut_astar.solve(estimate=_estimate, iter_limit=_iter_limit)
+    def solver_wrapper(*args, **kwargs):
+        return max_cut_astar.solve(*args, **kwargs)
 
     while it < n_iter:
         estimate = (u_bound + l_bound) / 2
