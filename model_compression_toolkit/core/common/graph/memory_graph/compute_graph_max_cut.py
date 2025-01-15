@@ -14,7 +14,6 @@
 # ==============================================================================
 from collections import namedtuple
 from typing import Tuple, List
-import timeout_decorator
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import OPERATORS_SCHEDULING, MAX_CUT, CUTS, FUSED_NODES_MAPPING
@@ -55,17 +54,16 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
 
     while it < n_iter:
         estimate = (u_bound + l_bound) / 2
-        if it == 0:
-            schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter)
-        else:
-            try:
-                schedule, max_cut_size, cuts = solver_wrapper(estimate=estimate, iter_limit=astar_n_iter)
-            except timeout_decorator.TimeoutError:
-                if last_result[0] is None:
-                    Logger.critical(f"Max-cut solver stopped on timeout in iteration {it} before finding a solution.")  # pragma: no cover
-                else:
-                    Logger.warning(f"Max-cut solver stopped on timeout in iteration {it}.")
-                    return last_result
+        # Add a timeout of 5 minutes to the solver from the 2nd iteration.
+        try:
+            schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter,
+                                                               time_limit=None if it == 0 else 300)
+        except TimeoutError:
+            if last_result[0] is None:
+                Logger.critical(f"Max-cut solver stopped on timeout in iteration {it} before finding a solution.")  # pragma: no cover
+            else:
+                Logger.warning(f"Max-cut solver stopped on timeout in iteration {it}.")
+                return last_result
 
         if schedule is None:
             l_bound = estimate

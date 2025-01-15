@@ -14,6 +14,7 @@
 # ==============================================================================
 import copy
 from typing import List, Tuple, Dict, Set
+from time import time
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.constants import DUMMY_TENSOR, DUMMY_NODE
@@ -122,7 +123,7 @@ class MaxCutAstar:
         self.target_cut = Cut([], set(), MemoryElements(elements={target_dummy_b, target_dummy_b2},
                                                         total_size=0))
 
-    def solve(self, estimate: float, iter_limit: int = 500) -> Tuple[List[BaseNode], float, List[Cut]]:
+    def solve(self, estimate: float, iter_limit: int = 500, time_limit: int = None) -> Tuple[List[BaseNode], float, List[Cut]]:
         """
         The AStar solver function. This method runs an AStar-like search on the memory graph,
         using the given estimate as a heuristic gap for solutions to consider.
@@ -131,6 +132,7 @@ class MaxCutAstar:
             estimate: Cut size estimation to consider larger size of nodes in each
                 expansion step, in order to fasten the algorithm divergence towards a solution.
             iter_limit: An upper limit for the number of expansion steps that the algorithm preforms.
+            time_limit: Optional time limit to the solver. Defaults to None which means no limit.
 
         Returns: A solution (if found within the steps limit) which contains:
         - A schedule for computation of the model (List of nodes).
@@ -146,7 +148,10 @@ class MaxCutAstar:
 
         expansion_count = 0
 
+        t1 = time()
         while expansion_count < iter_limit and len(open_list) > 0:
+            if time_limit is not None and time() - t1 > time_limit:
+                raise TimeoutError
             # Choose next node to expand
             next_cut = self._get_cut_to_expand(open_list, costs, routes, estimate)
 

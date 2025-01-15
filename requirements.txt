@@ -12,4 +12,3 @@ scipy
 protobuf
 mct-quantizers==1.5.2
 pydantic<2.0
-timeout-decorator
