@@ -22,8 +22,8 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set, is_opset_in_model
-from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_model, \
-    export_target_platform_model
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities, \
+    export_target_platform_capabilities
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 
 
@@ -65,19 +65,19 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_valid_model_object(self):
         """Test that a valid TargetPlatformCapabilities object is returned unchanged."""
-        result = load_target_platform_model(self.tpc)
+        result = load_target_platform_capabilities(self.tpc)
         self.assertEqual(self.tpc, result)
 
     def test_invalid_json_parsing(self):
         """Test that invalid JSON content raises a ValueError."""
         with self.assertRaises(ValueError) as context:
-            load_target_platform_model(self.invalid_json_file)
+            load_target_platform_capabilities(self.invalid_json_file)
         self.assertIn("Invalid JSON for loading TargetPlatformCapabilities in", str(context.exception))
 
     def test_nonexistent_file(self):
         """Test that a nonexistent file raises FileNotFoundError."""
         with self.assertRaises(FileNotFoundError) as context:
-            load_target_platform_model(self.nonexistent_file)
+            load_target_platform_capabilities(self.nonexistent_file)
         self.assertIn("is not a valid file", str(context.exception))
 
     def test_non_json_extension(self):
@@ -87,7 +87,7 @@ class TPModelInputOutputTests(unittest.TestCase):
             with open(non_json_file, "w") as file:
                 file.write(self.invalid_json_content)
             with self.assertRaises(ValueError) as context:
-                load_target_platform_model(non_json_file)
+                load_target_platform_capabilities(non_json_file)
             self.assertIn("does not have a '.json' extension", str(context.exception))
         finally:
             os.remove(non_json_file)
@@ -96,12 +96,12 @@ class TPModelInputOutputTests(unittest.TestCase):
         """Test that an unsupported input type raises TypeError."""
         invalid_input = 123  # Not a string or TargetPlatformCapabilities
         with self.assertRaises(TypeError) as context:
-            load_target_platform_model(invalid_input)
+            load_target_platform_capabilities(invalid_input)
         self.assertIn("must be either a TargetPlatformCapabilities instance or a string path", str(context.exception))
 
     def test_valid_export(self):
         """Test exporting a valid TargetPlatformCapabilities instance to a file."""
-        export_target_platform_model(self.tpc, self.valid_export_path)
+        export_target_platform_capabilities(self.tpc, self.valid_export_path)
         # Verify the file exists
         self.assertTrue(os.path.exists(self.valid_export_path))
 
@@ -113,20 +113,20 @@ class TPModelInputOutputTests(unittest.TestCase):
     def test_export_with_invalid_model(self):
         """Test that exporting an invalid model raises a ValueError."""
         with self.assertRaises(ValueError) as context:
-            export_target_platform_model("not_a_model", self.valid_export_path)
+            export_target_platform_capabilities("not_a_model", self.valid_export_path)
         self.assertIn("not a valid TargetPlatformCapabilities instance", str(context.exception))
 
     def test_export_with_invalid_path(self):
         """Test that exporting to an invalid path raises an OSError."""
         with self.assertRaises(OSError) as context:
-            export_target_platform_model(self.tpc, self.invalid_export_path)
+            export_target_platform_capabilities(self.tpc, self.invalid_export_path)
         self.assertIn("Failed to write to file", str(context.exception))
 
     def test_export_creates_parent_directories(self):
         """Test that exporting creates missing parent directories."""
         nested_path = "nested/directory/exported_model.json"
         try:
-            export_target_platform_model(self.tpc, nested_path)
+            export_target_platform_capabilities(self.tpc, nested_path)
             # Verify the file exists
             self.assertTrue(os.path.exists(nested_path))
 
@@ -145,8 +145,8 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_export_then_import(self):
         """Test that a model exported and then imported is identical."""
-        export_target_platform_model(self.tpc, self.valid_export_path)
-        imported_model = load_target_platform_model(self.valid_export_path)
+        export_target_platform_capabilities(self.tpc, self.valid_export_path)
+        imported_model = load_target_platform_capabilities(self.valid_export_path)
         self.assertEqual(self.tpc, imported_model)
 
 class TargetPlatformModelingTest(unittest.TestCase):

@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable
+from typing import Callable, Union
 from functools import partial
 
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 from model_compression_toolkit.core import CoreConfig
@@ -78,7 +79,8 @@ if FOUND_TORCH:
                                                               target_resource_utilization: ResourceUtilization = None,
                                                               core_config: CoreConfig = CoreConfig(),
                                                               qat_config: QATConfig = QATConfig(),
-                                                              target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                                              target_platform_capabilities: Union[TargetPlatformCapabilities, str]
+                                                              = DEFAULT_PYTORCH_TPC):
         """
          Prepare a trained Pytorch model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -100,7 +102,7 @@ if FOUND_TORCH:
              target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              qat_config (QATConfig): QAT configuration
-             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Pytorch model according to.
+             target_platform_capabilities (Union[TargetPlatformCapabilities, str]): TargetPlatformCapabilities to optimize the Pytorch model according to.
 
          Returns:
 
@@ -153,10 +155,11 @@ if FOUND_TORCH:
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
         fw_impl = PytorchImplementation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
         framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
-                                                             core_config.quantization_config.custom_tpc_opset_to_layer)
+                                                                core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore hessian scores service as we do not use it here
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,

@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -70,7 +71,7 @@ if FOUND_TF:
              representative_data_gen (Callable): Dataset used for calibration.
              target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+             target_platform_capabilities (Union[TargetPlatformCapabilities, str]): TargetPlatformCapabilities to optimize the Keras model according to.
 
          Returns:
 
@@ -137,6 +138,7 @@ if FOUND_TF:
 
         fw_impl = KerasImplementation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         attach2keras = AttachTpcToKeras()
         framework_platform_capabilities = attach2keras.attach(
             target_platform_capabilities,

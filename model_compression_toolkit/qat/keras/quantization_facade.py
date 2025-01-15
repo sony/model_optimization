@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable
+from typing import Callable, Union
 from functools import partial
 
 from model_compression_toolkit.core import CoreConfig
@@ -22,6 +22,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -49,7 +50,6 @@ if FOUND_TF:
     from model_compression_toolkit.core import common
     from model_compression_toolkit.core.common import BaseNode
     from model_compression_toolkit.constants import TENSORFLOW
-    from model_compression_toolkit.core.common.framework_info import FrameworkInfo
     from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -92,7 +92,7 @@ if FOUND_TF:
                                                             target_resource_utilization: ResourceUtilization = None,
                                                             core_config: CoreConfig = CoreConfig(),
                                                             qat_config: QATConfig = QATConfig(),
-                                                            target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                                            target_platform_capabilities: Union[TargetPlatformCapabilities, str] = DEFAULT_KERAS_TPC):
         """
          Prepare a trained Keras model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -114,7 +114,7 @@ if FOUND_TF:
              target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              qat_config (QATConfig): QAT configuration
-             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+             target_platform_capabilities (Union[TargetPlatformCapabilities, str]): TargetPlatformCapabilities to optimize the Keras model according to.
 
          Returns:
 
@@ -188,6 +188,7 @@ if FOUND_TF:
 
         fw_impl = KerasImplementation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         attach2keras = AttachTpcToKeras()
         target_platform_capabilities = attach2keras.attach(
             target_platform_capabilities,

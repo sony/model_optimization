@@ -20,13 +20,13 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 import json
 
 
-def load_target_platform_model(tpc_obj_or_path: Union[TargetPlatformCapabilities, str]) -> TargetPlatformCapabilities:
+def load_target_platform_capabilities(tpc_obj_or_path: Union[TargetPlatformCapabilities, str]) -> TargetPlatformCapabilities:
     """
         Parses the tpc input, which can be either a TargetPlatformCapabilities object
         or a string path to a JSON file.
 
         Parameters:
-            tpc_obj_or_path (Union[TargetPlatformModel, str]): Input target platform model or path to .JSON file.
+            tpc_obj_or_path (Union[TargetPlatformCapabilities, str]): Input target platform model or path to .JSON file.
 
         Returns:
             TargetPlatformCapabilities: The parsed TargetPlatformCapabilities.
@@ -66,7 +66,7 @@ def load_target_platform_model(tpc_obj_or_path: Union[TargetPlatformCapabilities
     )
 
 
-def export_target_platform_model(model: TargetPlatformCapabilities, export_path: Union[str, Path]) -> None:
+def export_target_platform_capabilities(model: TargetPlatformCapabilities, export_path: Union[str, Path]) -> None:
     """
     Exports a TargetPlatformCapabilities instance to a JSON file.
 

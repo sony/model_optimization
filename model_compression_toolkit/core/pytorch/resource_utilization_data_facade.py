@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable
+from typing import Callable, Union
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 if FOUND_TORCH:
@@ -40,7 +41,7 @@ if FOUND_TORCH:
     def pytorch_resource_utilization_data(in_model: Module,
                                           representative_data_gen: Callable,
                                           core_config: CoreConfig = CoreConfig(),
-                                          target_platform_capabilities: TargetPlatformCapabilities= PYTORCH_DEFAULT_TPC
+                                          target_platform_capabilities: Union[TargetPlatformCapabilities, str] = PYTORCH_DEFAULT_TPC
                                           ) -> ResourceUtilization:
         """
         Computes resource utilization data that can be used to calculate the desired target resource utilization for mixed-precision quantization.
@@ -50,7 +51,7 @@ if FOUND_TORCH:
             in_model (Model): PyTorch model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
             core_config (CoreConfig): CoreConfig containing parameters for quantization and mixed precision
-            target_platform_capabilities (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to optimize the PyTorch model according to.
+            target_platform_capabilities (Union[TargetPlatformCapabilities, str]): FrameworkQuantizationCapabilities to optimize the PyTorch model according to.
 
         Returns:
 
@@ -81,6 +82,7 @@ if FOUND_TORCH:
 
         fw_impl = PytorchImplementation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
         target_platform_capabilities = (

@@ -25,6 +25,7 @@ from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig, \
@@ -156,7 +157,8 @@ if FOUND_TF:
                                                   gptq_representative_data_gen: Callable = None,
                                                   target_resource_utilization: ResourceUtilization = None,
                                                   core_config: CoreConfig = CoreConfig(),
-                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
+                                                  target_platform_capabilities: Union[TargetPlatformCapabilities, str]
+                                                  = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -180,7 +182,7 @@ if FOUND_TF:
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+            target_platform_capabilities (Union[TargetPlatformCapabilities, str]): TargetPlatformCapabilities to optimize the Keras model according to.
 
         Returns:
 
@@ -241,6 +243,7 @@ if FOUND_TF:
 
         fw_impl = GPTQKerasImplemantation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         # Attach tpc model to framework
         attach2keras = AttachTpcToKeras()
         framework_platform_capabilities = attach2keras.attach(
