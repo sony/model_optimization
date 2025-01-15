@@ -196,7 +196,7 @@ def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
     """
     ru_indicated_vectors = {}
     # targets to add constraints for
-    constraints_targets = target_resource_utilization.get_restricted_metrics()
+    constraints_targets = target_resource_utilization.get_restricted_targets()
     # to add constraints for Total target we need to compute weight and activation
     targets_to_compute = constraints_targets
     if RUTarget.TOTAL in constraints_targets:
