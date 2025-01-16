@@ -32,6 +32,7 @@ from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.metadata import create_model_metadata
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 
@@ -145,7 +146,7 @@ if FOUND_TORCH:
                                                     core_config: CoreConfig = CoreConfig(),
                                                     gptq_config: GradientPTQConfig = None,
                                                     gptq_representative_data_gen: Callable = None,
-                                                    target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                                    target_platform_capabilities: Union[TargetPlatformCapabilities, str] = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -169,7 +170,7 @@ if FOUND_TORCH:
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
+            target_platform_capabilities (Union[TargetPlatformCapabilities, str]): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -214,6 +215,7 @@ if FOUND_TORCH:
 
         fw_impl = GPTQPytorchImplemantation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
         framework_quantization_capabilities = attach2pytorch.attach(target_platform_capabilities,

@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Union
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
@@ -47,7 +48,8 @@ if FOUND_TORCH:
                                      target_resource_utilization: ResourceUtilization,
                                      representative_data_gen: Callable,
                                      pruning_config: PruningConfig = PruningConfig(),
-                                     target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYOTRCH_TPC) -> \
+                                     target_platform_capabilities: Union[TargetPlatformCapabilities, str]
+                                     = DEFAULT_PYOTRCH_TPC) -> \
             Tuple[Module, PruningInfo]:
         """
         Perform structured pruning on a Pytorch model to meet a specified target resource utilization.
@@ -66,7 +68,7 @@ if FOUND_TORCH:
             target_resource_utilization (ResourceUtilization): Key Performance Indicators specifying the pruning targets.
             representative_data_gen (Callable): A function to generate representative data for pruning analysis.
             pruning_config (PruningConfig): Configuration settings for the pruning process. Defaults to standard config.
-            target_platform_capabilities (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
+            target_platform_capabilities (Union[TargetPlatformCapabilities, str]): Platform-specific constraints and capabilities.
                 Defaults to DEFAULT_PYTORCH_TPC.
 
         Returns:
@@ -118,6 +120,7 @@ if FOUND_TORCH:
         # Instantiate the Pytorch framework implementation.
         fw_impl = PruningPytorchImplementation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         # Attach TPC to framework
         attach2pytorch = AttachTpcToPytorch()
         framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)

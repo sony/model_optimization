@@ -14,12 +14,13 @@
 # ==============================================================================
 import copy
 
-from typing import Callable
+from typing import Callable, Union
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core import CoreConfig
@@ -48,7 +49,7 @@ if FOUND_TORCH:
                                            representative_data_gen: Callable,
                                            target_resource_utilization: ResourceUtilization = None,
                                            core_config: CoreConfig = CoreConfig(),
-                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                           target_platform_capabilities: Union[TargetPlatformCapabilities, str] = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -67,7 +68,7 @@ if FOUND_TORCH:
             representative_data_gen (Callable): Dataset used for calibration.
             target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
+            target_platform_capabilities (Union[TargetPlatformCapabilities, str]): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -109,6 +110,7 @@ if FOUND_TORCH:
 
         fw_impl = PytorchImplementation()
 
+        target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
         framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
