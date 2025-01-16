@@ -35,7 +35,7 @@ from model_compression_toolkit.core.common.mixed_precision.distance_weighting im
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import get_mp_interest_points
-from model_compression_toolkit.core import DEFAULTCONFIG
+from model_compression_toolkit.core import DEFAULTCONFIG, CustomOpsetLayers
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence
@@ -68,7 +68,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                                                       c.activation_n_bits) for c in mixed_precision_cfg_list],
                                         name="sem_test")
 
-    fqc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": ([InputLayer],)})
+    fqc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
 
     graph.set_fqc(fqc)
     graph = set_quantization_configuration_to_graph(graph=graph,
