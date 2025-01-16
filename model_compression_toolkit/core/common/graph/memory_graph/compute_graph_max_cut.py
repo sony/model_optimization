@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 from collections import namedtuple
-
 from typing import Tuple, List
 
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import OPERATORS_SCHEDULING, MAX_CUT, CUTS, FUSED_NODES_MAPPING
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -49,7 +49,17 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
     it = 0
     while it < n_iter:
         estimate = (u_bound + l_bound) / 2
-        schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter)
+        # Add a timeout of 5 minutes to the solver from the 2nd iteration.
+        try:
+            schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter,
+                                                               time_limit=None if it == 0 else 300)
+        except TimeoutError:
+            if last_result[0] is None:
+                Logger.critical(f"Max-cut solver stopped on timeout in iteration {it} before finding a solution.")  # pragma: no cover
+            else:
+                Logger.warning(f"Max-cut solver stopped on timeout in iteration {it}.")
+                return last_result
+
         if schedule is None:
             l_bound = estimate
         else:

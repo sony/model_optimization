@@ -182,7 +182,7 @@ def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
                         target_resource_utilization: ResourceUtilization,
                         indicators_matrix: np.ndarray,
                         lp_problem: LpProblem,
-                        non_conf_ru_dict: Optional[Dict[RUTarget, np.ndarray]]):
+                        non_conf_ru_dict: Dict[RUTarget, np.ndarray]):
     """
     Adding targets constraints for the Lp problem for the given target resource utilization.
     The update to the Lp problem object is done inplace.

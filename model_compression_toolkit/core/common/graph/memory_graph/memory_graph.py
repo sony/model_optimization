@@ -14,6 +14,7 @@
 # ==============================================================================
 from typing import List
 from operator import getitem
+from functools import cache
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX
@@ -82,7 +83,6 @@ class MemoryGraph(DirectedBipartiteGraph):
         inputs_tensors_memory = [sum([t.total_size for t in self.operation_node_children(n)])
                                  for n in nodes if n in model_graph.get_inputs()]
 
-        # TODO maxcut: why both inputs and outputs of each nodes, while the A* solves for node outputs only???
         nodes_total_memory = [sum([t.total_size for t in self.operation_node_children(n)] +
                                   [t.total_size for t in self.operation_node_parents(n)])
                               for n in nodes if n not in model_graph.get_inputs()]
@@ -117,6 +117,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         """
         self.sinks_b = [n for n in self.b_nodes if len(list(self.successors(n))) == 0]
 
+    @cache
     def activation_tensor_children(self, activation_tensor: ActivationMemoryTensor) -> List[BaseNode]:
         """
         Returns the children nodes of a side B node (activation tensor) in the bipartite graph.
@@ -129,6 +130,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         """
         return [oe[1] for oe in self.out_edges(activation_tensor)]
 
+    @cache
     def activation_tensor_parents(self, activation_tensor: ActivationMemoryTensor) -> List[BaseNode]:
         """
         Returns the parents nodes of a side B node (activation tensor) in the bipartite graph.
@@ -141,6 +143,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         """
         return [ie[0] for ie in self.in_edges(activation_tensor)]
 
+    @cache
     def operation_node_children(self, op_node: BaseNode) -> List[ActivationMemoryTensor]:
         """
         Returns the children nodes of a side A node (operation) in the bipartite graph.
@@ -153,6 +156,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         """
         return [oe[1] for oe in self.out_edges(op_node)]
 
+    @cache
     def operation_node_parents(self, op_node: BaseNode) -> List[ActivationMemoryTensor]:
         """
         Returns the parents nodes of a side A node (operation) in the bipartite graph.
