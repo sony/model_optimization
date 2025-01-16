@@ -225,23 +225,6 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(tanh_qco, sevenbit_qco)
         self.assertEqual(relu_qco, default_qco)
 
-    # TODO: need to test as part of attach to fw tests
-    # def test_opset_not_in_tp(self):
-    #     default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
-    #     hm = schema.TargetPlatformCapabilities(default_qco=default_qco,
-    #                                     tpc_minor_version=None,
-    #                                     tpc_patch_version=None,
-    #                                     tpc_platform_type=None,
-    #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
-    #                                     add_metadata=False)
-    #     hm_keras = FrameworkQuantizationCapabilities(hm)
-    #     with self.assertRaises(Exception) as e:
-    #         with hm_keras:
-    #             tp.OperationsSetToLayers("conv", [Conv2D])
-    #     self.assertEqual(
-    #         'conv is not defined in the target platform model that is associated with the target platform capabilities.',
-    #         str(e.exception))
-
     def test_keras_fusing_patterns(self):
         default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
         a = schema.OperatorsSet(name="opA")
