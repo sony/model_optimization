@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ResourceUtilizationCalculator, BitwidthMode, TargetInclusionCriterion
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities
 
 
@@ -104,6 +105,13 @@ def requires_mixed_precision(in_model: Any,
 
     Returns: A boolean indicating if mixed precision is needed.
     """
+
+    if target_resource_utilization.activation_restricted() or target_resource_utilization.total_mem_restricted():
+        Logger.warning("Using an experimental feature max-cut for activation memory utilization estimation.")
+        return True
+    if target_resource_utilization.bops_restricted():
+        return True
+
     core_config = _create_core_config_for_ru(core_config)
 
     transformed_graph = graph_preparation_runner(in_model,
