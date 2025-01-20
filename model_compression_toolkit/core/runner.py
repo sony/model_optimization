@@ -93,6 +93,8 @@ def core_runner(in_model: Any,
         if core_config.mixed_precision_config is None:
             Logger.critical("Provided an initialized target_resource_utilization, that means that mixed precision quantization is "
                             "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
+        if target_resource_utilization.activation_restricted() or target_resource_utilization.total_mem_restricted():
+            Logger.warning("Using an experimental feature max-cut for activation memory utilization estimation.")
         # Determine whether to use mixed precision or single precision based on target_resource_utilization.
         if requires_mixed_precision(in_model,
                                     target_resource_utilization,
