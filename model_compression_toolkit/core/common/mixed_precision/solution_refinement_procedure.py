@@ -68,7 +68,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             node_candidates = current_node.candidates_quantization_cfg
 
             # only weights kernel attribute is quantized with weights mixed precision
-            kernel_attr = search_manager.fw_info.get_kernel_op_attributes(current_node)
+            kernel_attr = search_manager.fw_info.get_kernel_op_attributes(current_node.type)
             kernel_attr = None if kernel_attr is None else kernel_attr[0]
             valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx], kernel_attr)
 
@@ -139,8 +139,9 @@ def _get_valid_candidates_indices(node_candidates: List[CandidateNodeQuantizatio
         activation_num_bits = current_candidate.activation_quantization_cfg.activation_n_bits
 
         # Filter candidates that have higher bit-width for both weights and activations (except for the current index).
+        # TODO: activation bits comparison: should be >= if ACTIVATION or TOTAL ru is used. else should be ==.
         return [i for i, c in enumerate(node_candidates) if
-                c.activation_quantization_cfg.activation_n_bits >= activation_num_bits
+                c.activation_quantization_cfg.activation_n_bits == activation_num_bits
                 and c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits >= weights_num_bits
                 and not (c.activation_quantization_cfg.activation_n_bits == activation_num_bits
                          and c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == weights_num_bits)]
