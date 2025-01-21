@@ -27,7 +27,7 @@ Models for IMX500, TFLite and qnnpack can be observed `here <https://github.com/
 The object MCT should get called TargetPlatformCapabilities (or shortly TPC).
 This diagram demonstrates the main components:
 
-.. image:: ../../../../images/tpc.jpg
+.. image:: ../../../../images/tpc_diagram.png
   :scale: 80%
 
 Now, we will detail about the different components.

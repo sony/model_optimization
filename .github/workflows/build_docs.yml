@@ -27,3 +27,9 @@ jobs:
           pip install sphinx==5.0.2 sphinx-autodoc-typehints==1.18.3 torch==2.5.* torchvision tensorflow==2.15.*
       - name: Build docs
         run: cd docsrc && make github SPHINXOPTS="-W --keep-going"
+
+      - name: Archive Docs
+        uses: actions/upload-artifact@v3
+        with:
+          name: archive-docs
+          path: docs/

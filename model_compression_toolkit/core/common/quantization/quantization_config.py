@@ -78,9 +78,6 @@ class QuantizationConfig:
         >>> qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING, weights_error_method=mct.core.QuantizationErrorMethod.MSE, relu_bound_to_power_of_2=True, weights_bias_correction=True)
 
 
-        The QuantizationConfig instance can then be used in the quantization workflow,
-        such as with Keras in the function: :func:~model_compression_toolkit.ptq.keras_post_training_quantization`.
-
     """
 
     activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE
