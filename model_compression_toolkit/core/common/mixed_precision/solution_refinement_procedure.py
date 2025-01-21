@@ -68,7 +68,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             node_candidates = current_node.candidates_quantization_cfg
 
             # only weights kernel attribute is quantized with weights mixed precision
-            kernel_attr = search_manager.fw_info.get_kernel_op_attributes(current_node)
+            kernel_attr = search_manager.fw_info.get_kernel_op_attributes(current_node.type)
             kernel_attr = None if kernel_attr is None else kernel_attr[0]
             valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx], kernel_attr)
 
