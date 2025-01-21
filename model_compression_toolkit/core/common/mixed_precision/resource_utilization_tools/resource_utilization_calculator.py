@@ -170,7 +170,6 @@ class ResourceUtilizationCalculator:
             w_total, *_ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
 
         if {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(ru_targets):
-            Logger.warning("Using an experimental feature max-cut for activation memory utilization estimation.")
             a_total = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
 
         ru = ResourceUtilization()
