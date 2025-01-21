@@ -208,3 +208,7 @@ class Manual16BitWidthSelectionMixedPrecisionTest(Manual16BitWidthSelectionTest)
 
     def get_resource_utilization(self):
         return mct.core.ResourceUtilization(activation_memory=6000)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        self.unit_test.assertTrue(len(quantization_info.mixed_precision_cfg) > 0, "Expected mixed-precision in test.")
+        super().compare(quantized_model, float_model, input_x=input_x, quantization_info=quantization_info)

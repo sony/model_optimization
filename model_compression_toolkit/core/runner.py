@@ -90,7 +90,7 @@ def core_runner(in_model: Any,
 
     # Checking whether to run mixed precision quantization
     if target_resource_utilization is not None and target_resource_utilization.is_any_restricted():
-        if core_config.mixed_precision_config is None:
+        if core_config.mixed_precision_config is None:  # pragma: no cover
             Logger.critical("Provided an initialized target_resource_utilization, that means that mixed precision quantization is "
                             "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
         if target_resource_utilization.activation_restricted() or target_resource_utilization.total_mem_restricted():
