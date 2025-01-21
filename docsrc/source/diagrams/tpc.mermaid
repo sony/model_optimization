@@ -1,0 +1,46 @@
+flowchart TB
+    subgraph TPC["Target Platform Capabilities"]
+        subgraph QCO["Quantization Config Options"]
+            Default["Default QCO (8-bit)"]
+            Mixed["Mixed Precision QCO (8, 4, 2 bits)"]
+            NoQuant["No Quantization QCO"]
+
+            subgraph OQC["Op Quantization Config"]
+                OQC1["8-bit"]
+                OQC2["4-bit"]
+                OQC3["2-bit"]
+                AQC["AttributeQuantizationConfig:<br>Kernel, Bias"]
+
+                OQC1 -->|contains| AQC
+                OQC2 -->|contains| AQC
+                OQC3 -->|contains| AQC
+            end
+
+            Mixed -->|contains| OQC1
+            Mixed -->|contains| OQC2
+            Mixed -->|contains| OQC3
+        end
+
+        subgraph OPS["Operators Sets"]
+            Conv["Conv, Conv Transpose,<br>Depthwise Conv"]
+            Act["ReLU, ReLU6,<br>Leaky ReLU, etc."]
+            NoQuantOps["Dropout, Flatten,<br>Reshape, etc."]
+        end
+
+        subgraph FP["Fusing Patterns"]
+            FP1["Conv + Activation"]
+        end
+
+        Mixed -->|attached to| Conv
+        Default -->|attached to| Act
+        NoQuant -->|attached to| NoQuantOps
+
+        FP1 -.-> Conv
+        FP1 -.-> Act
+    end
+
+    style TPC fill:#e6f3ff,stroke:#333
+    style QCO fill:#e6ffe6,stroke:#333
+    style OQC fill:#fff9e6,stroke:#333
+    style OPS fill:#ffe6e6,stroke:#333
+    style FP fill:#ffe6f0,stroke:#333
