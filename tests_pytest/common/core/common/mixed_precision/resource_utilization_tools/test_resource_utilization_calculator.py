@@ -157,6 +157,10 @@ class TestUtilization:
         assert max(u) == u[0]
         assert min(u) == u[2]
 
+    def test_invalid_radd(self):
+        with pytest.raises(ValueError, match='radd is only supported with 0'):
+            1 + Utilization(5, 5)
+
 
 class TestComputeResurceUtilization:
     """ Test compute_resource_utilization public api. """
@@ -438,7 +442,7 @@ class TestComputeActivationTensorsUtilization:
     def test_compute_act_tensors_utilization_errors(self, graph_mock, fw_impl_mock, fw_info_mock, bitmode):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_error):
-            ru_calc.compute_node_activation_tensor_utilization(build_node(), TIC.Any, bitmode, qc=build_qc())
+            ru_calc.compute_activation_tensors_utilization(TIC.Any, bitmode, act_qcs=Mock())
 
 
 class TestActivationMaxCutUtilization:

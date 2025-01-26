@@ -474,12 +474,12 @@ class ResourceUtilizationCalculator:
             Node's BOPS count.
         """
         node_mac = self.fw_impl.get_node_mac_operations(n, self.fw_info)
-        if node_mac == 0:
+        if node_mac == 0:    # pragma: no cover
             return node_mac
 
         incoming_edges = self.graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
         # TODO temporary adding this for const_representation test in torch which has Linear with const input
-        if not incoming_edges:
+        if not incoming_edges:    # pragma: no cover
             return 0
         assert len(incoming_edges) == 1, \
             f'Unexpected number of inputs {len(incoming_edges)} for BOPS calculation. Expected 1.'
