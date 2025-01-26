@@ -28,7 +28,7 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Set up environment for common tests
         run: |
@@ -46,7 +46,7 @@ jobs:
           python -m venv tf_env
           source tf_env/bin/activate
           python -m pip install --upgrade pip
-          pip install -r requirements.txt tensorflow==2.15.* sony-custom-layers coverage pytest pytest-mock
+          pip install -r requirements.txt tensorflow==2.13.* sony-custom-layers coverage pytest pytest-mock
 
       - name: Run TensorFlow tests (unittest)
         run: |
@@ -64,7 +64,7 @@ jobs:
           source torch_env/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install torch==2.5.* torchvision onnx onnxruntime onnxruntime-extensions sony-custom-layers coverage pytest pytest-mock
+          pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions sony-custom-layers coverage pytest pytest-mock
 
       - name: Run PyTorch tests (unittest)
         run: |
