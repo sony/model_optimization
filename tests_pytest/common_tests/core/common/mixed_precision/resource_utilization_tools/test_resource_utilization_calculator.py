@@ -13,40 +13,25 @@
 # limitations under the License.
 # ==============================================================================
 from types import MethodType
-
+from typing import Iterable, Union
 from unittest.mock import Mock
 
 import numpy as np
 import pytest
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization
-from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core import QuantizationConfig, ResourceUtilization
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
-from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements, ActivationMemoryTensor
+from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements, \
+    ActivationMemoryTensor
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     Utilization, ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
 from tests_pytest.test_util.graph_builder_utils import build_node, full_attr_name, build_qc
-
-
-@pytest.fixture
-def graph_mock():
-    return Mock(spec_set=Graph, nodes=[])
-
-
-@pytest.fixture
-def fw_impl_mock():
-    return Mock(spec_set=FrameworkImplementation)
-
-
-@pytest.fixture
-def fw_info_mock():
-    return Mock(spec_set=FrameworkInfo)
 
 
 BM = BitwidthMode
@@ -112,7 +97,7 @@ class TestComputeResurceUtilization:
         self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
         self.ru_calc.compute_activations_utilization.assert_not_called()
         self.ru_calc.compute_bops.assert_not_called()
-        assert ResourceUtilization(weights_memory=42)
+        assert ru == ResourceUtilization(weights_memory=42)
 
     def test_compute_ru_act(self):
         ru = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.ACTIVATION])
@@ -141,7 +126,7 @@ class TestComputeResurceUtilization:
     def test_compute_ru_custom_w_qc(self):
         w_qcs = {self.nodes[1]: build_qc(w_attr={'foo': (16, True)}).weights_quantization_cfg}
 
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, w_qcs=w_qcs)
+        self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, w_qcs=w_qcs)
 
         self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
         self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, w_qcs)
@@ -150,7 +135,7 @@ class TestComputeResurceUtilization:
     def test_compute_ru_custom_a_qc(self):
         a_qcs = {self.nodes[1]: build_qc(w_attr={'foo': (16, True)}).activation_quantization_cfg}
 
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs)
+        self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs)
 
         self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, a_qcs)
         self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
@@ -722,7 +707,7 @@ class TestComputeNodeWeightsUtilization:
 class TestComputeWeightUtilization:
     """ Tests for compute_weight_utilization public method. """
     @pytest.fixture
-    def prepare_compute_w_util(self):
+    def prepare_compute_w_util(self, fw_impl_mock, fw_info_mock):
         n1 = build_node('n1',
                         canonical_weights={'mp': np.ones((5, 10)), 'sp': np.zeros((42,)), 'noq': np.ones((3, 1, 4))},
                         qcs=[build_qc(w_attr={'mp': (6, True), 'sp': (4, True), 'noq': (8, False)}),
@@ -793,7 +778,7 @@ class TestComputeWeightUtilization:
     def test_compute_w_utilization_non_custom(self, prepare_compute_w_util):
         ru_calc, nodes = prepare_compute_w_util
         n1, n2 = nodes['n1'], nodes['n2']
-        total, per_node, per_weight = ru_calc.compute_weights_utilization(TIC.QConfigurable, BM.QMaxBit)
+        ru_calc.compute_weights_utilization(TIC.QConfigurable, BM.QMaxBit)
 
         ru_calc._collect_target_nodes_w_attrs.assert_called_once_with(TIC.QConfigurable, include_reused=False)
         calls = [call for call in ru_calc.compute_node_weights_utilization.call_args_list]
