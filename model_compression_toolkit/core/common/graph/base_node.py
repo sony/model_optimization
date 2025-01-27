@@ -30,6 +30,9 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
     FrameworkQuantizationCapabilities
 
 
+WeightAttrT = Union[str, int]
+
+
 class BaseNode:
     """
     Class to represent a node in a graph that represents the model.
@@ -40,7 +43,7 @@ class BaseNode:
                  framework_attr: Dict[str, Any],
                  input_shape: Tuple[Any],
                  output_shape: Tuple[Any],
-                 weights: Dict[Union[str, int], np.ndarray],
+                 weights: Dict[WeightAttrT, np.ndarray],
                  layer_class: type,
                  reuse: bool = False,
                  reuse_group: str = None,
@@ -189,7 +192,7 @@ class BaseNode:
         """
         return self.reuse or self.reuse_group is not None
 
-    def _get_weight_name(self, name: Union[str, int]) -> List[Union[str, int]]:
+    def _get_weight_name(self, name: WeightAttrT) -> List[WeightAttrT]:
         """
         Get weight names that match argument name (either string weights or integer for
         positional weights).
@@ -203,7 +206,7 @@ class BaseNode:
         return [k for k in self.weights.keys()
                 if (isinstance(k, int) and name == k) or (isinstance(k, str) and name in k)]
 
-    def get_weights_by_keys(self, name: Union[str, int]) -> np.ndarray:
+    def get_weights_by_keys(self, name: WeightAttrT) -> np.ndarray:
         """
         Get a node's weight by its name.
         Args:
