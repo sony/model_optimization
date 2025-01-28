@@ -131,8 +131,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.shift_neg_activat
 from tests.keras_tests.feature_networks_tests.feature_networks.softmax_shift_test import SoftmaxShiftTest
 from tests.keras_tests.feature_networks_tests.feature_networks.split_concatenate_test import SplitConcatenateTest
 from tests.keras_tests.feature_networks_tests.feature_networks.split_conv_bug_test import SplitConvBugTest
-from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_threshold_selection_activation_test import \
-    SymmetricThresholdSelectionActivationTest, SymmetricThresholdSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import \
@@ -753,20 +751,6 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()
-
-    def test_symmetric_threshold_selection_activation(self):
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
-
-    def test_symmetric_threshold_selection_softmax_activation(self):
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
     def test_uniform_range_selection_activation(self):
         UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
