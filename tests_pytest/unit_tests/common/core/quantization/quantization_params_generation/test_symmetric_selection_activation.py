@@ -35,6 +35,19 @@ def hist():
     return count, bins
 
 
+@pytest.fixture
+def bounded_hist():
+    np.random.seed(42)
+    size = (32, 32, 3)
+    num_bins = 2048
+    x = np.random.uniform(-7, 7, size=size).flatten()
+    e_x = np.exp(x - np.max(x))
+    x = (e_x / e_x.sum()) + 1
+    count, bins = np.histogram(x, bins=num_bins)
+
+    return count, bins
+
+
 err_methods_to_test = [e.name for e in QuantizationErrorMethod if e != QuantizationErrorMethod.HMSE]
 
 
@@ -48,4 +61,17 @@ def test_symmetric_threshold_selection(error_method, hist):
     assert THRESHOLD in search_res
     assert SIGNED in search_res
     assert np.isclose(search_res[THRESHOLD], 7, atol=0.4)
-    assert search_res[SIGNED] is True
+    assert search_res[SIGNED]
+
+
+@pytest.mark.parametrize("error_method", err_methods_to_test)
+def test_symmetric_threshold_selection_bounded_activation(error_method, bounded_hist):
+    counts, bins = bounded_hist
+
+    search_res = symmetric_selection_histogram(bins, counts, 2, 8, Mock(), Mock(), Mock(), Mock(),
+                                               MIN_THRESHOLD, QuantizationErrorMethod[error_method], False)
+
+    assert THRESHOLD in search_res
+    assert SIGNED in search_res
+    assert np.isclose(search_res[THRESHOLD], 1, atol=0.4)
+    assert not search_res[SIGNED]

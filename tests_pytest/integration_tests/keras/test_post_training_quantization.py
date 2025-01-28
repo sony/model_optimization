@@ -24,8 +24,8 @@ from mct_quantizers.keras.metadata import MetadataLayer
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.constants import KERNEL, DEPTHWISE_KERNEL
 from model_compression_toolkit.ptq import keras_post_training_quantization
-from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
-    Signedness
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
+    AttributeQuantizationConfig, Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
 from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import generate_tpc
 
@@ -120,9 +120,10 @@ def _verify_weights_quantizer_params(quant_method, weights_quantizer, params_sha
 
 
 class TestPostTrainingQuantizationApi:
-    # TODO:
-    #   [a, w&a]
-    #   extend to also test with different settings? (bc, snc, etc.)
+    # TODO: add tests for:
+    #   1) activation only, W&A, LUT quantizer (separate)
+    #   2) extend to also test with different settings features (bc, snc, etc.)
+    #   3) advanced models and operators
 
 
     def _verify_quantized_model_structure(self, model, q_model, quantization_info):
