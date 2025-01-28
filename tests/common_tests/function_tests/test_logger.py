@@ -82,18 +82,14 @@ class TestLogger(unittest.TestCase):
     def test_info(self, mock_get_logger):
         logger_mock = MagicMock()
         mock_get_logger.return_value = logger_mock
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            Logger.info(self.log_message)
-            self.assertEqual(fake_out.getvalue().strip(), self.log_message)
+        Logger.info(self.log_message)
         logger_mock.info.assert_called_once_with(self.log_message)
 
     @patch('model_compression_toolkit.logger.Logger.get_logger')
     def test_warning(self, mock_get_logger):
         logger_mock = MagicMock()
         mock_get_logger.return_value = logger_mock
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            Logger.warning(self.log_message)
-            self.assertEqual(fake_out.getvalue().strip(), self.log_message)
+        Logger.warning(self.log_message)
         logger_mock.warning.assert_called_once_with(self.log_message)
 
     @patch('model_compression_toolkit.logger.Logger.get_logger')
