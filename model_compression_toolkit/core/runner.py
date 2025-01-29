@@ -90,9 +90,11 @@ def core_runner(in_model: Any,
 
     # Checking whether to run mixed precision quantization
     if target_resource_utilization is not None and target_resource_utilization.is_any_restricted():
-        if core_config.mixed_precision_config is None:
+        if core_config.mixed_precision_config is None:  # pragma: no cover
             Logger.critical("Provided an initialized target_resource_utilization, that means that mixed precision quantization is "
                             "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
+        if target_resource_utilization.activation_restricted() or target_resource_utilization.total_mem_restricted():
+            Logger.warning("Using an experimental feature max-cut for activation memory utilization estimation.")
         # Determine whether to use mixed precision or single precision based on target_resource_utilization.
         if requires_mixed_precision(in_model,
                                     target_resource_utilization,
@@ -227,14 +229,11 @@ def _set_final_resource_utilization(graph: Graph,
     final_ru = None
     if ru_targets:
         ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
-        w_qcs, a_qcs = None, None
-        if ru_calculator.is_custom_weights_config_applicable(ru_targets):
-            w_qcs = {n: n.final_weights_quantization_cfg for n in graph.nodes}
-        if ru_calculator.is_custom_activation_config_applicable(ru_targets):
-            a_qcs = {n: n.final_activation_quantization_cfg for n in graph.nodes}
+        w_qcs = {n: n.final_weights_quantization_cfg for n in graph.nodes}
+        a_qcs = {n: n.final_activation_quantization_cfg for n in graph.nodes}
         final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                              BitwidthMode.QCustom,
-                                                              act_qcs=a_qcs, w_qcs=w_qcs, ru_targets=ru_targets)
+                                                              BitwidthMode.QCustom, act_qcs=a_qcs, w_qcs=w_qcs,
+                                                              ru_targets=ru_targets, allow_unused_qcs=True)
         summary = final_ru.get_summary_str(restricted=True)
         Logger.info(f'Resource utilization for quantized mixed-precision targets:\n {summary}.')
     graph.user_info.final_resource_utilization = final_ru

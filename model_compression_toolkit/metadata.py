@@ -57,6 +57,7 @@ def get_versions_dict(fqc) -> Dict:
         tpc_minor_version: str = f'{fqc.tpc.tpc_minor_version}'
         tpc_patch_version: str = f'{fqc.tpc.tpc_patch_version}'
         tpc_platform_type: str = f'{fqc.tpc.tpc_platform_type}'
+        tpc_name: str = f'{fqc.tpc.name}'
         tpc_schema: str = f'{fqc.tpc.SCHEMA_VERSION}'
 
     return asdict(TPCVersions(mct_version))

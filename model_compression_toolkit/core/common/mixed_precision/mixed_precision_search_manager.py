@@ -189,9 +189,11 @@ class MixedPrecisionSearchManager:
 
         """
         act_qcs, w_qcs = self.ru_helper.get_quantization_candidates(config)
+        act_qcs = None if (RUTarget.ACTIVATION not in self.ru_targets_to_compute and RUTarget.TOTAL not in self.ru_targets_to_compute) else act_qcs
+        w_qcs = None if (RUTarget.WEIGHTS not in self.ru_targets_to_compute and RUTarget.TOTAL not in self.ru_targets_to_compute) else w_qcs
         ru = self.ru_helper.ru_calculator.compute_resource_utilization(
             target_criterion=TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs,
-            w_qcs=w_qcs)
+            w_qcs=w_qcs, ru_targets=self.ru_targets_to_compute)
         return ru
 
     def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[int, Dict[int, float]]):

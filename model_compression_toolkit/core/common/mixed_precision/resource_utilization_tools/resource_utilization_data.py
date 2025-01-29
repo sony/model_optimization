@@ -104,6 +104,12 @@ def requires_mixed_precision(in_model: Any,
 
     Returns: A boolean indicating if mixed precision is needed.
     """
+    # Any target resource utilization other than weights will always require MP calculation.
+    if target_resource_utilization.activation_restricted() or \
+            target_resource_utilization.total_mem_restricted() or \
+            target_resource_utilization.bops_restricted():
+        return True
+
     core_config = _create_core_config_for_ru(core_config)
 
     transformed_graph = graph_preparation_runner(in_model,

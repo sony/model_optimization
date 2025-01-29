@@ -53,9 +53,10 @@ def compute_graph_max_cut(memory_graph: MemoryGraph,
         try:
             schedule, max_cut_size, cuts = max_cut_astar.solve(estimate=estimate, iter_limit=astar_n_iter,
                                                                time_limit=None if it == 0 else 300)
-        except TimeoutError:
+        except TimeoutError:  # pragma: no cover
+            # TODO: add test for this.
             if last_result[0] is None:
-                Logger.critical(f"Max-cut solver stopped on timeout in iteration {it} before finding a solution.")  # pragma: no cover
+                Logger.critical(f"Max-cut solver stopped on timeout in iteration {it} before finding a solution.")
             else:
                 Logger.warning(f"Max-cut solver stopped on timeout in iteration {it}.")
                 return last_result
