@@ -186,15 +186,29 @@ class Manual16BitWidthSelectionMixedPrecisionTest(Manual16BitWidthSelectionTest)
         qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
                                            quantization_configurations=quantization_configurations)
 
+        add_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.ADD)
+        base_cfg_8 = [l for l in add_qco.quantization_configurations if l.activation_n_bits == 8][0]
+        add_qco_8 = QuantizationConfigOptions(base_config=base_cfg_8, quantization_configurations=[base_cfg_8])
+
+        sub_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.SUB)
+        base_cfg_8 = [l for l in sub_qco.quantization_configurations if l.activation_n_bits == 8][0]
+        sub_qco_8 = QuantizationConfigOptions(base_config=base_cfg_8, quantization_configurations=[base_cfg_8])
+
         tpc = generate_custom_test_tpc(
             name="custom_16_bit_tpc",
             base_cfg=tpc.default_qco.base_config,
             base_tpc=tpc,
             operator_sets_dict={
                 OperatorSetNames.MUL: qco_16,
+                OperatorSetNames.ADD: add_qco_8,
+                OperatorSetNames.SUB: sub_qco_8,
             })
 
         return tpc
 
     def get_resource_utilization(self):
         return mct.core.ResourceUtilization(activation_memory=6000)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        self.unit_test.assertTrue(len(quantization_info.mixed_precision_cfg) > 0, "Expected mixed-precision in test.")
+        super().compare(quantized_model, float_model, input_x=input_x, quantization_info=quantization_info)

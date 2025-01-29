@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from typing import Callable, Any, List, Tuple, Union, Dict
+from typing import Callable, Any, List, Tuple, Union, Dict, TYPE_CHECKING
 
 import numpy as np
 
@@ -28,6 +28,8 @@ from model_compression_toolkit.core.common.quantization.quantization_config impo
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig, \
     OpQuantizationConfig
 
+if TYPE_CHECKING:
+    from model_compression_toolkit.core.common.graph.base_node import WeightAttrT
 
 ##########################################
 # Every node holds a quantization configuration
@@ -481,6 +483,15 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 return True
 
         return False
+
+    @property
+    def all_weight_attrs(self) -> List['WeightAttrT']:
+        """ Fetch all weight attributes keys (positional and named).
+
+            Returns:
+                List of attributes.
+        """
+        return list(self.pos_attributes_config_mapping.keys()) + list(self.attributes_config_mapping.keys())
 
     def _extract_config_for_attributes_with_name(self, attr_name) -> Dict[str, WeightsAttrQuantizationConfig]:
         """

@@ -151,7 +151,8 @@ class MaxCutAstar:
         t1 = time()
         while expansion_count < iter_limit and len(open_list) > 0:
             if time_limit is not None and time() - t1 > time_limit:
-                raise TimeoutError
+                # TODO: add test for this.
+                raise TimeoutError  # pragma: no cover
             # Choose next node to expand
             next_cut = self._get_cut_to_expand(open_list, costs, routes, estimate)
 
