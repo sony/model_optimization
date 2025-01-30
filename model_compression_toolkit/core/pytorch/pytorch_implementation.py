@@ -186,18 +186,32 @@ class PytorchImplementation(FrameworkImplementation):
 
     def run_model_inference(self,
                             model: Any,
-                            input_list: List[Any]) -> Tuple[torch.Tensor]:
+                            input_list: List[Any],
+                            requires_grad: bool = False) -> Tuple[torch.Tensor]:
         """
-        Run the model logic on the given the inputs.
+        Runs the given PyTorch model on the provided input data.
 
+        This method converts the input data into PyTorch tensors, sets the `requires_grad`
+        flag if necessary, and runs inference using the provided model.
         Args:
-            model: Pytorch model.
-            input_list: List of inputs for the model.
+            model: The PyTorch model to be executed.
+            input_list: A list of input data for the model.
+            requires_grad: If True, enables gradient computation for the input tensors.
 
         Returns:
-            The Pytorch model's output.
+            A tuple containing the model's output tensors.
         """
-        return model(*to_torch_tensor(input_list))
+        # Convert input list elements into PyTorch tensors
+        torch_tensor_list = to_torch_tensor(input_list)
+
+        # If gradients are required, enable tracking and gradient retention for each tensor
+        if requires_grad:
+            for input_tensor in torch_tensor_list:
+                input_tensor.requires_grad_()
+                input_tensor.retain_grad()
+
+        # Run the model with the prepared input tensors
+        return model(*torch_tensor_list)
 
     def shift_negative_correction(self,
                                   graph: Graph,

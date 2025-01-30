@@ -18,10 +18,12 @@ import numpy as np
 from typing import List
 
 from networkx.algorithms.dag import topological_sort
-from model_compression_toolkit.core import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo, QuantizationErrorMethod
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresGranularity, HessianMode, \
+    HessianScoresRequest
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
@@ -83,6 +85,7 @@ class ModelCollector:
     def __init__(self, graph: Graph,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
+                 hessian_info_service: HessianInfoService = None,
                  qc: common.QuantizationConfig = common.DEFAULTCONFIG):
         """
         Build a model from a graph per framework for statistics collection.
@@ -96,6 +99,8 @@ class ModelCollector:
 
         self.fw_impl = fw_impl
         self.fw_info = fw_info
+        self.hessian_service = hessian_info_service
+        self.qc = qc
 
         # Assign statisitcs collectors to nodes
         for n in graph.get_topo_sorted_nodes():
@@ -134,7 +139,7 @@ class ModelCollector:
                 if out_stats_container.require_collection():
                     outputs_nodes.append(n)
                     self.stats_containers_list.append(out_stats_container)
-
+        self.outputs_nodes = outputs_nodes
         # Build a float model and output all layers' outputs
         # (that should be collected) as the model's outputs
         self.model, _ = self.fw_impl.model_builder(graph,
@@ -154,14 +159,34 @@ class ModelCollector:
 
         # TODO: Thinking about delegating collections to framework
         # TODO: migrate datasets to framework datasets
-        tensor_data = self.fw_impl.run_model_inference(self.model, inputs_list)
-        for td, sc in zip(tensor_data, self.stats_containers_list):
+        compute_hessians = True# self.hessian_info_service is not None and self.qc.activation_error_method == QuantizationErrorMethod.HMSE
+        tensor_data = self.fw_impl.run_model_inference(self.model, inputs_list, requires_grad=compute_hessians)
+
+        if compute_hessians:
+            request = HessianScoresRequest(
+                mode=HessianMode.ACTIVATION,
+                granularity=HessianScoresGranularity.PER_ELEMENT,
+                target_nodes=self.outputs_nodes,
+                data_loader=None,
+                n_samples=inputs_list[0].shape[0],
+                compute_from_tensors=True
+            )
+            hessian_data = self.hessian_service.fetch_hessian(request=request,
+                                                              activation_tensors=tensor_data)
+            hessian_data = list(hessian_data.values())
+        else:
+            hessian_data = []
+        len_diff = len(tensor_data) - len(hessian_data)
+        hessian_data += [None for _ in range(len_diff)]
+        for td, hd, sc in zip(tensor_data, hessian_data, self.stats_containers_list):
             if isinstance(sc, (list, tuple)):
                 if not isinstance(td, (list, tuple)):
                     Logger.critical(f"\'tensor_data\' is of type {type(td)} but must be of the same type as \'stats_containers_list\', which is of type {type(sc)}") # pragma: no cover
                 if len(sc) != len(td):
                     Logger.critical('\'tensor_data\' and \'stats_containers_list\' must have matching lengths') # pragma: no cover
-                for tdi, sci in zip(td, sc):
-                    sci.update_statistics(self.fw_impl.to_numpy(tdi))
+                for tdi, hdi, sci in zip(td, hd, sc):
+                    hdi_numpy = hdi if hdi is None else self.fw_impl.to_numpy(hdi)
+                    sci.update_statistics(self.fw_impl.to_numpy(tdi), self.fw_impl.to_numpy(hdi_numpy))
             else:
-                sc.update_statistics(self.fw_impl.to_numpy(td))
+                hd_numpy = hd if hd is None else self.fw_impl.to_numpy(hd)
+                sc.update_statistics(self.fw_impl.to_numpy(td), hd_numpy)

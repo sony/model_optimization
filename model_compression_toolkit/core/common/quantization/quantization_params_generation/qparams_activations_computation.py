@@ -16,6 +16,7 @@ import numpy as np
 from typing import Dict, Union
 
 from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.quantization import quantization_params_generation
@@ -43,7 +44,10 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
     # If the statistics container collected the histogram, we start by filtering outliers using z threshold
     # filtering, and then computing the threshold based on the filtered histogram.
     if out_stats_container.require_collection():
-        bins_values, bins_counts = out_stats_container.hc.get_histogram()
+        if activation_quant_cfg.activation_error_method == QuantizationErrorMethod.HMSE:
+            bins_values, bins_counts = out_stats_container.weighted_hc.get_histogram()
+        else:
+            bins_values, bins_counts = out_stats_container.hc.get_histogram()
         bins_counts = quantization_params_generation.z_score_filter(activation_quant_cfg.z_threshold,
                                                                     bins_values,
                                                                     bins_counts)
