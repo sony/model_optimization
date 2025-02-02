@@ -33,18 +33,22 @@ class TestDocsLinks(unittest.TestCase):
             response = requests.get(_url)
             if response.status_code == 200:
                 return True
-        except:
-            try:
-                print('===================================================================')
-                print(_url)
-                print(_url.replace('/main/', f'/{branch_name}/'))
-                print('===================================================================')
-                response = requests.get(_url.replace('/main/', f'/{branch_name}/'))
-                if response.status_code == 200:
-                    return True
-            except Exception as e:
-                print(f"Error checking link '{_url}': {e}")
-                return False
+        except Exception as e:
+            print(f"Error checking link '{_url}': {e}")
+
+        try:
+            print('===================================================================')
+            print(_url)
+            _url = _url.replace('/main/', f'/{branch_name}/')
+            print(_url)
+            print('===================================================================')
+            response = requests.get(_url)
+            if response.status_code == 200:
+                return True
+        except Exception as e:
+            print(f"Error checking link '{_url}': {e}")
+
+        return False
 
     @staticmethod
     def get_branch_name():
