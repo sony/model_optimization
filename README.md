@@ -38,8 +38,6 @@ For installing the nightly version or installing from source, refer to the [inst
 
 **Important note**: In order to use MCT, you’ll need to provide a floating point .pt or .keras model as an input.
 
-Delete this [del_me file](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/del_me.txt)
-
 ### Tutorials and Examples 
 
 Our [tutorials](https://github.com/sony/model_optimization/blob/main/tutorials/README.md) section will walk you through the basics of the MCT tool, covering various compression techniques for both Keras and PyTorch models. 
