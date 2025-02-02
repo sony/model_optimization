@@ -37,11 +37,7 @@ class TestDocsLinks(unittest.TestCase):
             print(f"Error checking link '{_url}': {e}")
 
         try:
-            print('===================================================================')
-            print(_url)
             _url = _url.replace('/main/', f'/{branch_name}/')
-            print(_url)
-            print('===================================================================')
             response = requests.get(_url)
             if response.status_code == 200:
                 return True
@@ -50,15 +46,10 @@ class TestDocsLinks(unittest.TestCase):
 
         return False
 
-    @staticmethod
-    def get_branch_name():
-        result = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True, check=True)
-        return result.stdout.strip()
-
     def test_readme_and_rst_files(self):
         mct_folder = getcwd()
         print("MCT folder:", mct_folder)
-        branch_name = getenv("GITHUB_HEAD_REF")  # self.get_branch_name()
+        branch_name = getenv("GITHUB_HEAD_REF")
         print("Branch name:", branch_name)
         are_links_ok = True
         for filepath, _, filenames in walk(mct_folder):
