@@ -15,7 +15,7 @@
 import unittest
 import subprocess
 from shutil import rmtree
-from os import walk, getcwd
+from os import walk, getcwd, getenv
 from os.path import join, isdir, isfile
 import requests
 import re
