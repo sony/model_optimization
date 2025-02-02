@@ -35,6 +35,10 @@ class TestDocsLinks(unittest.TestCase):
                 return True
         except:
             try:
+                print('===================================================================')
+                print(_url)
+                print(_url.replace('/main/', f'/{branch_name}/'))
+                print('===================================================================')
                 response = requests.get(_url.replace('/main/', f'/{branch_name}/'))
                 if response.status_code == 200:
                     return True
