@@ -54,7 +54,7 @@ class TestDocsLinks(unittest.TestCase):
     def test_readme_and_rst_files(self):
         mct_folder = getcwd()
         print("MCT folder:", mct_folder)
-        branch_name = self.get_branch_name()
+        branch_name = os.getenv("GITHUB_HEAD_REF")  # self.get_branch_name()
         print("Branch name:", branch_name)
         are_links_ok = True
         for filepath, _, filenames in walk(mct_folder):
