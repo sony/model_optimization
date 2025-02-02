@@ -28,18 +28,30 @@ class TestDocsLinks(unittest.TestCase):
     """
 
     @staticmethod
-    def check_link(_url):
+    def check_link(_url, branch_name):
         try:
             response = requests.get(_url)
             if response.status_code == 200:
                 return True
-        except Exception as e:
-            print(f"Error checking link '{_url}': {e}")
-            return False
+        except:
+            try:
+                response = requests.get(_url.replace('/main/', f'/{branch_name}/'))
+                if response.status_code == 200:
+                    return True
+            except Exception as e:
+                print(f"Error checking link '{_url}': {e}")
+                return False
+
+    @staticmethod
+    def get_branch_name():
+        result = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True, check=True)
+        return result.stdout.strip()
 
     def test_readme_and_rst_files(self):
         mct_folder = getcwd()
         print("MCT folder:", mct_folder)
+        branch_name = self.get_branch_name()
+        print("Branch name:", branch_name)
         are_links_ok = True
         for filepath, _, filenames in walk(mct_folder):
             for filename in filenames:
@@ -61,9 +73,9 @@ class TestDocsLinks(unittest.TestCase):
                                     pass
                                 elif _link.startswith('data:image/'):
                                     # A link starting with 'data:image/' is a base64-encoded image --> ignore
-                                    print("Inline image, skipping:", _link)
+                                    print("Inline image, skipping.")
                                 elif 'http://' in _link or 'https://' in _link:
-                                    if self.check_link(_link):
+                                    if self.check_link(_link, branch_name):
                                         print("Link ok:", _link)
                                     else:
                                         are_links_ok = False
@@ -90,7 +102,7 @@ class TestDocsLinks(unittest.TestCase):
                                     # This link is checked when generating the docs
                                     pass
                                 elif 'http://' in _link or 'https://' in _link:
-                                    if self.check_link(_link):
+                                    if self.check_link(_link, branch_name):
                                         print("Link ok:", _link)
                                     else:
                                         are_links_ok = False
