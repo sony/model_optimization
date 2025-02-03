@@ -58,7 +58,7 @@ class HistogramCollector(BaseCollector):
         self._counts = None
         self._histogram_per_iteration = []
 
-    def __merge_histograms(self):
+    def _merge_histograms(self):
         """
         After collecting histogram per iteration, we merge these histograms to a single histogram
         containing all samples from all iterations.
@@ -131,7 +131,7 @@ class HistogramCollector(BaseCollector):
         # If collected histograms (one per inference iteration) were not merged before, merge them and return the
         # merged histogram.
         if self._bins is None or self._counts is None:
-            self.__merge_histograms()
+            self._merge_histograms()
         return self._bins, self._counts
 
     def max(self):

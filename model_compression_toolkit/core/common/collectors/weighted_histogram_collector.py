@@ -52,7 +52,7 @@ class WeightedHistogramCollector(HistogramCollector):
             - The method ensures that `x` and `weights` have matching shapes and logs
               an error if this condition is not met.
         """
-        if weights is None:
+        if weights is None or weights.sum() == 0:
             weights = np.ones_like(x) # Assign uniform weights if none are provided.
 
         if x.shape != weights.shape:
