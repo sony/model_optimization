@@ -2,7 +2,12 @@ name: Check Markdown and doc links
 
 on:
   workflow_dispatch: # Allow manual triggers
+  schedule:
+    - cron: 0 0 * * *
   pull_request:
+    branches:
+      - main
+  push:
     branches:
       - main
 
