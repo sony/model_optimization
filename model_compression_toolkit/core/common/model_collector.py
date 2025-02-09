@@ -159,7 +159,7 @@ class ModelCollector:
 
         # TODO: Thinking about delegating collections to framework
         # TODO: migrate datasets to framework datasets
-        compute_hessians = True# self.hessian_info_service is not None and self.qc.activation_error_method == QuantizationErrorMethod.HMSE
+        compute_hessians = self.hessian_service is not None and self.qc.activation_error_method == QuantizationErrorMethod.HMSE
         tensor_data = self.fw_impl.run_model_inference(self.model, inputs_list, requires_grad=compute_hessians)
 
         if compute_hessians:
@@ -176,8 +176,10 @@ class ModelCollector:
             hessian_data = list(hessian_data.values())
         else:
             hessian_data = []
-        len_diff = len(tensor_data) - len(hessian_data)
-        hessian_data += [None for _ in range(len_diff)]
+
+        # Hessian is not calculated for the output, add "None" as weights for output tenosrs
+        hessian_data += [None for _ in range(len(tensor_data) - len(hessian_data))]
+
         for td, hd, sc in zip(tensor_data, hessian_data, self.stats_containers_list):
             if isinstance(sc, (list, tuple)):
                 if not isinstance(td, (list, tuple)):
