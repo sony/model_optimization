@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Keras Structured Pruning &#8212; MCT Documentation: ver 2.2.0</title>
+    <title>Keras Structured Pruning &#8212; MCT Documentation: ver 2.3.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Structured Pruning</a></li> 
       </ul>
     </div>  
@@ -62,7 +62,7 @@ identify groups of channels that can be removed with minimal impact on performan
 <li><p><strong>target_resource_utilization</strong> (<a class="reference internal" href="../classes/ResourceUtilization.html#model_compression_toolkit.core.ResourceUtilization" title="model_compression_toolkit.core.ResourceUtilization"><em>ResourceUtilization</em></a>) – The target Key Performance Indicators to be achieved through pruning.</p></li>
 <li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – A function to generate representative data for pruning analysis.</p></li>
 <li><p><strong>pruning_config</strong> (<a class="reference internal" href="../classes/PruningConfig.html#model_compression_toolkit.pruning.PruningConfig" title="model_compression_toolkit.pruning.PruningConfig"><em>PruningConfig</em></a>) – Configuration settings for the pruning process. Defaults to standard config.</p></li>
-<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – Platform-specific constraints and capabilities. Defaults to DEFAULT_KERAS_TPC.</p></li>
+<li><p><strong>target_platform_capabilities</strong> (<em>Union</em><em>[</em><a class="reference internal" href="../modules/target_platform_capabilities.html#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a><em>, </em><em>str</em><em>]</em>) – Platform-specific constraints and capabilities. Defaults to DEFAULT_KERAS_TPC.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -145,7 +145,7 @@ extends the duration of the pruning process:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Structured Pruning</a></li> 
       </ul>
     </div>

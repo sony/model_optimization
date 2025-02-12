@@ -10,10 +10,7 @@ qat_config Module
 
 TrainingMethod
 ================================
-**Select a QAT training method:**
-
-.. autoclass:: model_compression_toolkit.qat.TrainingMethod
-
+In order to select a training method, please visit the :ref:`trainable_infrastructure API.<ug-trainable_infrastructure>`
 
 |
 
