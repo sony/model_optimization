@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Get TargetPlatformCapabilities &#8212; MCT Documentation: ver 2.2.0</title>
+    <title>Get FrameworkQuantizationCapabilities &#8212; MCT Documentation: ver 2.3.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,8 +31,8 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Get TargetPlatformCapabilities</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get FrameworkQuantizationCapabilities</a></li> 
       </ul>
     </div>  
 
@@ -41,38 +41,36 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="get-targetplatformcapabilities">
-<span id="ug-get-target-platform-capabilities"></span><h1>Get TargetPlatformCapabilities<a class="headerlink" href="#get-targetplatformcapabilities" title="Permalink to this heading">¶</a></h1>
+  <section id="get-frameworkquantizationcapabilities">
+<span id="ug-get-target-platform-capabilities"></span><h1>Get FrameworkQuantizationCapabilities<a class="headerlink" href="#get-frameworkquantizationcapabilities" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="model_compression_toolkit.get_target_platform_capabilities">
 <span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">get_target_platform_capabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fw_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.get_target_platform_capabilities" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a TargetPlatformCapabilities by the target platform model name and the framework name.
-For now, it supports frameworks ‘tensorflow’ and ‘pytorch’. For both of them
-the target platform model can be ‘default’, ‘imx500’, ‘tflite’, or ‘qnnpack’.</p>
+<dd><p>This is a degenerated function that only returns the MCT default TargetPlatformCapabilities object, to comply with the
+existing TPC API.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fw_name</strong> – Framework name of the TargetPlatformCapabilities.</p></li>
+<li><p><strong>fw_name</strong> – Framework name of the FrameworkQuantizationCapabilities.</p></li>
 <li><p><strong>target_platform_name</strong> – Target platform model name the model will use for inference.</p></li>
 <li><p><strong>target_platform_version</strong> – Target platform capabilities version.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A TargetPlatformCapabilities object that models the hardware and attaches
-a framework information to it.</p>
+<dd class="field-even"><p>A default TargetPlatformCapabilities object.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities.TargetPlatformCapabilities"><code class="xref py py-class docutils literal notranslate"><span class="pre">TargetPlatformCapabilities</span></code></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="../modules/target_platform_capabilities.html#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformCapabilities"><code class="xref py py-class docutils literal notranslate"><span class="pre">TargetPlatformCapabilities</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>For now, some fields of <a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.OpQuantizationConfig" title="model_compression_toolkit.target_platform.OpQuantizationConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpQuantizationConfig</span></code></a> are ignored during
+<p>For now, some fields of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpQuantizationConfig</span></code> are ignored during
 the optimization process such as quantization_preserving, fixed_scale, and fixed_zero_point.</p>
 <ul class="simple">
-<li><p>MCT will use more information from <a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.OpQuantizationConfig" title="model_compression_toolkit.target_platform.OpQuantizationConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">OpQuantizationConfig</span></code></a>, in the future.</p></li>
+<li><p>MCT will use more information from <code class="xref py py-class docutils literal notranslate"><span class="pre">OpQuantizationConfig</span></code>, in the future.</p></li>
 </ul>
 </div>
 </section>
@@ -104,8 +102,8 @@ the optimization process such as quantization_preserving, fixed_scale, and fixed
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Get TargetPlatformCapabilities</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get FrameworkQuantizationCapabilities</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>qat_config Module &#8212; MCT Documentation: ver 2.2.0</title>
+    <title>qat_config Module &#8212; MCT Documentation: ver 2.3.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">qat_config Module</a></li> 
       </ul>
     </div>  
@@ -45,16 +45,7 @@
 <span id="ug-qat-config"></span><h1>qat_config Module<a class="headerlink" href="#qat-config-module" title="Permalink to this heading">¶</a></h1>
 <section id="trainingmethod">
 <h2>TrainingMethod<a class="headerlink" href="#trainingmethod" title="Permalink to this heading">¶</a></h2>
-<p><strong>Select a QAT training method:</strong></p>
-<dl class="py class">
-<dt class="sig sig-object py" id="model_compression_toolkit.qat.TrainingMethod">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.qat.</span></span><span class="sig-name descname"><span class="pre">TrainingMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.qat.TrainingMethod" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enum for selecting a QAT training method</p>
-<p>STE - Standard straight-through estimator. Includes PowerOfTwo, symmetric &amp; uniform quantizers</p>
-<p>DQA -  DNN Quantization with Attention. Includes a smooth quantization introduces by DQA method</p>
-<p>LSQ - Learned Step size Quantization. Includes PowerOfTwo, symmetric &amp; uniform quantizers: <a class="reference external" href="https://arxiv.org/pdf/1902.08153.pdf">https://arxiv.org/pdf/1902.08153.pdf</a></p>
-</dd></dl>
-
+<p>In order to select a training method, please visit the <a class="reference internal" href="trainable_infrastructure.html#ug-trainable-infrastructure"><span class="std std-ref">trainable_infrastructure API.</span></a></p>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -69,8 +60,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>weight_training_method</strong> (<a class="reference internal" href="#model_compression_toolkit.qat.TrainingMethod" title="model_compression_toolkit.qat.TrainingMethod"><em>TrainingMethod</em></a>) – Training method for weight quantizers</p></li>
-<li><p><strong>activation_training_method</strong> (<a class="reference internal" href="#model_compression_toolkit.qat.TrainingMethod" title="model_compression_toolkit.qat.TrainingMethod"><em>TrainingMethod</em></a>) – Training method for activation quantizers:</p></li>
+<li><p><strong>weight_training_method</strong> (<a class="reference internal" href="trainable_infrastructure.html#model_compression_toolkit.trainable_infrastructure.TrainingMethod" title="model_compression_toolkit.trainable_infrastructure.TrainingMethod"><em>TrainingMethod</em></a>) – Training method for weight quantizers</p></li>
+<li><p><strong>activation_training_method</strong> (<a class="reference internal" href="trainable_infrastructure.html#model_compression_toolkit.trainable_infrastructure.TrainingMethod" title="model_compression_toolkit.trainable_infrastructure.TrainingMethod"><em>TrainingMethod</em></a>) – Training method for activation quantizers:</p></li>
 <li><p><strong>weight_quantizer_params_override</strong> – A dictionary of parameters to override in weight quantization quantizer instantiation. Defaults to None (no parameters)</p></li>
 <li><p><strong>activation_quantizer_params_override</strong> – A dictionary of parameters to override in activation quantization quantizer instantiation. Defaults to None (no parameters)</p></li>
 </ul>
@@ -119,7 +110,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">qat_config Module</a></li> 
       </ul>
     </div>
