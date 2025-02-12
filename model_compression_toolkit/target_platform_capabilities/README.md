@@ -13,7 +13,7 @@ in some operator for its weights/activations, fusing patterns, etc.)
 ## Supported Target Platform Models 
 
 Currently, MCT contains three target-platform models
-(new models can be created and used by users as demonstrated [here](https://sony.github.io/model_optimization/api/api_docs/modules/target_platform.html#targetplatformmodel-code-example)):
+(new models can be created and used by users as demonstrated [here](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/tpc_models/imx500_tpc/v1/tpc.py)):
 - [IMX500](https://developer.sony.com/develop/imx500/)
 - [TFLite](https://www.tensorflow.org/lite/performance/quantization_spec)
 - [QNNPACK](https://github.com/pytorch/QNNPACK)
