@@ -229,8 +229,8 @@ def _set_final_resource_utilization(graph: Graph,
     final_ru = None
     if ru_targets:
         ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
-        w_qcs = {n: n.final_weights_quantization_cfg for n in graph.nodes}
-        a_qcs = {n: n.final_activation_quantization_cfg for n in graph.nodes}
+        w_qcs = {n.name: n.final_weights_quantization_cfg for n in graph.nodes}
+        a_qcs = {n.name: n.final_activation_quantization_cfg for n in graph.nodes}
         final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
                                                               BitwidthMode.QCustom, act_qcs=a_qcs, w_qcs=w_qcs,
                                                               ru_targets=ru_targets, allow_unused_qcs=True)

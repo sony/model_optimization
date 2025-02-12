@@ -88,8 +88,8 @@ class MixedPrecisionRUHelper:
         """
         mp_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
         node_qcs = {n: n.candidates_quantization_cfg[mp_cfg[i]] for i, n in enumerate(mp_nodes)}
-        act_qcs = {n: cfg.activation_quantization_cfg for n, cfg in node_qcs.items()}
-        w_qcs = {n: cfg.weights_quantization_cfg for n, cfg in node_qcs.items()}
+        act_qcs = {n.name: cfg.activation_quantization_cfg for n, cfg in node_qcs.items()}
+        w_qcs = {n.name: cfg.weights_quantization_cfg for n, cfg in node_qcs.items()}
         return act_qcs, w_qcs
 
     def _weights_utilization(self, w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]]) -> Dict[BaseNode, float]:
