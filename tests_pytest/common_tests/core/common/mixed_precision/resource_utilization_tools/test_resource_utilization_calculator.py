@@ -52,7 +52,7 @@ class TestUtilization:
             1 + Utilization(5, 5)
 
 
-class TestComputeResurceUtilization:
+class TestComputeResourceUtilization:
     """ Test compute_resource_utilization public api. """
     @pytest.fixture(autouse=True)
     def setup(self, graph_mock, fw_impl_mock, fw_info_mock):
@@ -76,70 +76,103 @@ class TestComputeResurceUtilization:
         self.ru_calc = ru_calc
         self.nodes = [n1, n2, n3]
 
-    def test_compute_ru_all_targets(self):
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_all_targets(self, detailed):
+        ru_calc = self.ru_calc
         # default targets
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP)
+        ret = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP, return_detailed=detailed)
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, act_qcs=None, w_qcs=None)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, act_qcs=None, w_qcs=None)
+
+        ru = ret[0] if detailed else ret
         assert ru == ResourceUtilization(weights_memory=21,
                                          activation_memory=671,
                                          total_memory=692,
                                          bops=42*4*8)
+        if detailed:
+            detailed_res = ret[1]
+            assert set(detailed_res.keys()) == set(RUTarget)
+            assert sorted(list(detailed_res[RUTarget.ACTIVATION].values())) == [50, 71, 650, 671]
+            assert detailed_res[RUTarget.WEIGHTS] == {self.nodes[1]: 21}
+            assert sorted(list(detailed_res[RUTarget.TOTAL].values())) == [71, 92, 671, 692]
+            assert detailed_res[RUTarget.BOPS] == {self.nodes[1]: 42*4*8}
+
         # explicit targets
-        ru2 = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP, ru_targets=list(RUTarget))
-        assert ru2 == ru
+        ret2 = ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP, ru_targets=list(RUTarget),
+                                                    return_detailed=detailed)
+        assert ret2 == ret
 
-    def test_compute_ru_w(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.WEIGHTS])
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_w(self, detailed):
+        ru_calc = self.ru_calc
+        ret = ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.WEIGHTS],
+                                                   return_detailed=detailed)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_activations_utilization.assert_not_called()
+        ru_calc.compute_bops.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(weights_memory=42))
 
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_activations_utilization.assert_not_called()
-        self.ru_calc.compute_bops.assert_not_called()
-        assert ru == ResourceUtilization(weights_memory=42)
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_act(self, detailed):
+        ru_calc = self.ru_calc
+        ret = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.ACTIVATION],
+                                                        return_detailed=detailed)
 
-    def test_compute_ru_act(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.ACTIVATION])
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_weights_utilization.assert_not_called()
+        ru_calc.compute_bops.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(activation_memory=742))
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_weights_utilization.assert_not_called()
-        self.ru_calc.compute_bops.assert_not_called()
-        assert ru == ResourceUtilization(activation_memory=742)
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_total(self, detailed):
+        ru_calc = self.ru_calc
+        ret = ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.TOTAL],
+                                                   return_detailed=detailed)
 
-    def test_compute_ru_total(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.TOTAL])
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_bops.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(total_memory=742+42))
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_bops.assert_not_called()
-        assert ru == ResourceUtilization(total_memory=742+42)
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_bops(self, detailed):
+        ru_calc = self.ru_calc
+        ret = ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.Q8Bit, ru_targets=[RUTarget.BOPS],
+                                                   return_detailed=detailed)
 
-    def test_compute_ru_bops(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.Q8Bit, ru_targets=[RUTarget.BOPS])
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.Q8Bit, act_qcs=None, w_qcs=None)
+        ru_calc.compute_activations_utilization.assert_not_called()
+        ru_calc.compute_weights_utilization.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(bops=42*8*8))
 
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.Q8Bit, act_qcs=None, w_qcs=None)
-        self.ru_calc.compute_activations_utilization.assert_not_called()
-        self.ru_calc.compute_weights_utilization.assert_not_called()
-        assert ru == ResourceUtilization(bops=42*8*8)
+    def _validate(self, ret, detailed, exp_ru: ResourceUtilization):
+        ru = ret[0] if detailed else ret
+        assert ru == exp_ru
+        if detailed:
+            assert len(ret) == 2
+            assert set(ret[1].keys()) == exp_ru.get_restricted_targets()
 
     def test_compute_ru_custom_w_qc(self):
+        ru_calc = self.ru_calc
         w_qcs = {self.nodes[1]: build_qc(w_attr={'foo': (16, True)}).weights_quantization_cfg}
 
-        self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, w_qcs=w_qcs)
+        ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, w_qcs=w_qcs)
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, w_qcs)
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=None, w_qcs=w_qcs)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, w_qcs)
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=None, w_qcs=w_qcs)
 
     def test_compute_ru_custom_a_qc(self):
+        ru_calc = self.ru_calc
         a_qcs = {self.nodes[1]: build_qc(w_attr={'foo': (16, True)}).activation_quantization_cfg}
 
-        self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs)
+        ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs)
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, a_qcs)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs, w_qcs=None)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, a_qcs)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs, w_qcs=None)
 
     @pytest.mark.parametrize('bm', set(BM)-{BM.QCustom})
     def test_unexpected_qc_for_bitmode(self, bm):
@@ -159,15 +192,16 @@ class TestComputeResurceUtilization:
                                                       ru_targets=[RUTarget.ACTIVATION])
 
     def test_allowed_unexpected_qc_for_targets(self):
-        self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs=Mock(), ru_targets=[RUTarget.WEIGHTS],
-                                                  allow_unused_qcs=True)
+        ru_calc = self.ru_calc
+        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs=Mock(), ru_targets=[RUTarget.WEIGHTS],
+                                             allow_unused_qcs=True)
         # unexpected config is converted to None
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
 
-        self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs=Mock(), ru_targets=[RUTarget.ACTIVATION],
-                                                  allow_unused_qcs=True)
+        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs=Mock(), ru_targets=[RUTarget.ACTIVATION],
+                                             allow_unused_qcs=True)
         # unexpected config is converted to None
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
 
 
 class TestActivationUtilizationMethods:

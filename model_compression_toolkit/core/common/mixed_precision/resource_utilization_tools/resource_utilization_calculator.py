@@ -26,6 +26,8 @@ from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
+    VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
@@ -100,6 +102,9 @@ class Utilization(NamedTuple):
         return self.bytes < other.bytes
 
 
+DetailedMemType = Dict[Union[BaseNode, Cut], float]
+
+
 class ResourceUtilizationCalculator:
     """ Resource utilization calculator. """
 
@@ -144,7 +149,9 @@ class ResourceUtilizationCalculator:
                                      act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None,
                                      w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]] = None,
                                      ru_targets: Iterable[RUTarget] = None,
-                                     allow_unused_qcs: bool = False) -> ResourceUtilization:
+                                     allow_unused_qcs: bool = False,
+                                     return_detailed=False) \
+            -> Union[ResourceUtilization, Tuple[ResourceUtilization, Dict[RUTarget, DetailedMemType]]]:
         """
         Compute network's resource utilization.
 
@@ -160,9 +167,12 @@ class ResourceUtilizationCalculator:
             ru_targets: metrics to include for computation. If None, all metrics are calculated.
             allow_unused_qcs: by default, if custom quantization configs are passed, but are not going to be used for
               any of the requested targets, an error is raised. To disable the validation, pass True.
+            return_detailed: whether to return an additional dictionary with detailed utilization per element.
 
         Returns:
-            Resource utilization object.
+            Resource utilization object, or a tuple of resource utilization object and a dict containing detailed
+            memory utilization per ru target: for weights and bops targets - bytes per node,
+                                              for activations and total targets - bytes per cut.
         """
         ru_targets = set(ru_targets) if ru_targets else set(RUTarget)
 
@@ -179,24 +189,39 @@ class ResourceUtilizationCalculator:
                 raise ValueError('Activation configuration passed but no relevant ru_targets requested.')
             act_qcs = None
 
-        w_total, a_total = None, None
+        w_total, w_per_node = None, None
         if {RUTarget.WEIGHTS, RUTarget.TOTAL}.intersection(ru_targets):
-            w_total, *_ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
+            w_total, w_per_node, _ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
 
+        a_total, a_per_cut = None, None
         if {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(ru_targets):
-            a_total = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
+            a_total, a_per_cut, _ = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
 
         ru = ResourceUtilization()
+        detailed = {}
         if RUTarget.WEIGHTS in ru_targets:
             ru.weights_memory = w_total
+            if return_detailed:
+                detailed[RUTarget.WEIGHTS] = {n: u.bytes for n, u in w_per_node.items()}
         if RUTarget.ACTIVATION in ru_targets:
             ru.activation_memory = a_total
+            if return_detailed:
+                detailed[RUTarget.ACTIVATION] = {cut: u.bytes for cut, u in a_per_cut.items()}
         if RUTarget.TOTAL in ru_targets:
             ru.total_memory = w_total + a_total
+            if return_detailed:
+                detailed[RUTarget.TOTAL] = {cut: u.bytes + w_total for cut, u in a_per_cut.items()}
         if RUTarget.BOPS in ru_targets:
-            ru.bops, _ = self.compute_bops(target_criterion, bitwidth_mode, act_qcs=act_qcs, w_qcs=w_qcs)
+            ru.bops, bops_per_node = self.compute_bops(target_criterion, bitwidth_mode, act_qcs=act_qcs, w_qcs=w_qcs)
+            if return_detailed:
+                detailed[RUTarget.BOPS] = bops_per_node
 
-        assert ru.get_restricted_targets() == set(ru_targets), 'Mismatch between the number of requested and computed metrics'
+        assert ru.get_restricted_targets() == set(ru_targets), \
+            'Mismatch between the number of requested and computed metrics'
+
+        if return_detailed:
+            return ru, detailed
+
         return ru
 
     def compute_weights_utilization(self,
@@ -298,9 +323,11 @@ class ResourceUtilizationCalculator:
               activations, if not provided, the default configuration will be extracted from the node.
 
         Returns:
-            Total activation utilization of the network.
+            - Total activation utilization of the network.
+            - Total activation utilization per cut.
+            - Detailed activation utilization per cut per node.
         """
-        return self.compute_activation_utilization_by_cut(target_criterion, bitwidth_mode, act_qcs)[0]
+        return self.compute_activation_utilization_by_cut(target_criterion, bitwidth_mode, act_qcs)
 
     def compute_activation_utilization_by_cut(self,
                                               target_criterion: TargetInclusionCriterion,
