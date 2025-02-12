@@ -50,4 +50,4 @@ quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(Mo
 
 Similarly, you can retrieve IMX500, TFLite and QNNPACK target-platform models for Keras and PyTorch frameworks.
 
-For more information and examples, we highly recommend you to visit our [project website](https://sony.github.io/model_optimization/api/api_docs/modules/target_platform.html#ug-target-platform).
+For more information and examples, we highly recommend you to visit our [project website](https://sony.github.io/model_optimization/api/api_docs/modules/target_platform_capabilities.html#ug-target-platform-capabilities).
