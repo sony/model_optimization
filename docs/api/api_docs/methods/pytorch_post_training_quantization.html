@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Pytorch Post Training Quantization &#8212; MCT Documentation: ver 2.2.0</title>
+    <title>Pytorch Post Training Quantization &#8212; MCT Documentation: ver 2.3.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Quantization</a></li> 
       </ul>
     </div>  
@@ -48,7 +48,7 @@
 <span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.ptq.</span></span><span class="sig-name descname"><span class="pre">pytorch_post_training_quantization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_resource_utilization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CoreConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_TPC</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.ptq.pytorch_post_training_quantization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Quantize a trained Pytorch module using post-training quantization.
 By default, the module is quantized using a symmetric constraint quantization thresholds
-(power of two) as defined in the default TargetPlatformCapabilities.
+(power of two) as defined in the default FrameworkQuantizationCapabilities.
 The module is first optimized using several transformations (e.g. BatchNormalization folding to
 preceding layers). Then, using a given dataset, statistics (e.g. min/max, histogram, etc.) are
 being collected for each layer’s output (and input, depends on the quantization configuration).
@@ -64,7 +64,7 @@ observed loss.</p>
 <li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
 <li><p><strong>target_resource_utilization</strong> (<a class="reference internal" href="../classes/ResourceUtilization.html#model_compression_toolkit.core.ResourceUtilization" title="model_compression_toolkit.core.ResourceUtilization"><em>ResourceUtilization</em></a>) – ResourceUtilization object to limit the search of the mixed-precision configuration as desired.</p></li>
 <li><p><strong>core_config</strong> (<a class="reference internal" href="../modules/core_config.html#model_compression_toolkit.core.CoreConfig" title="model_compression_toolkit.core.CoreConfig"><em>CoreConfig</em></a>) – Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.</p></li>
-<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the PyTorch model according to.</p></li>
+<li><p><strong>target_platform_capabilities</strong> (<em>Union</em><em>[</em><a class="reference internal" href="../modules/target_platform_capabilities.html#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a><em>, </em><em>str</em><em>]</em>) – TargetPlatformCapabilities to optimize the PyTorch model according to.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -123,7 +123,7 @@ Set number of clibration iterations to 1:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Quantization</a></li> 
       </ul>
     </div>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 2.2.0</title>
+    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 2.3.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>  
@@ -43,30 +43,28 @@
             
   <section id="gradientptqconfig-class">
 <span id="ug-gradientptqconfig"></span><h1>GradientPTQConfig Class<a class="headerlink" href="#gradientptqconfig-class" title="Permalink to this heading">¶</a></h1>
-<p><strong>The following API can be used to create a GradientPTQConfig instance which can be used for post training quantization using knowledge distillation from a teacher (float Keras model) to a student (the quantized Keras model)</strong></p>
+<p><strong>The following API can be used to create a GradientPTQConfig instance which can be used for post training quantization using knowledge distillation from a teacher (float model) to a student (the quantized model)</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.gptq.GradientPTQConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GradientPTQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rounding_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">RoundingType.SoftQuantizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_hessian_based_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_quantization_parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">REG_DEFAULT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_weights_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">GPTQHessianScoresConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gptq_quantizer_params_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GradientPTQConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GradientPTQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_rest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_bias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_weights_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradual_activation_quantization_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rounding_type=RoundingType.SoftQuantizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_quantization_parameter=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_bias=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gptq_quantizer_params_override=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GradientPTQConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration to use for quantization with GradientPTQ.</p>
-<p>Initialize a GradientPTQConfig.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_epochs</strong> (<em>int</em>) – Number of representative dataset epochs to train.</p></li>
-<li><p><strong>optimizer</strong> (<em>Any</em>) – Optimizer to use.</p></li>
-<li><p><strong>optimizer_rest</strong> (<em>Any</em>) – Optimizer to use for bias and quantizer parameters.</p></li>
-<li><p><strong>loss</strong> (<em>Callable</em>) – The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
-the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
-accordingly. see example in multiple_tensors_mse_loss</p></li>
-<li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the GPTQ process.</p></li>
-<li><p><strong>train_bias</strong> (<em>bool</em>) – Whether to update the bias during the training or not.</p></li>
-<li><p><strong>rounding_type</strong> (<a class="reference internal" href="#model_compression_toolkit.gptq.RoundingType" title="model_compression_toolkit.gptq.RoundingType"><em>RoundingType</em></a>) – An enum that defines the rounding type.</p></li>
-<li><p><strong>use_hessian_based_weights</strong> (<em>bool</em>) – Whether to use Hessian-based weights for weighted average loss.</p></li>
-<li><p><strong>optimizer_quantization_parameter</strong> (<em>Any</em>) – Optimizer to override the rest optimizer  for quantizer parameters.</p></li>
-<li><p><strong>optimizer_bias</strong> (<em>Any</em>) – Optimizer to override the rest optimizer for bias.</p></li>
-<li><p><strong>regularization_factor</strong> (<em>float</em>) – A floating point number that defines the regularization factor.</p></li>
-<li><p><strong>hessian_weights_config</strong> (<a class="reference internal" href="#model_compression_toolkit.gptq.GPTQHessianScoresConfig" title="model_compression_toolkit.gptq.GPTQHessianScoresConfig"><em>GPTQHessianScoresConfig</em></a>) – A configuration that include all necessary arguments to run a computation of Hessian scores for the GPTQ loss.</p></li>
-<li><p><strong>gptq_quantizer_params_override</strong> (<em>dict</em>) – A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).</p></li>
+<li><p><strong>n_epochs</strong> – Number of representative dataset epochs to train.</p></li>
+<li><p><strong>loss</strong> – The loss to use. See ‘multiple_tensors_mse_loss’ for the expected interface.</p></li>
+<li><p><strong>optimizer</strong> – Optimizer to use.</p></li>
+<li><p><strong>optimizer_rest</strong> – Default optimizer to use for bias and quantizer parameters.</p></li>
+<li><p><strong>train_bias</strong> – Whether to update the bias during the training or not.</p></li>
+<li><p><strong>hessian_weights_config</strong> – A configuration that include all necessary arguments to run a computation of
+Hessian scores for the GPTQ loss.</p></li>
+<li><p><strong>gradual_activation_quantization_config</strong> – A configuration for Gradual Activation Quantization.</p></li>
+<li><p><strong>regularization_factor</strong> – A floating point number that defines the regularization factor.</p></li>
+<li><p><strong>rounding_type</strong> – An enum that defines the rounding type.</p></li>
+<li><p><strong>optimizer_quantization_parameter</strong> – Optimizer to override the rest optimizer for quantizer parameters.</p></li>
+<li><p><strong>optimizer_bias</strong> – Optimizer to override the rest optimizer for bias.</p></li>
+<li><p><strong>log_function</strong> – Function to log information about the GPTQ process.</p></li>
+<li><p><strong>gptq_quantizer_params_override</strong> – A dictionary of parameters to override in GPTQ quantizer instantiation.</p></li>
 </ul>
 </dd>
 </dl>
@@ -78,13 +76,14 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 <p><strong>The following API can be used to create a GPTQHessianScoresConfig instance which can be used to define necessary parameters for computing Hessian scores for the GPTQ loss function.</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.gptq.GPTQHessianScoresConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQHessianScoresConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessians_num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">GPTQ_HESSIAN_NUM_SAMPLES</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ACT_HESSIAN_DEFAULT_BATCH_SIZE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GPTQHessianScoresConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQHessianScoresConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">per_sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessians_num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GPTQHessianScoresConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration to use for computing the Hessian-based scores for GPTQ loss metric.</p>
-<p>Initialize a GPTQHessianWeightsConfig.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>hessians_num_samples</strong> (<em>int</em>) – Number of samples to use for computing the Hessian-based scores.</p></li>
+<li><p><strong>per_sample</strong> (<em>bool</em>) – Whether to use per sample attention score.</p></li>
+<li><p><strong>hessians_num_samples</strong> (<em>int</em><em>|</em><em>None</em>) – Number of samples to use for computing the Hessian-based scores.
+If None, compute Hessian for all images.</p></li>
 <li><p><strong>norm_scores</strong> (<em>bool</em>) – Whether to normalize the returned scores of the weighted loss function (to get values between 0 and 1).</p></li>
 <li><p><strong>log_norm</strong> (<em>bool</em>) – Whether to use log normalization for the GPTQ Hessian-based scores.</p></li>
 <li><p><strong>scale_log_norm</strong> (<em>bool</em>) – Whether to scale the final vector of the Hessian-based scores.</p></li>
@@ -106,6 +105,42 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 </dd></dl>
 
 </section>
+<section id="gradualactivationquantizationconfig">
+<h1>GradualActivationQuantizationConfig<a class="headerlink" href="#gradualactivationquantizationconfig" title="Permalink to this heading">¶</a></h1>
+<p><strong>The following API can be used to configure the gradual activation quantization when using GPTQ.</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.gptq.GradualActivationQuantizationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GradualActivationQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_fraction_scheduler_policy=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GradualActivationQuantizationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration for Gradual Activation Quantization.</p>
+<p>By default, the quantized fraction increases linearly from 0 to 1 throughout the training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>q_fraction_scheduler_policy</strong> – config for the scheduling of the quantized fraction.
+Only linear annealing is currently supported.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="qfractionlinearannealingconfig">
+<h1>QFractionLinearAnnealingConfig<a class="headerlink" href="#qfractionlinearannealingconfig" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.gptq.QFractionLinearAnnealingConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">QFractionLinearAnnealingConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_q_fraction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_q_fraction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.QFractionLinearAnnealingConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config for the quantized fraction linear scheduler of Gradual Activation Quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>initial_q_fraction</strong> – initial quantized fraction</p></li>
+<li><p><strong>target_q_fraction</strong> – target quantized fraction</p></li>
+<li><p><strong>start_step</strong> – gradient step to begin annealing</p></li>
+<li><p><strong>end_step</strong> – gradient step to complete annealing. None means last step.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 
 
             <div class="clearer"></div>
@@ -120,6 +155,8 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 <li><a class="reference internal" href="#">GradientPTQConfig Class</a></li>
 <li><a class="reference internal" href="#gptqhessianscoresconfig-class">GPTQHessianScoresConfig Class</a></li>
 <li><a class="reference internal" href="#roundingtype">RoundingType</a></li>
+<li><a class="reference internal" href="#gradualactivationquantizationconfig">GradualActivationQuantizationConfig</a></li>
+<li><a class="reference internal" href="#qfractionlinearannealingconfig">QFractionLinearAnnealingConfig</a></li>
 </ul>
 
   </div>
@@ -143,7 +180,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>

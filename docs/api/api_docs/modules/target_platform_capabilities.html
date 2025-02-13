@@ -1,0 +1,504 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>target_platform_capabilities Module &#8212; MCT Documentation: ver 2.3.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">target_platform_capabilities Module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="target-platform-capabilities-module">
+<span id="ug-target-platform-capabilities"></span><h1>target_platform_capabilities Module<a class="headerlink" href="#target-platform-capabilities-module" title="Permalink to this heading">¶</a></h1>
+<p>MCT can be configured to quantize and optimize models for different hardware settings.
+For example, when using qnnpack backend for Pytorch model inference, Pytorch <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/torch/ao/quantization/qconfig.py#L199">quantization
+configuration</a>
+uses <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/torch/ao/quantization/observer.py#L1429">per-tensor weights quantization</a>
+for Conv2d, while when using tflite modeling, Tensorflow uses <a class="reference external" href="https://www.tensorflow.org/lite/performance/quantization_spec#per-axis_vs_per-tensor">per-channel weights quantization for
+Conv2D</a>.</p>
+<p>This can be addressed in MCT by using the target_platform_capabilities module, that can configure different
+parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
+Models for IMX500, TFLite and qnnpack can be observed <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/target_platform_capabilities">here</a>, and can be used using <a class="reference internal" href="../methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities function</span></a>.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For now, some fields of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpQuantizationConfig</span></code> are ignored during
+the optimization process such as quantization_preserving, fixed_scale, and fixed_zero_point.</p>
+<ul class="simple">
+<li><p>MCT will use more information from <code class="xref py py-class docutils literal notranslate"><span class="pre">OpQuantizationConfig</span></code>, in the future.</p></li>
+</ul>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The object MCT should get called TargetPlatformCapabilities (or shortly TPC).
+This diagram demonstrates the main components:</p>
+<a class="reference internal image-reference" href="../../../images/tpc_diagram.png"><img alt="../../../images/tpc_diagram.png" src="../../../images/tpc_diagram.png" style="width: 683.2px; height: 542.4px;" /></a>
+<p>Now, we will detail about the different components.</p>
+<section id="quantizationmethod">
+<h2>QuantizationMethod<a class="headerlink" href="#quantizationmethod" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.QuantizationMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.</span></span><span class="sig-name descname"><span class="pre">QuantizationMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.QuantizationMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for quantization function selection:</p>
+<p>POWER_OF_TWO - Symmetric, uniform, threshold is power of two quantization.</p>
+<p>LUT_POT_QUANTIZER - quantization using a lookup table and power of 2 threshold.</p>
+<p>SYMMETRIC - Symmetric, uniform, quantization.</p>
+<p>UNIFORM - uniform quantization,</p>
+<p>LUT_SYM_QUANTIZER - quantization using a lookup table and symmetric threshold.</p>
+</dd></dl>
+
+</section>
+<section id="opquantizationconfig">
+<h2>OpQuantizationConfig<a class="headerlink" href="#opquantizationconfig" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OpQuantizationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>OpQuantizationConfig is a class to configure the quantization parameters of an operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>default_weight_attr_config</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig"><em>AttributeQuantizationConfig</em></a>) – A default attribute quantization configuration for the operation.</p></li>
+<li><p><strong>attr_weights_configs_mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig"><em>AttributeQuantizationConfig</em></a><em>]</em>) – A mapping between an op attribute name and its quantization configuration.</p></li>
+<li><p><strong>activation_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.QuantizationMethod" title="model_compression_toolkit.target_platform_capabilities.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for activation quantization.</p></li>
+<li><p><strong>activation_n_bits</strong> (<em>int</em>) – Number of bits to quantize the activations.</p></li>
+<li><p><strong>supported_input_activation_n_bits</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>]</em>) – Number of bits that operator accepts as input.</p></li>
+<li><p><strong>enable_activation_quantization</strong> (<em>bool</em>) – Whether to quantize the model activations or not.</p></li>
+<li><p><strong>quantization_preserving</strong> (<em>bool</em>) – Whether quantization parameters should be the same for an operator’s input and output.</p></li>
+<li><p><strong>fixed_scale</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Scale to use for an operator quantization parameters.</p></li>
+<li><p><strong>fixed_zero_point</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Zero-point to use for an operator quantization parameters.</p></li>
+<li><p><strong>simd_size</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.</p></li>
+<li><p><strong>signedness</strong> (<em>Signedness</em>) – Set activation quantization signedness.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p>
+</dd></dl>
+
+</section>
+<section id="attributequantizationconfig">
+<h2>AttributeQuantizationConfig<a class="headerlink" href="#attributequantizationconfig" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.</span></span><span class="sig-name descname"><span class="pre">AttributeQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds the quantization configuration of a weight attribute of a layer.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.weights_quantization_method">
+<span class="sig-name descname"><span class="pre">weights_quantization_method</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.weights_quantization_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>The method to use from QuantizationMethod for weights quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.QuantizationMethod" title="model_compression_toolkit.target_platform_capabilities.QuantizationMethod">QuantizationMethod</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.weights_n_bits">
+<span class="sig-name descname"><span class="pre">weights_n_bits</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.weights_n_bits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of bits to quantize the coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.weights_per_channel_threshold">
+<span class="sig-name descname"><span class="pre">weights_per_channel_threshold</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.weights_per_channel_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates whether to quantize the weights per-channel or per-tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.enable_weights_quantization">
+<span class="sig-name descname"><span class="pre">enable_weights_quantization</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.enable_weights_quantization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates whether to quantize the model weights or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.lut_values_bitwidth">
+<span class="sig-name descname"><span class="pre">lut_values_bitwidth</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.AttributeQuantizationConfig.lut_values_bitwidth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of bits to use when quantizing in a look-up table.
+If None, defaults to 8 in hptq; otherwise, it uses the provided value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p>
+</dd></dl>
+
+</section>
+<section id="quantizationconfigoptions">
+<h2>QuantizationConfigOptions<a class="headerlink" href="#quantizationconfigoptions" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.</span></span><span class="sig-name descname"><span class="pre">QuantizationConfigOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>QuantizationConfigOptions wraps a set of quantization configurations to consider during the quantization of an operator.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions.quantization_configurations">
+<span class="sig-name descname"><span class="pre">quantization_configurations</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions.quantization_configurations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuple of possible OpQuantizationConfig to gather.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OpQuantizationConfig" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OpQuantizationConfig">OpQuantizationConfig</a>, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions.base_config">
+<span class="sig-name descname"><span class="pre">base_config</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions.base_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fallback OpQuantizationConfig to use when optimizing the model in a non-mixed-precision manner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OpQuantizationConfig" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OpQuantizationConfig">OpQuantizationConfig</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p>
+</dd></dl>
+
+</section>
+<section id="targetplatformcapabilities">
+<h2>TargetPlatformCapabilities<a class="headerlink" href="#targetplatformcapabilities" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.</span></span><span class="sig-name descname"><span class="pre">TargetPlatformCapabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the hardware configuration used for quantized model inference.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.default_qco">
+<span class="sig-name descname"><span class="pre">default_qco</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.default_qco" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default quantization configuration options for the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions">QuantizationConfigOptions</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.operator_set">
+<span class="sig-name descname"><span class="pre">operator_set</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.operator_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuple of operator sets within the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[Tuple[<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet">OperatorsSet</a>, …]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.fusing_patterns">
+<span class="sig-name descname"><span class="pre">fusing_patterns</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.fusing_patterns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuple of fusing patterns for the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[Tuple[<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing">Fusing</a>, …]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.tpc_minor_version">
+<span class="sig-name descname"><span class="pre">tpc_minor_version</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.tpc_minor_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minor version of the Target Platform Configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.tpc_patch_version">
+<span class="sig-name descname"><span class="pre">tpc_patch_version</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.tpc_patch_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Patch version of the Target Platform Configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.tpc_platform_type">
+<span class="sig-name descname"><span class="pre">tpc_platform_type</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.tpc_platform_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of the platform for the Target Platform Configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.add_metadata">
+<span class="sig-name descname"><span class="pre">add_metadata</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.add_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to determine if metadata should be added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the Target Platform Model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.is_simd_padding">
+<span class="sig-name descname"><span class="pre">is_simd_padding</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.is_simd_padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates if SIMD padding is applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.SCHEMA_VERSION">
+<span class="sig-name descname"><span class="pre">SCHEMA_VERSION</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.TargetPlatformCapabilities.SCHEMA_VERSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version of the schema for the Target Platform Model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p>
+</dd></dl>
+
+</section>
+<section id="operatorsset">
+<h2>OperatorsSet<a class="headerlink" href="#operatorsset" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.</span></span><span class="sig-name descname"><span class="pre">OperatorsSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of operators that are represented by a unique label.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The set’s label (must be unique within a TargetPlatformCapabilities).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[str, OperatorSetNames]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet.qc_options">
+<span class="sig-name descname"><span class="pre">qc_options</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet.qc_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration options to use for this set of operations.
+If None, it represents a fusing set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.QuantizationConfigOptions">QuantizationConfigOptions</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet.type">
+<span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fixed type identifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Literal[“OperatorsSet”]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p>
+</dd></dl>
+
+</section>
+<section id="fusing">
+<h2>Fusing<a class="headerlink" href="#fusing" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.</span></span><span class="sig-name descname"><span class="pre">Fusing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fusing defines a tuple of operators that should be combined and treated as a single operator,
+hence no quantization is applied between them.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing.operator_groups">
+<span class="sig-name descname"><span class="pre">operator_groups</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing.operator_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>A tuple of operator groups,
+each being either an OperatorSetGroup or an OperatorsSet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Union[<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet">OperatorsSet</a>, <a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup">OperatorSetGroup</a>], …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.Fusing.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name for the Fusing instance. If not provided, it is generated from the operator groups’ names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p>
+</dd></dl>
+
+</section>
+<section id="operatorsetgroup">
+<h2>OperatorSetGroup<a class="headerlink" href="#operatorsetgroup" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.</span></span><span class="sig-name descname"><span class="pre">OperatorSetGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate a tuple of operator sets to treat them similarly in different places (like fusing).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup.operators_set">
+<span class="sig-name descname"><span class="pre">operators_set</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup.operators_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuple of operator sets to group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[<a class="reference internal" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet" title="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorsSet">OperatorsSet</a>, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema.OperatorSetGroup.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenated name generated from the names of the operator sets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">target_platform_capabilities Module</a><ul>
+<li><a class="reference internal" href="#quantizationmethod">QuantizationMethod</a></li>
+<li><a class="reference internal" href="#opquantizationconfig">OpQuantizationConfig</a></li>
+<li><a class="reference internal" href="#attributequantizationconfig">AttributeQuantizationConfig</a></li>
+<li><a class="reference internal" href="#quantizationconfigoptions">QuantizationConfigOptions</a></li>
+<li><a class="reference internal" href="#targetplatformcapabilities">TargetPlatformCapabilities</a></li>
+<li><a class="reference internal" href="#operatorsset">OperatorsSet</a></li>
+<li><a class="reference internal" href="#fusing">Fusing</a></li>
+<li><a class="reference internal" href="#operatorsetgroup">OperatorSetGroup</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">target_platform_capabilities Module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>
