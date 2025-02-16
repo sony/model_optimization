@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
-    VirtualSplitWeightsNode
+    VirtualSplitWeightsNode, VirtualSplitActivationNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
@@ -117,7 +117,7 @@ class ResourceUtilizationCalculator:
     }
 
     unexpected_qc_error = 'Custom quantization configuration is not expected for non-custom bit mode.'
-    invalid_qc_keys_error = 'Custom quantization configuration should define nodes by names.'
+    unexpected_qc_nodes_error = 'Custom quantization configuration contains unexpected node names.'
 
     def __init__(self, graph: Graph, fw_impl: FrameworkImplementation, fw_info: FrameworkInfo):
         self.graph = graph
@@ -133,6 +133,7 @@ class ResourceUtilizationCalculator:
             if n.weights:
                 self._params_cnt[n.name] = {k: v.size for k, v in n.weights.items()}
         self._cuts: Optional[Dict[Cut, List[BaseNode]]] = None
+        self._nodes_names = set(n.name for n in graph.nodes)
 
     @property
     def cuts(self) -> Dict[Cut, List[BaseNode]]:
@@ -465,25 +466,21 @@ class ResourceUtilizationCalculator:
             - Total BOPS count of the network.
             - Detailed BOPS count per node.
         """
-        if target_criterion != TargetInclusionCriterion.AnyQuantized:    # pragma: no cover
-            raise NotImplementedError('BOPS computation is currently only supported for quantized targets.')
-
         self._validate_custom_qcs(act_qcs, bitwidth_mode)
         self._validate_custom_qcs(w_qcs, bitwidth_mode)
 
-        nodes = self._collect_target_nodes_w_attrs(target_criterion, include_reused=True)
-        # filter out nodes with only positional weights # TODO add as arg to get target nodes
-        nodes = [n for n in nodes if n.has_kernel_weight_to_quantize(self.fw_info)]
-
         nodes_bops = {}
-        for n in nodes:
+        for n in self.graph.get_topo_sorted_nodes():
             w_qc = w_qcs.get(n.name) if w_qcs else None
-            nodes_bops[n.name] = self.compute_node_bops(n, bitwidth_mode, act_qcs=act_qcs, w_qc=w_qc)
+            bops = self.compute_node_bops(n, target_criterion, bitwidth_mode, act_qcs=act_qcs, w_qc=w_qc)
+            if bops:
+                nodes_bops[n.name] = bops
 
         return sum(nodes_bops.values()), nodes_bops
 
     def compute_node_bops(self,
                           n: BaseNode,
+                          target_criterion: Optional[TargetInclusionCriterion],
                           bitwidth_mode: BitwidthMode,
                           act_qcs: Optional[ActivationQCfgPerNode] = None,
                           w_qc: Optional[NodeWeightsQuantizationConfig] = None) -> Union[float, int]:
@@ -492,6 +489,7 @@ class ResourceUtilizationCalculator:
 
         Args:
             n: node.
+            target_criterion: criterion to include nodes for computation.
             bitwidth_mode: bit-width mode for the computation.
             act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
               In custom mode, must provide configuration for all configurable activations. For non-configurable
@@ -503,28 +501,52 @@ class ResourceUtilizationCalculator:
         Returns:
             Node's BOPS count.
         """
-        self._validate_custom_qcs(act_qcs, bitwidth_mode)
+        if target_criterion is None:
+            target_criterion = TargetInclusionCriterion.Any
+        if target_criterion not in [TargetInclusionCriterion.AnyQuantized, TargetInclusionCriterion.Any]:
+            raise ValueError('BOPS computation is supported only for Any and AnyQuantized targets.')
 
-        node_mac = self.fw_impl.get_node_mac_operations(n, self.fw_info)
+        self._validate_custom_qcs(act_qcs, bitwidth_mode)
+        if w_qc and bitwidth_mode != BitwidthMode.QCustom:
+            raise ValueError(self.unexpected_qc_error)
+
+        # extract the original weight node for mac computation
+        orig_w_node = n
+        if isinstance(n, VirtualActivationWeightsNode):
+            orig_w_node = n.original_weights_node
+        # TODO remove from substitution? If not, it looks like mac can be computed from the virtual node, need to check in integration
+        if isinstance(orig_w_node, VirtualSplitWeightsNode):
+            orig_w_node = orig_w_node.origin_node
+
+        # check if the node has kernel
+        kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
+        if len(kernel_attrs) > 1:  # pragma: no cover
+            raise NotImplementedError('Multiple kernel attributes are not supported for BOPS computation.')
+        if not kernel_attrs or not kernel_attrs[0]:
+            return 0
+
+        kernel_attr = kernel_attrs[0]
+        node_mac = self.fw_impl.get_node_mac_operations(orig_w_node, self.fw_info)
         if node_mac == 0:    # pragma: no cover
             return node_mac
 
-        incoming_edges = self.graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
-        # TODO temporary adding this for const_representation test in torch which has Linear with const input
-        if not incoming_edges:    # pragma: no cover
+        # find the activation node from which to get quantization info and for which to look in custom configuration
+        if isinstance(n, VirtualActivationWeightsNode):
+            # we don't need the original node (and cannot use it for custom configuration anyway)
+            a_node = n
+        else:
+            incoming_edges = self.graph.incoming_edges(n)
+            assert len(incoming_edges) == 1, \
+                f'Unexpected number of inputs {len(incoming_edges)} for BOPS calculation. Expected 1.'
+            a_node = incoming_edges[0].source_node
+
+        if (target_criterion == TargetInclusionCriterion.AnyQuantized and
+                not (a_node.is_activation_quantization_enabled() or n.is_weights_quantization_enabled(kernel_attr))):
             return 0
-        assert len(incoming_edges) == 1, \
-            f'Unexpected number of inputs {len(incoming_edges)} for BOPS calculation. Expected 1.'
-        input_act_node = incoming_edges[0].source_node
-        act_qc = act_qcs.get(input_act_node.name) if act_qcs else None
-        a_nbits = self._get_activation_nbits(input_act_node, bitwidth_mode, act_qc)
 
-        kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
-        if len(kernel_attrs) > 1:    # pragma: no cover
-            raise NotImplementedError('Multiple kernel attributes are not supported for BOPS computation.')
-        kernel_attr = kernel_attrs[0]
+        act_qc = act_qcs.get(a_node.name) if act_qcs else None
+        a_nbits = self._get_activation_nbits(a_node, bitwidth_mode, act_qc)
         w_nbits = self._get_weight_nbits(n, kernel_attr, bitwidth_mode, w_qc)
-
         node_bops = a_nbits * w_nbits * node_mac
         return node_bops
 
@@ -746,5 +768,6 @@ class ResourceUtilizationCalculator:
         if bitwidth_mode != BitwidthMode.QCustom:
             raise ValueError(self.unexpected_qc_error)
 
-        if any(not isinstance(k, str) for k in qcs.keys()):
-            raise ValueError(self.invalid_qc_keys_error)
+        unknown_nodes = set(qcs.keys()) - self._nodes_names
+        if unknown_nodes:
+            raise ValueError(self.unexpected_qc_nodes_error, unknown_nodes)

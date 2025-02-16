@@ -27,6 +27,8 @@ from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements, \
     ActivationMemoryTensor
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
+    VirtualSplitWeightsNode, VirtualSplitActivationNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
@@ -53,7 +55,10 @@ class TestUtilization:
 
 
 class TestComputeResourceUtilization:
-    """ Test compute_resource_utilization public api. """
+    """ Test compute_resource_utilization public api.
+
+        compute_resource_utilization on a virtual graph is tested in TestBOPSAndVirtualGraph
+    """
     @pytest.fixture(autouse=True)
     def setup(self, graph_mock, fw_impl_mock, fw_info_mock):
         n1 = build_node('n1', qcs=[build_qc()], output_shape=(None, 5, 10))
@@ -64,7 +69,7 @@ class TestComputeResourceUtilization:
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
 
-        fw_info_mock.get_kernel_op_attributes = Mock(return_value = ['foo'])    # for bops
+        fw_info_mock.get_kernel_op_attributes = Mock(return_value=['foo'])    # for bops
         fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n == n2 else 0    # for bops
 
         ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
@@ -177,31 +182,31 @@ class TestComputeResourceUtilization:
 
     def test_unexpected_custom_qcs_for_targets(self):
         with pytest.raises(ValueError, match='Activation configuration passed but no relevant ru_targets requested.'):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'n': Mock()},
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'n1': Mock()},
                                                       ru_targets=[RUTarget.WEIGHTS])
 
         with pytest.raises(ValueError, match='Weight configuration passed but no relevant ru_targets requested.'):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'n': Mock()},
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'n1': Mock()},
                                                       ru_targets=[RUTarget.ACTIVATION])
 
     def test_allowed_unexpected_custom_qcs_for_targets(self):
         ru_calc = self.ru_calc
-        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'n': Mock()}, ru_targets=[RUTarget.WEIGHTS],
+        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'n1': Mock()}, ru_targets=[RUTarget.WEIGHTS],
                                              allow_unused_qcs=True)
         # unexpected config is converted to None
         ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
 
-        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'n': Mock()}, ru_targets=[RUTarget.ACTIVATION],
+        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'n1': Mock()}, ru_targets=[RUTarget.ACTIVATION],
                                              allow_unused_qcs=True)
         # unexpected config is converted to None
         ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
 
     def test_invalid_custom_qcs(self):
-        with pytest.raises(ValueError, match=self.ru_calc.invalid_qc_keys_error):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={build_node(): Mock()})
+        with pytest.raises(ValueError, match=self.ru_calc.unexpected_qc_nodes_error):
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'unknown': Mock()})
 
-        with pytest.raises(ValueError, match=self.ru_calc.invalid_qc_keys_error):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={build_node(): Mock()})
+        with pytest.raises(ValueError, match=self.ru_calc.unexpected_qc_nodes_error):
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'unknown': Mock()})
 
     def _validate(self, ret, detailed, exp_ru: ResourceUtilization):
         ru = ret[0] if detailed else ret
@@ -377,9 +382,9 @@ class TestComputeActivationTensorsUtilization:
 
     def test_compute_act_tensors_util_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
-        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.invalid_qc_keys_error):
+        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_nodes_error):
             ru_calc.compute_activation_tensors_utilization(TIC.Any, BitwidthMode.QCustom,
-                                                           act_qcs={build_node(): Mock()})
+                                                           act_qcs={'unknown': Mock()})
 
 
 class TestActivationMaxCutUtilization:
@@ -554,8 +559,8 @@ class TestActivationMaxCutUtilization:
 
     def test_compute_act_utilization_by_cut_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
-        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.invalid_qc_keys_error):
-            ru_calc.compute_activation_utilization_by_cut(TIC.Any, BM.QCustom, act_qcs={build_node(): Mock()})
+        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_nodes_error):
+            ru_calc.compute_activation_utilization_by_cut(TIC.Any, BM.QCustom, act_qcs={'unknown': Mock()})
 
 
 class TestWeightUtilizationMethods:
@@ -858,8 +863,8 @@ class TestComputeWeightUtilization:
 
     def test_compute_w_utilization_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
-        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.invalid_qc_keys_error):
-            ru_calc.compute_weights_utilization(TIC.Any, BM.QCustom, w_qcs={build_node(): Mock()})
+        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_nodes_error):
+            ru_calc.compute_weights_utilization(TIC.Any, BM.QCustom, w_qcs={'unknown': Mock()})
 
 
 class TestCalculatorMisc:
@@ -892,3 +897,281 @@ class TestCalculatorMisc:
         n6 = build_node('n6')
         with pytest.raises(ValueError, match=fr'Could not topo-sort, nodes \[{n6}\] do not match the graph nodes'):
             ru_calc._topo_sort([n1, n2, n6])
+
+
+class BOPNode:
+    pass
+
+
+class TestBOPSAndVirtualGraph:
+    def test_compute_regular_node_bops(self, fw_impl_mock, fw_info_mock):
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n.name == 'n2' else 0
+
+        # a quantized, w quantized
+        graph, n1, n2, _ = self._build_regular_node_graph(True, True)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.Float) == 42*32*32
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.Q8Bit) == 42*8*8
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 42*7*2
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMaxBit) == 42*16*4
+
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QMaxBit) == 42*16*4
+        assert ru_calc.compute_node_bops(n2, None, BM.QMaxBit) == 42*16*4
+
+        assert ru_calc.compute_node_bops(n1, None, BM.Float) == 0
+
+        # a quantized, w not quantized - should be selected by AnyQuantized
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=True, enable_wq=False)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 42 * 7 * 32
+
+        # a not quantized, w quantized - should be selected by AnyQuantized
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=False, enable_wq=True)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 42 * 32 * 2
+
+        # a not quantized, w not quantized - should not be selected by AnyQuantized
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=False, enable_wq=False)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 0
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QMinBit) == 42 * 32 * 32
+
+    def test_compute_regular_node_bops_custom(self, fw_impl_mock, fw_info_mock):
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n.name == 'n2' else 0
+
+        custom_qc1 = build_qc(3)
+        custom_qc2 = build_qc(5, w_attr={'foo': (6, True)})
+        a_cfg = {'n1': custom_qc1.activation_quantization_cfg,
+                 'n2': custom_qc2.activation_quantization_cfg,
+                 'n3': Mock()}
+
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=False, enable_wq=False)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QCustom,
+                                         act_qcs=a_cfg, w_qc=custom_qc2.weights_quantization_cfg) == 42 * 3 * 6
+        assert ru_calc.compute_node_bops(n2, None, BM.QCustom,
+                                         act_qcs=a_cfg, w_qc=custom_qc2.weights_quantization_cfg) == 42 * 3 * 6
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QCustom,
+                                         act_qcs=a_cfg, w_qc=custom_qc2.weights_quantization_cfg) == 0
+
+    def test_compute_node_bops_default_qc(self, fw_impl_mock, fw_info_mock):
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n.name == 'n2' else 0
+
+        n1 = build_node('n1', qcs=[build_qc(7)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
+                        canonical_weights={'foo': np.zeros((3, 14))},
+                        qcs=[build_qc(w_attr={'foo': (6, True)})])
+        n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17))
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QCustom) == 42 * 7 * 6
+
+    # def test_compute_regular_node_bops_mult_a_outputs(self, fw_impl_mock, fw_info_mock):
+    #     n1 = build_node('n1', qcs=[build_qc()], output_shape=(None, 5, 10))
+    #     n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 3),
+    #                     canonical_weights={'foo': np.zeros((3, 14))},
+    #                     qcs=[build_qc(w_attr={'foo': (4, True)})])
+    #     n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17), input_shape=[(2, 3), (None, 5, 10)])
+    #     # n1 output edge goes to 2 nodes
+    #     graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+    #                   edge_list=[Edge(n1, n2, 0, 0), Edge(n1, n3, 0, 1), Edge(n2, n3, 0, 0)])
+    #     ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+    #     assert ru_calc.compute_node_bops(n2, TIC.Any, BM.Float) == 0
+    #
+    #     # n1 has multiple outputs, but relevant edge goes to a single node
+    #     n1 = build_node('n1', qcs=[build_qc()], output_shape=[(None, 5, 10), (None, 2, 3)])
+    #     graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+    #                   edge_list=[Edge(n1, n2, 0, 0), Edge(n1, n3, 1, 1), Edge(n2, n3, 0, 0)])
+    #     ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+    #     assert ru_calc.compute_node_bops(n2, TIC.Any, BM.Float) == 0
+
+    def test_compute_virtual_aw_node_bops_fully_quantized(self, fw_impl_mock, fw_info_mock):
+        # all quantized
+        g, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                   quantize_a1=True, quantize_w1=True,
+                                                                   quantize_a2=True, quantize_w2=True)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.Float) == 42 * 32 * 32
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.Q8Bit) == 42 * 8 * 8
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMinBit) == 42 * 4 * 6
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMaxBit) == 42 * 16 * 16
+
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.Float) == 142 * 32 * 32
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.Q8Bit) == 142 * 8 * 8
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMinBit) == 142 * 2 * 2
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMaxBit) == 142 * 5 * 6
+
+        assert ru_calc.compute_node_bops(a2, TIC.AnyQuantized, BM.Float) == 0
+
+        assert ru_calc.compute_node_bops(w3, TIC.AnyQuantized, BM.QMaxBit) == 142 * 7 * 6
+
+    def test_compute_virtual_aw_node_bops_half_quantized(self, fw_impl_mock, fw_info_mock):
+        g, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                   quantize_a1=True, quantize_w1=False,
+                                                                   quantize_a2=False, quantize_w2=True)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMaxBit) == 42 * 16 * 32
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMaxBit) == 142 * 32 * 6
+
+    def test_compute_virtual_aw_node_bops_unquantized(self, fw_impl_mock, fw_info_mock):
+        g, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                   quantize_a1=False, quantize_w1=False,
+                                                                   quantize_a2=False, quantize_w2=False)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMaxBit) == 0
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMaxBit) == 0
+
+        assert ru_calc.compute_node_bops(a1w2, TIC.Any, BM.QMaxBit) == 42 * 32 * 32
+        assert ru_calc.compute_node_bops(a2w3, TIC.Any, BM.QMaxBit) == 142 * 32 * 32
+
+    def test_compute_virtual_aw_node_bops_custom(self, fw_impl_mock, fw_info_mock):
+        g, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                   quantize_a1=False, quantize_w1=False,
+                                                                   quantize_a2=True, quantize_w2=True)
+        custom_qc_a1w2 = build_qc(5, w_attr={'foo': (6, True)})
+        custom_qc_a2w3 = build_qc(7, w_attr={'bar': (3, True)})
+        a_cfg = {a1w2.name: custom_qc_a1w2.activation_quantization_cfg,
+                 a2w3.name: custom_qc_a2w3.activation_quantization_cfg}
+        w_a1w2 = custom_qc_a1w2.weights_quantization_cfg
+        w_a2w3 = custom_qc_a2w3.weights_quantization_cfg
+
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(a1w2, TIC.Any, BM.QCustom, act_qcs=a_cfg, w_qc=w_a1w2) == 42 * 5 * 6
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QCustom, act_qcs=a_cfg, w_qc=w_a1w2) == 0
+
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QCustom, act_qcs=a_cfg, w_qc=w_a2w3) == 142 * 7 * 3
+
+    @pytest.mark.parametrize('bm', set(BitwidthMode) - {BM.QCustom})
+    def test_node_bops_unexpected_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock, bm):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match=ru_calc.unexpected_qc_error):
+            ru_calc.compute_node_bops(Mock(), TIC.Any, bm, act_qcs=Mock())
+
+        with pytest.raises(ValueError, match=ru_calc.unexpected_qc_error):
+            ru_calc.compute_node_bops(Mock(), TIC.Any, bm, w_qc=Mock())
+
+    def test_node_bops_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match=ru_calc.unexpected_qc_nodes_error):
+            ru_calc.compute_node_bops(Mock(), TIC.Any, BM.QCustom, act_qcs={'unknown': Mock()})
+
+    @pytest.mark.parametrize('target_criterion', set(TIC) - {TIC.Any, TIC.AnyQuantized})
+    def test_node_bops_invalid_criterion(self, graph_mock, fw_impl_mock, fw_info_mock, target_criterion):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match='BOPS computation is supported only for Any and AnyQuantized targets.'):
+            ru_calc.compute_node_bops(Mock(), target_criterion, BM.Float)
+
+    def test_compute_bops(self, fw_impl_mock, fw_info_mock,):
+        class BOPNode2:
+            pass
+
+        n1 = build_node('n1', qcs=[build_qc(16, True)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
+                        canonical_weights={'mp': np.zeros((3, 14))},
+                        qcs=[
+                            build_qc(7, w_attr={'mp': (4, True)}),
+                            build_qc(7, w_attr={'mp': (2, True)})
+                        ])
+
+        n3 = build_node('n3', layer_class=BOPNode2, output_shape=(None, 17),
+                        canonical_weights={'sp': np.zeros((3, 14, 15))},
+                        qcs=[build_qc(w_attr={'sp': (5, True)})])
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
+
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: {BOPNode: ['mp'], BOPNode2: ['sp']}.get(node_type) or []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: {'n2': 42, 'n3': 630}.get(n.name, 0)
+        topo = graph.get_topo_sorted_nodes()
+        graph.get_topo_sorted_nodes = Mock(return_value=topo[::-1])
+
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        total, detailed = ru_calc.compute_bops(TIC.Any, BM.QMaxBit)
+        assert list(detailed.keys()) == ['n3', 'n2']
+        assert detailed == {'n2': 42 * 16 * 4,
+                            'n3': 630 * 7 * 5}
+        assert total == 42 * 64 + 630 * 35
+
+        custom_qc = build_qc(9, w_attr={'mp': (7, True)})
+        a_cfg = {'n1': build_qc(4, False).activation_quantization_cfg}
+        w_cfg = {'n2': custom_qc.weights_quantization_cfg}
+        total, detailed = ru_calc.compute_bops(TIC.Any, BM.QCustom, a_cfg, w_cfg)
+        assert detailed == {'n2': 42 * 32 * 7,
+                            'n3': 630 * 7 * 5}
+
+    def test_compute_virtual_graph_resources(self, fw_impl_mock, fw_info_mock):
+        g, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock, True, True, True, True)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        ru, detailed = ru_calc.compute_resource_utilization(TIC.Any, BM.QMaxBit, return_detailed=True)
+        assert (sorted(list(detailed[RUTarget.ACTIVATION].values())) ==
+                sorted([24, 24 + 50*2, 50*2+88*5/8, 88*5/8 + 24*7/8, 24*7/8, 0])), detailed[RUTarget.ACTIVATION]
+        assert detailed[RUTarget.WEIGHTS] == {a1w2.name: 42*2, a2w3.name: 142*6/8, w3.name: 142*6/8}
+        assert detailed[RUTarget.BOPS] == {a1w2.name: 42*16*16, a2w3.name: 142*5*6, w3.name: 142*7*6}
+        assert ru == ResourceUtilization(weights_memory=84 + 142*1.5,
+                                         activation_memory=155,
+                                         total_memory=155+297,
+                                         bops=42*256+142*30+142*42)
+
+    def _build_regular_node_graph(self, enable_aq, enable_wq):
+        n1 = build_node('n1', qcs=[build_qc(16, enable_aq), build_qc(7, enable_aq)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
+                        canonical_weights={'foo': np.zeros((3, 14)),
+                                           'bar': np.zeros((15, 9, 2, 6))},
+                        qcs=[
+                            build_qc(w_attr={'foo': (4, enable_wq), 'bar': (8, True)}),
+                            build_qc(w_attr={'foo': (2, enable_wq), 'bar': (8, True)})
+                        ])
+        n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17))
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
+        return graph, n1, n2, n3
+
+    def _build_virtual_node_graph(self, fw_impl_mock, fw_info_mock, quantize_w1, quantize_w2, quantize_a1, quantize_a2):
+
+        class BOPNode2:
+            pass
+
+        class ActType:
+            pass
+
+        # define original nodes
+        n_in = build_node('in', qcs=[build_qc()], output_shape=(None, 2, 3, 4))
+        n1 = build_node('n1', qcs=[build_qc(16, quantize_a1),
+                                   build_qc(4, quantize_a1)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 44),
+                        canonical_weights={'foo': np.zeros((3, 14))},
+                        qcs=[
+                            build_qc(2, quantize_a2, w_attr={'foo': (16, quantize_w1)}),
+                            build_qc(3, quantize_a2, w_attr={'foo': (10, quantize_w1)}),
+                            build_qc(4, quantize_a2, w_attr={'foo': (7, quantize_w1)}),
+                            build_qc(5, quantize_a2, w_attr={'foo': (6, quantize_w1)}),
+                        ])
+        n3 = build_node('n3', layer_class=BOPNode2, output_shape=(None, 24),
+                        canonical_weights={'bar': np.zeros((2, 71))},
+                        qcs=[
+                            build_qc(4, w_attr={'bar': (6, quantize_w2)}),
+                            build_qc(5, w_attr={'bar': (5, quantize_w2)}),
+                            build_qc(6, w_attr={'bar': (4, quantize_w2)}),
+                            build_qc(7, w_attr={'bar': (2, quantize_w2)})
+                        ])
+
+        def get_kernel_attr(node_type):
+            return {BOPNode: ['foo'], BOPNode2: ['bar']}.get(node_type) or []
+        fw_info_mock.get_kernel_op_attributes = get_kernel_attr
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: {n2: 42, n3: 142}.get(n, 0)
+
+        # virtual aw node made of original nodes
+        a1w2 = VirtualActivationWeightsNode(act_node=n1, weights_node=n2, fw_info=fw_info_mock, **n2.__dict__)
+        a2 = VirtualSplitActivationNode(n2, ActType, {})
+        w3 = VirtualSplitWeightsNode(n3, 'bar')
+        # virtual aw node made of virtual split a, w nodes
+        a2w3 = VirtualActivationWeightsNode(act_node=a2, weights_node=w3, fw_info=fw_info_mock, **n3.__dict__)
+        a3 = VirtualSplitActivationNode(n3, ActType, {})
+        g = Graph('g', nodes=[a1w2, a2w3, a3], input_nodes=[n_in], output_nodes=[w3],
+                  edge_list=[Edge(n_in, a1w2, 0, 0), Edge(a1w2, a2w3, 0, 0), Edge(a2w3, a3, 0, 0), Edge(a3, w3, 0, 0)])
+        return g, a1w2, a2, a2w3, w3, a3

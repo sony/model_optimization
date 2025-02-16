@@ -79,6 +79,9 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
             c.activation_quantization_cfg.enable_activation_quantization = False
             c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
 
+    def get_total_output_params(self) -> float:
+        return 0
+
 
 class VirtualSplitActivationNode(VirtualSplitNode):
     """
@@ -189,6 +192,9 @@ class VirtualActivationWeightsNode(BaseNode):
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
         self.candidates_quantization_cfg = v_candidates
+
+    def get_total_output_params(self) -> float:
+        return self.original_activation_node.get_total_output_params()
 
     def get_bops_count(self, fw_impl: Any, fw_info: FrameworkInfo, candidate_idx: int) -> float:
         """
