@@ -68,7 +68,8 @@ def create_tensor2node(graph: common.Graph,
 
     """
     current_sc = graph.get_out_stats_collector(node)
-    is_list_nostat_collectors = isinstance(current_sc, list) and len([sc for sc in current_sc if not isinstance(sc, common.NoStatsCollector)]) == 0
+    is_list_nostat_collectors = isinstance(current_sc, list) and len(
+        [sc for sc in current_sc if not isinstance(sc, common.NoStatsCollector)]) == 0
     if isinstance(current_sc, common.NoStatsCollector) or current_sc is None or is_list_nostat_collectors:
         stats_collector = common.StatsCollector(fw_info.out_channel_axis_mapping.get(node.type))
         graph.set_out_stats_collector_to_node(node, stats_collector)
@@ -102,13 +103,14 @@ class ModelCollector:
         self.hessian_service = hessian_info_service
         self.qc = qc
 
-        # Assign statisitcs collectors to nodes
+        # Assign statistics collectors to nodes
         for n in graph.get_topo_sorted_nodes():
             sc = create_stats_collector_for_node(n, fw_info=fw_info)  # Get static collector for the node
             # If we use bias correction, and the node has kernel weights to quantize, we need to make sure
             # its previous nodes' tensors are consistent with this node.
             kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-            if qc.weights_bias_correction and kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
+            if qc.weights_bias_correction and kernel_attr is not None and n.is_weights_quantization_enabled(
+                    kernel_attr):
                 for ie in graph.incoming_edges(n):
                     input_node = ie.source_node
                     create_tensor2node(graph,
@@ -116,7 +118,6 @@ class ModelCollector:
                                        fw_info)
             if sc is not None:
                 graph.set_out_stats_collector_to_node(n, sc)
-
 
         outputs_nodes = []  # List of graph nodes, the model should output their outputs.
         self.stats_containers_list = []  # List of output statistics containers of nodes ordered
@@ -139,12 +140,17 @@ class ModelCollector:
                 if out_stats_container.require_collection():
                     outputs_nodes.append(n)
                     self.stats_containers_list.append(out_stats_container)
-        self.outputs_nodes = outputs_nodes
+
+        # Append nodes from graph.get_outputs() that are not already in outputs_nodes for Hessian calculation
+        # for output nodes that don't collect statistics such as "permute", "transpose" etc.
+        # TODO: Add integration test for this case
+        self.outputs_nodes = outputs_nodes + [out.node for out in graph.get_outputs() if out.node not in outputs_nodes]
+
         # Build a float model and output all layers' outputs
         # (that should be collected) as the model's outputs
         self.model, _ = self.fw_impl.model_builder(graph,
                                                    mode=ModelBuilderMode.FLOAT,
-                                                   append2output=outputs_nodes,
+                                                   append2output=self.outputs_nodes,
                                                    fw_info=self.fw_info)
 
     def infer(self, inputs_list: List[np.ndarray]):
@@ -183,9 +189,11 @@ class ModelCollector:
         for td, hd, sc in zip(tensor_data, hessian_data, self.stats_containers_list):
             if isinstance(sc, (list, tuple)):
                 if not isinstance(td, (list, tuple)):
-                    Logger.critical(f"\'tensor_data\' is of type {type(td)} but must be of the same type as \'stats_containers_list\', which is of type {type(sc)}") # pragma: no cover
+                    Logger.critical(
+                        f"\'tensor_data\' is of type {type(td)} but must be of the same type as \'stats_containers_list\', which is of type {type(sc)}")  # pragma: no cover
                 if len(sc) != len(td):
-                    Logger.critical('\'tensor_data\' and \'stats_containers_list\' must have matching lengths') # pragma: no cover
+                    Logger.critical(
+                        '\'tensor_data\' and \'stats_containers_list\' must have matching lengths')  # pragma: no cover
                 for tdi, hdi, sci in zip(td, hd, sc):
                     hdi_numpy = hdi if hdi is None else self.fw_impl.to_numpy(hdi)
                     sci.update_statistics(self.fw_impl.to_numpy(tdi), self.fw_impl.to_numpy(hdi_numpy))
