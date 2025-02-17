@@ -539,6 +539,12 @@ class ResourceUtilizationCalculator:
             assert len(incoming_edges) == 1, \
                 f'Unexpected number of inputs {len(incoming_edges)} for BOPS calculation. Expected 1.'
             a_node = incoming_edges[0].source_node
+            # TODO keeping the previous behavior to submit gradually. Previously MP computed bops only from virtual combined nodes,
+            # and activation with multiple outputs is not converted into a virtual combined node, so this would create
+            # a mismatch between MP and data ru. However now MP uses this method as well, so there is no reason not to
+            # include it in the computation.
+            if len(self.graph.out_edges(a_node)) > 1:
+                return 0
 
         if (target_criterion == TargetInclusionCriterion.AnyQuantized and
                 not (a_node.is_activation_quantization_enabled() or n.is_weights_quantization_enabled(kernel_attr))):

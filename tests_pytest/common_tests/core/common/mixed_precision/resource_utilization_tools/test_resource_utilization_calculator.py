@@ -971,24 +971,27 @@ class TestBOPSAndVirtualGraph:
         ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
         assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QCustom) == 42 * 7 * 6
 
-    # def test_compute_regular_node_bops_mult_a_outputs(self, fw_impl_mock, fw_info_mock):
-    #     n1 = build_node('n1', qcs=[build_qc()], output_shape=(None, 5, 10))
-    #     n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 3),
-    #                     canonical_weights={'foo': np.zeros((3, 14))},
-    #                     qcs=[build_qc(w_attr={'foo': (4, True)})])
-    #     n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17), input_shape=[(2, 3), (None, 5, 10)])
-    #     # n1 output edge goes to 2 nodes
-    #     graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
-    #                   edge_list=[Edge(n1, n2, 0, 0), Edge(n1, n3, 0, 1), Edge(n2, n3, 0, 0)])
-    #     ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
-    #     assert ru_calc.compute_node_bops(n2, TIC.Any, BM.Float) == 0
-    #
-    #     # n1 has multiple outputs, but relevant edge goes to a single node
-    #     n1 = build_node('n1', qcs=[build_qc()], output_shape=[(None, 5, 10), (None, 2, 3)])
-    #     graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
-    #                   edge_list=[Edge(n1, n2, 0, 0), Edge(n1, n3, 1, 1), Edge(n2, n3, 0, 0)])
-    #     ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
-    #     assert ru_calc.compute_node_bops(n2, TIC.Any, BM.Float) == 0
+    def test_compute_regular_node_bops_mult_a_outputs(self, fw_impl_mock, fw_info_mock):
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n.name == 'n2' else 0
+
+        n1 = build_node('n1', qcs=[build_qc()], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 3),
+                        canonical_weights={'foo': np.zeros((3, 14))},
+                        qcs=[build_qc(w_attr={'foo': (4, True)})])
+        n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17), input_shape=[(2, 3), (None, 5, 10)])
+        # n1 output edge goes to 2 nodes
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n1, n3, 0, 1), Edge(n2, n3, 0, 0)])
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.Float) == 0
+
+        # n1 has multiple outputs, but relevant edge goes to a single node
+        n1 = build_node('n1', qcs=[build_qc()], output_shape=[(None, 5, 10), (None, 2, 3)])
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n1, n3, 1, 1), Edge(n2, n3, 0, 0)])
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.Float) == 0
 
     def test_compute_virtual_aw_node_bops_fully_quantized(self, fw_impl_mock, fw_info_mock):
         # all quantized
