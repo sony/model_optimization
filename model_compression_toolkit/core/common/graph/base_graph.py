@@ -449,7 +449,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         if node_to_remove in self.get_inputs():  # If node is in the graph's inputs, the inputs should be updated
             if new_graph_inputs is None:
                 Logger.critical(
-                    f'{node_to_remove.name} s among the graph inputs; however, it cannot be removed without providing a new input.')  # pragma: no cover
+                    f'{node_to_remove.name} is among the graph inputs; however, it cannot be removed without providing a new input.')  # pragma: no cover
             self.set_inputs(new_graph_inputs)
 
         # Make sure there are no connected edges left to the node before removing it.

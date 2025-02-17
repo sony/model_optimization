@@ -17,9 +17,10 @@
 import unittest
 import torch
 import numpy as np
+from model_compression_toolkit.core.pytorch import pytorch_implementation
 
 from model_compression_toolkit.core.pytorch.reader.reader import fx_graph_module_generation
-from model_compression_toolkit.core.pytorch.pytorch_implementation import to_torch_tensor
+from model_compression_toolkit.core.pytorch.pytorch_implementation import to_torch_tensor, PytorchImplementation
 
 
 class BadFxModel(torch.nn.Module):
@@ -37,16 +38,32 @@ class BadFxModel(torch.nn.Module):
         return x
 
 
-class TestGraphReading(unittest.TestCase):
+def data_gen():
+    yield [np.zeros((1, 3, 20, 20))]
 
-    def test_graph_reading(self):
+
+class TestGraphReading(unittest.TestCase):
+    def test_fx_tracer_error(self):
         model = BadFxModel()
-        try:
-            graph = fx_graph_module_generation(model,
-                                               lambda : np.zeros((1, 3, 20, 20)),
-                                               to_torch_tensor)
-        except Exception as e:
-            self.assertEqual(str(e).split('\n')[0], 'Error parsing model with torch.fx')
+
+        with self.assertRaises(Exception) as e:
+            fx_graph_module_generation(model,
+                                       data_gen,
+                                       to_torch_tensor)
+        self.assertEqual(str(e.exception).split('\n')[0], 'Error parsing model with torch.fx')
+
+    def test_disconnected_input(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.conv = torch.nn.Conv2d(3, 5, 3)
+
+            def forward(self, x, unused=None):
+                return self.conv(x)
+
+        with self.assertRaises(ValueError) as e:
+            PytorchImplementation().model_reader(Model(), data_gen)
+        self.assertEqual(str(e.exception), r"The network contains disconnected input(s): ['unused'].")
 
 
 if __name__ == '__main__':
