@@ -36,7 +36,7 @@ pip install model-compression-toolkit
 ```
 For installing the nightly version or installing from source, refer to the [installation guide](https://github.com/sony/model_optimization/blob/main/INSTALLATION.md).
 
-**Important note**: In order to use MCT, you’ll need to provide a floating point .pt or .keras model as an input.
+**Important note**: In order to use MCT, you’ll need to provide a pre-trained floating point model (PyTorch/Keras) as an input.
 
 ### Tutorials and Examples 
 
@@ -60,7 +60,7 @@ QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | [QAT API](
 For each flow, **Quantization core** utilizes various algorithms and hyper-parameters for optimal [hardware-aware](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) quantization results. 
 For further details, please see [Supported features and algorithms](#high-level-features-and-techniques). 
 
- **Required input**: Floating point model - 32bit model in either .pt or .keras format
+ **Required input**: Pre-trained floating point model (PyTorch/Keras)
  
  **Optional input**: Representative dataset - can be either provided by the user, or generated utilizing the [Data Generation](#data-generation-) capability
 
