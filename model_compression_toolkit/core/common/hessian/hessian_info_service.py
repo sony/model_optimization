@@ -166,17 +166,10 @@ class HessianInfoService:
             raise ValueError('Number of samples can be None only when force_compute is True.')
 
         orig_request = request
-
-        # Retrieve model output nodes from the graph
-        model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
-
-        # Exclude model output nodes from the target nodes in the request
-        target_nodes = [n for n in request.target_nodes if n not in model_output_nodes]
-
         # replace reused nodes with primary nodes
         # TODO need to check if there is a bug in reuse. While this is the same layer, the compare tensors and their
         #  gradients are not. It seems that currently the same compare tensor of the primary node is used multiple times
-        target_nodes = [self._get_primary_node(n) for n in target_nodes]
+        target_nodes = [self._get_primary_node(n) for n in request.target_nodes]
         request = request.clone(target_nodes=target_nodes)
 
         if request.compute_from_tensors and activation_tensors is not None:

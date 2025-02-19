@@ -204,15 +204,14 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             A tuple containing the model's output tensors.
         """
-        # Convert input list into a TensorFlow-compatible format (if needed)
-        inputs = tf.convert_to_tensor(input_list)
-
         # Prevent gradient computation if requires_grad is False
-        if not requires_grad:
-            with tf.stop_gradient():
-                return model(inputs)
+        if requires_grad:
+            # Record operations for automatic differentiation
+            with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
+                g.watch(input_list)
+                return model(input_list)
         else:
-            return model(inputs)
+            return model(input_list)
 
     def shift_negative_correction(self,
                                   graph: Graph,

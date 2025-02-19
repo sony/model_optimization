@@ -117,7 +117,8 @@ class TestModelCollectorInit:
         assert isinstance(graph.get_out_stats_collector(node3), StatsCollector)
         assert isinstance(graph.get_in_stats_collector(node2), StatsCollector)
         assert isinstance(graph.get_in_stats_collector(node3), NoStatsCollector)
-        assert mc.outputs_nodes == [node1, node3]
+        assert mc.intermediate_output_tensors == [node1]
+        assert mc.model_outputs == [node3]
         assert len(mc.stats_containers_list) == 2
 
     def test_bias_correction_creates_tensor2node(self, monkeypatch, fw_impl_mock, fw_info_mock):

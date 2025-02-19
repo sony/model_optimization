@@ -126,7 +126,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                 hessian_approx_scores = hess_v ** 2
                 num_dims = len(hess_v.shape)
                 if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
-                    hessian_approx_scores = torch.sum(hessian_approx_scores, dim=tuple(range(1,num_dims)))
+                    hessian_approx_scores = torch.sum(hessian_approx_scores, dim=tuple(range(1,num_dims))).unsqueeze(-1)
                 elif self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL and num_dims > 2:
                     hessian_approx_scores = torch.mean(hessian_approx_scores, dim=tuple(range(2, num_dims)))
 

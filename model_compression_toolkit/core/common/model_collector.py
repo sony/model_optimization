@@ -75,6 +75,21 @@ def create_tensor2node(graph: common.Graph,
         graph.set_out_stats_collector_to_node(node, stats_collector)
 
 
+def ensure_matching_data_lengths(stats_collector, tensor_data, hessian_data):
+    if not isinstance(tensor_data, (list, tuple)):
+        Logger.critical(
+            f"\'tensor_data\' is of type {type(tensor_data)} but must be of the same type as \'stats_containers_list\', which is of type {type(stats_collector)}")  # pragma: no cover
+    if len(stats_collector) != len(tensor_data):
+        Logger.critical(
+            '\'tensor_data\' and \'stats_containers_list\' must have matching lengths')  # pragma: no cover
+    if not isinstance(hessian_data, (list, tuple)):
+        Logger.critical(
+            f"\'hessian_data\' is of type {type(hessian_data)} but must be of the same type as \'stats_containers_list\', which is of type {type(stats_collector)}")  # pragma: no cover
+    if len(stats_collector) != len(hessian_data):
+        Logger.critical(
+            '\'hessian_data\' and \'stats_containers_list\' must have matching lengths')  # pragma: no cover
+
+
 class ModelCollector:
     """
     Build a model from a graph for statistics collection purposes.
@@ -102,6 +117,7 @@ class ModelCollector:
         self.fw_info = fw_info
         self.hessian_service = hessian_info_service
         self.qc = qc
+        self.model_outputs = [out.node for out in graph.get_outputs()]
 
         # Assign statistics collectors to nodes
         for n in graph.get_topo_sorted_nodes():
@@ -141,16 +157,19 @@ class ModelCollector:
                     outputs_nodes.append(n)
                     self.stats_containers_list.append(out_stats_container)
 
-        # Append nodes from graph.get_outputs() that are not already in outputs_nodes for Hessian calculation
-        # for output nodes that don't collect statistics such as "permute", "transpose" etc.
+        self.intermediate_output_tensors = [n for n in outputs_nodes if n not in self.model_outputs]
+
+        # Append nodes from graph.get_outputs() that are not already in outputs_nodes for Hessian
+        # calculation for output nodes that don't collect statistics such as "permute", "transpose" etc.
         # TODO: Add integration test for this case
-        self.outputs_nodes = outputs_nodes + [out.node for out in graph.get_outputs() if out.node not in outputs_nodes]
+        append2output = outputs_nodes + [n for n in self.model_outputs if n not in outputs_nodes]
+
 
         # Build a float model and output all layers' outputs
         # (that should be collected) as the model's outputs
         self.model, _ = self.fw_impl.model_builder(graph,
                                                    mode=ModelBuilderMode.FLOAT,
-                                                   append2output=self.outputs_nodes,
+                                                   append2output=append2output,
                                                    fw_info=self.fw_info)
 
     def infer(self, inputs_list: List[np.ndarray]):
@@ -172,7 +191,7 @@ class ModelCollector:
             request = HessianScoresRequest(
                 mode=HessianMode.ACTIVATION,
                 granularity=HessianScoresGranularity.PER_ELEMENT,
-                target_nodes=self.outputs_nodes,
+                target_nodes=self.intermediate_output_tensors,
                 data_loader=None,
                 n_samples=inputs_list[0].shape[0],
                 compute_from_tensors=True
@@ -188,15 +207,12 @@ class ModelCollector:
 
         for td, hd, sc in zip(tensor_data, hessian_data, self.stats_containers_list):
             if isinstance(sc, (list, tuple)):
-                if not isinstance(td, (list, tuple)):
-                    Logger.critical(
-                        f"\'tensor_data\' is of type {type(td)} but must be of the same type as \'stats_containers_list\', which is of type {type(sc)}")  # pragma: no cover
-                if len(sc) != len(td):
-                    Logger.critical(
-                        '\'tensor_data\' and \'stats_containers_list\' must have matching lengths')  # pragma: no cover
+                if hd is None:
+                    hd = [None for _ in range(len(td))]
+                ensure_matching_data_lengths(td, hd, sc)
                 for tdi, hdi, sci in zip(td, hd, sc):
                     hdi_numpy = hdi if hdi is None else self.fw_impl.to_numpy(hdi)
-                    sci.update_statistics(self.fw_impl.to_numpy(tdi), self.fw_impl.to_numpy(hdi_numpy))
+                    sci.update_statistics(self.fw_impl.to_numpy(tdi), hdi_numpy)
             else:
                 hd_numpy = hd if hd is None else self.fw_impl.to_numpy(hd)
                 sc.update_statistics(self.fw_impl.to_numpy(td), hd_numpy)
