@@ -236,5 +236,6 @@ def _set_final_resource_utilization(graph: Graph,
                                                               ru_targets=ru_targets, allow_unused_qcs=True)
         summary = final_ru.get_summary_str(restricted=True)
         Logger.info(f'Resource utilization for quantized mixed-precision targets:\n {summary}.')
+        print(summary)
     graph.user_info.final_resource_utilization = final_ru
     graph.user_info.mixed_precision_cfg = final_bit_widths_config

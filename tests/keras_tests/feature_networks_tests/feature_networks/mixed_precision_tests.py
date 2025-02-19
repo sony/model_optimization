@@ -511,9 +511,10 @@ class MixedPrecisionReducedTotalMemorySearchTest(MixedPrecisionActivationBaseTes
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
-        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [2, 2]))
+        print('ACTIVATION_BITS', activation_bits)
+        self.unit_test.assertTrue(activation_bits[1:] == [2, 2])
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 3],

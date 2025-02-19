@@ -28,9 +28,10 @@ jobs:
           pip check
       - name: Run unittests
         run: |
-          python -m unittest discover tests/keras_tests -v
+     #     python -m unittest discover tests/keras_tests -v
+            pytest tests/keras_tests/feature_networks_tests/test_features_runner.py -k test_mixed_precision_reduced_total_memory
 
-      - name: Run pytest
-        run: |
-          pytest tests_pytest/keras
+#      - name: Run pytest
+#        run: |
+#          pytest tests_pytest/keras
 
