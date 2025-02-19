@@ -553,27 +553,23 @@ class KerasImplementation(FrameworkImplementation):
 
         Returns: The MAC count og the operation
         """
-
-        output_shape = node.output_shape
-        kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
-        output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
-
-        if node.is_match_type(Conv2D) or node.is_match_type(Conv2DTranspose):
-            # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
-            return np.prod([x for x in output_shape if x is not None]) * \
-                   kernel_shape[input_channel_axis] * \
-                   (kernel_shape[0] * kernel_shape[1])
-        elif node.is_match_type(DepthwiseConv2D):
-            # Depth * (W_out * H_out) * C_in * (W_kernel * H_kernel)
-            return node.framework_attr.get(DEPTH_MULTIPLIER) * \
-                   np.prod([x for x in output_shape if x is not None]) / output_shape[output_channel_axis] * \
-                   kernel_shape[input_channel_axis] * \
-                   (kernel_shape[0] * kernel_shape[1])
-        elif node.is_match_type(Dense):
-            # IN * OUT
-            return kernel_shape[0] * kernel_shape[1]
-        else:
+        kernels = fw_info.get_kernel_op_attributes(node.type)
+        if not kernels or kernels[0] is None:
             return 0
+
+        assert len(kernels) == 1
+        kernel_shape = node.get_weights_by_keys(kernels[0]).shape
+
+        if node.is_match_type(Conv2D) or node.is_match_type(Conv2DTranspose) or node.is_match_type(DepthwiseConv2D):
+            h, w = node.get_output_shapes_list()[0][-2:]
+            return np.prod(kernel_shape) * h * w
+
+        if node.is_match_type(Dense):
+            # IN * OUT * (all previous dims[:-1])
+            _, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
+            return node.get_total_output_params() * kernel_shape[input_channel_axis]
+
+        return 0
 
     def apply_second_moment_correction(self,
                                        quantized_model: Any,
