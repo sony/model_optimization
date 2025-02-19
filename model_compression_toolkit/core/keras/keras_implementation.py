@@ -561,7 +561,7 @@ class KerasImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(kernels[0]).shape
 
         if node.is_match_type(Conv2D) or node.is_match_type(Conv2DTranspose) or node.is_match_type(DepthwiseConv2D):
-            h, w = node.get_output_shapes_list()[0][-2:]
+            h, w = node.get_output_shapes_list()[0][-3:-1]
             return np.prod(kernel_shape) * h * w
 
         if node.is_match_type(Dense):

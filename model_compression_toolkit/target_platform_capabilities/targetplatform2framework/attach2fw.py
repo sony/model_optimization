@@ -39,9 +39,9 @@ class AttachTpcToFramework:
 
         tpc = FrameworkQuantizationCapabilities(tpc_model)
         custom_opset2layer = custom_opset2layer if custom_opset2layer is not None else {}
-
+        operator_set = tpc_model.operator_set or ()
         with tpc:
-            for opset in tpc_model.operator_set:
+            for opset in operator_set:
                 if isinstance(opset, OperatorsSet):  # filter out OperatorsSetConcat
                     if opset.name in custom_opset2layer:
                         custom_opset_layers = custom_opset2layer[opset.name]
