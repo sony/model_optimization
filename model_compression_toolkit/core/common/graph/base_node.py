@@ -450,7 +450,7 @@ class BaseNode:
         """
         # shape can be tuple or list, and multiple shapes can be packed in list or tuple
         if self.output_shape and isinstance(self.output_shape[0], (tuple, list)):
-            output_shapes = tuple(self.output_shape)
+            output_shapes = [tuple(s) for s in self.output_shape]
         else:
             output_shapes = [tuple(self.output_shape)]
         return output_shapes

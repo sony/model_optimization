@@ -53,23 +53,6 @@ def minimal_tpc(default_quant_cfg_options):
                                       fusing_patterns=None)
 
 
-# def quantization_cfg_disable_everything():
-#     return QuantizationConfig(
-#         relu_bound_to_power_of_2=False,
-#         weights_bias_correction=False,
-#         weights_second_moment_correction=False,
-#         input_scaling=False,
-#         softmax_shift=False,
-#         shift_negative_activation_correction=False,
-#         activation_channel_equalization=False,
-#         linear_collapsing=False,
-#         residual_collapsing=False,
-#         shift_negative_threshold_recalculation=False,
-#         shift_negative_params_search=False,
-#         concat_threshold_update=False,
-#         activation_bias_correction=False)
-
-
 @fixture
 def graph_mock():
     """ Basic Graph mock. """
