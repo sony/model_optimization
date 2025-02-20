@@ -71,7 +71,7 @@ class HessianScoresRequest:
     compute_from_tensors: bool = False
 
     def __post_init__(self):
-        if self.data_loader is None and self.n_samples is None:
+        if self.data_loader is None and self.n_samples is None and not self.compute_from_tensors:
             raise ValueError('Data loader and the number of samples cannot both be None.')
 
     def clone(self, **kwargs):

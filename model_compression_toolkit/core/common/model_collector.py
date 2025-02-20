@@ -15,7 +15,7 @@
 
 
 import numpy as np
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Optional
 
 from networkx.algorithms.dag import topological_sort
 from model_compression_toolkit.core import FrameworkInfo, QuantizationErrorMethod
@@ -113,6 +113,20 @@ def ensure_matching_data_lengths(
         Logger.critical(
             "'hessian_data' and 'stats_collector' must have matching lengths."
         )  # pragma: no cover
+
+
+def convert_to_numpy_and_abs(tensor: Optional[np.ndarray], fw_impl: FrameworkImplementation) -> Optional[np.ndarray]:
+    """
+    Converts a tensor to a NumPy array and applies the absolute value operation if the tensor is not None.
+
+    Args:
+        tensor: Input tensor to be converted to a NumPy array.
+        fw_impl: Framework implementation that provides the 'to_numpy' method for tensor conversion.
+
+    Returns:
+        A NumPy array of the input tensor with absolute values applied. If the input tensor is None, returns None.
+    """
+    return tensor if tensor is None else np.abs(fw_impl.to_numpy(tensor))
 
 
 class ModelCollector:
@@ -226,6 +240,7 @@ class ModelCollector:
                 granularity=HessianScoresGranularity.PER_ELEMENT,
                 target_nodes=self.intermediate_output_tensors,
                 data_loader=None,
+                n_samples=None,
                 compute_from_tensors=True
             )
             hessian_tensors = self.hessian_service.fetch_hessian(request=request,
@@ -243,8 +258,8 @@ class ModelCollector:
                     hessian_tensor = [None for _ in range(len(activation_tensor))]
                 ensure_matching_data_lengths(activation_tensor, hessian_tensor, stats_container)
                 for activation_tensor_i, hessian_tensor_i, sci in zip(activation_tensor, hessian_tensor, stats_container):
-                    hessian_tensor_i_numpy = hessian_tensor_i if hessian_tensor_i is None else self.fw_impl.to_numpy(hessian_tensor_i)
-                    sci.update_statistics(self.fw_impl.to_numpy(activation_tensor_i), hessian_tensor_i_numpy)
+                    sci.update_statistics(self.fw_impl.to_numpy(activation_tensor_i),
+                                          convert_to_numpy_and_abs(hessian_tensor_i, self.fw_impl))
             else:
-                hessian_tensor_numpy = hessian_tensor if hessian_tensor is None else self.fw_impl.to_numpy(hessian_tensor)
-                stats_container.update_statistics(self.fw_impl.to_numpy(activation_tensor), hessian_tensor_numpy)
+                stats_container.update_statistics(self.fw_impl.to_numpy(activation_tensor),
+                                                  convert_to_numpy_and_abs(hessian_tensor, self.fw_impl))

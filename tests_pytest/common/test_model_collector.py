@@ -15,6 +15,7 @@
 import pytest
 from unittest.mock import Mock, call
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import StatsCollector, NoStatsCollector, DEFAULTCONFIG, Graph, model_collector
@@ -261,8 +262,13 @@ class TestModelCollectorInfer:
         mc = ModelCollector(self.graph, fw_impl_mock, fw_info_mock, qc=self.qc, hessian_info_service=self.fake_hessian_info_service)
         mc.infer(self.infer_input)
         # Check that update_statistics is called with the corresponding outputs and hessian data.
-        fake_stats_container.update_statistics.assert_has_calls([
-            call(self.fake_output1, self.fake_hessian_result),
-            call(self.fake_output2, self.fake_hessian_result),
-            call(self.fake_output3, None)
-        ])
+        calls = fake_stats_container.update_statistics.call_args_list
+
+        assert_array_equal(calls[0][0][0], self.fake_output1)
+        assert_array_equal(calls[0][0][1], np.abs(self.fake_hessian_result))
+
+        assert_array_equal(calls[1][0][0], self.fake_output2)
+        assert_array_equal(calls[1][0][1], np.abs(self.fake_hessian_result))
+
+        assert calls[2][0][0] is self.fake_output3
+        assert calls[2][0][1] is None

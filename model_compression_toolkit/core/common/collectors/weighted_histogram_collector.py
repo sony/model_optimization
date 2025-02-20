@@ -82,8 +82,6 @@ class WeightedHistogramCollector(HistogramCollector):
             - The method ensures that `x` and `weights` have matching shapes and logs
               an error if this condition is not met.
         """
-        assert np.all(weights >= 0)
-
         if weights is None or np.all(weights == 0):
             weights = np.ones_like(x) # Assign uniform weights if none are provided.
 
