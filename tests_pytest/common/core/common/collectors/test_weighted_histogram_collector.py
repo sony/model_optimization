@@ -12,15 +12,89 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from unittest.mock import Mock
+
 import numpy as np
 import pytest
-from model_compression_toolkit.core.common.collectors.weighted_histogram_collector import WeightedHistogramCollector
+from model_compression_toolkit.core.common.collectors.weighted_histogram_collector import WeightedHistogramCollector, \
+    check_broadcastable
+from model_compression_toolkit.logger import Logger
+
+
+@pytest.fixture
+def mock_logger():
+    """Fixture to mock Logger.critical using unittest.mock.Mock."""
+    mock = Mock()
+    Logger.critical = mock  # Override Logger.critical with the mock
+    return mock
 
 
 @pytest.fixture
 def collector():
     """Fixture that returns a WeightedHistogramCollector with a small number of bins for testing."""
     return WeightedHistogramCollector(n_bins=10)
+
+
+class TestCheckBroadcastable:
+    def test_valid_broadcast(self, mock_logger):
+        """Test cases where broadcasting should succeed without calling Logger.critical."""
+
+        # Same shape
+        x = np.random.rand(4, 5, 6)
+        w = np.random.rand(4, 5, 6)
+        check_broadcastable(x, w)
+        mock_logger.assert_not_called()
+
+        # w has ones in dimensions
+        w = np.random.rand(1, 5, 1)
+        check_broadcastable(x, w)
+        mock_logger.assert_not_called()
+
+        # w has fewer dimensions but is still broadcastable
+        w = np.random.rand(5, 6)
+        check_broadcastable(x, w)
+        mock_logger.assert_not_called()
+
+        # w has only ones (fully broadcastable)
+        w = np.random.rand(1, 1, 1)
+        check_broadcastable(x, w)
+        mock_logger.assert_not_called()
+
+    def test_invalid_broadcast(self, mock_logger):
+        """Test cases where broadcasting should fail and call Logger.critical."""
+
+        x = np.random.rand(4, 5, 6)
+
+        # More dimensions in w than x
+        w = np.random.rand(4, 5, 6, 1)
+        check_broadcastable(x, w)
+        mock_logger.assert_called_once_with(
+            f"Tensor weights with shape {w.shape} has more dimensions than tensor a with shape {x.shape}.")
+        mock_logger.reset_mock()
+
+        # Mismatched dimension (not 1 and not equal)
+        w = np.random.rand(3, 5, 6)
+        check_broadcastable(x, w)
+        mock_logger.assert_called_once_with(
+            f"Tensor weights with shape {w.shape} cannot be broadcasted to tensor a with shape {x.shape}. "
+            f"Dimension mismatch at index 0: {w.shape[0]} cannot be broadcasted to {x.shape[0]}.")
+        mock_logger.reset_mock()
+
+        # Another mismatched case
+        w = np.random.rand(4, 3, 6)
+        check_broadcastable(x, w)
+        mock_logger.assert_called_once_with(
+            f"Tensor weights with shape {w.shape} cannot be broadcasted to tensor a with shape {x.shape}. "
+            f"Dimension mismatch at index 1: {w.shape[1]} cannot be broadcasted to {x.shape[1]}.")
+        mock_logger.reset_mock()
+
+        # Another dimension mismatch
+        w = np.random.rand(4, 5, 7)
+        check_broadcastable(x, w)
+        mock_logger.assert_called_once_with(
+            f"Tensor weights with shape {w.shape} cannot be broadcasted to tensor a with shape {x.shape}. "
+            f"Dimension mismatch at index 2: {w.shape[2]} cannot be broadcasted to {x.shape[2]}.")
+        mock_logger.reset_mock()
 
 
 class TestWeightedHistogramCollector:

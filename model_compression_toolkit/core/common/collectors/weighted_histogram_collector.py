@@ -15,6 +15,36 @@
 
 import numpy as np
 from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector
+from model_compression_toolkit.logger import Logger
+
+
+def check_broadcastable(x: np.ndarray, weights: np.ndarray) -> None:
+    """
+    Checks if tensor 'weights' can be broadcasted to the shape of tensor 'x'.
+
+    Args:
+        x (np.ndarray): The target tensor.
+        weights (np.ndarray): The tensor to check broadcasting compatibility.
+
+    Raises:
+        Logger.critical: If 'weights' cannot be broadcasted to 'x'.
+    """
+    # Get shapes
+    shape_x = x.shape
+    shape_w = weights.shape
+
+    # Ensure weights has less or equal dimensions than x
+    if len(shape_w) > len(shape_x):
+        Logger.critical(f"Tensor weights with shape {shape_w} has more dimensions than tensor a with shape {shape_x}.")
+
+    # Align shapes by padding weights' shape with leading ones
+    shape_w = (1,) * (len(shape_x) - len(shape_w)) + shape_w
+
+    # Check if each dimension is either equal or 1
+    for i, (sx, sw) in enumerate(zip(shape_x, shape_w)):
+        if not (sx == sw or sw == 1):
+            Logger.critical(f"Tensor weights with shape {shape_w} cannot be broadcasted to tensor a with shape {shape_x}. "
+                             f"Dimension mismatch at index {i}: {sw} cannot be broadcasted to {sx}.")
 
 
 class WeightedHistogramCollector(HistogramCollector):
@@ -52,28 +82,32 @@ class WeightedHistogramCollector(HistogramCollector):
             - The method ensures that `x` and `weights` have matching shapes and logs
               an error if this condition is not met.
         """
-        if weights is None or weights.sum() == 0:
+        assert np.all(weights >= 0)
+
+        if weights is None or np.all(weights == 0):
             weights = np.ones_like(x) # Assign uniform weights if none are provided.
 
-        if x.shape != weights.shape:
-            # Get x's shape
-            x_shape = x.shape
+        # Checks if tensor 'weights' can be broadcasted to the shape of tensor 'x'.
+        check_broadcastable(x, weights)
 
-            # Get weight's shape
-            weights_shape = weights.shape
+        # Get x's shape
+        x_shape = x.shape
 
-            # Determine the correct shape for weights
-            weights_new_shape = list(weights_shape)  # Convert to list for modification
+        # Get weight's shape
+        weights_shape = weights.shape
 
-            # Ensure weights has the same number of dimensions as x
-            while len(weights_new_shape) < len(x_shape):
-                weights_new_shape.append(1)  # Add singleton dimensions
+        # Determine the correct shape for weights
+        weights_new_shape = list(weights_shape)  # Convert to list for modification
 
-            # Reshape weights to the correct shape
-            weights = weights.reshape(weights_new_shape)
+        # Ensure weights has the same number of dimensions as x
+        while len(weights_new_shape) < len(x_shape):
+            weights_new_shape.append(1)  # Add singleton dimensions
 
-            # Broadcast weights to match x's shape
-            weights = np.broadcast_to(weights, x_shape)
+        # Reshape weights to the correct shape
+        weights = weights.reshape(weights_new_shape)
+
+        # Broadcast weights to match x's shape
+        weights = np.broadcast_to(weights, x_shape)
 
         # Compute the weighted histogram.
         count, bins = np.histogram(x, bins=self._n_bins, weights=weights)

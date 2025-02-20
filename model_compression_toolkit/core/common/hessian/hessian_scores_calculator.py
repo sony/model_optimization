@@ -55,6 +55,10 @@ class HessianScoresCalculator(ABC):
         self.input_images = fw_impl.to_tensor(input_images)
         self.num_iterations_for_approximation = num_iterations_for_approximation
 
+        # Validate representative dataset has same inputs as graph
+        if len(self.input_images) != len(graph.get_inputs()):  # pragma: no cover
+            Logger.critical(f"The graph requires {len(graph.get_inputs())} inputs, but the provided representative dataset contains {len(self.input_images)} inputs.")
+
         self.fw_impl = fw_impl
         self.hessian_request = hessian_scores_request
 

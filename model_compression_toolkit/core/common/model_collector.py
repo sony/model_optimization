@@ -15,7 +15,7 @@
 
 
 import numpy as np
-from typing import List
+from typing import List, Union, Tuple
 
 from networkx.algorithms.dag import topological_sort
 from model_compression_toolkit.core import FrameworkInfo, QuantizationErrorMethod
@@ -75,19 +75,44 @@ def create_tensor2node(graph: common.Graph,
         graph.set_out_stats_collector_to_node(node, stats_collector)
 
 
-def ensure_matching_data_lengths(stats_collector, tensor_data, hessian_data):
+def ensure_matching_data_lengths(
+    stats_collector: Union[List[BaseStatsCollector], Tuple[BaseStatsCollector, ...]],
+    tensor_data: Union[List, Tuple],
+    hessian_data: Union[List, Tuple]
+):
+    """
+    Ensures that the lengths of `tensor_data`, `hessian_data`, and `stats_collector` are matching.
+    If the types or lengths do not match, a critical error is logged.
+
+    Args:
+        stats_collector: A list or tuple of statistics collectors.
+        tensor_data: A list or tuple of tensors corresponding to the statistics collectors.
+        hessian_data: A list or tuple of Hessian tensors corresponding to the statistics collectors.
+
+    Raises:
+        Logs a critical error and halts execution if there is a type mismatch or
+        if the lengths of the inputs do not match.
+    """
+
     if not isinstance(tensor_data, (list, tuple)):
         Logger.critical(
-            f"\'tensor_data\' is of type {type(tensor_data)} but must be of the same type as \'stats_containers_list\', which is of type {type(stats_collector)}")  # pragma: no cover
+            f"'tensor_data' is of type {type(tensor_data)}, but must be of the same type as 'stats_collector' ({type(stats_collector)})."
+        )  # pragma: no cover
+
     if len(stats_collector) != len(tensor_data):
         Logger.critical(
-            '\'tensor_data\' and \'stats_containers_list\' must have matching lengths')  # pragma: no cover
+            "'tensor_data' and 'stats_collector' must have matching lengths."
+        )  # pragma: no cover
+
     if not isinstance(hessian_data, (list, tuple)):
         Logger.critical(
-            f"\'hessian_data\' is of type {type(hessian_data)} but must be of the same type as \'stats_containers_list\', which is of type {type(stats_collector)}")  # pragma: no cover
+            f"'hessian_data' is of type {type(hessian_data)}, but must be of the same type as 'stats_collector' ({type(stats_collector)})."
+        )  # pragma: no cover
+
     if len(stats_collector) != len(hessian_data):
         Logger.critical(
-            '\'hessian_data\' and \'stats_containers_list\' must have matching lengths')  # pragma: no cover
+            "'hessian_data' and 'stats_collector' must have matching lengths."
+        )  # pragma: no cover
 
 
 class ModelCollector:
@@ -184,35 +209,42 @@ class ModelCollector:
 
         # TODO: Thinking about delegating collections to framework
         # TODO: migrate datasets to framework datasets
-        compute_hessians = self.hessian_service is not None and self.qc.activation_error_method == QuantizationErrorMethod.HMSE
-        tensor_data = self.fw_impl.run_model_inference(self.model, inputs_list, requires_grad=compute_hessians)
+        compute_hessians = self.qc.activation_error_method == QuantizationErrorMethod.HMSE
+
+        # Retrieve intermediate layer activations for statistical analysis.
+        # Enable gradient computation if Hessian calculations are required.
+        activation_tensors = self.fw_impl.run_model_inference(self.model, inputs_list, requires_grad=compute_hessians)
 
         if compute_hessians:
+            if self.hessian_service is None:
+                Logger.critical(
+                    "Hessian computation is enabled but `hessian_service` is not initialized. "
+                    "Ensure that `hessian_service` is properly set."
+                )  # pragma: no cover
             request = HessianScoresRequest(
                 mode=HessianMode.ACTIVATION,
                 granularity=HessianScoresGranularity.PER_ELEMENT,
                 target_nodes=self.intermediate_output_tensors,
                 data_loader=None,
-                n_samples=inputs_list[0].shape[0],
                 compute_from_tensors=True
             )
-            hessian_data = self.hessian_service.fetch_hessian(request=request,
-                                                              activation_tensors=tensor_data)
-            hessian_data = list(hessian_data.values())
+            hessian_tensors = self.hessian_service.fetch_hessian(request=request,
+                                                                 activation_tensors=activation_tensors)
+            hessian_tensors = list(hessian_tensors.values())
         else:
-            hessian_data = []
+            hessian_tensors = []
 
         # Hessian is not calculated for the output, add "None" as weights for output tenosrs
-        hessian_data += [None for _ in range(len(tensor_data) - len(hessian_data))]
+        hessian_tensors += [None for _ in range(len(activation_tensors) - len(hessian_tensors))]
 
-        for td, hd, sc in zip(tensor_data, hessian_data, self.stats_containers_list):
-            if isinstance(sc, (list, tuple)):
-                if hd is None:
-                    hd = [None for _ in range(len(td))]
-                ensure_matching_data_lengths(td, hd, sc)
-                for tdi, hdi, sci in zip(td, hd, sc):
-                    hdi_numpy = hdi if hdi is None else self.fw_impl.to_numpy(hdi)
-                    sci.update_statistics(self.fw_impl.to_numpy(tdi), hdi_numpy)
+        for activation_tensor, hessian_tensor, stats_container in zip(activation_tensors, hessian_tensors, self.stats_containers_list):
+            if isinstance(stats_container, (list, tuple)):
+                if hessian_tensor is None:
+                    hessian_tensor = [None for _ in range(len(activation_tensor))]
+                ensure_matching_data_lengths(activation_tensor, hessian_tensor, stats_container)
+                for activation_tensor_i, hessian_tensor_i, sci in zip(activation_tensor, hessian_tensor, stats_container):
+                    hessian_tensor_i_numpy = hessian_tensor_i if hessian_tensor_i is None else self.fw_impl.to_numpy(hessian_tensor_i)
+                    sci.update_statistics(self.fw_impl.to_numpy(activation_tensor_i), hessian_tensor_i_numpy)
             else:
-                hd_numpy = hd if hd is None else self.fw_impl.to_numpy(hd)
-                sc.update_statistics(self.fw_impl.to_numpy(td), hd_numpy)
+                hessian_tensor_numpy = hessian_tensor if hessian_tensor is None else self.fw_impl.to_numpy(hessian_tensor)
+                stats_container.update_statistics(self.fw_impl.to_numpy(activation_tensor), hessian_tensor_numpy)

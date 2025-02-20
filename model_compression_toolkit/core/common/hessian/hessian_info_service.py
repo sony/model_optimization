@@ -20,6 +20,7 @@ import numpy as np
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
+from model_compression_toolkit.logger import Logger
 
 if TYPE_CHECKING:    # pragma: no cover
     from model_compression_toolkit.core.common import BaseNode
@@ -139,7 +140,7 @@ class HessianInfoService:
         self.cache = HessianCache()
 
     def fetch_hessian(self, request: HessianScoresRequest,
-                      activation_tensors: Optional[List[Any]] = None,
+                      activation_tensors: Optional[Tuple[Any]] = None,
                       force_compute: bool = False,
                       ) -> Dict[LayerName, Tensor]:
         """
@@ -152,7 +153,7 @@ class HessianInfoService:
 
         Args:
             request: request per which to fetch the hessians.
-            activation_tensors (Optional[List[Any]]): List of activation tensors used for Hessian computation
+            activation_tensors (Optional[Tuple[Any]): List of activation tensors used for Hessian computation
             when `compute_from_tensors` in the request is `True`. Defaults to None.
             force_compute: if True, will compute the hessians.
                            If False, will look for cached hessians first.
@@ -163,7 +164,7 @@ class HessianInfoService:
             requested granularity.
         """
         if request.n_samples is None and not force_compute:
-            raise ValueError('Number of samples can be None only when force_compute is True.')
+            Logger.critical('Number of samples can be None only when force_compute is True.')
 
         orig_request = request
         # replace reused nodes with primary nodes
@@ -172,7 +173,12 @@ class HessianInfoService:
         target_nodes = [self._get_primary_node(n) for n in request.target_nodes]
         request = request.clone(target_nodes=target_nodes)
 
-        if request.compute_from_tensors and activation_tensors is not None:
+        if request.compute_from_tensors:
+            if activation_tensors is None:
+                Logger.critical(f"The 'compute_from_tensors' option is enabled, but no 'activation_tensors' were provided.")
+            # This mode is primarily used for Hessian-weighted histograms in statistical collection.
+            # To ensure efficiency, we approximate the Hessian using a single iteration.
+            # This provides a sufficiently accurate approximation for this feature.
             res = self._compute_hessian_for_batch(request, activation_tensors, n_iterations=1)
         else:
             if force_compute:
@@ -204,7 +210,7 @@ class HessianInfoService:
             return res
 
         if request.data_loader is None:
-            raise ValueError(f'Not enough hessians are cached to fulfill the request, but data loader was not passed '
+            Logger.critical(f'Not enough hessians are cached to fulfill the request, but data loader was not passed '
                              f'for additional computation. Requested {request.n_samples}, '
                              f'available {min(missing.values())}.')
 
@@ -259,7 +265,7 @@ class HessianInfoService:
 
         if request.n_samples:
             if n_samples < request.n_samples:
-                raise ValueError(f'Could not compute the requested number of Hessians ({request.n_samples}), '
+                Logger.critical(f'Could not compute the requested number of Hessians ({request.n_samples}), '
                                  f'not enough samples in the provided representative dataset.')
 
             if n_samples > request.n_samples:

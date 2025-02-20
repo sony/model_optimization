@@ -76,10 +76,11 @@ def determine_signedness(
     """
     if activation_quant_cfg.signedness in [Signedness.SIGNED, Signedness.UNSIGNED]:
         return activation_quant_cfg.signedness == Signedness.SIGNED
-    elif nodes_prior_info.is_output_bounded():
+
+    if nodes_prior_info.is_output_bounded():
         return min_value < 0
-    else:
-        return np.any(bins_values[:-1][bins_counts > 0] < 0)
+
+    return np.any(bins_values[:-1][bins_counts > 0] < 0)
 
 
 def update_activation_quantization_params_fn(
