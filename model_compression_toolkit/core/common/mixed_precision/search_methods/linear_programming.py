@@ -218,7 +218,12 @@ def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
             ru_vec = np.concatenate([ru_vec, non_conf_ru_vec])
         ru_indicated_vectors[target] = ru_vec
 
-    # add constraints only for the restricted targets in target resource utilization.
+    # Add constraints only for the restricted targets in target resource utilization.
+    # Adding activation constraints modifies the lp term in ru_indicated_vectors, so if both activation and total
+    # are restricted we first add the constraints for total.
+    if RUTarget.TOTAL in constraints_targets and RUTarget.ACTIVATION in constraints_targets:
+        constraints_targets.remove(RUTarget.ACTIVATION)
+        constraints_targets = list(constraints_targets) + [RUTarget.ACTIVATION]
     for target in constraints_targets:
         target_resource_utilization_value = target_resource_utilization.get_resource_utilization_dict()[target]
         aggr_ru = _aggregate_for_lp(ru_indicated_vectors, target)
