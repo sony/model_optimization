@@ -15,7 +15,8 @@
 
 from model_compression_toolkit.core.common import BaseNode, Graph, BaseSubstitution
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
+    VirtualSplitWeightsNode
 
 
 class BaseVirtualActivationWeightsComposition(BaseSubstitution):
@@ -39,17 +40,18 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
+        if not isinstance(weights_node, VirtualSplitWeightsNode):
+            raise TypeError(f'Matched node {weights_node} was expected to be of type VirtualSplitWeightsNode. '
+                            f'This substitution is expected to be called after activation-weights split.')
 
         predecessors = graph.get_prev_nodes(weights_node)
-        if len(predecessors) != 1:
-            return graph
-
+        assert len(predecessors) == 1, (f'Matched node for {self.__class__.__name__} substitution is expected to have'
+                                        f'exactly one input, node {weights_node} has {len(predecessors)}')
         act_node = predecessors[0]
-
         if len(graph.out_edges(act_node)) > 1:
             Logger.warning(f"Node {act_node.name} has multiple outgoing edges, which is not supported with "
-                           f"mixed-precision bit-operations utilization, thus, edge {act_node.name} --> {weights_node.name} "
-                           f"would not be counted in the bit-operations calculations.")
+                           f"mixed-precision search under bit-operations constraint. In such case, it might result in "
+                           f"incorrect resource utilization computation and suboptimal bits selection.")
             return graph
 
         # Virtual composed activation-weights node

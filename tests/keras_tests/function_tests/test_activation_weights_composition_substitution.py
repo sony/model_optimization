@@ -34,7 +34,7 @@ import numpy as np
 from model_compression_toolkit.core import DEFAULTCONFIG, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
-    VirtualActivationWeightsNode
+    VirtualActivationWeightsNode, VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
@@ -147,13 +147,7 @@ class TestActivationWeightsComposition(unittest.TestCase):
         self.assertTrue(len(composed_node_2.candidates_quantization_cfg) == num_activation_candidates,
                         "The composed node should have the cartesian product of the activation and weights nodes candidates.")
 
-    def test_two_conv_net_compose_without_split(self):
-        """
-        Note that this test checks a hypothetical case that should not be used - we should not run nodes
-        composition without running weights nodes split before, otherwise we'll might get duplication
-        in the composed node's candidates.
-        """
-
+    def test_compose_without_split_error(self):
         in_model = two_conv_model()
         keras_impl = KerasImplementation()
 
@@ -162,22 +156,9 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
 
-        # Nodes composition substitution
-        v_graph = substitute(copy.deepcopy(graph), [VirtualActivationWeightsComposition()])
-
-        self.assertTrue(len(v_graph.nodes) == len(graph.nodes) - 2,
-                        "Both convolution nodes should be composed with their predecessor activation node.")
-        self.assertTrue(len(graph.input_nodes) == len(v_graph.input_nodes))
-        self.assertTrue(len(graph.output_nodes) == len(v_graph.output_nodes))
-
-        composed_node_1 = v_graph.get_topo_sorted_nodes()[0]
-        composed_node_2 = v_graph.get_topo_sorted_nodes()[1]
-        graph_sorted_nodes = graph.get_topo_sorted_nodes()
-
-        self.assertTrue(composed_node_1.original_activation_node.name == graph_sorted_nodes[0].name)
-        self.assertTrue(composed_node_1.original_weights_node.name == graph_sorted_nodes[1].name)
-        self.assertTrue(composed_node_2.original_activation_node.name == graph_sorted_nodes[2].name)
-        self.assertTrue(composed_node_2.original_weights_node.name == graph_sorted_nodes[3].name)
+        with self.assertRaises(TypeError) as e:
+            substitute(copy.deepcopy(graph), [VirtualActivationWeightsComposition()])
+        self.assertTrue('expected to be of type VirtualSplitWeightsNode' in str(e.exception))
 
     def test_two_conv_net_compose_after_split(self):
         in_model = two_conv_model()
@@ -189,8 +170,8 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               default_config=default_config)
 
         # Nodes split and composition substitution
-        split_graph = substitute(graph, [WeightsActivationSplit()])
-        v_graph = substitute(split_graph, [VirtualActivationWeightsComposition()])
+        split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+        v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
 
         self._verify_two_conv_with_split_test(graph, v_graph, 9, 9)
 
@@ -205,8 +186,8 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               default_config=default_config)
 
         # Nodes split and composition substitution
-        split_graph = substitute(graph, [WeightsActivationSplit()])
-        v_graph = substitute(split_graph, [VirtualActivationWeightsComposition()])
+        split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+        v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
 
         self._verify_two_conv_with_split_test(graph, v_graph, 3, 3)
 
@@ -222,9 +203,8 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               default_config=default_config)
 
         # Nodes split and composition substitution
-        split_graph = substitute(graph, [WeightsActivationSplit()])
-        v_graph = substitute(split_graph, [VirtualActivationWeightsComposition()])
-
+        split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+        v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
         self._verify_two_conv_with_split_test(graph, v_graph, 3, 3)
 
     def test_all_weights_layers_composition(self):
@@ -238,9 +218,10 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               default_config=default_config)
 
         # Nodes split and composition substitution
-        split_graph = substitute(graph, [WeightsActivationSplit()])
-        v_graph = substitute(split_graph, [VirtualActivationWeightsComposition()])
+        split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+        v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
 
+        assert split_graph is not graph
         self.assertTrue(len(v_graph.nodes) == 8)
         self.assertTrue(len([n for n in v_graph.nodes if isinstance(n, VirtualActivationWeightsNode)]) == 5)
 
@@ -274,14 +255,18 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
 
-        # Nodes composition substitution
-        v_graph = substitute(graph, [VirtualActivationWeightsComposition()])
+        split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+        v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
 
         #  Since the only activation before the convolutions is the Input layer activation, and it goes to both
         # convolutions (the input node has multiple output edges) no composition should be made.
-        self.assertTrue(len(v_graph.nodes) == len(graph.nodes))
+        self.assertTrue(len(v_graph.nodes) == len(split_graph.nodes))
         self.assertTrue(not any([isinstance(n, VirtualActivationWeightsNode) for n in v_graph.nodes]))
+        virtual_activations = [n for n in v_graph.nodes if isinstance(n, VirtualSplitActivationNode)]
+        virtual_weights = [n for n in v_graph.nodes if isinstance(n, VirtualSplitWeightsNode)]
+        self.assertEqual(len(virtual_activations), 2)
+        self.assertEqual(len(virtual_weights), 2)
 
         sorted_v_nodes = v_graph.get_topo_sorted_nodes()
-        for i, n in enumerate(graph.get_topo_sorted_nodes()):
+        for i, n in enumerate(split_graph.get_topo_sorted_nodes()):
             self.assertTrue(n.name == sorted_v_nodes[i].name)

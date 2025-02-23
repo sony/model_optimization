@@ -52,9 +52,9 @@ class BaseWeightsActivationSplit(BaseSubstitution):
         # The decomposition works on linear nodes, that is, nodes with kernel ops
         kernel_attr = graph.fw_info.get_kernel_op_attributes(node.type)[0]
         if kernel_attr is None:
-            Logger.error(f"Trying to split node weights and activation, but node "
-                         f"{node.name} doesn't have a kernel attribute.")
-        if not node.is_all_weights_candidates_equal(kernel_attr) and not node.is_all_activation_candidates_equal():
+            Logger.critical(f"Trying to split node weights and activation, but node "
+                            f"{node.name} doesn't have a kernel attribute.")
+        if node.is_configurable_weight(kernel_attr) and node.has_configurable_activation():
             # Node has both different weights and different activation configuration candidates
             weights_bits = [c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
                             for c in node.get_unique_weights_candidates(kernel_attr)]
