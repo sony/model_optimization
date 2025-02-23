@@ -53,38 +53,37 @@ class HistogramCollector(BaseCollector):
         """
 
         super().__init__()
-        self.__n_bins = n_bins
-        self.__bins = None
-        self.__counts = None
-        self.__histogram_per_iteration = []
+        self._n_bins = n_bins
+        self._bins = None
+        self._counts = None
+        self._histogram_per_iteration = []
 
-    def __merge_histograms(self):
+    def _merge_histograms(self):
         """
         After collecting histogram per iteration, we merge these histograms to a single histogram
         containing all samples from all iterations.
         The merge is done in a lazy manner (is computed only when actually needed).
         """
-        if len(self.__histogram_per_iteration) > 0:
+        if len(self._histogram_per_iteration) > 0:
             # Stack all bins that were gathered during inference
-            bins_stack = np.vstack([hist[1] for hist in self.__histogram_per_iteration])
+            bins_stack = np.vstack([hist[1] for hist in self._histogram_per_iteration])
 
             # The combined histogram will be computed between new min/max (which is the min/max of all histograms).
             # The bin width of the merged histogram is the minimal bin width among all histograms (to lose as less
             # information as possible during the merge).
             merged_histogram_min = np.min(bins_stack)
             merged_histogram_max = np.max(bins_stack)
-            merged_bin_width = (merged_histogram_max - merged_histogram_min) / self.__n_bins
-            merged_histogram_bins = np.arange(merged_histogram_min, merged_histogram_max+merged_bin_width, merged_bin_width)
+            merged_histogram_bins = np.linspace(merged_histogram_min, merged_histogram_max, self._n_bins + 1)
 
             merged_histogram_counts = None
-            for histogram in self.__histogram_per_iteration:  # Iterate all collected histograms and merge them
+            for histogram in self._histogram_per_iteration:  # Iterate all collected histograms and merge them
                 if merged_histogram_counts is None:  # First histogram to consider
-                    merged_histogram_counts = interpolate_histogram(merged_histogram_bins, histogram[1], histogram[0])
+                    merged_histogram_counts = histogram[0].astype(np.float64)  # Convert to float64
                 else:  # Merge rest of histograms into existing final histogram
                     merged_histogram_counts += interpolate_histogram(merged_histogram_bins, histogram[1], histogram[0])
 
-            self.__counts = merged_histogram_counts
-            self.__bins = merged_histogram_bins
+            self._counts = merged_histogram_counts
+            self._bins = merged_histogram_bins
 
     def scale(self, scale_factor: np.ndarray):
         """
@@ -102,7 +101,7 @@ class HistogramCollector(BaseCollector):
             self.update_legal_status(is_illegal=True)
         else:
             bins, _ = self.get_histogram()
-            self.__bins = bins * scale_factor
+            self._bins = bins * scale_factor
 
     def shift(self, shift_value: np.ndarray):
         """
@@ -120,7 +119,7 @@ class HistogramCollector(BaseCollector):
             self.update_legal_status(is_illegal=True)
         else:
             bins, _ = self.get_histogram()
-            self.__bins = bins + shift_value
+            self._bins = bins + shift_value
 
     def get_histogram(self) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -130,9 +129,9 @@ class HistogramCollector(BaseCollector):
         self.validate_data_correctness()
         # If collected histograms (one per inference iteration) were not merged before, merge them and return the
         # merged histogram.
-        if self.__bins is None or self.__counts is None:
-            self.__merge_histograms()
-        return self.__bins, self.__counts
+        if self._bins is None or self._counts is None:
+            self._merge_histograms()
+        return self._bins, self._counts
 
     def max(self):
         """
@@ -156,5 +155,5 @@ class HistogramCollector(BaseCollector):
         Args:
             x: Tensor going through the collector to update the histogram according to.
         """
-        count, bins = np.histogram(x, bins=self.__n_bins)
-        self.__histogram_per_iteration.append((count, bins))
+        count, bins = np.histogram(x, bins=self._n_bins)
+        self._histogram_per_iteration.append((count, bins))

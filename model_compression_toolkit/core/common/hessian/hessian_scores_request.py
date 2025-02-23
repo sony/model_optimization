@@ -17,6 +17,8 @@ import dataclasses
 
 from enum import Enum
 
+from model_compression_toolkit.logger import Logger
+
 if TYPE_CHECKING:    # pragma: no cover
     from model_compression_toolkit.core.common import BaseNode
 
@@ -60,16 +62,19 @@ class HessianScoresRequest:
             the computation. Can be None if all hessians for the request are expected to be pre-computed previously.
         n_samples: The number of samples to fetch hessian estimations for. If None, fetch hessians for a full pass
             of the data loader.
+        compute_from_tensors: If `True`, Hessians are computed directly from given tensors instead of using the data loader.
+
     """
     mode: HessianMode
     granularity: HessianScoresGranularity
     target_nodes: Sequence['BaseNode']
     data_loader: Optional[Iterable]
     n_samples: Optional[int]
+    compute_from_tensors: bool = False
 
     def __post_init__(self):
-        if self.data_loader is None and self.n_samples is None:
-            raise ValueError('Data loader and the number of samples cannot both be None.')
+        if self.data_loader is None and self.n_samples is None and not self.compute_from_tensors:
+            Logger.critical('Data loader and the number of samples cannot both be None.')
 
     def clone(self, **kwargs):
         """ Create a clone with optional overrides """

@@ -221,7 +221,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                         n_samples=1,
                                                         target_nodes=[node])
 
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(Exception) as e:
             self.his.fetch_hessian(expected_hessian_request)
         self.assertTrue('Not enough hessians are cached to fulfill the request' in e.exception.args[0])
 
