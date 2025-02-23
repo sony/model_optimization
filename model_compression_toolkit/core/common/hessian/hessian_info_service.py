@@ -163,7 +163,7 @@ class HessianInfoService:
             A dictionary of layers' hessian tensors of shape (samples, ...). The exact shape depends on the
             requested granularity.
         """
-        if request.n_samples is None and not force_compute:
+        if request.n_samples is None and not (force_compute or request.compute_from_tensors):
             Logger.critical('Number of samples can be None only when force_compute is True.')
 
         orig_request = request

@@ -17,6 +17,8 @@ import dataclasses
 
 from enum import Enum
 
+from model_compression_toolkit.logger import Logger
+
 if TYPE_CHECKING:    # pragma: no cover
     from model_compression_toolkit.core.common import BaseNode
 
@@ -72,7 +74,7 @@ class HessianScoresRequest:
 
     def __post_init__(self):
         if self.data_loader is None and self.n_samples is None and not self.compute_from_tensors:
-            raise ValueError('Data loader and the number of samples cannot both be None.')
+            Logger.critical('Data loader and the number of samples cannot both be None.')
 
     def clone(self, **kwargs):
         """ Create a clone with optional overrides """
