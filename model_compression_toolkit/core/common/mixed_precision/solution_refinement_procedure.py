@@ -116,14 +116,10 @@ def is_activation_restriction_compliant(
         current_weight_bits: int,
         candidate_activation_bits: int,
         candidate_weight_bits: int,
-        is_weight_restricted: bool
 ) -> bool:
     """Used when we try to improve activation bit-width. The comparison of the weight bit width
     is dependent on whether the target RU limits weight usage, thus we look for a MP solution
     for weights, or not."""
-    if is_weight_restricted:
-        return (candidate_activation_bits > current_activation_bits and
-                candidate_weight_bits >= current_weight_bits)
     return (candidate_activation_bits > current_activation_bits and
             candidate_weight_bits == current_weight_bits)
 
@@ -194,8 +190,7 @@ def _get_valid_candidates_indices(
                 current_activation_bits,
                 current_weight_bits,
                 candidate_activation_bits,
-                candidate_weight_bits,
-                is_weight_restricted
+                candidate_weight_bits
             )
         # Weight is quantized. Try to increase weight bits for current node.
         return is_weight_restriction_compliant(
