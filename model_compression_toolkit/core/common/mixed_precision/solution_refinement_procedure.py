@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
@@ -67,8 +67,6 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             node_candidates = current_node.candidates_quantization_cfg
 
             # only weights kernel attribute is quantized with weights mixed precision
-            # kernel_attr = search_manager.fw_info.get_kernel_op_attributes(current_node.type)
-            # kernel_attr = None if kernel_attr is None else kernel_attr[0]
             valid_candidates = _get_valid_candidates_indices(node_candidates,
                                                              new_solution[node_idx],
                                                              target_resource_utilization.activation_restricted(),
@@ -113,51 +111,46 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
 
 def is_activation_restriction_compliant(
         current_activation_bits: int,
-        current_weight_bits: int,
+        current_weight_bits: Dict[str, int],
         candidate_activation_bits: int,
-        candidate_weight_bits: int,
+        candidate_weight_bits: Dict[str, int],
         is_weight_restricted: bool
 ) -> bool:
     """Used when we try to improve activation bit-width. The comparison of the weight bit width
     is dependent on whether the target RU limits weight usage, thus we look for a MP solution
     for weights, or not."""
     if is_weight_restricted:
-        return ((candidate_activation_bits > current_activation_bits) and
-                all(candidate_weight_bits[attr] >= current_weight_bits[attr] for attr in current_weight_bits.keys()))
-    return ((candidate_activation_bits > current_activation_bits )and
-            all(candidate_weight_bits[attr] == current_weight_bits[attr] for attr in current_weight_bits.keys()))
+        valid_candidate_for_weight = all(candidate_weight_bits[attr] >= current_weight_bits[attr] for attr in current_weight_bits.keys())
+        valid_candidate_for_activation = candidate_activation_bits > current_activation_bits
+        return valid_candidate_for_weight and valid_candidate_for_activation
 
+    valid_candidate_for_weight = all(candidate_weight_bits[attr] == current_weight_bits[attr] for attr in current_weight_bits.keys())
+    valid_candidate_for_activation = candidate_activation_bits > current_activation_bits
+    return valid_candidate_for_weight and valid_candidate_for_activation
 
 def is_weight_restriction_compliant(
-        current_activation_bits,
-        current_weight_bits,
-        candidate_activation_bits,
-        candidate_weight_bits,
-        is_activation_restricted
+        current_activation_bits: int,
+        current_weight_bits: Dict[str, int],
+        candidate_activation_bits: int,
+        candidate_weight_bits: Dict[str, int],
+        is_activation_restricted: bool
 ) -> bool:
     """Used when we try to improve weights bit-width. The comparison of the activation bit width
     is dependent on whether the target RU limits activation usage, thus we look for a MP solution
     for activations, or not."""
+
     if is_activation_restricted:
-        xxx = all(candidate_weight_bits[attr] > current_weight_bits[attr] for attr in current_weight_bits.keys())
-        yyy = candidate_activation_bits >= current_activation_bits
-        return xxx and yyy
-    xxx = all(candidate_weight_bits[attr] > current_weight_bits[attr] for attr in current_weight_bits.keys())
-    yyy = candidate_activation_bits == current_activation_bits
-    return xxx and yyy
+        valid_candidate_for_weight = all(candidate_weight_bits[attr] > current_weight_bits[attr] for attr in current_weight_bits.keys())
+        valid_candidate_for_activation = candidate_activation_bits >= current_activation_bits
+        return valid_candidate_for_weight and valid_candidate_for_activation
+
+    valid_candidate_for_weight = all(candidate_weight_bits[attr] > current_weight_bits[attr] for attr in current_weight_bits.keys())
+    valid_candidate_for_activation = candidate_activation_bits == current_activation_bits
+
+    return valid_candidate_for_weight and valid_candidate_for_activation
 
 
-# def is_candidate_eligible_when_considering_all_weight_attributes(current_weight_bits,
-#                                                                  candidate_weight_bits):
-#     if current_weight_bits.keys() != candidate_weight_bits.keys():
-#         raise ValueError(f"Compared two candidates with different attributes in wwight quantization configuration: {current_weight_bits} and {candidate_weight_bits}.")
-#      return all(
-#         candidate_weight_bits[attr] > current_weight_bits[attr]
-#         for attr in current_weight_bits
-#     )
-
-
-def get_candidate_bits(candidate) -> Tuple[int, int]:
+def get_candidate_bits(candidate) -> Tuple[Dict[str, int], int]:
     """
     Extract weight and activation bits from a candidate.
 
@@ -165,21 +158,19 @@ def get_candidate_bits(candidate) -> Tuple[int, int]:
         Tuple of (weights_n_bits, activation_n_bits)
     """
 
-    # weights_n_bits = candidate.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits if kernel_attr else None
-    w_attrs = candidate.weights_quantization_cfg.all_weight_attrs
-    w_attr_to_nbits = {}
-    for w_attr in w_attrs:
-        w_attr_to_nbits[w_attr] = candidate.weights_quantization_cfg.get_attr_config(w_attr).weights_n_bits
+    weight_attrs = candidate.weights_quantization_cfg.all_weight_attrs
+    weight_attrs_to_nbits = {}
+    for w_attr in weight_attrs:
+        weight_attrs_to_nbits[w_attr] = candidate.weights_quantization_cfg.get_attr_config(w_attr).weights_n_bits
     activation_n_bits = candidate.activation_quantization_cfg.activation_n_bits
-    return w_attr_to_nbits, activation_n_bits
+    return weight_attrs_to_nbits, activation_n_bits
 
 
 def _get_valid_candidates_indices(
         node_candidates: List['CandidateNodeQuantizationConfig'],
         current_chosen_index: int,
         is_activation_restricted: bool,
-        is_weight_restricted: bool,
-        # kernel_attr: str = None
+        is_weight_restricted: bool
 ) -> List[int]:
     """
     Find node's valid candidates to improve the node's MP chosen candidate.
@@ -192,21 +183,17 @@ def _get_valid_candidates_indices(
         current_chosen_index: Current index in MP configuration of the node.
         is_activation_restricted: Whether activation quantization is restricted.
         is_weight_restricted: Whether weight quantization is restricted.
-        kernel_attr: The name of the kernel attribute on the node, otherwise None.
 
     Returns:
         List of indices of valid candidates.
     """
     current_candidate = node_candidates[current_chosen_index]
-    # current_weight_bits, current_activation_bits = get_candidate_bits(current_candidate, kernel_attr)
     current_weight_bits, current_activation_bits = get_candidate_bits(current_candidate)
 
 
     def is_valid_candidate(candidate) -> bool:
-        # candidate_weight_bits, candidate_activation_bits = get_candidate_bits(candidate, kernel_attr)
         candidate_weight_bits, candidate_activation_bits = get_candidate_bits(candidate)
 
-        # Activation is quantized. Try to increase activation bits for current node.
         return is_activation_restriction_compliant(
             current_activation_bits,
             current_weight_bits,

@@ -59,11 +59,6 @@ def candidate_configs():
         # Mock a method or property to return the full weight bits dictionary
         candidate_0.weights_quantization_cfg.get_attr_config = MagicMock(
             return_value=Mock(weights_n_bits=weight_bits_dict_0['kernel']))
-
-        #         candidate_0.weights_quantization_cfg.get_attr_config = MagicMock(
-        #             return_value=Mock(weights_n_bits=weight_bits_0)
-        #         )
-
         candidate_0.activation_quantization_cfg = Mock()
         candidate_0.activation_quantization_cfg.activation_n_bits = act_bits_0
 
@@ -71,12 +66,8 @@ def candidate_configs():
         candidate_1 = Mock()
         candidate_1.weights_quantization_cfg = Mock()
         candidate_1.weights_quantization_cfg.all_weight_attrs = list(weight_bits_dict_1.keys())
-        # candidate_1.weights_quantization_cfg.get_weight_bits_dict = MagicMock(
-        #     return_value=weight_bits_dict_1
-        # )
         candidate_1.weights_quantization_cfg.get_attr_config = MagicMock(
             return_value=Mock(weights_n_bits=weight_bits_dict_1['kernel']))
-
         candidate_1.activation_quantization_cfg = Mock()
         candidate_1.activation_quantization_cfg.activation_n_bits = act_bits_1
 
@@ -84,28 +75,6 @@ def candidate_configs():
 
     return _create_candidates
 
-
-# def candidate_configs():
-#     def _create_candidates(weight_bits_0, act_bits_0, weight_bits_1, act_bits_1):
-#         candidate_0 = Mock()
-#         candidate_0.weights_quantization_cfg = Mock()
-#         candidate_0.weights_quantization_cfg.get_attr_config = MagicMock(
-#             return_value=Mock(weights_n_bits=weight_bits_0)
-#         )
-#         candidate_0.activation_quantization_cfg = Mock()
-#         candidate_0.activation_quantization_cfg.activation_n_bits = act_bits_0
-#
-#         candidate_1 = Mock()
-#         candidate_1.weights_quantization_cfg = Mock()
-#         candidate_1.weights_quantization_cfg.get_attr_config = MagicMock(
-#             return_value=Mock(weights_n_bits=weight_bits_1)
-#         )
-#         candidate_1.activation_quantization_cfg = Mock()
-#         candidate_1.activation_quantization_cfg.activation_n_bits = act_bits_1
-#
-#         return [candidate_0, candidate_1]
-#
-#     return _create_candidates
 
 # The four test cases covered below:
 # 1. Ensuring that a valid candidate is not found when weight grows from 4bits to 8bits.
@@ -125,25 +94,16 @@ def test_greedy_solution_refinement_procedure(
         resource_limit,
         alternative_candidate_resources_usage
 ):
-    weight_bits_dict_0 = {'kernel': 8}  # Single attribute for simplicity, can add more
+    weight_bits_dict_0 = {'kernel': 8}
     act_bits_0 = 16
-    weight_bits_dict_1 = {'kernel': 4}  # Must match keys with weight_bits_dict_0
+    weight_bits_dict_1 = {'kernel': 4}
     act_bits_1 = 8
 
     initial_solution = [1]
     expected_solution = [1]
 
-    # node_mock = Mock()
-    # node_mock.candidates_quantization_cfg = create_candidates(
-    #     weight_bits_dict_0, act_bits_0, weight_bits_dict_1, act_bits_1
-    # )
-
     node_mock = Mock()
     node_mock.candidates_quantization_cfg = candidate_configs(weight_bits_dict_0, act_bits_0, weight_bits_dict_1, act_bits_1)
-    # node_mock.candidates_quantization_cfg = xxx(
-    #     weight_bits_dict_0, act_bits_0, weight_bits_dict_1, act_bits_1
-    # )
-
 
     search_manager.graph.get_configurable_sorted_nodes.return_value = [node_mock]
 
