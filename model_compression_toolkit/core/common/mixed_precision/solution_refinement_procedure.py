@@ -152,10 +152,10 @@ def get_candidate_bits(candidate, kernel_attr: str = None) -> Tuple[int, int]:
     Returns:
         Tuple of (weights_n_bits, activation_n_bits)
     """
-    return (
-        candidate.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
-        candidate.activation_quantization_cfg.activation_n_bits
-    )
+
+    weights_n_bits = candidate.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits if kernel_attr else None
+    activation_n_bits = candidate.activation_quantization_cfg.activation_n_bits
+    return weights_n_bits, activation_n_bits
 
 
 def _get_valid_candidates_indices(
@@ -183,6 +183,7 @@ def _get_valid_candidates_indices(
     """
     current_candidate = node_candidates[current_chosen_index]
     current_weight_bits, current_activation_bits = get_candidate_bits(current_candidate, kernel_attr)
+
 
     def is_valid_candidate(candidate) -> bool:
         candidate_weight_bits, candidate_activation_bits = get_candidate_bits(candidate, kernel_attr)
