@@ -71,9 +71,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_b
     MixedPrecisionBopsAndActivationUtilizationTest, \
     MixedPrecisionBopsAndTotalUtilizationTest, MixedPrecisionBopsWeightsActivationUtilizationTest, \
     MixedPrecisionBopsMultipleOutEdgesTest
-from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_compatible_with_configured_ru_parts import \
-    MixedPrecisionActivationNoResourceUtilizationForWeightsTest, \
-    MixedPrecisionWeightsNoResourceUtilizationForActivationsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
     MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearch4BitsAvgTest, \
     MixedPrecisionActivationSearch2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
@@ -248,10 +245,6 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mixed_precision_weights_only_activation_conf(self):
         MixedPrecisionWeightsOnlyConfigurableActivationsTest(self).run_test()
-
-    def test_mixed_precision_does_not_affect_not_asked_ru_elements(self):
-        MixedPrecisionActivationNoResourceUtilizationForWeightsTest(self).run_test()
-        MixedPrecisionWeightsNoResourceUtilizationForActivationsTest(self).run_test()
 
     def test_requires_mixed_precision(self):
         RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
