@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 from dataclasses import dataclass
-from typing import List, Dict, Tuple, TYPE_CHECKING
+from typing import List, Dict, Tuple, TYPE_CHECKING, Any, Optional
 
 import numpy as np
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
+from model_compression_toolkit.logger import Logger
 
 if TYPE_CHECKING:    # pragma: no cover
     from model_compression_toolkit.core.common import BaseNode
@@ -139,24 +140,31 @@ class HessianInfoService:
         self.cache = HessianCache()
 
     def fetch_hessian(self, request: HessianScoresRequest,
-                      force_compute: bool = False) -> Dict[LayerName, Tensor]:
+                      activation_tensors: Optional[Tuple[Any]] = None,
+                      force_compute: bool = False,
+                      ) -> Dict[LayerName, Tensor]:
         """
-        Fetch hessians per request.
-        If 'force_compute' is False, will first try to retrieve previously cached hessians. If no or not enough
-        hessians are found in the cache, will compute the remaining number of hessians to fulfill the request.
-        If 'force_compute' is True, will compute the hessians (use when you need hessians for specific inputs).
+        Fetches Hessian approximations based on the given request.
+
+        This method retrieves Hessians from the cache when available, unless `force_compute` is set to `True`,
+        in which case the Hessians are recomputed (use when you need hessians for specific inputs).
+        If `compute_from_tensors` in the request is `True`, the Hessians are computed directly from
+        the provided activation tensors.
 
         Args:
             request: request per which to fetch the hessians.
+            activation_tensors (Optional[Tuple[Any]): List of activation tensors used for Hessian computation
+            when `compute_from_tensors` in the request is `True`. Defaults to None.
             force_compute: if True, will compute the hessians.
                            If False, will look for cached hessians first.
+
 
         Returns:
             A dictionary of layers' hessian tensors of shape (samples, ...). The exact shape depends on the
             requested granularity.
         """
-        if request.n_samples is None and not force_compute:
-            raise ValueError('Number of samples can be None only when force_compute is True.')
+        if request.n_samples is None and not (force_compute or request.compute_from_tensors):
+            Logger.critical('Number of samples can be None only when force_compute is True.')
 
         orig_request = request
         # replace reused nodes with primary nodes
@@ -165,13 +173,21 @@ class HessianInfoService:
         target_nodes = [self._get_primary_node(n) for n in request.target_nodes]
         request = request.clone(target_nodes=target_nodes)
 
-        if force_compute:
-            res = self._compute_hessians(request, self.num_iterations_for_approximation, count_by_cache=False)
+        if request.compute_from_tensors:
+            if activation_tensors is None:
+                Logger.critical(f"The 'compute_from_tensors' option is enabled, but no 'activation_tensors' were provided.")
+            # This mode is primarily used for Hessian-weighted histograms in statistical collection.
+            # To ensure efficiency, we approximate the Hessian using a single iteration.
+            # This provides a sufficiently accurate approximation for this feature.
+            res = self._compute_hessian_for_batch(request, activation_tensors, n_iterations=1)
         else:
-            res = self._fetch_hessians_with_compute(request, self.num_iterations_for_approximation)
+            if force_compute:
+                res = self._compute_hessians(request, self.num_iterations_for_approximation, count_by_cache=False)
+            else:
+                res = self._fetch_hessians_with_compute(request, self.num_iterations_for_approximation)
 
-        # restore nodes from the original request
-        res = {n_orig.name: res[n.name] for n_orig, n in zip(orig_request.target_nodes, request.target_nodes)}
+            # restore nodes from the original request
+            res = {n_orig.name: res[n.name] for n_orig, n in zip(orig_request.target_nodes, request.target_nodes)}
         return res
 
     def clear_cache(self):
@@ -194,7 +210,7 @@ class HessianInfoService:
             return res
 
         if request.data_loader is None:
-            raise ValueError(f'Not enough hessians are cached to fulfill the request, but data loader was not passed '
+            Logger.critical(f'Not enough hessians are cached to fulfill the request, but data loader was not passed '
                              f'for additional computation. Requested {request.n_samples}, '
                              f'available {min(missing.values())}.')
 
@@ -249,7 +265,7 @@ class HessianInfoService:
 
         if request.n_samples:
             if n_samples < request.n_samples:
-                raise ValueError(f'Could not compute the requested number of Hessians ({request.n_samples}), '
+                Logger.critical(f'Could not compute the requested number of Hessians ({request.n_samples}), '
                                  f'not enough samples in the provided representative dataset.')
 
             if n_samples > request.n_samples:

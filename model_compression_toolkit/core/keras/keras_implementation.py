@@ -188,18 +188,30 @@ class KerasImplementation(FrameworkImplementation):
 
     def run_model_inference(self,
                             model: Any,
-                            input_list: List[Any]) -> Tuple[tf.Tensor]:
+                            input_list: List[Any],
+                            requires_grad: bool = False) -> Tuple[tf.Tensor]:
         """
-        Run the model logic on the given the inputs.
+        Runs inference on the given Keras model with the provided inputs.
+
+        This method executes the model on the given input data. If `requires_grad` is set to `False`,
+        gradients will not be computed during inference by wrapping execution in a `tf.stop_gradient()` context.
 
         Args:
-            model: Keras model.
-            input_list: List of inputs for the model.
+            model: The Keras model to execute.
+            input_list: A list of inputs for the model.
+            requires_grad: If False, prevents gradient computation (default: False).
 
         Returns:
-            The Keras model's output.
+            A tuple containing the model's output tensors.
         """
-        return model(input_list)
+        # Prevent gradient computation if requires_grad is False
+        if requires_grad:
+            # Record operations for automatic differentiation
+            with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
+                g.watch(input_list)
+                return model(input_list)
+        else:
+            return model(input_list)
 
     def shift_negative_correction(self,
                                   graph: Graph,

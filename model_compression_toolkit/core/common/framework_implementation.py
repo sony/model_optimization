@@ -137,13 +137,18 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def run_model_inference(self,
                             model: Any,
-                            input_list: List[Any]) -> Tuple[Any]:
+                            input_list: List[Any],
+                            requires_grad: bool = False) -> Tuple[Any]:
         """
-        Run the model logic on the given the inputs.
+        Executes the given model on the provided input data.
+
+        This method must be implemented by subclasses to provide framework-specific logic
+        for running inference (e.g., PyTorch, TensorFlow/Keras).
 
         Args:
-            model: Framework's model.
-            input_list: List of inputs for the model.
+            model: The framework-specific model instance.
+            input_list: A list of inputs for the model.
+            requires_grad: Whether to enable gradient computation. Defaults to `False`.
 
         Returns:
             The frameworks model's output.

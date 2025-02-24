@@ -212,7 +212,7 @@ class TestHessianService(unittest.TestCase):
         self.assertEqual(hessian[target_node.name].shape[0], 2, "Expecting 2 Hessian scores.")
 
     def test_invalid_request(self):
-        with self.assertRaises(ValueError, msg='Data loader and the number of samples cannot both be None'):
+        with self.assertRaises(Exception, msg='Data loader and the number of samples cannot both be None'):
             HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                  granularity=HessianScoresGranularity.PER_TENSOR,
                                  n_samples=None,
@@ -225,7 +225,7 @@ class TestHessianService(unittest.TestCase):
                                        n_samples=None,
                                        data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=list(self.graph.nodes))
-        with self.assertRaises(ValueError, msg='Number of samples can be None only when force_compute is True.'):
+        with self.assertRaises(Exception, msg='Number of samples can be None only when force_compute is True.'):
             self.hessian_service.fetch_hessian(request)
 
     def test_double_fetch_more_samples(self):
