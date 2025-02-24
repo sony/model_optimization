@@ -440,18 +440,28 @@ class BaseNode:
 
         return any([self.is_weights_quantization_enabled(attr) for attr in self.get_node_weights_attributes()])
 
+    # TODO it makes more sense to standardize the input/output shapes at node creation.
+    def get_output_shapes_list(self) -> List[tuple]:
+        """
+        Return output shape in a standardized form as a list of tuples.
+
+        Returns:
+            A list of output shape tuples.
+        """
+        # shape can be tuple or list, and multiple shapes can be packed in list or tuple
+        if self.output_shape and isinstance(self.output_shape[0], (tuple, list)):
+            output_shapes = [tuple(s) for s in self.output_shape]
+        else:
+            output_shapes = [tuple(self.output_shape)]
+        return output_shapes
+
     def get_total_output_params(self) -> float:
         """
         Calculates the output size of the node.
 
         Returns: Output size.
         """
-        # shape can be tuple or list, and multiple shapes can be packed in list or tuple
-        if self.output_shape and isinstance(self.output_shape[0], (tuple, list)):
-            output_shapes = self.output_shape
-        else:
-            output_shapes = [self.output_shape]
-
+        output_shapes = self.get_output_shapes_list()
         # remove batch size (first element) from output shape
         output_shapes = [s[1:] for s in output_shapes]
         # for scalar shape (None,) prod returns 1
@@ -550,7 +560,7 @@ class BaseNode:
         """
 
         return len(self.candidates_quantization_cfg) > 0 and \
-               any([c.activation_quantization_cfg.enable_activation_quantization for c in self.candidates_quantization_cfg])
+            any([c.activation_quantization_cfg.enable_activation_quantization for c in self.candidates_quantization_cfg])
 
     def get_all_weights_attr_candidates(self, attr: str) -> List[WeightsAttrQuantizationConfig]:
         """
