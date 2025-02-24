@@ -514,7 +514,7 @@ class ResourceUtilizationCalculator:
         orig_w_node = n
         if isinstance(n, VirtualActivationWeightsNode):
             orig_w_node = n.original_weights_node
-        # TODO remove from substitution? If not, it looks like mac can be computed from the virtual node, need to check in integration
+
         if isinstance(orig_w_node, VirtualSplitWeightsNode):
             orig_w_node = orig_w_node.origin_node
 

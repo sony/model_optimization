@@ -83,6 +83,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
     # Set graph for MP search
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
     if target_resource_utilization.bops_restricted():
+        # TODO: we only need the virtual graph is both activations and weights are configurable
         # Since Bit-operations count target resource utilization is set, we need to reconstruct the graph for the MP search
         graph = substitute(graph, fw_impl.get_substitutions_virtual_weights_activation_coupling())
 

@@ -55,12 +55,9 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
             return graph
 
         # Virtual composed activation-weights node
-        # we pass a dummy initialization dict to initialize the super BaseNode class,
-        # the actual arguments values are irrelevant because they are being overridden or not used
         v_node = VirtualActivationWeightsNode(act_node,
                                               weights_node,
-                                              fw_info=graph.fw_info,
-                                              **weights_node.__dict__)
+                                              fw_info=graph.fw_info)
 
         # Update graph
         graph.add_node(v_node)

@@ -24,7 +24,6 @@ import numpy as np
 
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
-from model_compression_toolkit.logger import Logger
 
 
 class VirtualSplitNode(BaseNode):
@@ -73,14 +72,14 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
         super().__init__(origin_node)
 
         self.name = origin_node.name + VIRTUAL_WEIGHTS_SUFFIX
-
-        self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates(kernel_attr)
-        for c in self.candidates_quantization_cfg:
-            c.activation_quantization_cfg.enable_activation_quantization = False
-            c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
-
-    def get_total_output_params(self) -> float:
-        return 0
+        # Virtual weights node is created only to be absorbed into virtual composed node right away.
+        # However, in some cases composition is impossible and virtual weights node can remain in the graph.
+        # In such case it messes up resource utilization computation, specifically activation cuts. In order to minimize
+        # the impact, we preserve the behavior of the original node wrt activation (shape and quantization),
+        # so that prev - virtualW cut is identical to prev-origin_node. Only the cut virtualW-virtualA will be different
+        # from the original graph, so in the worst case the utilization will be higher in virtual graph.
+        # This should guarantee that the utilization of the original graph does not exceed the requested target.
+        self.candidates_quantization_cfg = origin_node.candidates_quantization_cfg
 
 
 class VirtualSplitActivationNode(VirtualSplitNode):
@@ -129,50 +128,38 @@ class VirtualActivationWeightsNode(BaseNode):
     def __init__(self,
                  act_node: BaseNode,
                  weights_node: BaseNode,
-                 name: str,
-                 framework_attr: Dict[str, Any],
-                 input_shape: Tuple[Any],
-                 output_shape: Tuple[Any],
-                 weights: Dict[str, np.ndarray],
-                 layer_class: type,
-                 fw_info: FrameworkInfo,
-                 reuse: bool = False,
-                 reuse_group: str = None,
-                 quantization_attr: Dict[str, Any] = None,
-                 has_activation: bool = True,
-                 **kwargs):
+                 fw_info: FrameworkInfo):
         """
         Init a VirtualActivationWeightsNode object.
 
         Args:
             act_node: The original activation node.
             weights_node: The original weights node.
-            name: Node's name
-            framework_attr: Framework attributes the layer had which the node holds.
-            input_shape: Input tensor shape of the node.
-            output_shape: Input tensor shape of the node.
-            weights: Dictionary from a variable name to the weights with that name in the layer the node represents.
-            layer_class: Class path of the layer this node represents.
-            fw_info: A FrameworkInfo object with framework specific information,
-            reuse: Whether this node was duplicated and represents a reused layer.
-            reuse_group: Name of group of nodes from the same reused layer.
-            quantization_attr: Attributes the node holds regarding how it should be quantized.
-            has_activation: Whether the node has activations that we might want to quantize.
-            **kwargs: Additional arguments that can be passed but are not used (allows to init the object with an
-                existing node's __dict__).
-
+            fw_info: A FrameworkInfo object with framework specific information.
         """
+        weights = weights_node.weights
+        if act_node.weights:
+            assert fw_info.get_kernel_op_attributes(act_node)[0] is None, \
+                f'Node {act_node} with kernel cannot be used as activation for VirtualActivationWeightsNode.'
+            assert not set(weights.keys()).intersection(set(act_node.weights.keys())), \
+                'Activation and weight nodes are not expected to have the same weight attribute'
+            if any(act_node.is_configurable_weight(attr) for attr in act_node.weights):
+                raise NotImplementedError('Node with a configurable weight cannot be used as activation for '
+                                          'VirtualActivationWeightsNode.')
+            # combine weights from activation and weights
+            weights.update(act_node.weights)
 
+        name = f"{VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX}_{act_node.name}_{weights_node.name}"
         super().__init__(name,
-                         framework_attr,
-                         input_shape,
-                         output_shape,
-                         weights,
-                         layer_class,
-                         reuse,
-                         reuse_group,
-                         quantization_attr,
-                         has_activation)
+                         framework_attr=weights_node.framework_attr,
+                         input_shape=act_node.input_shape,
+                         output_shape=act_node.output_shape,
+                         weights=weights,
+                         layer_class=weights_node.layer_class,
+                         reuse=weights_node.reuse,
+                         reuse_group=weights_node.reuse_group,
+                         quantization_attr=weights_node.quantization_attr,
+                         has_activation=False)
 
         self.name = f"{VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX}_{act_node.name}_{weights_node.name}"
 
@@ -180,10 +167,20 @@ class VirtualActivationWeightsNode(BaseNode):
         self.original_weights_node = weights_node
 
         v_candidates = []
+        kernel_attr = fw_info.get_kernel_op_attributes(weights_node.type)[0]
+        weights_candidates_quantization_cfg = weights_node.get_unique_weights_candidates(kernel_attr)
         for c_a in act_node.candidates_quantization_cfg:
-            for c_w in weights_node.candidates_quantization_cfg:
+            for c_w in weights_candidates_quantization_cfg:
                 composed_candidate = CandidateNodeQuantizationConfig(activation_quantization_cfg=c_a.activation_quantization_cfg,
                                                                      weights_quantization_cfg=c_w.weights_quantization_cfg)
+                if act_node.weights:
+                    # add non-kernel weights cfg from activation node to the composed node's weights cfg
+                    composed_candidate.weights_quantization_cfg.attributes_config_mapping.update(
+                        c_a.weights_quantization_cfg.attributes_config_mapping
+                    )
+                    composed_candidate.weights_quantization_cfg.pos_attributes_config_mapping.update(
+                        c_a.weights_quantization_cfg.pos_attributes_config_mapping
+                    )
                 v_candidates.append(composed_candidate)
 
         # sorting the candidates by weights number of bits first and then by activation number of bits (reversed order)
@@ -192,29 +189,3 @@ class VirtualActivationWeightsNode(BaseNode):
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
         self.candidates_quantization_cfg = v_candidates
-
-    def get_total_output_params(self) -> float:
-        return self.original_activation_node.get_total_output_params()
-
-    def get_bops_count(self, fw_impl: Any, fw_info: FrameworkInfo, candidate_idx: int) -> float:
-        """
-        Computes the composed node's (edge) bit-operation count.
-
-        Args:
-            fw_impl: A FrameworkImplementation object with framework specific methods.
-            fw_info: A FrameworkInfo object with framework specific information,
-            candidate_idx: The index of the node's quantization candidate configuration.
-
-        Returns: The BOPS count of the composed node.
-
-        """
-        kernel_attr = fw_info.get_kernel_op_attributes(self.original_weights_node.type)[0]
-        node_mac = fw_impl.get_node_mac_operations(self.original_weights_node, fw_info)
-        candidate = self.candidates_quantization_cfg[candidate_idx]
-        kernel_attr_cfg = candidate.weights_quantization_cfg.get_attr_config(kernel_attr)
-        weights_bit = kernel_attr_cfg.weights_n_bits if \
-            kernel_attr_cfg.enable_weights_quantization else FLOAT_BITWIDTH
-        activation_bit = candidate.activation_quantization_cfg.activation_n_bits if \
-            candidate.activation_quantization_cfg.enable_activation_quantization else FLOAT_BITWIDTH
-        node_bops = weights_bit * activation_bit * node_mac
-        return node_bops
