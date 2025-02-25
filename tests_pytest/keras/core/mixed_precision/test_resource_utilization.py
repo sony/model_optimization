@@ -109,6 +109,7 @@ fw_impl = KerasImplementation()
 
 class TestRUIntegration:
     def test_orig_vs_virtual_sequential_graph(self):
+        """ Test detailed ru computation on original and corresponding virtual graph. """
         inputs = Input(shape=(18, 18, 3))
         x = Conv2D(filters=8, kernel_size=5)(inputs)
         x = tf.add(x, np.ones((14, 8)))    # => activation with const in the composed node
@@ -175,6 +176,8 @@ class TestRUIntegration:
         assert self._extract_values(detailed_virtual[RUTarget.BOPS]) == exp_bops
 
     def test_mult_output_activation(self):
+        """ Tests the case when input activation has multiple outputs -> virtual weights nodes are not merged
+            into VirtualActivationWeightsNode. """
         inputs = Input(shape=(16, 16, 3))
         x1 = Conv2D(filters=15, kernel_size=3, groups=3)(inputs)
         x2 = DepthwiseConv2D(kernel_size=3, depth_multiplier=5)(inputs)
@@ -197,20 +200,19 @@ class TestRUIntegration:
                        (14 * 14 * 15 * binary_out_a_bit + 14 * 14 * 10 * linear_a_min_nbit) / 8,
                        14 * 14 * 10 * linear_a_min_nbit / 8]
 
-        # the order of conv and dwconv is not guaranteed but they have same values
+        # the order of conv and dwconv is not guaranteed, but they have same values
         exp_w_ru = [3*3*1*15*linear_w_min_nbit/8,
                     3*3*3*5*linear_w_min_nbit/8,
                     15 * 10 * linear_w_min_nbit/8]
-        exp_bops = [(3*3*1*15)*(14*14)*default_a_nbit*linear_w_min_nbit,
-                    (3*3*3*5)*(14*14)*default_a_nbit*linear_w_min_nbit,
-                    (15*10)*(14*14)*binary_out_a_bit*linear_w_min_nbit]
+        # bops are not computed for virtual weights nodes
+        exp_bops = [(15*10)*(14*14)*binary_out_a_bit*linear_w_min_nbit]
 
         assert self._extract_values(detailed_orig[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)
         assert self._extract_values(detailed_orig[RUTarget.WEIGHTS]) == exp_w_ru
         assert self._extract_values(detailed_orig[RUTarget.BOPS]) == exp_bops
 
         virtual_graph = substitute(copy.deepcopy(graph),
-                                   fw_impl.get_substitutions_virtual_weights_activation_coupling())
+                                   self.fw_impl.get_substitutions_virtual_weights_activation_coupling())
         assert len(virtual_graph.nodes) == 7
         assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualActivationWeightsNode)]) == 1
         assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualSplitActivationNode)]) == 3
@@ -222,8 +224,7 @@ class TestRUIntegration:
                                                                             return_detailed=True)
         assert ru_virtual == ru_orig
         # conv and dwconv each remain as a pair of virtual W and virtual A nodes. Remaining virtual W nodes mess up the
-        # cuts. However, this should only add virtualW-virtualA cuts, all cuts from the original graph should be
-        # identical
+        # cuts - but this should only add virtualW-virtualA cuts, all cuts from the original graph should stay identical
         assert not set(exp_cuts_ru) - set(detailed_virtual[RUTarget.ACTIVATION].values())
         assert self._extract_values(detailed_virtual[RUTarget.WEIGHTS]) == exp_w_ru
         assert self._extract_values(detailed_virtual[RUTarget.BOPS]) == exp_bops

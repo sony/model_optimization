@@ -32,6 +32,8 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     NodeActivationQuantizationConfig
+from model_compression_toolkit.core.common.substitutions.virtual_activation_weights_composition import \
+    BaseVirtualActivationWeightsComposition, get_input_activation_if_composable
 
 
 class BitwidthMode(Enum):
@@ -510,13 +512,19 @@ class ResourceUtilizationCalculator:
         if w_qc and bitwidth_mode != BitwidthMode.QCustom:
             raise ValueError(self.unexpected_qc_error)
 
-        # extract the original weight node for mac computation
+        if isinstance(n, VirtualSplitWeightsNode):
+            # Virtual weights node can only be present if it couldn't be merged into VirtualActivationWeightsNode.
+            # This means that during MP search we cannot compute bops for all A/W nbits combinations. To prevent
+            # inconsistencies we ignore such nodes for bops computation.
+            return 0
+
+        # Fetch the original weights node for mac computation (VirtualActivationWeightsNode input/output shapes are
+        # based on the activation original node, not weights original node)
         orig_w_node = n
         if isinstance(n, VirtualActivationWeightsNode):
             orig_w_node = n.original_weights_node
-
-        if isinstance(orig_w_node, VirtualSplitWeightsNode):
-            orig_w_node = orig_w_node.origin_node
+            if isinstance(orig_w_node, VirtualSplitWeightsNode):
+                orig_w_node = orig_w_node.origin_node
 
         # check if the node has kernel
         kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
@@ -535,10 +543,9 @@ class ResourceUtilizationCalculator:
             # we don't need the original node (and cannot use it for custom configuration anyway)
             a_node = n
         else:
-            incoming_edges = self.graph.incoming_edges(n)
-            assert len(incoming_edges) == 1, \
-                f'Unexpected number of inputs {len(incoming_edges)} for BOPS calculation. Expected 1.'
-            a_node = incoming_edges[0].source_node
+            a_node = get_input_activation_if_composable(self.graph, n, warn=False)
+            if a_node is None:
+                return 0
 
         if (target_criterion == TargetInclusionCriterion.AnyQuantized and
                 not (a_node.is_activation_quantization_enabled() or n.is_weights_quantization_enabled(kernel_attr))):

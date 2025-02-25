@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Optional
 
 from model_compression_toolkit.core.common import BaseNode, Graph, BaseSubstitution
 from model_compression_toolkit.logger import Logger
@@ -44,14 +45,8 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
             raise TypeError(f'Matched node {weights_node} was expected to be of type VirtualSplitWeightsNode. '
                             f'This substitution is expected to be called after activation-weights split.')
 
-        predecessors = graph.get_prev_nodes(weights_node)
-        assert len(predecessors) == 1, (f'Matched node for {self.__class__.__name__} substitution is expected to have'
-                                        f'exactly one input, node {weights_node} has {len(predecessors)}')
-        act_node = predecessors[0]
-        if len(graph.out_edges(act_node)) > 1:
-            Logger.warning(f"Node {act_node.name} has multiple outgoing edges, which is not supported with "
-                           f"mixed-precision search under bit-operations constraint. In such case, it might result in "
-                           f"incorrect resource utilization computation and suboptimal bits selection.")
+        act_node = get_input_activation_if_composable(graph, weights_node, warn=True)
+        if act_node is None:
             return graph
 
         # Virtual composed activation-weights node
@@ -70,3 +65,29 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
         graph.remove_node(act_node)
 
         return graph
+
+
+def get_input_activation_if_composable(graph: Graph, weights_node: BaseNode, warn: bool) -> Optional[BaseNode]:
+    """
+    Get input activation node for composition, or None if not composable.
+
+    Args:
+        graph: graph.
+        weights_node: weights node for composition.
+        warn: whether to log a warning if not composable.
+
+    Returns:
+        Input activation node or None.
+    """
+    predecessors = graph.get_prev_nodes(weights_node)
+    assert len(predecessors) == 1, (f'Weights node is expected to have exactly one input, '
+                                    f'node {weights_node} has {len(predecessors)}')
+    act_node = predecessors[0]
+    if len(graph.out_edges(act_node)) > 1:
+        if warn:
+            Logger.warning(f"Node {act_node.name} has multiple outgoing edges, which is not supported with "
+                           f"mixed-precision search under bit-operations constraint. In such case, it might result in "
+                           f"incorrect resource utilization computation and suboptimal bits selection.")
+        return None
+
+    return act_node
