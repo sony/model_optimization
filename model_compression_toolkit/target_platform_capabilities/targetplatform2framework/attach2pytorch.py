@@ -70,7 +70,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.HARDSWISH: [Hardswish, hardswish],
             OperatorSetNames.FLATTEN: [Flatten, flatten],
             OperatorSetNames.GET_ITEM: [operator.getitem],
-            OperatorSetNames.RESHAPE: [reshape],
+            OperatorSetNames.RESHAPE: [reshape, torch.Tensor.view],
             OperatorSetNames.UNSQUEEZE: [unsqueeze],
             OperatorSetNames.SQUEEZE: [squeeze],
             OperatorSetNames.PERMUTE: [permute],
