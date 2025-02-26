@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-<<<<<<< HEAD
 import torch
 from torch import nn
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
@@ -69,66 +68,18 @@ def test_get_mac(minimal_tpc):
     fw_impl = PytorchImplementation()
     fw_info = DEFAULT_PYTORCH_INFO
     model = Model()
-=======
-import numpy as np
-from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, Input, Flatten
-import keras
-
-from model_compression_toolkit.core import QuantizationConfig
-from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
-    AttachTpcToKeras
-
-
-def data_gen():
-    yield [np.random.randn(28, 32, 10)]
-
-
-def build_model():
-    x = Input(shape=(28, 32, 10))
-    y = Conv2D(filters=20, kernel_size=(5, 4))(x)
-    y = Conv2D(filters=15, kernel_size=(4, 6), groups=5)(y)
-    y = Conv2D(filters=8, kernel_size=(3, 3), strides=2)(y)
-    y = Conv2D(filters=12, kernel_size=(3, 3), dilation_rate=2)(y)
-    y = Conv2DTranspose(filters=20, kernel_size=(5, 3))(y)
-    y = Conv2DTranspose(filters=10, kernel_size=(3, 3), strides=2)(y)
-    y = Conv2DTranspose(filters=5, kernel_size=(3, 3), dilation_rate=2)(y)
-    y = DepthwiseConv2D(kernel_size=(2, 3), depth_multiplier=4)(y)
-    y = DepthwiseConv2D(kernel_size=(3, 3), depth_multiplier=2, strides=3)(y)
-    y = DepthwiseConv2D(kernel_size=(3, 3), depth_multiplier=2, dilation_rate=2)(y)
-    y = Dense(10)(y)
-    y = Flatten()(y)
-    y = Dense(5)(y)
-    return keras.Model(inputs=x, outputs=y)
-
-
-def test_get_mac(minimal_tpc):
-    fw_impl = KerasImplementation()
-    model = build_model()
-    fw_info = DEFAULT_KERAS_INFO
->>>>>>> compute bops on activation with multiple outputs
 
     graph = graph_preparation_runner(model,
                                      data_gen,
                                      QuantizationConfig(linear_collapsing=False),
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
-<<<<<<< HEAD
                                      fqc=AttachTpcToPytorch().attach(minimal_tpc),
-=======
-                                     fqc=AttachTpcToKeras().attach(minimal_tpc),
->>>>>>> compute bops on activation with multiple outputs
                                      mixed_precision_enable=False,
                                      running_gptq=False)
 
     nodes = graph.get_topo_sorted_nodes()
-<<<<<<< HEAD
     # assert len(nodes) == 14, nodes
-=======
-    assert len(nodes) == 14, nodes
->>>>>>> compute bops on activation with multiple outputs
     assert fw_impl.get_node_mac_operations(nodes[0], fw_info) == 0
     assert fw_impl.get_node_mac_operations(nodes[1], fw_info) == (10*20*5*4)*24*29
     assert fw_impl.get_node_mac_operations(nodes[2], fw_info) == (4*3*4*6)*5*21*24
@@ -140,17 +91,10 @@ def test_get_mac(minimal_tpc):
     assert fw_impl.get_node_mac_operations(nodes[8], fw_info) == (5*2*3*4)*24*21
     assert fw_impl.get_node_mac_operations(nodes[9], fw_info) == (10*3*3*4)*8*7
     assert fw_impl.get_node_mac_operations(nodes[10], fw_info) == (40*3*3*2)*4*3
-<<<<<<< HEAD
     assert fw_impl.get_node_mac_operations(nodes[10], fw_info) == (40*3*3*2)*4*3
     assert fw_impl.get_node_mac_operations(nodes[11], fw_info) == 0
     assert fw_impl.get_node_mac_operations(nodes[12], fw_info) == 4*3*(80*10)
     assert fw_impl.get_node_mac_operations(nodes[13], fw_info) == 0
     assert fw_impl.get_node_mac_operations(nodes[14], fw_info) == (4*3*10)*5
-=======
-    assert fw_impl.get_node_mac_operations(nodes[11], fw_info) == 4*3*(80*10)
-    assert fw_impl.get_node_mac_operations(nodes[12], fw_info) == 0
-    assert fw_impl.get_node_mac_operations(nodes[13], fw_info) == (4*3*80*10)*5
-
->>>>>>> compute bops on activation with multiple outputs
 
 
