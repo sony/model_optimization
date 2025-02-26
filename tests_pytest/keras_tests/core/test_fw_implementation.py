@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-<<<<<<< HEAD
 import numpy as np
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, Input, Flatten
 import keras
@@ -77,5 +76,3 @@ def test_get_mac(minimal_tpc):
     assert fw_impl.get_node_mac_operations(nodes[11], fw_info) == 4*3*(80*10)
     assert fw_impl.get_node_mac_operations(nodes[12], fw_info) == 0
     assert fw_impl.get_node_mac_operations(nodes[13], fw_info) == (4*3*10)*5
-=======
->>>>>>> compute bops on activation with multiple outputs
