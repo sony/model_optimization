@@ -13,15 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 from types import MethodType
-from typing import Iterable, Union
 from unittest.mock import Mock
 
 import numpy as np
 import pytest
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.core import QuantizationConfig, ResourceUtilization
-from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core import ResourceUtilization
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -33,8 +32,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     Utilization, ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from tests_pytest.test_util.graph_builder_utils import build_node, full_attr_name, build_qc
-
+from tests_pytest.test_util.graph_builder_utils import build_node, build_qc, full_attr_name
 
 BM = BitwidthMode
 TIC = TargetInclusionCriterion
