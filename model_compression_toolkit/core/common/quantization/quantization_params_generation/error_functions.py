@@ -514,6 +514,8 @@ def get_threshold_selection_histogram_error_function(quantization_method: Quanti
     quant_method_error_function_mapping = {
         qc.QuantizationErrorMethod.MSE: lambda q_bins, q_count, bins, counts, threshold, _range:
         _mse_error_histogram(q_bins, q_count, bins, counts),
+        qc.QuantizationErrorMethod.HMSE: lambda q_bins, q_count, bins, counts, threshold, _range:
+        _mse_error_histogram(q_bins, q_count, bins, counts), #HMSE need the same functionality as MSE
         qc.QuantizationErrorMethod.MAE: lambda q_bins, q_count, bins, counts, threshold, _range:
         _mae_error_histogram(q_bins, q_count, bins, counts),
         qc.QuantizationErrorMethod.LP: lambda q_bins, q_count, bins, counts, threshold, _range:

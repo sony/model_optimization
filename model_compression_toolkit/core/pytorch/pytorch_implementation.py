@@ -186,18 +186,32 @@ class PytorchImplementation(FrameworkImplementation):
 
     def run_model_inference(self,
                             model: Any,
-                            input_list: List[Any]) -> Tuple[torch.Tensor]:
+                            input_list: List[Any],
+                            requires_grad: bool = False) -> Tuple[torch.Tensor]:
         """
-        Run the model logic on the given the inputs.
+        Runs the given PyTorch model on the provided input data.
 
+        This method converts the input data into PyTorch tensors, sets the `requires_grad`
+        flag if necessary, and runs inference using the provided model.
         Args:
-            model: Pytorch model.
-            input_list: List of inputs for the model.
+            model: The PyTorch model to be executed.
+            input_list: A list of input data for the model.
+            requires_grad: If True, enables gradient computation for the input tensors.
 
         Returns:
-            The Pytorch model's output.
+            A tuple containing the model's output tensors.
         """
-        return model(*to_torch_tensor(input_list))
+        # Convert input list elements into PyTorch tensors
+        torch_tensor_list = to_torch_tensor(input_list)
+
+        # If gradients are required, enable tracking and gradient retention for each tensor
+        if requires_grad:
+            for input_tensor in torch_tensor_list:
+                input_tensor.requires_grad_()
+                input_tensor.retain_grad()
+
+        # Run the model with the prepared input tensors
+        return model(*torch_tensor_list)
 
     def shift_negative_correction(self,
                                   graph: Graph,
@@ -492,21 +506,23 @@ class PytorchImplementation(FrameworkImplementation):
 
         Returns: The MAC count of the operation
         """
+        kernels = fw_info.get_kernel_op_attributes(node.type)
+        if not kernels or kernels[0] is None:
+            return 0
 
-        output_shape = node.output_shape[0]
-        kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
-        output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
+        assert len(kernels) == 1
+        kernel_shape = node.get_weights_by_keys(kernels[0]).shape
 
         if node.is_match_type(Conv2d) or node.is_match_type(ConvTranspose2d):
-            # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
-            return np.prod([x for x in output_shape if x is not None]) * \
-                   kernel_shape[input_channel_axis] * \
-                   (kernel_shape[0] * kernel_shape[1])
-        elif node.is_match_type(Linear):
-            # IN * OUT
-            return kernel_shape[0] * kernel_shape[1]
-        else:
-            return 0
+            h, w = node.get_output_shapes_list()[0][-2:]
+            return np.prod(kernel_shape) * h * w
+
+        if node.is_match_type(Linear):
+            # IN * OUT * (all previous dims[:-1])
+            _, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
+            return node.get_total_output_params() * kernel_shape[input_channel_axis]
+
+        return 0
 
     def apply_second_moment_correction(self,
                                        quantized_model: Any,

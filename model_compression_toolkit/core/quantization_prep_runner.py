@@ -69,6 +69,7 @@ def quantization_preparation_runner(graph: Graph,
     mi = ModelCollector(graph,
                         fw_impl,
                         fw_info,
+                        hessian_info_service,
                         core_config.quantization_config)  # Mark points for statistics collection
 
     for _data in tqdm(representative_data_gen(), "Statistics Collection"):

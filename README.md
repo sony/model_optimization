@@ -17,9 +17,9 @@ ______________________________________________________________________
   <a href="#license">License</a>
 </p>
 <p align="center">
-  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/pytorch-2.1%20%7C%202.2%20%7C%202.3-blue" /></a>
-  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/TensorFlow-2.12%20%7C%202.13%20%7C%202.14%20%7C%202.15-blue" /></a>
-  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/python-3.9%20%7C3.10%20%7C3.11-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/pytorch-2.2%20%7C%202.3%20%7C%202.4%20%7C%202.5-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/tensorflow-2.12%20%7C%202.13%20%7C%202.14%20%7C%202.15-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue" /></a>
   <a href="https://github.com/sony/model_optimization/releases"><img src="https://img.shields.io/github/v/release/sony/model_optimization" /></a>
   <a href="https://github.com/sony/model_optimization/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" /></a>
   
@@ -36,7 +36,7 @@ pip install model-compression-toolkit
 ```
 For installing the nightly version or installing from source, refer to the [installation guide](https://github.com/sony/model_optimization/blob/main/INSTALLATION.md).
 
-**Important note**: In order to use MCT, you’ll need to provide a floating point .pt or .keras model as an input.
+**Important note**: In order to use MCT, you’ll need to provide a pre-trained floating point model (PyTorch/Keras) as an input.
 
 ### Tutorials and Examples 
 
@@ -60,7 +60,7 @@ QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | [QAT API](
 For each flow, **Quantization core** utilizes various algorithms and hyper-parameters for optimal [hardware-aware](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) quantization results. 
 For further details, please see [Supported features and algorithms](#high-level-features-and-techniques). 
 
- **Required input**: Floating point model - 32bit model in either .pt or .keras format
+ **Required input**: Pre-trained floating point model (PyTorch/Keras)
  
  **Optional input**: Representative dataset - can be either provided by the user, or generated utilizing the [Data Generation](#data-generation-) capability
 
@@ -203,4 +203,4 @@ MCT is licensed under Apache License Version 2.0. By contributing to the project
 
 [4] Gordon, O., Cohen, E., Habi, H. V., & Netzer, A., 2024. [EPTQ: Enhanced Post-Training Quantization via Hessian-guided Network-wise Optimization, European Conference on Computer Vision Workshop 2024, Computational Aspects of Deep Learning (CADL)](https://arxiv.org/abs/2309.11531)
 
-[5] Dikstein, L., Lapid, A., Netzer, A., & Habi, H. V., 2024. [Data Generation for Hardware-Friendly Post-Training Quantization, Accepted to IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) 2025](https://arxiv.org/abs/2410.22110)
+[5] Dikstein, L., Lapid, A., Netzer, A., & Habi, H. V., 2024. [Data Generation for Hardware-Friendly Post-Training Quantization, Accepted to IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) 2025](https://openaccess.thecvf.com/content/WACV2025/papers/Dikstein_Data_Generation_for_Hardware-Friendly_Post-Training_Quantization_WACV_2025_paper.pdf)

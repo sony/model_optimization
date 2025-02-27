@@ -52,7 +52,8 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
         # Track the unused opsets for warning purposes.
-        self.__tpc_opsets_not_used = [s.name for s in tpc.operator_set]
+        operator_set = tpc.operator_set or ()
+        self.__tpc_opsets_not_used = [s.name for s in operator_set]
         self.remove_fusing_names_from_not_used_list()
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:

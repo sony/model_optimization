@@ -152,5 +152,8 @@ def model_reader(model: torch.nn.Module,
     logging.info("Start Model Reading...")
     fx_model = fx_graph_module_generation(model, representative_data_gen, to_tensor)
     graph = build_graph(fx_model, to_numpy)
+    disconnected_inputs = [n.name for n in graph.get_inputs() if not graph.out_edges(n)]
+    if disconnected_inputs:
+        raise ValueError(f'The network contains disconnected input(s): {disconnected_inputs}.')
     graph = remove_broken_nodes_from_graph(graph)
     return graph

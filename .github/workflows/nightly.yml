@@ -30,7 +30,7 @@ jobs:
           python setup.py sdist bdist_wheel
       - name: Publish nightly
         run: |
-          twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_KEY }}
+          twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_SSI_DEV_NIGHTLY_KEY }}
       - name: Post publish import test
         run: |
           pip install mct-nightly tensorflow torch

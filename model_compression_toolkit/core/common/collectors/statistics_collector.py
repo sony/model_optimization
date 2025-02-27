@@ -17,13 +17,12 @@
 import math
 from copy import deepcopy
 from typing import Any, Tuple
-
 import numpy as np
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
 from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector
 from model_compression_toolkit.core.common.collectors.mean_collector import MeanCollector
 from model_compression_toolkit.core.common.collectors.min_max_per_channel_collector import MinMaxPerChannelCollector
+from model_compression_toolkit.core.common.collectors.weighted_histogram_collector import WeightedHistogramCollector
 
 
 class BaseStatsCollector(object):
@@ -71,21 +70,24 @@ class StatsCollector(BaseStatsCollector):
 
         super().__init__()
         self.hc = HistogramCollector()
+        self.weighted_hc = WeightedHistogramCollector()
         self.mc = MeanCollector(axis=out_channel_axis)
         self.mpcc = MinMaxPerChannelCollector(init_min_value=init_min_value,
                                               init_max_value=init_max_value,
                                               axis=out_channel_axis)
 
-    def update_statistics(self, x: Any):
+    def update_statistics(self, x: Any, weights: Any=None):
         """
         Update statistics in all collectors with a new tensor to consider.
 
         Args:
             x: Tensor to consider when updating statistics.
+            weights: Weights tensor to consider when updating statistics.
         """
 
         x = standardize_tensor(x)
         self.hc.update(x)
+        self.weighted_hc.update(x, weights)
         self.mc.update(x)
         self.mpcc.update(x)
 
@@ -228,6 +230,7 @@ def shift_statistics(collector: BaseStatsCollector,
         shifted_collector.mc.shift(shift_value)
         if shifted_collector.require_collection():
             shifted_collector.hc.shift(shift_value)
+            shifted_collector.weighted_hc.shift(shift_value)
 
     return shifted_collector
 
@@ -253,5 +256,6 @@ def scale_statistics(collector: BaseStatsCollector,
         scaled_collector.mc.scale(scale_value)
         if scaled_collector.require_collection():
             scaled_collector.hc.scale(scale_value)
+            scaled_collector.weighted_hc.scale(scale_value)
 
     return scaled_collector
