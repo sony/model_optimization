@@ -8,7 +8,7 @@ GradientPTQConfig Class
 =================================
 
 
-**The following API can be used to create a GradientPTQConfig instance which can be used for post training quantization using knowledge distillation from a teacher (float Keras model) to a student (the quantized Keras model)**
+**The following API can be used to create a GradientPTQConfig instance which can be used for post training quantization using knowledge distillation from a teacher (float model) to a student (the quantized model)**
 
 .. autoclass:: model_compression_toolkit.gptq.GradientPTQConfig
     :members:
@@ -30,3 +30,22 @@ RoundingType
 
 .. autoclass:: model_compression_toolkit.gptq.RoundingType
     :members:
+
+
+=====================================
+GradualActivationQuantizationConfig
+=====================================
+
+**The following API can be used to configure the gradual activation quantization when using GPTQ.**
+
+.. autoclass:: model_compression_toolkit.gptq.GradualActivationQuantizationConfig
+    :members:
+
+
+=====================================
+QFractionLinearAnnealingConfig
+=====================================
+
+.. autoclass:: model_compression_toolkit.gptq.QFractionLinearAnnealingConfig
+    :members:
+

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>CoreConfig &#8212; MCT Documentation: ver 2.2.0</title>
+    <title>CoreConfig &#8212; MCT Documentation: ver 2.3.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">CoreConfig</a></li> 
       </ul>
     </div>  
@@ -46,15 +46,14 @@
 <p><strong>Class to configure the optimization process of the model:</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.core.CoreConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.</span></span><span class="sig-name descname"><span class="pre">CoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantization_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mixed_precision_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bit_width_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.CoreConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>A class to hold the configurations classes of the MCT-core.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.</span></span><span class="sig-name descname"><span class="pre">CoreConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantization_config=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mixed_precision_config=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bit_width_config=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_config=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.CoreConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dataclass to hold the configurations classes of the MCT-core.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>quantization_config</strong> (<a class="reference internal" href="../classes/QuantizationConfig.html#model_compression_toolkit.core.QuantizationConfig" title="model_compression_toolkit.core.QuantizationConfig"><em>QuantizationConfig</em></a>) – Config for quantization.</p></li>
-<li><p><strong>mixed_precision_config</strong> (<a class="reference internal" href="../classes/MixedPrecisionQuantizationConfig.html#model_compression_toolkit.core.MixedPrecisionQuantizationConfig" title="model_compression_toolkit.core.MixedPrecisionQuantizationConfig"><em>MixedPrecisionQuantizationConfig</em></a>) – Config for mixed precision quantization.</p></li>
-<li><p><strong>None</strong> (<em>If</em>) – </p></li>
-<li><p><strong>used.</strong> (<em>a default MixedPrecisionQuantizationConfig is</em>) – </p></li>
+<li><p><strong>mixed_precision_config</strong> (<a class="reference internal" href="../classes/MixedPrecisionQuantizationConfig.html#model_compression_toolkit.core.MixedPrecisionQuantizationConfig" title="model_compression_toolkit.core.MixedPrecisionQuantizationConfig"><em>MixedPrecisionQuantizationConfig</em></a>) – Config for mixed precision quantization.
+If None, a default MixedPrecisionQuantizationConfig is used.</p></li>
 <li><p><strong>bit_width_config</strong> (<a class="reference internal" href="../classes/BitWidthConfig.html#model_compression_toolkit.core.BitWidthConfig" title="model_compression_toolkit.core.BitWidthConfig"><em>BitWidthConfig</em></a>) – Config for manual bit-width selection.</p></li>
 <li><p><strong>debug_config</strong> (<a class="reference internal" href="debug_config.html#model_compression_toolkit.core.DebugConfig" title="model_compression_toolkit.core.DebugConfig"><em>DebugConfig</em></a>) – Config for debugging and editing the network quantization process.</p></li>
 </ul>
@@ -91,7 +90,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.3.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">CoreConfig</a></li> 
       </ul>
     </div>
