@@ -68,13 +68,14 @@ def set_quantization_configuration_to_graph(graph: Graph,
     nodes_to_manipulate_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_bit_widths(graph)
 
     for n in graph.nodes:
+        print(n, nodes_to_manipulate_bit_widths['activation'].get(n))
         set_quantization_configs_to_node(node=n,
                                          graph=graph,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
                                          fqc=graph.fqc,
                                          mixed_precision_enable=mixed_precision_enable,
-                                         manual_bit_width_override=nodes_to_manipulate_bit_widths.get(n))
+                                         manual_bit_width_override=nodes_to_manipulate_bit_widths['activation'].get(n))
     return graph
 
 

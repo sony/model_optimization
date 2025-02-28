@@ -98,16 +98,25 @@ class BitWidthConfig:
         Returns:
             Dict: A dictionary mapping nodes to their new bit-widths.
         """
-        nodes_to_change_bit_width = {}
-        for manual_bit_width_selection in self.manual_activation_bit_width_selection_list:
-            filtered_nodes = graph.filter(manual_bit_width_selection.filter)
-            if len(filtered_nodes) == 0:
-                Logger.critical(f"Node Filtering Error: No nodes found in the graph for filter {manual_bit_width_selection.filter.__dict__} "
-                                f"to change their bit width to {manual_bit_width_selection.bit_width}.")
-            for n in filtered_nodes:
-                # check if a manual configuration exists for this node
-                if n in nodes_to_change_bit_width:
-                    Logger.info(
-                        f"Node {n} has an existing manual bit width configuration of {nodes_to_change_bit_width.get(n)}. A new manual configuration request of {manual_bit_width_selection.bit_width} has been received, and the previous value is being overridden.")
-                nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width})
+        def make_nodes_to_change_bit_width(manual_bit_width_selection_list):
+            unit_nodes_to_change_bit_width = {}
+            for manual_bit_width_selection in manual_bit_width_selection_list:
+                filtered_nodes = graph.filter(manual_bit_width_selection.filter)
+                if len(filtered_nodes) == 0:
+                    Logger.critical(
+                        f"Node Filtering Error: No nodes found in the graph for filter {manual_bit_width_selection.filter.__dict__} "
+                        f"to change their bit width to {manual_bit_width_selection.bit_width}.")
+                for n in filtered_nodes:
+                    # check if a manual configuration exists for this node
+                    if n in unit_nodes_to_change_bit_width:
+                        Logger.info(
+                            f"Node {n} has an existing manual bit width configuration of {unit_nodes_to_change_bit_width.get(n)}. A new manual configuration request of {manual_bit_width_selection.bit_width} has been received, and the previous value is being overridden.")
+                    unit_nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width})
+
+            return unit_nodes_to_change_bit_width
+
+        a_nodes_to_change_bit_width = make_nodes_to_change_bit_width(self.manual_activation_bit_width_selection_list)
+        w_nodes_to_change_bit_width = make_nodes_to_change_bit_width(self.manual_weights_bit_width_selection_list)
+
+        nodes_to_change_bit_width = {'activation': a_nodes_to_change_bit_width, 'weights': w_nodes_to_change_bit_width}
         return nodes_to_change_bit_width
