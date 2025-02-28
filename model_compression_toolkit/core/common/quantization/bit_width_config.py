@@ -42,6 +42,7 @@ class BitWidthConfig:
         manual_activation_bit_width_selection_list (List[ManualBitWidthSelection]): A list of ManualBitWidthSelection objects defining manual bit-width configurations.
     """
     manual_activation_bit_width_selection_list: List[ManualBitWidthSelection] = field(default_factory=list)
+    manual_weights_bit_width_selection_list: List[ManualBitWidthSelection] = field(default_factory=list)
 
     def set_manual_activation_bit_width(self,
                                         filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
@@ -64,6 +65,28 @@ class BitWidthConfig:
             bit_widths = [bit_widths[0] for f in filters]
         for bit_width, filter in zip (bit_widths, filters):
             self.manual_activation_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
+
+    def set_manual_weights_bit_width(self,
+                                        filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
+                                        bit_widths: Union[List[int], int]):
+        """
+        Add a manual bit-width selection to the configuration.
+
+        Args:
+            filter (Union[List[BaseNodeMatcher], BaseNodeMatcher]): The filters used to select nodes for bit-width manipulation.
+            bit_width (Union[List[int], int]): The bit widths to be applied to the selected nodes.
+            If a single value is given it will be applied to all the filters
+        """
+        filters = [filters] if not isinstance(filters, list) else filters
+        bit_widths = [bit_widths] if not isinstance(bit_widths, list) else bit_widths
+        if len(bit_widths) > 1 and len(bit_widths) != len(filters):
+            Logger.critical(f"Configuration Error: The number of provided bit_width values {len(bit_widths)} "
+                            f"must match the number of filters {len(filters)}, or a single bit_width value "
+                            f"should be provided for all filters.")
+        elif len(bit_widths) == 1 and len(filters) > 1:
+            bit_widths = [bit_widths[0] for f in filters]
+        for bit_width, filter in zip (bit_widths, filters):
+            self.manual_weights_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
 
     def get_nodes_to_manipulate_bit_widths(self, graph: Graph) -> Dict:
         """
