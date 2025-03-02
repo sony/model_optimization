@@ -15,8 +15,7 @@
 
 import numpy as np
 from pulp import *
-from tqdm import tqdm
-from typing import Dict, Tuple, Any, Optional
+from typing import Dict, Tuple, Any
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
@@ -51,7 +50,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
 
-    layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_resource_utilization)
+    layer_to_metrics_mapping = search_manager.build_sensitivity_mapping()
 
     # Init variables to find their values when solving the lp problem.
     layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_metrics_mapping)
@@ -254,77 +253,3 @@ def _aggregate_for_lp(targets_ru_vec: Dict[RUTarget, Any], target: RUTarget) -> 
         return list(targets_ru_vec[target])
 
     raise ValueError(f'Unexpected target {target}.')    # pragma: no cover
-
-
-def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
-                                    target_resource_utilization: ResourceUtilization,
-                                    eps: float = EPS) -> Dict[int, Dict[int, float]]:
-    """
-    This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
-    It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
-    For each node and some possible node's bitwidth (according to the given search space), we use
-    the framework function compute_metric_fn in order to infer
-    a batch of images, and compute (using the inference results) the sensitivity metric of
-    the configured mixed-precision model.
-
-    Args:
-        search_manager: MixedPrecisionSearchManager object to be used for problem formalization.
-        target_resource_utilization: ResourceUtilization to constrain our LP problem with some resources limitations
-        (like model' weights memory consumption).
-        eps: Epsilon value to manually increase metric value (if necessary) for numerical stability
-
-    Returns:
-        Mapping from each node's index in a graph, to a dictionary from the bitwidth index (of this node) to
-        the sensitivity of the model.
-
-    """
-
-    Logger.info('Starting to evaluate metrics')
-    layer_to_metrics_mapping = {}
-
-    if search_manager.using_virtual_graph:
-        origin_max_config = search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(search_manager.max_ru_config)
-        max_config_value = search_manager.compute_metric_fn(origin_max_config)
-    else:
-        max_config_value = search_manager.compute_metric_fn(search_manager.max_ru_config)
-
-    for node_idx, layer_possible_bitwidths_indices in tqdm(search_manager.layer_to_bitwidth_mapping.items(),
-                                                           total=len(search_manager.layer_to_bitwidth_mapping)):
-        layer_to_metrics_mapping[node_idx] = {}
-
-        for bitwidth_idx in layer_possible_bitwidths_indices:
-            if search_manager.max_ru_config[node_idx] == bitwidth_idx:
-                # This is a computation of the metric for the max configuration, assign pre-calculated value
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = max_config_value
-                continue
-
-            # Create a configuration that differs at one layer only from the baseline model
-            mp_model_configuration = search_manager.max_ru_config.copy()
-            mp_model_configuration[node_idx] = bitwidth_idx
-
-            # Build a distance matrix using the function we got from the framework implementation.
-            if search_manager.using_virtual_graph:
-                # Reconstructing original graph's configuration from virtual graph's configuration
-                origin_mp_model_configuration = \
-                    search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
-                        mp_model_configuration,
-                        changed_virtual_nodes_idx=[node_idx],
-                        original_base_config=origin_max_config)
-                origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
-                                                c != origin_mp_model_configuration[i]]
-                metric_value = search_manager.compute_metric_fn(
-                    origin_mp_model_configuration,
-                    origin_changed_nodes_indices,
-                    origin_max_config)
-            else:
-                metric_value = search_manager.compute_metric_fn(
-                    mp_model_configuration,
-                    [node_idx],
-                    search_manager.max_ru_config)
-
-            layer_to_metrics_mapping[node_idx][bitwidth_idx] = max(metric_value, max_config_value + eps)
-
-    # Finalize distance metric mapping
-    search_manager.finalize_distance_metric(layer_to_metrics_mapping)
-
-    return layer_to_metrics_mapping
