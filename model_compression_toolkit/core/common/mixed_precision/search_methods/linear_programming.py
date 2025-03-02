@@ -27,7 +27,7 @@ SOLVER_TIME_LIMIT = 60
 
 
 def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
-                                  target_resource_utilization: ResourceUtilization = None) -> np.ndarray:
+                                  target_resource_utilization: ResourceUtilization) -> List[int]:
     """
     Searching and returning a mixed-precision configuration using an ILP optimization solution.
     It first builds a mapping from each layer's index (in the model) to a dictionary that maps the
@@ -44,16 +44,12 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
         consumption).
 
     Returns:
-        The mixed-precision configuration (1-D array of indices. Each indicates the bitwidth index of a node).
+        The mixed-precision configuration (A list of indices. Each indicates the bitwidth index of a node).
 
     """
 
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
-
-    if target_resource_utilization is None or search_manager is None:
-        Logger.critical("Invalid parameters: 'target_resource_utilization' and 'search_manager' must not be 'None' "
-                        "for mixed-precision search. Ensure valid inputs are provided.")
 
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_resource_utilization)
 
@@ -82,10 +78,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
          in layer_to_indicator_vars_mapping.values()]
     ).flatten()
 
-    if target_resource_utilization.bops_restricted():
-        return search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(config)
-    else:
-        return config
+    return config.tolist()
 
 
 def _init_problem_vars(layer_to_metrics_mapping: Dict[int, Dict[int, float]]) -> Tuple[
@@ -289,7 +282,7 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
     Logger.info('Starting to evaluate metrics')
     layer_to_metrics_mapping = {}
 
-    if target_resource_utilization.bops_restricted():
+    if search_manager.using_virtual_graph:
         origin_max_config = search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(search_manager.max_ru_config)
         max_config_value = search_manager.compute_metric_fn(origin_max_config)
     else:
@@ -310,7 +303,7 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
             mp_model_configuration[node_idx] = bitwidth_idx
 
             # Build a distance matrix using the function we got from the framework implementation.
-            if target_resource_utilization.bops_restricted():
+            if search_manager.using_virtual_graph:
                 # Reconstructing original graph's configuration from virtual graph's configuration
                 origin_mp_model_configuration = \
                     search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
