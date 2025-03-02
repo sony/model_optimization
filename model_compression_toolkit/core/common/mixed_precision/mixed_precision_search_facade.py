@@ -70,12 +70,9 @@ def search_bit_width(graph: Graph,
 
     """
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
-    # MP metric (it adds noise to the computation)
-    tru = target_resource_utilization
-    weight_only_restricted = tru.weight_restricted() and not (tru.activation_restricted() or
-                                                              tru.total_mem_restricted() or
-                                                              tru.bops_restricted())
-    disable_activation_for_metric = weight_only_restricted or not graph.has_any_configurable_activation()
+    # MP metric (it adds noise to the computation). BOPS is ignored as it's irrelevant.
+    w_only_restricted = not (target_resource_utilization.get_restricted_targets() - {RUTarget.WEIGHTS, RUTarget.BOPS})
+    disable_activation_for_metric = w_only_restricted or not graph.has_any_configurable_activation()
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS utilization computation purposes)
