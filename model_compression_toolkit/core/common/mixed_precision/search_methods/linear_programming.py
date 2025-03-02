@@ -162,8 +162,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
         _add_ru_constraints(search_manager=search_manager,
                             target_resource_utilization=target_resource_utilization,
                             indicators_matrix=indicators_matrix,
-                            lp_problem=lp_problem,
-                            non_conf_ru_dict=search_manager.non_conf_ru_dict)
+                            lp_problem=lp_problem)
     else:  # pragma: no cover
         Logger.critical("Unable to execute mixed-precision search: 'target_resource_utilization' is None. "
                         "A valid 'target_resource_utilization' is required.")
@@ -173,8 +172,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
 def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
                         target_resource_utilization: ResourceUtilization,
                         indicators_matrix: np.ndarray,
-                        lp_problem: LpProblem,
-                        non_conf_ru_dict: Dict[RUTarget, np.ndarray]):
+                        lp_problem: LpProblem):
     """
     Adding targets constraints for the Lp problem for the given target resource utilization.
     The update to the Lp problem object is done inplace.
@@ -184,7 +182,6 @@ def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
         target_resource_utilization: Target resource utilization.
         indicators_matrix: A diagonal matrix of the Lp problem's indicators.
         lp_problem: An Lp problem object to add constraint to.
-        non_conf_ru_dict: A non-configurable nodes' resource utilization vectors for the constrained targets.
     """
     ru_indicated_vectors = {}
     # targets to add constraints for
@@ -203,11 +200,6 @@ def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
         # that would be required if that configuration is selected).
         # Each element in a vector is an lp object representing the configurations sum term for a memory element.
         ru_vec = indicated_ru_matrix.sum(axis=1) + search_manager.min_ru[target]
-
-        non_conf_ru_vec = non_conf_ru_dict[target]
-        if non_conf_ru_vec is not None and non_conf_ru_vec.size:
-            # add non-conf value as additional mem elements so that they get aggregated
-            ru_vec = np.concatenate([ru_vec, non_conf_ru_vec])
         ru_indicated_vectors[target] = ru_vec
 
     # Add constraints only for the restricted targets in target resource utilization.

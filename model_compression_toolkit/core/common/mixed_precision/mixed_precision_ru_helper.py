@@ -17,7 +17,7 @@ from typing import List, Set, Dict, Optional, Tuple, Any
 import numpy as np
 
 from model_compression_toolkit.core import FrameworkInfo
-from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
@@ -36,7 +36,7 @@ class MixedPrecisionRUHelper:
         self.fw_impl = fw_impl
         self.ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
 
-    def compute_utilization(self, ru_targets: Set[RUTarget], mp_cfg: Optional[List[int]]) -> Dict[RUTarget, np.ndarray]:
+    def compute_utilization(self, ru_targets: Set[RUTarget], mp_cfg: List[int]) -> Dict[RUTarget, np.ndarray]:
         """
         Compute utilization of requested targets for a specific configuration in the format expected by LP problem
         formulation namely a vector of ru values for relevant memory elements (nodes or cuts) in a constant order
@@ -51,7 +51,7 @@ class MixedPrecisionRUHelper:
         """
 
         ru = {}
-        act_qcs, w_qcs = self.get_quantization_candidates(mp_cfg) if mp_cfg else (None, None)
+        act_qcs, w_qcs = self.get_quantization_candidates(mp_cfg)
         if RUTarget.WEIGHTS in ru_targets:
             wu = self._weights_utilization(w_qcs)
             ru[RUTarget.WEIGHTS] = np.array(list(wu.values()))
@@ -71,7 +71,7 @@ class MixedPrecisionRUHelper:
         return ru
 
     def get_quantization_candidates(self, mp_cfg) \
-            -> Tuple[Dict[BaseNode, NodeActivationQuantizationConfig], Dict[BaseNode, NodeWeightsQuantizationConfig]]:
+            -> Tuple[Dict[str, NodeActivationQuantizationConfig], Dict[str, NodeWeightsQuantizationConfig]]:
         """
         Retrieve quantization candidates objects for weights and activations from the configuration list.
 
@@ -88,70 +88,51 @@ class MixedPrecisionRUHelper:
         w_qcs = {n.name: cfg.weights_quantization_cfg for n, cfg in node_qcs.items()}
         return act_qcs, w_qcs
 
-    def _weights_utilization(self, w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]]) -> Dict[BaseNode, float]:
+    def _weights_utilization(self, w_qcs: Dict[str, NodeWeightsQuantizationConfig]) -> Dict[str, float]:
         """
-        Compute weights utilization for configurable weights if configuration is passed,
-        or for non-configurable nodes otherwise.
+        Compute weights utilization for configurable weights.
 
         Args:
-            w_qcs: nodes quantization configuration to compute, or None.
+            w_qcs: nodes quantization configuration to compute.
 
         Returns:
             Weight utilization per node.
         """
-        if w_qcs:
-            target_criterion = TargetInclusionCriterion.QConfigurable
-            bitwidth_mode = BitwidthMode.QCustom
-        else:
-            target_criterion = TargetInclusionCriterion.QNonConfigurable
-            bitwidth_mode = BitwidthMode.QDefaultSP
-
-        _, nodes_util, _ = self.ru_calculator.compute_weights_utilization(target_criterion=target_criterion,
-                                                                          bitwidth_mode=bitwidth_mode,
+        _, nodes_util, _ = self.ru_calculator.compute_weights_utilization(target_criterion=TargetInclusionCriterion.AnyQuantized,
+                                                                          bitwidth_mode=BitwidthMode.QCustom,
                                                                           w_qcs=w_qcs)
         nodes_util = {n: u.bytes for n, u in nodes_util.items()}
         return nodes_util
 
-    def _activation_utilization(self, act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]]) \
-            -> Optional[Dict[Any, float]]:
+    def _activation_utilization(self, act_qcs: Dict[str, NodeActivationQuantizationConfig]) -> Dict[Any, float]:
         """
-        Compute activation utilization using MaxCut for all quantized nodes if configuration is passed.
+        Compute activation utilization using MaxCut for all quantized nodes.
 
         Args:
-            act_qcs: nodes activation configuration or None.
+            act_qcs: nodes activation configuration.
 
         Returns:
-            Activation utilization per cut, or empty dict if no configuration was passed.
+            Activation utilization per cut.
         """
-        # Maxcut activation utilization is computed for all quantized nodes, so non-configurable memory is already
-        # covered by the computation of configurable activations.
-        if not act_qcs:
-            return {}
-
         _, cuts_util, *_ = self.ru_calculator.compute_activation_utilization_by_cut(
             TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs)
         cuts_util = {c: u.bytes for c, u in cuts_util.items()}
         return cuts_util
 
     def _bops_utilization(self,
-                          act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]],
-                          w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]]) -> np.ndarray:
+                          act_qcs: Optional[Dict[str, NodeActivationQuantizationConfig]],
+                          w_qcs: Optional[Dict[str, NodeWeightsQuantizationConfig]]) -> np.ndarray:
         """
         Computes a resource utilization vector with the respective bit-operations (BOPS) count
         according to the given mixed-precision configuration.
 
         Args:
-            act_qcs: nodes activation configuration or None.
-            w_qcs: nodes quantization configuration to compute, or None.
-              Either both are provided, or both are None.
+            act_qcs: nodes activation configuration.
+            w_qcs: nodes quantization configuration to compute.
 
         Returns:
             A vector of node's BOPS count.
         """
-        assert [act_qcs, w_qcs].count(None) in [0, 2], 'act_qcs and w_qcs should both be provided or both be None.'
-        if act_qcs is None:
-            return np.array([])
-
         _, detailed_bops = self.ru_calculator.compute_bops(TargetInclusionCriterion.Any, BitwidthMode.QCustom,
                                                            act_qcs=act_qcs, w_qcs=w_qcs)
         return np.array(list(detailed_bops.values()))
