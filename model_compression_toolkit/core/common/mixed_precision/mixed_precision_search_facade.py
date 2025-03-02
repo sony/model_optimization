@@ -13,24 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 
-import copy
 from enum import Enum
-import numpy as np
-from typing import List, Callable, Dict
+from typing import List, Callable
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import HessianInfoService
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
-from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
-    mp_integer_programming_search
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.hessian import HessianInfoService
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
+    MixedPrecisionSearchManager
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
+    ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.mixed_precision.solution_refinement_procedure import \
     greedy_solution_refinement_procedure
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.logger import Logger
 
 
 class BitWidthSearchMethod(Enum):
