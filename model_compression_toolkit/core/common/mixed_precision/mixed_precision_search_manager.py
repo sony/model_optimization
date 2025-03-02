@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 
 from typing import Callable, Dict, List
 
@@ -30,6 +31,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_ru_helper import \
     MixedPrecisionRUHelper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.logger import Logger
 
 
@@ -43,8 +45,7 @@ class MixedPrecisionSearchManager:
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
-                 target_resource_utilization: ResourceUtilization,
-                 original_graph: Graph = None):
+                 target_resource_utilization: ResourceUtilization):
         """
 
         Args:
@@ -54,18 +55,21 @@ class MixedPrecisionSearchManager:
             sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
                 a bit-width configuration for the MP model.
             target_resource_utilization: Target Resource Utilization to bound our feasible solution space s.t the configuration does not violate it.
-            original_graph: In case we have a search over a virtual graph (if we have BOPS utilization target), then this argument
-                will contain the original graph (for config reconstruction purposes).
         """
 
-        self.graph = graph
-        self.original_graph = graph if original_graph is None else original_graph
         self.fw_info = fw_info
         self.fw_impl = fw_impl
+
+        self.original_graph = graph
+        # graph for mp search
+        self.mp_graph, self.using_virtual_graph = self._get_mp_graph(graph, target_resource_utilization)
+
         self.sensitivity_evaluator = sensitivity_evaluator
+        self.compute_metric_fn = sensitivity_evaluator.compute_metric
+        self.target_resource_utilization = target_resource_utilization
+
+        self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
         self.layer_to_bitwidth_mapping = self.get_search_space()
-        self.compute_metric_fn = self.get_sensitivity_metric()
-        self._cuts = None
 
         # To define RU Total constraints we need to compute weights and activations even if they have no constraints
         # TODO currently this logic is duplicated in linear_programming.py
@@ -74,15 +78,52 @@ class MixedPrecisionSearchManager:
             targets = targets.union({RUTarget.ACTIVATION, RUTarget.WEIGHTS}) - {RUTarget.TOTAL}
         self.ru_targets_to_compute = targets
 
-        self.ru_helper = MixedPrecisionRUHelper(graph, fw_info, fw_impl)
-        self.target_resource_utilization = target_resource_utilization
-        self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
-        self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
+        self.ru_helper = MixedPrecisionRUHelper(self.mp_graph, fw_info, fw_impl)
+
+        self.min_ru_config = self.mp_graph.get_min_candidates_config(fw_info)
+        self.max_ru_config = self.mp_graph.get_max_candidates_config(fw_info)
         self.min_ru = self.ru_helper.compute_utilization(self.ru_targets_to_compute, self.min_ru_config)
         self.non_conf_ru_dict = self.ru_helper.compute_utilization(self.ru_targets_to_compute, None)
 
-        self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.graph,
+        self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.mp_graph,
                                                                        original_graph=self.original_graph)
+
+    def search(self):
+        """
+        Run mixed precision search.
+
+        Returns:
+            Indices of the selected bit-widths candidates.
+        """
+        # import here to prevent circular dependency
+        from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
+            mp_integer_programming_search
+        config = mp_integer_programming_search(self, self.target_resource_utilization)
+        if self.mp_graph is self.original_graph:
+            return config
+
+        return self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(config)
+
+    def _get_mp_graph(self, graph, target_resource_utilization):
+        """
+        Get graph for mixed precision search. Virtual graph is built if bops is restricted and both activation and
+        weights are configurable.
+
+        Args:
+            graph: input graph.
+            target_resource_utilization: target resource utilization.
+
+        Returns:
+            Graph for mixed precision search (virtual or original).
+        """
+        if (target_resource_utilization.bops_restricted() and
+                graph.has_any_configurable_activation() and
+                graph.has_any_configurable_weights()):
+            mp_graph = substitute(copy.deepcopy(graph),
+                                  self.fw_impl.get_substitutions_virtual_weights_activation_coupling())
+            return mp_graph, True
+
+        return graph, False
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
@@ -94,25 +135,11 @@ class MixedPrecisionSearchManager:
         """
 
         indices_mapping = {}
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes(self.fw_info)
-        for idx, n in enumerate(nodes_to_configure):
+        for idx, n in enumerate(self.mp_topo_configurable_nodes):
             # For each node, get all possible bitwidth indices for it
             # (which is a list from 0 to the length of the candidates mp_config list of the node).
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
-
-    def get_sensitivity_metric(self) -> Callable:
-        """
-
-        Returns: Return a function (from the framework implementation) to compute a metric that
-        indicates the similarity of the mixed-precision model (to the float model) for a given
-        mixed-precision configuration.
-
-        """
-        # Get from the framework an evaluation function on how a MP configuration,
-        # affects the expected loss.
-
-        return self.sensitivity_evaluator.compute_metric
 
     def compute_resource_utilization_matrix(self, target: RUTarget) -> np.ndarray:
         """
@@ -126,12 +153,8 @@ class MixedPrecisionSearchManager:
             A resource utilization matrix of shape (num configurations, num memory elements). Num memory elements
             depends on the target, e.g. num nodes or num cuts, for which utilization is computed.
         """
-        assert isinstance(target, RUTarget), f"{target} is not a valid resource target"
-
-        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
-
         ru_matrix = []
-        for c, c_n in enumerate(configurable_sorted_nodes):
+        for c, c_n in enumerate(self.mp_topo_configurable_nodes):
             for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
                 if candidate_idx == self.min_ru_config[c]:
                     candidate_rus = self.min_ru[target]

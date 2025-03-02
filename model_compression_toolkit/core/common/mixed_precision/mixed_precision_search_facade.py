@@ -34,16 +34,10 @@ from model_compression_toolkit.logger import Logger
 
 
 class BitWidthSearchMethod(Enum):
-    # When adding a new search_methods MP configuration method, these enum and factory dictionary
-    # should be updated with it's kind and a search_method implementation.
     INTEGER_PROGRAMMING = 0
 
 
-search_methods = {
-    BitWidthSearchMethod.INTEGER_PROGRAMMING: mp_integer_programming_search}
-
-
-def search_bit_width(graph_to_search_cfg: Graph,
+def search_bit_width(graph: Graph,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation,
                      target_resource_utilization: ResourceUtilization,
@@ -60,7 +54,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
     target_resource_utilization have to be passed. If it was not passed, the facade is not supposed to get here by now.
 
     Args:
-        graph_to_search_cfg: Graph to search a MP configuration for.
+        graph: Graph to search a MP configuration for.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
         target_resource_utilization: Target Resource Utilization to bound our feasible solution space s.t the configuration does not violate it.
@@ -75,51 +69,34 @@ def search_bit_width(graph_to_search_cfg: Graph,
         bit-width index on the node).
 
     """
-
-    # target_resource_utilization have to be passed. If it was not passed, the facade is not supposed to get here by now.
-    if target_resource_utilization is None:
-        Logger.critical("Target ResourceUtilization is required for the bit-width search method's configuration.")  # pragma: no cover
-
-    # Set graph for MP search
-    graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
-    if target_resource_utilization.bops_restricted():
-        # TODO: we only need the virtual graph is both activations and weights are configurable
-        # Since Bit-operations count target resource utilization is set, we need to reconstruct the graph for the MP search
-        graph = substitute(graph, fw_impl.get_substitutions_virtual_weights_activation_coupling())
-
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
     # MP metric (it adds noise to the computation)
     tru = target_resource_utilization
     weight_only_restricted = tru.weight_restricted() and not (tru.activation_restricted() or
                                                               tru.total_mem_restricted() or
                                                               tru.bops_restricted())
-    disable_activation_for_metric = weight_only_restricted or graph_to_search_cfg.is_single_activation_cfg()
+    disable_activation_for_metric = weight_only_restricted or not graph.has_any_configurable_activation()
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS utilization computation purposes)
     se = fw_impl.get_sensitivity_evaluator(
-        graph_to_search_cfg,
+        graph,
         mp_config,
         representative_data_gen=representative_data_gen,
         fw_info=fw_info,
         disable_activation_for_metric=disable_activation_for_metric,
         hessian_info_service=hessian_info_service)
 
-    # Instantiate a manager object
+    if search_method != BitWidthSearchMethod.INTEGER_PROGRAMMING:
+        raise NotImplementedError()
+
+    # Search manager and LP are highly coupled, so LP search method was moved inside search manager.
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
                                                  fw_impl,
                                                  se,
-                                                 target_resource_utilization,
-                                                 original_graph=graph_to_search_cfg)
-
-    if search_method not in search_methods:
-        raise NotImplementedError()  # pragma: no cover
-
-    search_method_fn = search_methods[search_method]
-    # Search for the desired mixed-precision configuration
-    result_bit_cfg = search_method_fn(search_manager,
-                                      target_resource_utilization)
+                                                 target_resource_utilization)
+    result_bit_cfg = search_manager.search()
 
     if mp_config.refine_mp_solution:
         result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_resource_utilization)
