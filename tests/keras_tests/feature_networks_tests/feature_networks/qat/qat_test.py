@@ -306,9 +306,9 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
 
         self.compare(qat_ready_model, quantization_info)
 
-    def compare(self, qat_ready_model, quantization_info):
+    def _compare(self, qat_ready_model, quantization_info):
 
-        self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == self.expected_mp_cfg))
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == self.expected_mp_cfg)
 
         # check that quantizer gets multiple bits configuration
         for layer in qat_ready_model.layers:
