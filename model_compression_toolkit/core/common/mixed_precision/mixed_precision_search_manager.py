@@ -85,7 +85,6 @@ class MixedPrecisionSearchManager:
         self.min_ru_config = self.mp_graph.get_min_candidates_config(fw_info)
         self.max_ru_config = self.mp_graph.get_max_candidates_config(fw_info)
         self.min_ru = self.ru_helper.compute_utilization(self.ru_targets_to_compute, self.min_ru_config)
-        self.non_conf_ru_dict = self.ru_helper.compute_utilization(self.ru_targets_to_compute, None)
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.mp_graph,
                                                                        original_graph=self.original_graph)
