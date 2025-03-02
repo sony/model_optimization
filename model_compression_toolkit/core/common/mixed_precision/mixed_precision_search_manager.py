@@ -13,11 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+from tqdm import tqdm
 
-from typing import Callable, Dict, List
+from typing import Dict, List
 
 import numpy as np
 
+from model_compression_toolkit.constants import EPS
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -103,6 +105,75 @@ class MixedPrecisionSearchManager:
             return config
 
         return self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(config)
+
+    def build_sensitivity_mapping(self, eps: float = EPS) -> Dict[int, Dict[int, float]]:
+        """
+        This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
+        It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
+        For each node and some possible node's bitwidth (according to the given search space), we use
+        the framework function compute_metric_fn in order to infer
+        a batch of images, and compute (using the inference results) the sensitivity metric of
+        the configured mixed-precision model.
+
+        Args:
+            eps: Epsilon value to manually increase metric value (if necessary) for numerical stability
+
+        Returns:
+            Mapping from each node's index in a graph, to a dictionary from the bitwidth index (of this node) to
+            the sensitivity of the model.
+
+        """
+
+        Logger.info('Starting to evaluate metrics')
+        layer_to_metrics_mapping = {}
+
+        if self.using_virtual_graph:
+            origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
+                self.max_ru_config)
+            max_config_value = self.compute_metric_fn(origin_max_config)
+        else:
+            max_config_value = self.compute_metric_fn(self.max_ru_config)
+
+        for node_idx, layer_possible_bitwidths_indices in tqdm(self.layer_to_bitwidth_mapping.items(),
+                                                               total=len(self.layer_to_bitwidth_mapping)):
+            layer_to_metrics_mapping[node_idx] = {}
+
+            for bitwidth_idx in layer_possible_bitwidths_indices:
+                if self.max_ru_config[node_idx] == bitwidth_idx:
+                    # This is a computation of the metric for the max configuration, assign pre-calculated value
+                    layer_to_metrics_mapping[node_idx][bitwidth_idx] = max_config_value
+                    continue
+
+                # Create a configuration that differs at one layer only from the baseline model
+                mp_model_configuration = self.max_ru_config.copy()
+                mp_model_configuration[node_idx] = bitwidth_idx
+
+                # Build a distance matrix using the function we got from the framework implementation.
+                if self.using_virtual_graph:
+                    # Reconstructing original graph's configuration from virtual graph's configuration
+                    origin_mp_model_configuration = \
+                        self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
+                            mp_model_configuration,
+                            changed_virtual_nodes_idx=[node_idx],
+                            original_base_config=origin_max_config)
+                    origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
+                                                    c != origin_mp_model_configuration[i]]
+                    metric_value = self.compute_metric_fn(
+                        origin_mp_model_configuration,
+                        origin_changed_nodes_indices,
+                        origin_max_config)
+                else:
+                    metric_value = self.compute_metric_fn(
+                        mp_model_configuration,
+                        [node_idx],
+                        self.max_ru_config)
+
+                layer_to_metrics_mapping[node_idx][bitwidth_idx] = max(metric_value, max_config_value + eps)
+
+        # Finalize distance metric mapping
+        self.finalize_distance_metric(layer_to_metrics_mapping)
+
+        return layer_to_metrics_mapping
 
     def _get_mp_graph(self, graph, target_resource_utilization):
         """
