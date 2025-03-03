@@ -289,7 +289,7 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
                      input_x=self.representative_data_gen(),
                      quantization_info=quantization_info)
 
-        self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == [1, 0, 0, 1, 0]))
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == [1, 0, 0, 1, 0])
 
         # check that quantizer gets multiple bits configuration
         for _, layer in qat_ready_model.named_children():
@@ -336,7 +336,7 @@ class QuantizationAwareTrainingMixedPrecisionRUCfgTest(QuantizationAwareTraining
                      quantization_info=quantization_info)
 
         # check that MP search doesn't return 8 bits configuration for all layers
-        self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == [1, 1, 0, 0, 0]))
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == [1, 1, 0, 0, 0])
 
         # check that quantizer gets multiple bits configuration
         for _, layer in qat_ready_model.named_children():

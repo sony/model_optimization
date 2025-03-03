@@ -335,7 +335,7 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
         return ResourceUtilization(80)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == self.expected_config))
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == self.expected_config)
 
 
 class MixedPrecisionWeightsTestNet(torch.nn.Module):
