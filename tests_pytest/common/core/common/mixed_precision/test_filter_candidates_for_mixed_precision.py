@@ -21,7 +21,13 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_candi
 
 @pytest.fixture
 def setup_mocks():
-    """Set up common mock objects for all test cases."""
+    """
+    Set up mock objects for testing the filtering of mixed precision candidates.
+
+    Mocks the behavior of a graph containing activation and weight-configurable nodes
+    with multiple quantization candidates. The test will check whether the correct candidates
+    are filtered based on given constraints.
+    """
     tru = MagicMock()
     graph = MagicMock()
     fw_info = MagicMock()
@@ -66,6 +72,15 @@ def setup_mocks():
     ])
 def test_filtering(setup_mocks, weight_restricted, activation_restricted, expected_act_candidates,
                    expected_weight_candidates):
+    """
+    Test candidate filtering based on weight and activation restrictions.
+
+    This test verifies that:
+    - When weight restriction is applied, only 1 activation candidate remains.
+    - When activation restriction is applied, only 1 weight candidate remains.
+    - When both restrictions are applied, filtering occurs on both activations and weights.
+    - When no restrictions are applied, all candidates remain.
+    """
     tru, graph, fw_info, fqc, act_node, weight_node = setup_mocks
 
     tru.total_mem_restricted.return_value = False
@@ -84,6 +99,16 @@ def test_filtering(setup_mocks, weight_restricted, activation_restricted, expect
     (False, True),  # BOPS restricted
 ])
 def test_early_return(setup_mocks, total_mem_restricted, bops_restricted):
+    """
+    Test early return condition when total memory or BOPS restrictions are applied.
+
+    This test verifies that if total memory or BOPS restrictions are applied, the filtering function
+    returns early without filtering candidates.
+
+    Expected behavior:
+    - No filtering occurs when total memory or BOPS constraints are enabled.
+    - The number of candidates remains unchanged (2 for both activations and weights).
+    """
     tru, graph, fw_info, fqc, act_node, weight_node = setup_mocks
 
     tru.total_mem_restricted.return_value = total_mem_restricted
