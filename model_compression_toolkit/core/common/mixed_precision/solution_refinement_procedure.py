@@ -168,13 +168,17 @@ def _get_valid_candidates_indices(
         """
         candidate_weight_bits, candidate_activation_bits = get_candidate_bits(candidate)
 
+        # Current candidate - no need to check
+        if candidate_activation_bits == current_activation_bits and all(candidate_weight_bits[attr] == current_weight_bits[attr] for attr in current_weight_bits.keys()):
+            return False
+
         valid_weight = all(
-            candidate_weight_bits[attr] > current_weight_bits[attr] if is_weight_restricted else
+            candidate_weight_bits[attr] >= current_weight_bits[attr] if is_weight_restricted else
             candidate_weight_bits[attr] == current_weight_bits[attr]
             for attr in current_weight_bits.keys()
         )
         valid_activation = (
-            candidate_activation_bits > current_activation_bits if is_activation_restricted else
+            candidate_activation_bits >= current_activation_bits if is_activation_restricted else
             candidate_activation_bits == current_activation_bits
         )
         return valid_weight and valid_activation
