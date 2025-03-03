@@ -65,6 +65,8 @@ def search_bit_width(graph: Graph,
         bit-width index on the node).
 
     """
+    assert target_resource_utilization.is_any_restricted()
+
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
     # MP metric (it adds noise to the computation). BOPS is ignored as it's irrelevant.
     w_only_restricted = not (target_resource_utilization.get_restricted_targets() - {RUTarget.WEIGHTS, RUTarget.BOPS})

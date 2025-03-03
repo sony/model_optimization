@@ -50,14 +50,14 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
 
-    layer_to_metrics_mapping = search_manager.build_sensitivity_mapping()
+    layer_to_sensitivity_mapping = search_manager.build_sensitivity_mapping()
 
     # Init variables to find their values when solving the lp problem.
-    layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_metrics_mapping)
+    layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_sensitivity_mapping)
 
     # Add all equations and inequalities that define the problem.
     lp_problem = _formalize_problem(layer_to_indicator_vars_mapping,
-                                    layer_to_metrics_mapping,
+                                    layer_to_sensitivity_mapping,
                                     layer_to_objective_vars_mapping,
                                     target_resource_utilization,
                                     search_manager)
@@ -150,28 +150,25 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
 
     # Bound the feasible solution space with the desired resource utilization values.
     # Creates separate constraints for weights utilization and activation utilization.
-    if target_resource_utilization is not None:
-        indicators = []
-        for layer in layer_to_metrics_mapping.keys():
-            for _, indicator in layer_to_indicator_vars_mapping[layer].items():
-                indicators.append(indicator)
+    assert target_resource_utilization and target_resource_utilization.is_any_restricted()
 
-        indicators_arr = np.array(indicators)
-        indicators_matrix = np.diag(indicators_arr)
+    indicators = []
+    for layer in layer_to_metrics_mapping.keys():
+        for _, indicator in layer_to_indicator_vars_mapping[layer].items():
+            indicators.append(indicator)
 
-        _add_ru_constraints(search_manager=search_manager,
-                            target_resource_utilization=target_resource_utilization,
-                            indicators_matrix=indicators_matrix,
-                            lp_problem=lp_problem)
-    else:  # pragma: no cover
-        Logger.critical("Unable to execute mixed-precision search: 'target_resource_utilization' is None. "
-                        "A valid 'target_resource_utilization' is required.")
+    indicators_vec = np.array(indicators)
+
+    _add_ru_constraints(search_manager=search_manager,
+                        target_resource_utilization=target_resource_utilization,
+                        indicators_vec=indicators_vec,
+                        lp_problem=lp_problem)
     return lp_problem
 
 
 def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
                         target_resource_utilization: ResourceUtilization,
-                        indicators_matrix: np.ndarray,
+                        indicators_vec: np.ndarray,
                         lp_problem: LpProblem):
     """
     Adding targets constraints for the Lp problem for the given target resource utilization.
@@ -180,68 +177,33 @@ def _add_ru_constraints(search_manager: MixedPrecisionSearchManager,
     Args:
         search_manager:  MixedPrecisionSearchManager object to be used for resource utilization constraints formalization.
         target_resource_utilization: Target resource utilization.
-        indicators_matrix: A diagonal matrix of the Lp problem's indicators.
+        indicators_vec: A vector of the Lp problem's indicators.
         lp_problem: An Lp problem object to add constraint to.
     """
-    ru_indicated_vectors = {}
-    # targets to add constraints for
-    constraints_targets = target_resource_utilization.get_restricted_targets()
-    # to add constraints for Total target we need to compute weight and activation
-    targets_to_compute = constraints_targets
-    if RUTarget.TOTAL in constraints_targets:
-        targets_to_compute = targets_to_compute.union({RUTarget.ACTIVATION, RUTarget.WEIGHTS}) - {RUTarget.TOTAL}
+    candidates_ru = search_manager.compute_resource_utilization_matrices()
+    min_ru = search_manager.min_ru
+    target_ru = target_resource_utilization.get_resource_utilization_dict(restricted_only=True)
+    assert candidates_ru.keys() == target_ru.keys()
 
-    for target in targets_to_compute:
-        ru_matrix = search_manager.compute_resource_utilization_matrix(target)    # num elements X num configurations
-        indicated_ru_matrix = np.matmul(ru_matrix.T, indicators_matrix)    # num elements X num configurations
+    for target, ru_matrix in candidates_ru.items():
+        # We expect 2d matrix of shape (num candidates, m). For cumulative metrics (weights, bops) m=1 - overall
+        # utilization. For max metrics (activation, total) m=num memory elements (max element depends on configuration)
+        assert ru_matrix.ndim == 2
+        if target in [RUTarget.WEIGHTS, RUTarget.BOPS]:
+            assert ru_matrix.shape[1] == 1
 
-        # Sum the indicated values over all configurations, and add the value for minimal configuration once.
-        # Indicated utilization values are relative to the minimal configuration, i.e. they represent the extra memory
-        # that would be required if that configuration is selected).
-        # Each element in a vector is an lp object representing the configurations sum term for a memory element.
-        ru_vec = indicated_ru_matrix.sum(axis=1) + search_manager.min_ru[target]
-        ru_indicated_vectors[target] = ru_vec
+        # ru values are relative to the minimal configuration, so we adjust the target ru accordingly
+        ru_constraint = target_ru[target] - min_ru[target]
+        if any(ru_constraint < 0):
+            raise ValueError(f"The model cannot be quantized to meet the specified target resource utilization "
+                             f"{target.value} with the value {target_ru[target]}.")
 
-    # Add constraints only for the restricted targets in target resource utilization.
-    # Adding activation constraints modifies the lp term in ru_indicated_vectors, so if both activation and total
-    # are restricted we first add the constraints for total.
-    if RUTarget.TOTAL in constraints_targets and RUTarget.ACTIVATION in constraints_targets:
-        constraints_targets.remove(RUTarget.ACTIVATION)
-        constraints_targets = list(constraints_targets) + [RUTarget.ACTIVATION]
-    for target in constraints_targets:
-        target_resource_utilization_value = target_resource_utilization.get_resource_utilization_dict()[target]
-        aggr_ru = _aggregate_for_lp(ru_indicated_vectors, target)
-        for v in aggr_ru:
-            if isinstance(v, float):
-                if v > target_resource_utilization_value:
-                    Logger.critical(
-                        f"The model cannot be quantized to meet the specified target resource utilization {target.value} "
-                        f"with the value {target_resource_utilization_value}.")  # pragma: no cover
-            else:
-                lp_problem += v <= target_resource_utilization_value
+        indicated_ru_matrix = ru_matrix.T * indicators_vec
+        # build lp sum term over all candidates
+        ru_vec = indicated_ru_matrix.sum(axis=1)
 
-
-def _aggregate_for_lp(targets_ru_vec: Dict[RUTarget, Any], target: RUTarget) -> list:
-    """
-    Aggregate resource utilization values for the LP.
-
-    Args:
-        targets_ru_vec: resource utilization vectors for all precomputed targets.
-        target: resource utilization target.
-
-    Returns:
-        Aggregated resource utilization.
-    """
-    if target == RUTarget.TOTAL:
-        w = lpSum(targets_ru_vec[RUTarget.WEIGHTS])
-        act_ru_vec = targets_ru_vec[RUTarget.ACTIVATION]
-        return [w + v for v in act_ru_vec]
-
-    if target in [RUTarget.WEIGHTS, RUTarget.BOPS]:
-        return [lpSum(targets_ru_vec[target])]
-
-    if target == RUTarget.ACTIVATION:
-        # for max aggregation, each value constitutes a separate constraint
-        return list(targets_ru_vec[target])
-
-    raise ValueError(f'Unexpected target {target}.')    # pragma: no cover
+        # For cumulative metrics a single constraint is added, for max metrics a separate constraint
+        # is added for each memory element (each element < target => max element < target).
+        assert len(ru_vec) == len(ru_constraint)
+        for v, c in zip(ru_vec, ru_constraint):
+            lp_problem += v <= c
