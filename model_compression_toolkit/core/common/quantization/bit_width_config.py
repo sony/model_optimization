@@ -15,6 +15,7 @@
 from dataclasses import dataclass, field
 from typing import List, Union, Dict
 
+from model_compression_toolkit.constants import WEIGHTS_ATTRIBUTE, ACTIVATION_ATTRIBUTE
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.matchers.node_matcher import BaseNodeMatcher
 from model_compression_toolkit.logger import Logger
@@ -115,8 +116,8 @@ class BitWidthConfig:
 
             return unit_nodes_to_change_bit_width
 
-        a_nodes_to_change_bit_width = make_nodes_to_change_bit_width(self.manual_activation_bit_width_selection_list)
-        w_nodes_to_change_bit_width = make_nodes_to_change_bit_width(self.manual_weights_bit_width_selection_list)
+        activation_nodes_to_change_bit_width = make_nodes_to_change_bit_width(self.manual_activation_bit_width_selection_list)
+        weights_nodes_to_change_bit_width = make_nodes_to_change_bit_width(self.manual_weights_bit_width_selection_list)
 
-        nodes_to_change_bit_width = {'activation': a_nodes_to_change_bit_width, 'weights': w_nodes_to_change_bit_width}
+        nodes_to_change_bit_width = {ACTIVATION_ATTRIBUTE: activation_nodes_to_change_bit_width, WEIGHTS_ATTRIBUTE: weights_nodes_to_change_bit_width}
         return nodes_to_change_bit_width

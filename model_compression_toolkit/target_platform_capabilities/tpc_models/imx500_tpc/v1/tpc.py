@@ -68,7 +68,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
     kernel_base_config = AttributeQuantizationConfig(
-        weights_quantization_method=QuantizationMethod.SYMMETRIC,
+        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=8,
         weights_per_channel_threshold=True,
         enable_weights_quantization=True,
@@ -93,7 +93,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         attr_weights_configs_mapping={},
         activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,
-        supported_input_activation_n_bits=8,
+        supported_input_activation_n_bits=(8,16),
         enable_activation_quantization=True,
         quantization_preserving=False,
         fixed_scale=None,
@@ -107,7 +107,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
         activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,
-        supported_input_activation_n_bits=8,
+        supported_input_activation_n_bits=(8,16),
         enable_activation_quantization=True,
         quantization_preserving=False,
         fixed_scale=None,
@@ -120,12 +120,25 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # In this example, we quantize some operations' weights
     # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
     # to quantize the operations' activations using LUT.
-    four_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}},
-                                                 simd_size=linear_eight_bits.simd_size * 2)
-    two_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}},
-                                                simd_size=linear_eight_bits.simd_size * 4)
+    weights_four_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}},
+                                                         simd_size=linear_eight_bits.simd_size * 2)
+    weights_two_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}},
+                                                        simd_size=linear_eight_bits.simd_size * 4)
+    weights_sixteen_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 16}},
+                                                            simd_size=linear_eight_bits.simd_size / 2)
 
-    mixed_precision_cfg_list = [linear_eight_bits, four_bits, two_bits]
+    weights_linear_eight_bits_activation_sixteen_bit = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 8}},
+                                                                                        activation_n_bits=16)
+    weights_four_bits_activation_sixteen_bit = weights_four_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}},
+                                                                                activation_n_bits=16)
+    weights_two_eight_bits_activation_sixteen_bit = weights_two_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}},
+                                                                                    activation_n_bits=16)
+    weights_sixteen_bits_activation_sixteen_bit = weights_sixteen_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 16}},
+                                                                                      activation_n_bits=16)
+
+    mixed_precision_cfg_list = [linear_eight_bits, weights_four_bits, weights_two_bits, weights_sixteen_bits, 
+                                weights_linear_eight_bits_activation_sixteen_bit, weights_four_bits_activation_sixteen_bit,
+                                weights_two_eight_bits_activation_sixteen_bit, weights_sixteen_bits_activation_sixteen_bit]
 
     return linear_eight_bits, mixed_precision_cfg_list, eight_bits_default
 
@@ -166,8 +179,21 @@ def generate_tpc(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
 
-    no_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False)
+    no_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False,
+                                                                           supported_input_activation_n_bits=(8, 16))
                               .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+
+    const_config = default_config.clone_and_edit(
+            default_weight_attr_config=default_config.default_weight_attr_config.clone_and_edit(
+            enable_weights_quantization=True, weights_per_channel_threshold=True,
+            weights_quantization_method=QuantizationMethod.POWER_OF_TWO))
+    const_activation_config_input16 = const_config.clone_and_edit(supported_input_activation_n_bits=(8, 16))
+    const_activation_config_input16_output16 = const_activation_config_input16.clone_and_edit(activation_n_bits=16,
+                                                                                              signedness=Signedness.SIGNED)
+    const_activation_configuration_options_inout16 = schema.QuantizationConfigOptions(
+                                                                    quantization_configurations=tuple([const_activation_config_input16_output16, 
+                                                                                                       const_activation_config_input16]),
+                                                                    base_config=const_activation_config_input16)
 
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.STACK, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.UNSTACK, qc_options=no_quantization_config))
@@ -201,14 +227,14 @@ def generate_tpc(default_config: OpQuantizationConfig,
 
     # Define operations sets without quantization configuration
     # options (useful for creating fusing patterns, for example):
-    relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
-    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.RELU6)
+    relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU, qc_options=const_activation_configuration_options_inout16)
+    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.RELU6, qc_options=const_activation_configuration_options_inout16)
     leaky_relu = schema.OperatorsSet(name=schema.OperatorSetNames.LEAKY_RELU)
     prelu = schema.OperatorsSet(name=schema.OperatorSetNames.PRELU)
-    add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD)
-    sub = schema.OperatorsSet(name=schema.OperatorSetNames.SUB)
-    mul = schema.OperatorsSet(name=schema.OperatorSetNames.MUL)
-    div = schema.OperatorsSet(name=schema.OperatorSetNames.DIV)
+    add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD, qc_options=const_activation_configuration_options_inout16)
+    sub = schema.OperatorsSet(name=schema.OperatorSetNames.SUB, qc_options=const_activation_configuration_options_inout16)
+    mul = schema.OperatorsSet(name=schema.OperatorSetNames.MUL, qc_options=const_activation_configuration_options_inout16)
+    div = schema.OperatorsSet(name=schema.OperatorSetNames.DIV, qc_options=const_activation_configuration_options_inout16)
     swish = schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)
     hard_swish = schema.OperatorsSet(name=schema.OperatorSetNames.HARDSWISH)
     sigmoid = schema.OperatorsSet(name=schema.OperatorSetNames.SIGMOID)
