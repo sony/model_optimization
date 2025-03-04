@@ -25,7 +25,7 @@ import copy
 @pytest.fixture
 def search_manager():
     manager = Mock()
-    manager.graph.get_configurable_sorted_nodes = MagicMock()
+    manager.mp_topo_configurable_nodes = MagicMock()
     manager.fw_info.get_kernel_op_attributes = MagicMock()
     manager.replace_config_in_index = MagicMock(
         side_effect=lambda config, idx, candidate: (
@@ -105,7 +105,7 @@ def test_greedy_solution_refinement_procedure(
     node_mock = Mock()
     node_mock.candidates_quantization_cfg = candidate_configs(weight_bits_dict_0, act_bits_0, weight_bits_dict_1, act_bits_1)
 
-    search_manager.graph.get_configurable_sorted_nodes.return_value = [node_mock]
+    search_manager.mp_topo_configurable_nodes = [node_mock]
 
     search_manager.compute_resource_utilization_for_config = MagicMock(side_effect=lambda config: {
         0: ResourceUtilization(**alternative_candidate_resources_usage),
