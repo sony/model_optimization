@@ -137,6 +137,7 @@ def generate_tpc(default_config: OpQuantizationConfig,
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
     default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
+    base_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([base_config]), base_config=base_config)
 
     # In TFLite, the quantized operator specifications constraint operators quantization
     # differently. For more details:
@@ -179,13 +180,13 @@ def generate_tpc(default_config: OpQuantizationConfig,
                                qc_options=default_configuration_options.clone_and_edit(
                                    fixed_zero_point=-128, fixed_scale=1 / 256))
     fc = schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED,
-                             qc_options=default_configuration_options.clone_and_edit_weight_attribute(
+                             qc_options=base_configuration_options.clone_and_edit_weight_attribute(
                                  weights_per_channel_threshold=False))
     squeeze = schema.OperatorsSet(name=schema.OperatorSetNames.SQUEEZE,
                                   qc_options=default_configuration_options.clone_and_edit(
                                       quantization_preserving=True))
 
-    conv2d = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
+    conv2d = schema.OperatorsSet(name=schema.OperatorSetNames.CONV, qc_options=base_configuration_options)
     relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
     relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.RELU6)
     elu = schema.OperatorsSet(name=schema.OperatorSetNames.ELU)
