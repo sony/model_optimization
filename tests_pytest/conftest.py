@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from mct_quantizers import QuantizationMethod
 from unittest.mock import Mock
 
 from pytest import fixture
 
-from model_compression_toolkit.core import FrameworkInfo, QuantizationConfig
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.target_platform_capabilities import OpQuantizationConfig, Signedness, \
-    QuantizationConfigOptions, TargetPlatformCapabilities
+    QuantizationConfigOptions, QuantizationMethod, TargetPlatformCapabilities
 
 
 @fixture

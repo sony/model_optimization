@@ -32,5 +32,5 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest tests_pytest/keras
+          pytest tests_pytest/keras_tests
 

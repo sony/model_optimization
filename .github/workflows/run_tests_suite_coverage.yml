@@ -39,7 +39,7 @@ jobs:
         run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest discover tests/common_tests -v
 
       - name: Run common tests (pytest)
-        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/common
+        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/common_tests
 
       - name: Set up TensorFlow environment
         run: |
@@ -56,7 +56,7 @@ jobs:
       - name: Run TensorFlow tests (pytest)
         run: |
           source tf_env/bin/activate
-          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/keras
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/keras_tests
 
       - name: Set up PyTorch environment
         run: |
@@ -74,7 +74,7 @@ jobs:
       - name: Run PyTorch tests (pytest)
         run: |
           source torch_env/bin/activate
-          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/pytorch
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/pytorch_tests
 
       - name: Combine Multiple Coverage Files
         run: coverage combine

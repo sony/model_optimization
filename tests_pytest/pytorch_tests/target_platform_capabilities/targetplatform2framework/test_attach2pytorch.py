@@ -18,7 +18,7 @@ import torch.nn
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
-from tests_pytest.base_test_classes.base_tpc_attach2fw_test import BaseTpcAttach2FrameworkTest
+from tests_pytest.fw_tests_common_base.base_tpc_attach2fw_test import BaseTpcAttach2FrameworkTest
 
 
 class TestAttachTpc2Pytorch(BaseTpcAttach2FrameworkTest):
