@@ -144,7 +144,7 @@ class MixedPrecisionBopsAndActivationUtilizationTest(MixedPrecisionBopsAllWeight
         super().__init__(unit_test)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(activation_memory=460, bops=1300000)  # should require some quantization to all layers
+        return ResourceUtilization(activation_memory=1000, bops=1300000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsAndTotalUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -152,7 +152,7 @@ class MixedPrecisionBopsAndTotalUtilizationTest(MixedPrecisionBopsAllWeightsLaye
         super().__init__(unit_test)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(total_memory=650, bops=1300000)  # should require some quantization to all layers
+        return ResourceUtilization(total_memory=1000, bops=1300000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsWeightsActivationUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -160,7 +160,7 @@ class MixedPrecisionBopsWeightsActivationUtilizationTest(MixedPrecisionBopsAllWe
         super().__init__(unit_test)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(weights_memory=200, activation_memory=500, bops=1300000)  # should require some quantization to all layers
+        return ResourceUtilization(weights_memory=200, activation_memory=1000, bops=1300000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsMultipleOutEdgesTest(BaseMixedPrecisionBopsTest):

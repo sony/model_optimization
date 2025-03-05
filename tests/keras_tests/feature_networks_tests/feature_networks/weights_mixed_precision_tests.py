@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import abc
 
+import typing
 
 import numpy as np
 import tensorflow as tf
@@ -65,10 +67,23 @@ class MixedPrecisionBaseTest(BaseKerasFeatureNetworkTest):
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
+    def get_resource_utilization(self):
+        raise NotImplementedError()
+
+    @typing.final
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
-        # This is a base test, so it does not check a thing. Only actual tests of mixed precision
-        # compare things to test.
-        raise NotImplementedError
+        # call concrete validation of the specific test
+        self._compare(quantized_model, float_model, input_x, quantization_info)
+        # make sure the final utilization satisfies the target constraints
+        target_ru = self.get_resource_utilization()
+        if target_ru.is_any_restricted():
+            self.unit_test.assertTrue(
+                target_ru.is_satisfied_by(quantization_info.final_resource_utilization))
+
+    @abc.abstractmethod
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+        # test-specific validation, to be implemented by each test
+        raise NotImplementedError()
 
 
 class MixedPrecisionManuallyConfiguredTest(MixedPrecisionBaseTest):
@@ -95,7 +110,7 @@ class MixedPrecisionManuallyConfiguredTest(MixedPrecisionBaseTest):
         # set manually)
         return ResourceUtilization(1)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         assert quantization_info.mixed_precision_cfg == [2, 1]
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.unique(conv_layers[0].weights[0]).flatten().shape[0] <= 4)
@@ -114,7 +129,7 @@ class MixedPrecisionSearchTest(MixedPrecisionBaseTest):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
                                                          distance_weighting_method=self.distance_metric)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(any([b != 0 for b in quantization_info.mixed_precision_cfg]),
                                   "At least one of the conv layers is expected to be quantized to meet the required "
@@ -147,7 +162,7 @@ class MixedPrecisionWithHessianScoresTest(MixedPrecisionBaseTest):
                                                          distance_weighting_method=self.distance_metric,
                                                          use_hessian_based_scores=True)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(any([b != 0 for b in quantization_info.mixed_precision_cfg]),
                                   "At least one of the conv layers is expected to be quantized to meet the required "
@@ -220,7 +235,7 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
     def get_resource_utilization(self):
         return ResourceUtilization(1790)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # We just needed to verify that the graph finalization is working without failing.
         # The actual quantization is not interesting for the sake of this test, so we just verify some
         # degenerated things to see that everything worked.
@@ -242,7 +257,7 @@ class MixedPrecisionSearch4BitsAvgTest(MixedPrecisionBaseTest):
         # Resource Utilization is for 4 bits on average
         return ResourceUtilization(17920 * 4 / 8)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         assert (quantization_info.mixed_precision_cfg == [1, 1]).all()
         for i in range(32):  # quantized per channel
@@ -283,7 +298,7 @@ class MixedPrecisionCombinedNMSTest(MixedPrecisionBaseTest):
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue((quantization_info.mixed_precision_cfg != 0).any())
 
@@ -308,7 +323,7 @@ class MixedPrecisionSearch2BitsAvgTest(MixedPrecisionBaseTest):
         # Resource Utilization is for 2 bits on average
         return ResourceUtilization(17920 * 2 / 8)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         assert (quantization_info.mixed_precision_cfg == [2, 2]).all()
         for i in range(32):  # quantized per channel
@@ -335,7 +350,7 @@ class MixedPrecisionSearchActivationNonConfNodesTest(MixedPrecisionBaseTest):
     def get_resource_utilization(self):
         return self.target_total_ru
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # No need to verify quantization configuration here since this test is similar to other tests we have,
         # we're only interested in the ResourceUtilization
         self.unit_test.assertTrue(quantization_info.final_resource_utilization.activation_memory <=
@@ -351,7 +366,7 @@ class MixedPrecisionSearchTotalMemoryNonConfNodesTest(MixedPrecisionBaseTest):
     def get_resource_utilization(self):
         return self.target_total_ru
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # No need to verify quantization configuration here since this test is similar to other tests we have,
         # we're only interested in the ResourceUtilization
         self.unit_test.assertTrue(
@@ -373,7 +388,7 @@ class MixedPrecisionDepthwiseTest(MixedPrecisionBaseTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantization_info.mixed_precision_cfg) == 1)
         self.unit_test.assertTrue(quantization_info.mixed_precision_cfg[0] == 1)
 
@@ -426,7 +441,7 @@ class MixedPrecisionActivationDisabled(MixedPrecisionBaseTest):
         # resource utilization is infinity -> should give best model - 8bits
         return ResourceUtilization(17919)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         assert (quantization_info.mixed_precision_cfg == [0, 1]).all()
         for i in range(32):  # quantized per channel
@@ -449,7 +464,7 @@ class MixedPrecisionSearchLastLayerDistanceTest(MixedPrecisionBaseTest):
     def get_resource_utilization(self):
         return ResourceUtilization(17919)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         assert any([(quantization_info.mixed_precision_cfg == [1, 0]).all(),
                     (quantization_info.mixed_precision_cfg == [0, 1]).all()])
@@ -526,7 +541,7 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
     def get_resource_utilization(self):
         return ResourceUtilization(1535)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         wrapper_layers = get_layers_from_model_by_type(quantized_model, KerasQuantizationWrapper)
         weights_bits = wrapper_layers[0].weights_quantizers[KERNEL].num_bits
         self.unit_test.assertTrue(weights_bits == 4)

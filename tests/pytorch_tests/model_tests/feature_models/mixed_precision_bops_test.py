@@ -131,7 +131,7 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
         # Verify that some layers got bit-width smaller than 8 bits (so checking candidate index is not 0)
         self.unit_test.assertTrue(any(i > 0 for i in quantization_info.mixed_precision_cfg))
         # Verify final BOPs utilization
-        self.unit_test.assertTrue(quantization_info.final_resource_utilization.bops <= self.get_resource_utilization().bops)
+        self.unit_test.assertTrue(self.get_resource_utilization().is_satisfied_by(quantization_info.final_resource_utilization))
 
 
 class MixedPrecisionBopsBasicTest(BaseMixedPrecisionBopsTest):
@@ -198,7 +198,8 @@ class MixedPrecisionBopsAndActivationMemoryUtilizationTest(MixedPrecisionBopsAll
         super().__init__(unit_test)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(activation_memory=1000, bops=3000000)  # should require some quantization to all layers
+        # act max cut 2bit = 2*(30*30*4)*2/8 = 1800
+        return ResourceUtilization(activation_memory=1800, bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsAndTotalMemoryUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -206,7 +207,7 @@ class MixedPrecisionBopsAndTotalMemoryUtilizationTest(MixedPrecisionBopsAllWeigh
         super().__init__(unit_test)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(total_memory=1100, bops=3000000)  # should require some quantization to all layers
+        return ResourceUtilization(total_memory=2000, bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsWeightsActivationUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -214,7 +215,7 @@ class MixedPrecisionBopsWeightsActivationUtilizationTest(MixedPrecisionBopsAllWe
         super().__init__(unit_test)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(weights_memory=150, activation_memory=1000, bops=3000000)  # should require some quantization to all layers
+        return ResourceUtilization(weights_memory=150, activation_memory=1800, bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsMultipleOutEdgesTest(BaseMixedPrecisionBopsTest):
