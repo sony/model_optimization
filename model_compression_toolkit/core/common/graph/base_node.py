@@ -167,6 +167,14 @@ class BaseNode:
         """
         return self.is_weights_quantization_enabled(attr_name) and not self.is_all_weights_candidates_equal(attr_name)
 
+    def has_any_configurable_weight(self) -> bool:
+        """
+        Check whether any of the node's weights is configurable.
+        Returns:
+            Whether any of the node's weights is configurable.
+        """
+        return any(self.is_configurable_weight(attr) for attr in self.weights)
+
     def has_configurable_activation(self) -> bool:
         """
         Checks whether the activation has a configurable quantization.

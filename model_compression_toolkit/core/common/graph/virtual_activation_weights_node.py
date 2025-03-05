@@ -141,11 +141,11 @@ class VirtualActivationWeightsNode(BaseNode):
         if act_node.weights:
             assert fw_info.get_kernel_op_attributes(act_node)[0] is None, \
                 f'Node {act_node} with kernel cannot be used as activation for VirtualActivationWeightsNode.'
-            assert not set(weights.keys()).intersection(set(act_node.weights.keys())), \
-                'Activation and weight nodes are not expected to have the same weight attribute'
+            if set(weights.keys()).intersection(set(act_node.weights.keys())):
+                raise ValueError('Activation and weight nodes are not expected to have the same weight attribute')    # pragma: no cover
             if any(act_node.is_configurable_weight(attr) for attr in act_node.weights):
                 raise NotImplementedError('Node with a configurable weight cannot be used as activation for '
-                                          'VirtualActivationWeightsNode.')
+                                          'VirtualActivationWeightsNode.')    # pragma: no cover
             # combine weights from activation and weights
             weights.update(act_node.weights)
 

@@ -269,3 +269,35 @@ class TestActivationWeightsComposition(unittest.TestCase):
         sorted_v_nodes = v_graph.get_topo_sorted_nodes()
         for i, n in enumerate(split_graph.get_topo_sorted_nodes()):
             self.assertTrue(n.name == sorted_v_nodes[i].name)
+
+    def test_activation_with_const(self):
+        inputs = Input(shape=INPUT_SHAPE)
+        x = tf.add(inputs, np.ones(INPUT_SHAPE[-1]))
+        x = Conv2D(filters=2, kernel_size=3)(x)
+        model = keras.Model(inputs=inputs, outputs=x)
+
+        keras_impl = KerasImplementation()
+
+        base_config, _, default_config = get_op_quantization_configs()
+        graph = prepare_graph(model, keras_impl,
+                              mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
+                              default_config=default_config)
+
+        split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+        v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        nodes = v_graph.get_topo_sorted_nodes()
+        self.assertTrue(len(nodes) == 3)
+        self.assertTrue(isinstance(nodes[1], VirtualActivationWeightsNode))
+        aw_node = nodes[1]
+        self.assertTrue(len(aw_node.candidates_quantization_cfg) == 9)
+
+        orig_add, orig_conv = graph.get_topo_sorted_nodes()[1:]
+        self.assertFalse(orig_add.has_any_configurable_weight())
+        pos_weights_cfg = orig_add.candidates_quantization_cfg[0].weights_quantization_cfg.pos_attributes_config_mapping
+        self.assertTrue(all(c.weights_quantization_cfg.pos_attributes_config_mapping == pos_weights_cfg
+                            for c in aw_node.candidates_quantization_cfg))
+        self.assertTrue(len(aw_node.weights) == 3)
+
+        self.assertTrue(np.array_equal(aw_node.weights[1], orig_add.weights[1]))
+        self.assertTrue(all(np.array_equal(aw_node.weights[k], v) for k, v in orig_conv.weights.items()))
