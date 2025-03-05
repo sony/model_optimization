@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from collections import defaultdict
+
 from copy import deepcopy
 from enum import Enum, auto
 from typing import Dict, NamedTuple, Optional, Tuple, List, Iterable, Union, Literal, Sequence
@@ -22,18 +23,17 @@ from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_node import WeightAttrT
-from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
-    VirtualSplitWeightsNode, VirtualSplitActivationNode
+    VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
+    NodeActivationQuantizationConfig, BaseNodeQuantizationConfig
 from model_compression_toolkit.core.common.substitutions.virtual_activation_weights_composition import \
-    BaseVirtualActivationWeightsComposition, get_input_activation_if_composable
+    get_input_activation_if_composable
 
 
 class BitwidthMode(Enum):
@@ -393,6 +393,7 @@ class ResourceUtilizationCalculator:
               In custom mode, must provide configuration for all configurable activations. For non-configurable
               activations, if not provided, the default configuration will be extracted from the node.
             include_reused: whether to include reused nodes.
+
         Returns:
             - Total activation utilization of the network.
             - Detailed utilization per node. Dict keys are nodes in a topological order.
@@ -426,6 +427,7 @@ class ResourceUtilizationCalculator:
             qc: activation quantization config for the node. Should be provided only in custom bit mode.
               In custom mode, must be provided if the activation is configurable. For non-configurable activation, if
               not passed, the default configuration will be extracted from the node.
+
         Returns:
             Node's activation utilization.
         """
@@ -509,8 +511,7 @@ class ResourceUtilizationCalculator:
             raise ValueError('BOPS computation is supported only for Any and AnyQuantized targets.')
 
         self._validate_custom_qcs(act_qcs, bitwidth_mode)
-        if w_qc and bitwidth_mode != BitwidthMode.QCustom:
-            raise ValueError(self.unexpected_qc_error)
+        self._validate_custom_qcs(w_qc, bitwidth_mode)
 
         if isinstance(n, VirtualSplitWeightsNode):
             # Virtual weights node can only be present if it couldn't be merged into VirtualActivationWeightsNode.
@@ -535,7 +536,7 @@ class ResourceUtilizationCalculator:
 
         kernel_attr = kernel_attrs[0]
         node_mac = self.fw_impl.get_node_mac_operations(orig_w_node, self.fw_info)
-        if node_mac == 0:    # pragma: no cover
+        if node_mac == 0:
             return node_mac
 
         # find the activation node from which to get quantization info and for which to look in custom configuration
@@ -592,10 +593,11 @@ class ResourceUtilizationCalculator:
         """
         nodes_attrs = {n: attrs for n in self.graph.nodes
                        if (attrs := self._get_target_weight_attrs(n, target_criterion))
-                           and (include_reused or not n.reuse)}
+                       and (include_reused or not n.reuse)}
         return nodes_attrs
 
-    def _get_target_weight_attrs(self, n: BaseNode, target_criterion: TargetInclusionCriterion) -> List[str]:
+    @staticmethod
+    def _get_target_weight_attrs(n: BaseNode, target_criterion: TargetInclusionCriterion) -> List[str]:
         """
         Collect weight attributes of a node per criterion.
 
@@ -755,14 +757,13 @@ class ResourceUtilizationCalculator:
         raise ValueError(f'Unknown mode {bitwidth_mode.name}')    # pragma: no cover
 
     def _validate_custom_qcs(self,
-                             qcs: Dict[NodeName, Union[NodeActivationQuantizationConfig,
-                                                       NodeWeightsQuantizationConfig]],
+                             qcs: Union[BaseNodeQuantizationConfig, Dict[NodeName, BaseNodeQuantizationConfig]],
                              bitwidth_mode: BitwidthMode):
         """
         Validate custom quantization configuration.
 
         Args:
-            qcs: configuration.
+            qcs: either a mapping from nodes names to quantization configuration, or just a quantization configuration.
             bitwidth_mode: bit mode.
 
         Raises:
@@ -774,6 +775,9 @@ class ResourceUtilizationCalculator:
 
         if bitwidth_mode != BitwidthMode.QCustom:
             raise ValueError(self.unexpected_qc_error)
+
+        if isinstance(qcs, (NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig)):
+            return
 
         unknown_nodes = set(qcs.keys()) - self._nodes_names
         if unknown_nodes:

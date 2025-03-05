@@ -16,8 +16,8 @@ import torch
 from torch import nn
 
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from tests_pytest.base_test_classes.base_test_ru_integration import BaseRUIntegrationTester
-from tests_pytest.pytorch.torch_test_util.torch_test_mixin import TorchFwMixin
+from tests_pytest.fw_tests_common_base.base_test_ru_integration import BaseRUIntegrationTester
+from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwMixin
 
 
 class TestRUIntegrationTorch(BaseRUIntegrationTester, TorchFwMixin):

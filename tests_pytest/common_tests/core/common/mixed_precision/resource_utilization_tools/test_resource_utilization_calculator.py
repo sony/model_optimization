@@ -1062,7 +1062,7 @@ class TestBOPSAndVirtualGraph:
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
 
-        fw_info_mock.get_kernel_op_attributes = lambda node_type: {BOPNode: ['mp'], BOPNode2: ['sp']}.get(node_type) or []
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: {BOPNode: ['mp'], BOPNode2: ['sp']}.get(node_type, [])
         fw_impl_mock.get_node_mac_operations = lambda n, fw_info: {'n2': 42, 'n3': 630}.get(n.name, 0)
         topo = graph.get_topo_sorted_nodes()
         graph.get_topo_sorted_nodes = Mock(return_value=topo[::-1])
@@ -1178,7 +1178,7 @@ class TestBOPSAndVirtualGraph:
                         ])
 
         def get_kernel_attr(node_type):
-            return {BOPNode: ['foo'], BOPNode2: ['bar']}.get(node_type) or []
+            return {BOPNode: ['foo'], BOPNode2: ['bar']}.get(node_type, [])
         fw_info_mock.get_kernel_op_attributes = get_kernel_attr
         fw_impl_mock.get_node_mac_operations = lambda n, fw_info: {n2: 42, n3: 142}.get(n, 0)
 
