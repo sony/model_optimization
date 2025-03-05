@@ -63,7 +63,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
-            current_node = search_manager.graph.get_configurable_sorted_nodes(search_manager.fw_info)[node_idx]
+            current_node = search_manager.mp_topo_configurable_nodes[node_idx]
             node_candidates = current_node.candidates_quantization_cfg
 
             # only weights kernel attribute is quantized with weights mixed precision

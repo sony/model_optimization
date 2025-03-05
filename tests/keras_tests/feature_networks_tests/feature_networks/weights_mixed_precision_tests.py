@@ -259,7 +259,7 @@ class MixedPrecisionSearch4BitsAvgTest(MixedPrecisionBaseTest):
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [1, 1]).all()
+        assert quantization_info.mixed_precision_cfg == [1, 1]
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
@@ -300,7 +300,7 @@ class MixedPrecisionCombinedNMSTest(MixedPrecisionBaseTest):
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        self.unit_test.assertTrue((quantization_info.mixed_precision_cfg != 0).any())
+        self.unit_test.assertTrue(any(i for i in quantization_info.mixed_precision_cfg))
 
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
@@ -325,7 +325,7 @@ class MixedPrecisionSearch2BitsAvgTest(MixedPrecisionBaseTest):
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [2, 2]).all()
+        assert quantization_info.mixed_precision_cfg == [2, 2]
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 4)
@@ -443,7 +443,7 @@ class MixedPrecisionActivationDisabled(MixedPrecisionBaseTest):
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [0, 1]).all()
+        assert quantization_info.mixed_precision_cfg == [0, 1]
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
@@ -466,8 +466,8 @@ class MixedPrecisionSearchLastLayerDistanceTest(MixedPrecisionBaseTest):
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert any([(quantization_info.mixed_precision_cfg == [1, 0]).all(),
-                    (quantization_info.mixed_precision_cfg == [0, 1]).all()])
+        assert any([quantization_info.mixed_precision_cfg == [1, 0],
+                    quantization_info.mixed_precision_cfg == [0, 1]])
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)

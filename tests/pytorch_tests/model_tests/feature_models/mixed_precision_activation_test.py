@@ -72,7 +72,7 @@ class MixedPrecisionActivationBaseTest(BasePytorchTest):
         raise NotImplementedError
 
     def verify_config(self, result_config, expected_config):
-        self.unit_test.assertTrue(all(result_config == expected_config),
+        self.unit_test.assertTrue(result_config == expected_config,
                                   f"Configuration mismatch: expected {expected_config} but got {result_config}.")
 
 

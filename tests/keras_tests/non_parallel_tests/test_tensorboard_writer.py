@@ -162,7 +162,8 @@ class TestFileLogger(unittest.TestCase):
                                           fqc=fqc,
                                           network_editor=[],
                                           quant_config=cfg,
-                                          target_resource_utilization=mct.core.ResourceUtilization(),
+                                          target_resource_utilization=mct.core.ResourceUtilization(weights_memory=73,
+                                                                                                   activation_memory=191),
                                           n_iter=1,
                                           analyze_similarity=True,
                                           mp_cfg=mp_cfg)

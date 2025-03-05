@@ -203,12 +203,15 @@ class SensitivityEvaluation:
         """
 
         evaluation_graph = copy.deepcopy(self.graph)
-
+        # if activation is disabled, keep a list of nodes that are only activation-configurable, so we can ignore
+        # them even if we get a configuration for them
+        self.ignored_activation_nodes = []
         if self.disable_activation_for_metric:
             for n in evaluation_graph.get_topo_sorted_nodes():
                 for c in n.candidates_quantization_cfg:
                     c.activation_quantization_cfg.enable_activation_quantization = False
-
+                if not n.has_any_configurable_weight():
+                    self.ignored_activation_nodes.append(n.name)
         model_mp, _, conf_node2layers = self.fw_impl.model_builder(evaluation_graph,
                                                                    mode=ModelBuilderMode.MIXEDPRECISION,
                                                                    append2output=self.interest_points + self.output_points,
@@ -288,11 +291,12 @@ class SensitivityEvaluation:
 
         """
         node_name = sorted_configurable_nodes_names[node_idx_to_configure]
+        if node_name in self.ignored_activation_nodes:
+            return
         layers_to_config = self.conf_node2layers.get(node_name, None)
         if layers_to_config is None:
             Logger.critical(
                 f"Matching layers for node {node_name} not found in the mixed precision model configuration.")  # pragma: no cover
-
         for current_layer in layers_to_config:
             self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
 
