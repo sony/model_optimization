@@ -68,7 +68,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
     kernel_base_config = AttributeQuantizationConfig(
-        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        weights_quantization_method=QuantizationMethod.SYMMETRIC,
         weights_n_bits=8,
         weights_per_channel_threshold=True,
         enable_weights_quantization=True,
