@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 import numpy as np
 from numpy.testing import assert_array_equal
 
@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.model_collector import create_stats_collector_for_node, create_tensor2node, ModelCollector
-from tests_pytest.common.graph_builder_utils import build_node, DummyLayer, build_qc
+from tests_pytest.test_util.graph_builder_utils import build_node, DummyLayer, build_qc
 
 
 @pytest.fixture

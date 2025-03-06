@@ -31,5 +31,5 @@ jobs:
           python -m unittest discover tests/pytorch_tests -v
       - name: Run pytest
         run: |
-          pytest tests_pytest/pytorch
+          pytest tests_pytest/pytorch_tests
 

@@ -78,7 +78,7 @@ class HistogramCollector(BaseCollector):
             merged_histogram_counts = None
             for histogram in self._histogram_per_iteration:  # Iterate all collected histograms and merge them
                 if merged_histogram_counts is None:  # First histogram to consider
-                    merged_histogram_counts = histogram[0].astype(np.float64)  # Convert to float64
+                    merged_histogram_counts = interpolate_histogram(merged_histogram_bins, histogram[1], histogram[0])
                 else:  # Merge rest of histograms into existing final histogram
                     merged_histogram_counts += interpolate_histogram(merged_histogram_bins, histogram[1], histogram[0])
 

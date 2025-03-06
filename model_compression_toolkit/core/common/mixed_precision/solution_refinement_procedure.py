@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List
+from typing import List, Tuple, Dict
 
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
@@ -21,7 +21,6 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
-import numpy as np
 
 
 def greedy_solution_refinement_procedure(mp_solution: List[int],
@@ -68,9 +67,11 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             node_candidates = current_node.candidates_quantization_cfg
 
             # only weights kernel attribute is quantized with weights mixed precision
-            kernel_attr = search_manager.fw_info.get_kernel_op_attributes(current_node.type)
-            kernel_attr = None if kernel_attr is None else kernel_attr[0]
-            valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx], kernel_attr)
+            valid_candidates = _get_valid_candidates_indices(node_candidates,
+                                                             new_solution[node_idx],
+                                                             target_resource_utilization.activation_restricted(),
+                                                             target_resource_utilization.weight_restricted()
+                                                             )
 
             # Create a list of ru for the valid candidates.
             updated_ru = []
@@ -108,40 +109,81 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
     return new_solution
 
 
-def _get_valid_candidates_indices(node_candidates: List[CandidateNodeQuantizationConfig],
-                                  current_chosen_index: int,
-                                  kernel_attr: str = None) -> List[int]:
+def _get_valid_candidates_indices(
+        node_candidates: List[CandidateNodeQuantizationConfig],
+        current_chosen_index: int,
+        is_activation_restricted: bool,
+        is_weight_restricted: bool
+) -> List[int]:
     """
-    Find node's valid candidates to try and improve the node's MP chosen candidate.
-    Valid indices are indices of candidates that have higher number of bits for both weights and activations
-    (if they are quantized in this node).
+    Find node's valid candidates to improve the node's MP chosen candidate.
+
+    Valid indices are indices of candidates that have a higher number of bits for both
+    weights and activations. In cases where weights or activations are not restricted (thus,
+    we do not search for an MP solution for them), a candidate is considered to be
+    valid only if the bit-width of the part that is not eligible for MP has equal bit-width
+    to the current candidate.
 
     Args:
-        node_candidates: Candidates of the node.
-        current_chosen_index: Current index in MP configuration of the node.
-        kernel_attr: The name of the kernel attribute on the node, otherwise None.
+        node_candidates (List[CandidateNodeQuantizationConfig]): List of candidate configurations for the node.
+        current_chosen_index (int): Index of the currently chosen candidate in the list.
+        is_activation_restricted (bool): Indicates whether activation resources are restricted.
+        is_weight_restricted (bool): Indicates whether weight resources are restricted.
+
 
     Returns:
-        List of indices of valid candidates.
+        List[int]: List of indices of valid candidates.
     """
+
+    def get_candidate_bits(candidate: CandidateNodeQuantizationConfig) -> Tuple[Dict[str, int], int]:
+        """
+        Extract weight and activation bits from a candidate.
+
+        Args:
+            candidate (CandidateNodeQuantizationConfig): A candidate node configuration.
+
+        Returns:
+            Tuple[Dict[str, int], int]:
+                - A dictionary mapping weight attributes to their bit-widths.
+                - The activation bit-width.
+        """
+        weight_attrs = candidate.weights_quantization_cfg.all_weight_attrs
+        weight_attrs_to_nbits: Dict[str, int] = {
+            w_attr: candidate.weights_quantization_cfg.get_attr_config(w_attr).weights_n_bits
+            for w_attr in weight_attrs
+        }
+        activation_n_bits: int = candidate.activation_quantization_cfg.activation_n_bits
+        return weight_attrs_to_nbits, activation_n_bits
+
+    def is_valid_candidate(candidate: CandidateNodeQuantizationConfig) -> bool:
+        """
+        Check if a candidate satisfies the weight and activation bit-width constraints to be
+        considered as a valid candidate.
+
+        Args:
+            candidate (CandidateNodeQuantizationConfig): A candidate node configuration.
+
+        Returns:
+            bool: True if the candidate is valid, False otherwise.
+        """
+        candidate_weight_bits, candidate_activation_bits = get_candidate_bits(candidate)
+
+        # Current candidate - no need to check
+        if candidate_activation_bits == current_activation_bits and all(candidate_weight_bits[attr] == current_weight_bits[attr] for attr in current_weight_bits.keys()):
+            return False
+
+        valid_weight = all(
+            candidate_weight_bits[attr] >= current_weight_bits[attr] if is_weight_restricted else
+            candidate_weight_bits[attr] == current_weight_bits[attr]
+            for attr in current_weight_bits.keys()
+        )
+        valid_activation = (
+            candidate_activation_bits >= current_activation_bits if is_activation_restricted else
+            candidate_activation_bits == current_activation_bits
+        )
+        return valid_weight and valid_activation
+
     current_candidate = node_candidates[current_chosen_index]
+    current_weight_bits, current_activation_bits = get_candidate_bits(current_candidate)
 
-    if kernel_attr is None:
-        # In this node we only quantize activation, so no need to check weights number of bits
-        activation_num_bits = current_candidate.activation_quantization_cfg.activation_n_bits
-
-        # Filter candidates that have higher bit-width for activations
-        return [i for i, c in enumerate(node_candidates) if
-                c.activation_quantization_cfg.activation_n_bits >= activation_num_bits
-                and not (c.activation_quantization_cfg.activation_n_bits == activation_num_bits)]
-    else:
-        weights_num_bits = current_candidate.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
-        activation_num_bits = current_candidate.activation_quantization_cfg.activation_n_bits
-
-        # Filter candidates that have higher bit-width for both weights and activations (except for the current index).
-        # TODO: activation bits comparison: should be >= if ACTIVATION or TOTAL ru is used. else should be ==.
-        return [i for i, c in enumerate(node_candidates) if
-                c.activation_quantization_cfg.activation_n_bits == activation_num_bits
-                and c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits >= weights_num_bits
-                and not (c.activation_quantization_cfg.activation_n_bits == activation_num_bits
-                         and c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == weights_num_bits)]
+    return [idx for idx, candidate in enumerate(node_candidates) if is_valid_candidate(candidate)]

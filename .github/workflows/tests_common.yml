@@ -31,5 +31,5 @@ jobs:
         run: python -m unittest discover tests/common_tests -v
 
       - name: Run pytest
-        run:  pytest tests_pytest/common
+        run:  pytest tests_pytest/common_tests
 
