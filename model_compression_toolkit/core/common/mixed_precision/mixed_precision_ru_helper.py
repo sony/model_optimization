@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Set, Dict, Optional, Tuple, Any, Union
+from typing import List, Set, Dict, Tuple
 
 import numpy as np
 

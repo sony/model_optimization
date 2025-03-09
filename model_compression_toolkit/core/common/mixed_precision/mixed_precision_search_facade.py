@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
-    ResourceUtilization, RUTarget
+    ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.solution_refinement_procedure import \
     greedy_solution_refinement_procedure
 

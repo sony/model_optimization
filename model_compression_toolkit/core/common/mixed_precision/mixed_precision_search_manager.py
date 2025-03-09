@@ -67,9 +67,9 @@ class MixedPrecisionSearchManager:
         self.original_graph = graph
         # graph for mp search
         self.mp_graph, self.using_virtual_graph = self._get_mp_graph(graph, target_resource_utilization)
+        del graph  # so that it's not used by mistake
 
         self.sensitivity_evaluator = sensitivity_evaluator
-        self.compute_metric_fn = sensitivity_evaluator.compute_metric
         self.target_resource_utilization = target_resource_utilization
 
         self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
@@ -93,6 +93,7 @@ class MixedPrecisionSearchManager:
             Indices of the selected bit-widths candidates.
         """
         # import here to prevent circular dependency
+        # TODO: remove search manager dependency from linear_programming
         from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
             mp_integer_programming_search
         config = mp_integer_programming_search(self, self.target_resource_utilization)
@@ -122,12 +123,13 @@ class MixedPrecisionSearchManager:
         Logger.info('Starting to evaluate metrics')
         layer_to_metrics_mapping = {}
 
+        compute_metric = self.sensitivity_evaluator.compute_metric
         if self.using_virtual_graph:
             origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
                 self.max_ru_config)
-            max_config_value = self.compute_metric_fn(origin_max_config)
+            max_config_value = compute_metric(origin_max_config)
         else:
-            max_config_value = self.compute_metric_fn(self.max_ru_config)
+            max_config_value = compute_metric(self.max_ru_config)
 
         for node_idx, layer_possible_bitwidths_indices in tqdm(self.layer_to_bitwidth_mapping.items(),
                                                                total=len(self.layer_to_bitwidth_mapping)):
@@ -153,12 +155,12 @@ class MixedPrecisionSearchManager:
                             original_base_config=origin_max_config)
                     origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
                                                     c != origin_mp_model_configuration[i]]
-                    metric_value = self.compute_metric_fn(
+                    metric_value = compute_metric(
                         origin_mp_model_configuration,
                         origin_changed_nodes_indices,
                         origin_max_config)
                 else:
-                    metric_value = self.compute_metric_fn(
+                    metric_value = compute_metric(
                         mp_model_configuration,
                         [node_idx],
                         self.max_ru_config)

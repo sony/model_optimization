@@ -170,7 +170,6 @@ class BaseNode:
     def has_any_configurable_weight(self) -> bool:
         """
         Check whether any of the node's weights is configurable.
-        
         Returns:
             Whether any of the node's weights is configurable.
         """
