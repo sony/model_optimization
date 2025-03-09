@@ -31,7 +31,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     Utilization, ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from tests_pytest.test_util.graph_builder_utils import build_node, full_attr_name, build_qc
+from tests_pytest._test_util.graph_builder_utils import build_node, full_attr_name, build_qc
 
 
 @pytest.fixture
