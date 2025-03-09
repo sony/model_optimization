@@ -16,7 +16,7 @@
 from packaging import version
 import tensorflow as tf
 
-from tests_pytest.fw_tests_common_base.base_tpc_attach2fw_test import BaseTpcAttach2FrameworkTest
+from tests_pytest._fw_tests_common_base.base_tpc_attach2fw_test import BaseTpcAttach2FrameworkTest
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Identity
