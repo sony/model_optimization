@@ -161,8 +161,6 @@ class VirtualActivationWeightsNode(BaseNode):
                          quantization_attr=weights_node.quantization_attr,
                          has_activation=False)
 
-        self.name = f"{VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX}_{act_node.name}_{weights_node.name}"
-
         self.original_activation_node = act_node
         self.original_weights_node = weights_node
 
