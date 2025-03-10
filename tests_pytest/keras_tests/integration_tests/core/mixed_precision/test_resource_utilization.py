@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, Input, Subtract, Flatten
 
-from tests_pytest.fw_tests_common_base.base_test_ru_integration import BaseRUIntegrationTester
+from tests_pytest._fw_tests_common_base.base_test_ru_integration import BaseRUIntegrationTester
 from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMixin
 
 
