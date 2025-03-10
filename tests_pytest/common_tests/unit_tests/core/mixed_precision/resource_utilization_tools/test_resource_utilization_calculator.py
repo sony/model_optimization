@@ -13,41 +13,26 @@
 # limitations under the License.
 # ==============================================================================
 from types import MethodType
-
 from unittest.mock import Mock
 
 import numpy as np
 import pytest
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization
+from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
-from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements, ActivationMemoryTensor
+from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements, \
+    ActivationMemoryTensor
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
+    VirtualSplitWeightsNode, VirtualSplitActivationNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     Utilization, ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from tests_pytest._test_util.graph_builder_utils import build_node, full_attr_name, build_qc
-
-
-@pytest.fixture
-def graph_mock():
-    return Mock(spec_set=Graph, nodes=[])
-
-
-@pytest.fixture
-def fw_impl_mock():
-    return Mock(spec_set=FrameworkImplementation)
-
-
-@pytest.fixture
-def fw_info_mock():
-    return Mock(spec_set=FrameworkInfo)
-
+from tests_pytest._test_util.graph_builder_utils import build_node, build_qc, full_attr_name
 
 BM = BitwidthMode
 TIC = TargetInclusionCriterion
@@ -67,8 +52,11 @@ class TestUtilization:
             1 + Utilization(5, 5)
 
 
-class TestComputeResurceUtilization:
-    """ Test compute_resource_utilization public api. """
+class TestComputeResourceUtilization:
+    """ Test compute_resource_utilization public api.
+
+        compute_resource_utilization on a virtual graph is tested in TestBOPSAndVirtualGraph
+    """
     @pytest.fixture(autouse=True)
     def setup(self, graph_mock, fw_impl_mock, fw_info_mock):
         n1 = build_node('n1', qcs=[build_qc()], output_shape=(None, 5, 10))
@@ -79,7 +67,7 @@ class TestComputeResurceUtilization:
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
 
-        fw_info_mock.get_kernel_op_attributes = Mock(return_value = ['foo'])    # for bops
+        fw_info_mock.get_kernel_op_attributes = Mock(return_value=['foo'])    # for bops
         fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n == n2 else 0    # for bops
 
         ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
@@ -91,98 +79,139 @@ class TestComputeResurceUtilization:
         self.ru_calc = ru_calc
         self.nodes = [n1, n2, n3]
 
-    def test_compute_ru_all_targets(self):
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_all_targets(self, detailed):
+        ru_calc = self.ru_calc
         # default targets
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP)
+        ret = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP, return_detailed=detailed)
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, act_qcs=None, w_qcs=None)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, None)
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QDefaultSP, act_qcs=None, w_qcs=None)
+
+        ru = ret[0] if detailed else ret
         assert ru == ResourceUtilization(weights_memory=21,
                                          activation_memory=671,
                                          total_memory=692,
                                          bops=42*4*8)
+        if detailed:
+            detailed_res = ret[1]
+            assert set(detailed_res.keys()) == set(RUTarget)
+            assert sorted(list(detailed_res[RUTarget.ACTIVATION].values())) == [50, 71, 650, 671]
+            assert detailed_res[RUTarget.WEIGHTS] == {'n2': 21}
+            assert sorted(list(detailed_res[RUTarget.TOTAL].values())) == [71, 92, 671, 692]
+            assert detailed_res[RUTarget.BOPS] == {'n2': 42*4*8}
+
         # explicit targets
-        ru2 = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP, ru_targets=list(RUTarget))
-        assert ru2 == ru
+        ret2 = ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QDefaultSP, ru_targets=list(RUTarget),
+                                                    return_detailed=detailed)
+        assert ret2 == ret
 
-    def test_compute_ru_w(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.WEIGHTS])
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_w(self, detailed):
+        ru_calc = self.ru_calc
+        ret = ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.WEIGHTS],
+                                                   return_detailed=detailed)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_activations_utilization.assert_not_called()
+        ru_calc.compute_bops.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(weights_memory=42))
 
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_activations_utilization.assert_not_called()
-        self.ru_calc.compute_bops.assert_not_called()
-        assert ResourceUtilization(weights_memory=42)
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_act(self, detailed):
+        ru_calc = self.ru_calc
+        ret = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.ACTIVATION],
+                                                        return_detailed=detailed)
 
-    def test_compute_ru_act(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.ACTIVATION])
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_weights_utilization.assert_not_called()
+        ru_calc.compute_bops.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(activation_memory=742))
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_weights_utilization.assert_not_called()
-        self.ru_calc.compute_bops.assert_not_called()
-        assert ru == ResourceUtilization(activation_memory=742)
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_total(self, detailed):
+        ru_calc = self.ru_calc
+        ret = ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.TOTAL],
+                                                   return_detailed=detailed)
 
-    def test_compute_ru_total(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.Any, BM.Q8Bit, ru_targets=[RUTarget.TOTAL])
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
+        ru_calc.compute_bops.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(total_memory=742+42))
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.Q8Bit, None)
-        self.ru_calc.compute_bops.assert_not_called()
-        assert ru == ResourceUtilization(total_memory=742+42)
+    @pytest.mark.parametrize('detailed', [True, False])
+    def test_compute_ru_bops(self, detailed):
+        ru_calc = self.ru_calc
+        ret = ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.Q8Bit, ru_targets=[RUTarget.BOPS],
+                                                   return_detailed=detailed)
 
-    def test_compute_ru_bops(self):
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.Q8Bit, ru_targets=[RUTarget.BOPS])
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.Q8Bit, act_qcs=None, w_qcs=None)
+        ru_calc.compute_activations_utilization.assert_not_called()
+        ru_calc.compute_weights_utilization.assert_not_called()
+        self._validate(ret, detailed, ResourceUtilization(bops=42*8*8))
 
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.Q8Bit, act_qcs=None, w_qcs=None)
-        self.ru_calc.compute_activations_utilization.assert_not_called()
-        self.ru_calc.compute_weights_utilization.assert_not_called()
-        assert ru == ResourceUtilization(bops=42*8*8)
+    def test_compute_ru_custom_w_qcs(self):
+        ru_calc = self.ru_calc
+        w_qcs = {'n2': build_qc(w_attr={'foo': (16, True)}).weights_quantization_cfg}
 
-    def test_compute_ru_custom_w_qc(self):
-        w_qcs = {self.nodes[1]: build_qc(w_attr={'foo': (16, True)}).weights_quantization_cfg}
+        ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, w_qcs=w_qcs)
 
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, w_qcs=w_qcs)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, w_qcs)
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=None, w_qcs=w_qcs)
 
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, w_qcs)
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=None, w_qcs=w_qcs)
+    def test_compute_ru_custom_a_qcs(self):
+        ru_calc = self.ru_calc
+        a_qcs = {'n2': build_qc(w_attr={'foo': (16, True)}).activation_quantization_cfg}
 
-    def test_compute_ru_custom_a_qc(self):
-        a_qcs = {self.nodes[1]: build_qc(w_attr={'foo': (16, True)}).activation_quantization_cfg}
+        ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs)
 
-        ru = self.ru_calc.compute_resource_utilization(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs)
-
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, a_qcs)
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
-        self.ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs, w_qcs=None)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, a_qcs)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, None)
+        ru_calc.compute_bops.assert_called_once_with(TIC.AnyQuantized, BM.QCustom, act_qcs=a_qcs, w_qcs=None)
 
     @pytest.mark.parametrize('bm', set(BM)-{BM.QCustom})
-    def test_unexpected_qc_for_bitmode(self, bm):
+    def test_unexpected_custom_qcs_for_bitmode(self, bm):
         with pytest.raises(ValueError, match=self.ru_calc.unexpected_qc_error):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM, act_qcs=Mock())
+            self.ru_calc.compute_resource_utilization(TIC.Any, bm, act_qcs={'n': Mock()})
 
         with pytest.raises(ValueError, match=self.ru_calc.unexpected_qc_error):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM, w_qcs=Mock())
+            self.ru_calc.compute_resource_utilization(TIC.Any, bm, w_qcs={'n': Mock()})
 
-    def test_unexpected_qc_for_targets(self):
+    def test_unexpected_custom_qcs_for_targets(self):
         with pytest.raises(ValueError, match='Activation configuration passed but no relevant ru_targets requested.'):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs=Mock(),
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'n1': Mock()},
                                                       ru_targets=[RUTarget.WEIGHTS])
 
         with pytest.raises(ValueError, match='Weight configuration passed but no relevant ru_targets requested.'):
-            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs=Mock(),
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'n1': Mock()},
                                                       ru_targets=[RUTarget.ACTIVATION])
 
-    def test_allowed_unexpected_qc_for_targets(self):
-        self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs=Mock(), ru_targets=[RUTarget.WEIGHTS],
-                                                  allow_unused_qcs=True)
+    def test_allowed_unexpected_custom_qcs_for_targets(self):
+        ru_calc = self.ru_calc
+        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'n1': Mock()}, ru_targets=[RUTarget.WEIGHTS],
+                                             allow_unused_qcs=True)
         # unexpected config is converted to None
-        self.ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
+        ru_calc.compute_weights_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
 
-        self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs=Mock(), ru_targets=[RUTarget.ACTIVATION],
-                                                  allow_unused_qcs=True)
+        ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'n1': Mock()}, ru_targets=[RUTarget.ACTIVATION],
+                                             allow_unused_qcs=True)
         # unexpected config is converted to None
-        self.ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
+        ru_calc.compute_activations_utilization.assert_called_once_with(TIC.Any, BM.QCustom, None)
+
+    def test_invalid_custom_qcs(self):
+        with pytest.raises(ValueError, match=self.ru_calc.unexpected_qc_nodes_error):
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, act_qcs={'unknown': Mock()})
+
+        with pytest.raises(ValueError, match=self.ru_calc.unexpected_qc_nodes_error):
+            self.ru_calc.compute_resource_utilization(TIC.Any, BM.QCustom, w_qcs={'unknown': Mock()})
+
+    def _validate(self, ret, detailed, exp_ru: ResourceUtilization):
+        ru = ret[0] if detailed else ret
+        assert ru == exp_ru
+        if detailed:
+            assert len(ret) == 2
+            assert set(ret[1].keys()) == exp_ru.get_restricted_targets()
 
 
 class TestActivationUtilizationMethods:
@@ -266,8 +295,8 @@ class TestActivationUtilizationMethods:
 class TestComputeActivationTensorsUtilization:
     """ Tests for activation tensors utilization public apis. """
     def test_compute_node_activation_tensor_utilization(self, graph_mock, fw_impl_mock, fw_info_mock):
-        mp_reuse = build_node(output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(16)], reuse=True)
-        noq = build_node(output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False)])
+        mp_reuse = build_node('mp_reuse', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(16)], reuse=True)
+        noq = build_node('noq', output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False)])
         graph_mock.nodes = [mp_reuse, noq]
 
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
@@ -310,13 +339,13 @@ class TestComputeActivationTensorsUtilization:
         ru_calc.compute_node_activation_tensor_utilization = Mock(wraps=ru_calc.compute_node_activation_tensor_utilization)
 
         qcs = {
-            mp: build_qc(a_enable=False).activation_quantization_cfg,
-            noq: build_qc(4, True).activation_quantization_cfg
+            'mp': build_qc(a_enable=False).activation_quantization_cfg,
+            'noq': build_qc(4, True).activation_quantization_cfg
         }
         # include reuse + custom qc
         total, per_node = ru_calc.compute_activation_tensors_utilization(TIC.Any, BM.QCustom, act_qcs=qcs,
                                                                          include_reused=True)
-        assert per_node == {mp: Utilization(42, 168.), noq: Utilization(142, 71.), sp: Utilization(59, 59.)}
+        assert per_node == {'mp': Utilization(42, 168.), 'noq': Utilization(142, 71.), 'sp': Utilization(59, 59.)}
         assert total == 168.
         ru_calc._get_target_activation_nodes.assert_called_once_with(TIC.Any, include_reused=True)
 
@@ -326,15 +355,15 @@ class TestComputeActivationTensorsUtilization:
         calls = sorted(ru_calc.compute_node_activation_tensor_utilization.call_args_list,
                        key=lambda call: call.args[0].name)
         assert len(calls) == 3
-        assert calls[0].args == (mp, None, BM.QCustom, qcs[mp])
-        assert calls[1].args == (noq, None, BM.QCustom, qcs[noq])
+        assert calls[0].args == (mp, None, BM.QCustom, qcs['mp'])
+        assert calls[1].args == (noq, None, BM.QCustom, qcs['noq'])
         assert calls[2].args == (sp, None, BM.QCustom, None)
 
         # no reused + no custom
         total, per_node = ru_calc.compute_activation_tensors_utilization(TIC.AnyQuantized, BM.QMinBit,
                                                                          include_reused=False)
         ru_calc._get_target_activation_nodes.assert_called_with(TIC.AnyQuantized, include_reused=False)
-        assert per_node == {mp: Utilization(42, 10.5)}
+        assert per_node == {'mp': Utilization(42, 10.5)}
         assert total == 10.5
 
         # no target nodes
@@ -344,10 +373,16 @@ class TestComputeActivationTensorsUtilization:
         assert per_node == {}
 
     @pytest.mark.parametrize('bitmode', set(BM) - {BM.QCustom})
-    def test_compute_act_tensors_utilization_errors(self, graph_mock, fw_impl_mock, fw_info_mock, bitmode):
+    def test_compute_act_tensors_util_unexpected_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock, bitmode):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_error):
-            ru_calc.compute_activation_tensors_utilization(TIC.Any, bitmode, act_qcs=Mock())
+            ru_calc.compute_activation_tensors_utilization(TIC.Any, bitmode, act_qcs={'n': Mock()})
+
+    def test_compute_act_tensors_util_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_nodes_error):
+            ru_calc.compute_activation_tensors_utilization(TIC.Any, BitwidthMode.QCustom,
+                                                           act_qcs={'unknown': Mock()})
 
 
 class TestActivationMaxCutUtilization:
@@ -394,14 +429,14 @@ class TestActivationMaxCutUtilization:
         total, per_cut, per_cut_per_node = ru_calc.compute_activation_utilization_by_cut(target_criterion=TIC.AnyQuantized,
                                                                                          bitwidth_mode=BM.QDefaultSP)
 
-        assert per_cut_per_node == {cut1: {n1: Utilization(10 * 20 * 3, 600)},
-                                    cut12: {n1: Utilization(10 * 20 * 3, 600),
-                                            n2: Utilization(5 * 10, 50)},
-                                    cut23: {n2: Utilization(5*10, 50),
-                                            n3: Utilization(5*10, 50)},
-                                    cut34: {n3: Utilization(5*10, 50),
-                                            n4: Utilization(5*10*32, 1600)},
-                                    cut4: {n4: Utilization(5 * 10 * 32, 1600)}}
+        assert per_cut_per_node == {cut1: {'n1': Utilization(10 * 20 * 3, 600)},
+                                    cut12: {'n1': Utilization(10 * 20 * 3, 600),
+                                            'n2': Utilization(5 * 10, 50)},
+                                    cut23: {'n2': Utilization(5*10, 50),
+                                            'n3': Utilization(5*10, 50)},
+                                    cut34: {'n3': Utilization(5*10, 50),
+                                            'n4': Utilization(5*10*32, 1600)},
+                                    cut4: {'n4': Utilization(5 * 10 * 32, 1600)}}
         assert per_cut == {
             nodes_to_cuts[('n1',)]: Utilization(600, 600),
             nodes_to_cuts[('n1', 'n2')]: Utilization(650, 650),
@@ -456,7 +491,7 @@ class TestActivationMaxCutUtilization:
         ru_calc.compute_node_activation_tensor_utilization = Mock(wraps=ru_calc.compute_node_activation_tensor_utilization)
         ru_calc._get_cut_target_nodes = Mock(wraps=ru_calc._get_cut_target_nodes)
 
-        qcs = {mp_reuse: build_qc(7), mp: build_qc(10), noq: build_qc(4, True), mp2: build_qc(4, False)}
+        qcs = {'mp_reuse': build_qc(7), 'mp': build_qc(10), 'noq': build_qc(4, True), 'mp2': build_qc(4, False)}
         qcs = {k: v.activation_quantization_cfg for k, v in qcs.items()}
         total, per_cut, per_cut_node = ru_calc.compute_activation_utilization_by_cut(TIC.AnyQuantized, BM.QCustom, qcs)
 
@@ -468,16 +503,16 @@ class TestActivationMaxCutUtilization:
         compute_tensor_calls = sorted(ru_calc.compute_node_activation_tensor_utilization.call_args_list,
                                       key=lambda call: call.args[0].name)
         assert len(compute_tensor_calls) == 6
-        assert compute_tensor_calls[0].args == (mp, TIC.AnyQuantized, BM.QCustom, qcs[mp])
+        assert compute_tensor_calls[0].args == (mp, TIC.AnyQuantized, BM.QCustom, qcs['mp'])
         assert compute_tensor_calls[-1].args == (sp, TIC.AnyQuantized, BM.QCustom, None)
 
         assert len(per_cut_node) == 4
-        assert per_cut_node[cut1] == {mp_reuse: Utilization(24, 21.)}
-        assert per_cut_node[cut2] == {mp_reuse: Utilization(24, 21.),
-                                      mp: Utilization(50, 62.5),
-                                      sp: Utilization(200, 75.)}
-        assert per_cut_node[cut3] == {sp: Utilization(200, 75.)}
-        assert per_cut_node[cut4] == {mp2: Utilization(150, 600.)}
+        assert per_cut_node[cut1] == {'mp_reuse': Utilization(24, 21.)}
+        assert per_cut_node[cut2] == {'mp_reuse': Utilization(24, 21.),
+                                      'mp': Utilization(50, 62.5),
+                                      'sp': Utilization(200, 75.)}
+        assert per_cut_node[cut3] == {'sp': Utilization(200, 75.)}
+        assert per_cut_node[cut4] == {'mp2': Utilization(150, 600.)}
 
         assert per_cut == {cut1: Utilization(24, 21.),
                            cut2: Utilization(274, 158.5),
@@ -491,8 +526,8 @@ class TestActivationMaxCutUtilization:
 
         total, per_cut, per_cut_node = ru_calc.compute_activation_utilization_by_cut(TIC.QNonConfigurable, BM.QDefaultSP)
         assert len(per_cut_node) == 2
-        assert per_cut_node[cut2] == {sp: Utilization(200, 75.)}
-        assert per_cut_node[cut3] == {sp: Utilization(200, 75.)}
+        assert per_cut_node[cut2] == {'sp': Utilization(200, 75.)}
+        assert per_cut_node[cut3] == {'sp': Utilization(200, 75.)}
         assert per_cut == {cut2: Utilization(200, 75.),
                            cut3: Utilization(200, 75.)}
         assert total == 75.
@@ -515,10 +550,15 @@ class TestActivationMaxCutUtilization:
         ru_calc._compute_cuts.assert_called()
 
     @pytest.mark.parametrize('bitmode', set(BM)-{BM.QCustom})
-    def test_compute_act_utilization_by_cut_errors(self, graph_mock, fw_impl_mock, fw_info_mock, bitmode):
+    def test_compute_act_utilization_by_cut_unexpected_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock, bitmode):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_error):
-            ru_calc.compute_activation_utilization_by_cut(TIC.Any, bitmode, act_qcs=Mock())
+            ru_calc.compute_activation_utilization_by_cut(TIC.Any, bitmode, act_qcs={'n': Mock()})
+
+    def test_compute_act_utilization_by_cut_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_nodes_error):
+            ru_calc.compute_activation_utilization_by_cut(TIC.Any, BM.QCustom, act_qcs={'unknown': Mock()})
 
 
 class TestWeightUtilizationMethods:
@@ -722,7 +762,7 @@ class TestComputeNodeWeightsUtilization:
 class TestComputeWeightUtilization:
     """ Tests for compute_weight_utilization public method. """
     @pytest.fixture
-    def prepare_compute_w_util(self):
+    def prepare_compute_w_util(self, fw_impl_mock, fw_info_mock):
         n1 = build_node('n1',
                         canonical_weights={'mp': np.ones((5, 10)), 'sp': np.zeros((42,)), 'noq': np.ones((3, 1, 4))},
                         qcs=[build_qc(w_attr={'mp': (6, True), 'sp': (4, True), 'noq': (8, False)}),
@@ -751,26 +791,26 @@ class TestComputeWeightUtilization:
         ru_calc, nodes = prepare_compute_w_util
         n1, n2, n3 = nodes['n1'], nodes['n2'], nodes['n3']
         # n3 - not in qc (but should be considered)
-        custom_qc = {n1: build_qc(w_attr={'mp': (5, False), 'noq': (16, True)}).weights_quantization_cfg,
-                     n2: build_qc(w_attr={'mp': (6, True)}, pos_attr=(2, True, [1])).weights_quantization_cfg,
-                     nodes['no_w']: build_qc().weights_quantization_cfg,
-                     nodes['reused']: build_qc(w_attr={'sp': (8, True)})}
+        custom_qc = {n1.name: build_qc(w_attr={'mp': (5, False), 'noq': (16, True)}).weights_quantization_cfg,
+                     n2.name: build_qc(w_attr={'mp': (6, True)}, pos_attr=(2, True, [1])).weights_quantization_cfg,
+                     nodes['no_w'].name: build_qc().weights_quantization_cfg,
+                     nodes['reused'].name: build_qc(w_attr={'sp': (8, True)})}
 
         total, per_node, per_weight = ru_calc.compute_weights_utilization(TIC.Any, BM.QCustom, custom_qc)
 
         ru_calc._collect_target_nodes_w_attrs.assert_called_once_with(TIC.Any, include_reused=False)
 
         ru_calc._topo_sort.assert_called_once()
-        assert sorted(ru_calc._topo_sort.call_args.args[0], key=lambda n:n.name) == [n1, n2, n3]
+        assert sorted(ru_calc._topo_sort.call_args.args[0], key=lambda n: n.name) == [n1, n2, n3]
 
         calls = [call for call in ru_calc.compute_node_weights_utilization.call_args_list]
         assert len(calls) == 3
         calls = sorted(calls, key=lambda call: call.args[0].name)
         # first call
-        assert (calls[0].args[0], *calls[0].args[2:]) == (n1, BitwidthMode.QCustom, custom_qc[n1])
+        assert (calls[0].args[0], *calls[0].args[2:]) == (n1, BitwidthMode.QCustom, custom_qc['n1'])
         assert sorted(calls[0].args[1]) == full_attr_name(['mp', 'noq', 'sp'])
         # second call
-        assert (calls[1].args[0], *calls[1].args[2:]) == (n2, BitwidthMode.QCustom, custom_qc[n2])
+        assert (calls[1].args[0], *calls[1].args[2:]) == (n2, BitwidthMode.QCustom, custom_qc['n2'])
         assert calls[1].args[1] in (full_attr_name(['mp', 1]), full_attr_name([1, 'mp']))
         # third call
         assert (calls[2].args[0], *calls[2].args[2:]) == (n3, BitwidthMode.QCustom, None)
@@ -778,22 +818,22 @@ class TestComputeWeightUtilization:
 
         # check the actual results
         assert len(per_weight) == len(per_node) == 3
-        assert per_weight[n1] == {full_attr_name('mp'): Utilization(50, 200.),
-                                  full_attr_name('sp'): Utilization(42, 21),
-                                  full_attr_name('noq'): Utilization(12, 24.)}
-        assert per_weight[n2] == {full_attr_name('mp'): Utilization(124, 93.),
-                                  1: Utilization(720, 180.)}
-        assert per_weight[n3] == {full_attr_name('sp'): Utilization(123, 30.75)}
+        assert per_weight[n1.name] == {full_attr_name('mp'): Utilization(50, 200.),
+                                       full_attr_name('sp'): Utilization(42, 21),
+                                       full_attr_name('noq'): Utilization(12, 24.)}
+        assert per_weight[n2.name] == {full_attr_name('mp'): Utilization(124, 93.),
+                                       1: Utilization(720, 180.)}
+        assert per_weight[n3.name] == {full_attr_name('sp'): Utilization(123, 30.75)}
 
-        assert per_node == {n1: Utilization(104, 245.),
-                            n2: Utilization(844, 273.),
-                            n3: Utilization(123, 30.75)}
+        assert per_node == {n1.name: Utilization(104, 245.),
+                            n2.name: Utilization(844, 273.),
+                            n3.name: Utilization(123, 30.75)}
         assert total == 245+273+30.75
 
     def test_compute_w_utilization_non_custom(self, prepare_compute_w_util):
         ru_calc, nodes = prepare_compute_w_util
         n1, n2 = nodes['n1'], nodes['n2']
-        total, per_node, per_weight = ru_calc.compute_weights_utilization(TIC.QConfigurable, BM.QMaxBit)
+        ru_calc.compute_weights_utilization(TIC.QConfigurable, BM.QMaxBit)
 
         ru_calc._collect_target_nodes_w_attrs.assert_called_once_with(TIC.QConfigurable, include_reused=False)
         calls = [call for call in ru_calc.compute_node_weights_utilization.call_args_list]
@@ -814,10 +854,15 @@ class TestComputeWeightUtilization:
         assert per_weight == {}
 
     @pytest.mark.parametrize('bm', set(BM)-{BM.QCustom})
-    def test_compute_w_utilization_errors(self, graph_mock, fw_impl_mock, fw_info_mock, bm):
+    def test_compute_w_utilization_unexpected_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock, bm):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_error):
-            ru_calc.compute_weights_utilization(TIC.Any, BM.QMaxBit, w_qcs={Mock(): Mock()})
+            ru_calc.compute_weights_utilization(TIC.Any, BM.QMaxBit, w_qcs={'n': Mock()})
+
+    def test_compute_w_utilization_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match=ResourceUtilizationCalculator.unexpected_qc_nodes_error):
+            ru_calc.compute_weights_utilization(TIC.Any, BM.QCustom, w_qcs={'unknown': Mock()})
 
 
 class TestCalculatorMisc:
@@ -834,10 +879,10 @@ class TestCalculatorMisc:
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
 
         ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
-        assert ru_calc._act_tensors_size == {n1: 50, n2: 666, n3: 17}
-        assert ru_calc._params_cnt == {n2: {full_attr_name('foo'): 42,
-                                            full_attr_name('bar'): 1620,
-                                            2: 142}}
+        assert ru_calc._act_tensors_size == {'n1': 50, 'n2': 666, 'n3': 17}
+        assert ru_calc._params_cnt == {'n2': {full_attr_name('foo'): 42,
+                                              full_attr_name('bar'): 1620,
+                                              2: 142}}
 
     def test_topo_sort(self, graph_mock, fw_impl_mock, fw_info_mock):
         n1, n2, n3, n4, n5 = [build_node(f'n{i}') for i in range(5)]
@@ -850,3 +895,300 @@ class TestCalculatorMisc:
         n6 = build_node('n6')
         with pytest.raises(ValueError, match=fr'Could not topo-sort, nodes \[{n6}\] do not match the graph nodes'):
             ru_calc._topo_sort([n1, n2, n6])
+
+
+class BOPNode:
+    pass
+
+
+class TestBOPSAndVirtualGraph:
+    def test_compute_regular_node_bops(self, fw_impl_mock, fw_info_mock):
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n.name == 'n2' else 0
+
+        # a quantized, w quantized
+        graph, n1, n2, _ = self._build_regular_node_graph(True, True)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.Float) == 42*32*32
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.Q8Bit) == 42*8*8
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 42*7*2
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMaxBit) == 42*16*4
+
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QMaxBit) == 42*16*4
+        assert ru_calc.compute_node_bops(n2, None, BM.QMaxBit) == 42*16*4
+
+        assert ru_calc.compute_node_bops(n1, None, BM.Float) == 0
+
+        # a quantized, w not quantized - should be selected by AnyQuantized
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=True, enable_wq=False)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 42 * 7 * 32
+
+        # a not quantized, w quantized - should be selected by AnyQuantized
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=False, enable_wq=True)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 42 * 32 * 2
+
+        # a not quantized, w not quantized - should not be selected by AnyQuantized
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=False, enable_wq=False)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QMinBit) == 0
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QMinBit) == 42 * 32 * 32
+
+    def test_compute_regular_node_bops_custom(self, fw_impl_mock, fw_info_mock):
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n.name == 'n2' else 0
+
+        custom_qc1 = build_qc(3)
+        custom_qc2 = build_qc(5, w_attr={'foo': (6, True)})
+        a_cfg = {'n1': custom_qc1.activation_quantization_cfg,
+                 'n2': custom_qc2.activation_quantization_cfg,
+                 'n3': Mock()}
+
+        graph, _, n2, _ = self._build_regular_node_graph(enable_aq=False, enable_wq=False)
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QCustom,
+                                         act_qcs=a_cfg, w_qc=custom_qc2.weights_quantization_cfg) == 42 * 3 * 6
+        assert ru_calc.compute_node_bops(n2, None, BM.QCustom,
+                                         act_qcs=a_cfg, w_qc=custom_qc2.weights_quantization_cfg) == 42 * 3 * 6
+        assert ru_calc.compute_node_bops(n2, TIC.AnyQuantized, BM.QCustom,
+                                         act_qcs=a_cfg, w_qc=custom_qc2.weights_quantization_cfg) == 0
+
+    def test_compute_node_bops_default_qc(self, fw_impl_mock, fw_info_mock):
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: 42 if n.name == 'n2' else 0
+
+        n1 = build_node('n1', qcs=[build_qc(7)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
+                        canonical_weights={'foo': np.zeros((3, 14))},
+                        qcs=[build_qc(w_attr={'foo': (6, True)})])
+        n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17))
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QCustom) == 42 * 7 * 6
+
+    def test_compute_virtual_aw_node_bops_fully_quantized(self, fw_impl_mock, fw_info_mock):
+        # all quantized
+        g, _, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                  quantize_a1=True, quantize_w1=True,
+                                                                  quantize_a2=True, quantize_w2=True)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.Float) == 42 * 32 * 32
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.Q8Bit) == 42 * 8 * 8
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMinBit) == 42 * 4 * 6
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMaxBit) == 42 * 16 * 16
+
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.Float) == 142 * 32 * 32
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.Q8Bit) == 142 * 8 * 8
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMinBit) == 142 * 2 * 2
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMaxBit) == 142 * 5 * 6
+
+        assert ru_calc.compute_node_bops(a2, TIC.AnyQuantized, BM.Float) == 0
+
+    def test_compute_virtual_aw_node_bops_half_quantized(self, fw_impl_mock, fw_info_mock):
+        g, _, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                   quantize_a1=True, quantize_w1=False,
+                                                                   quantize_a2=False, quantize_w2=True)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMaxBit) == 42 * 16 * 32
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMaxBit) == 142 * 32 * 6
+
+    def test_compute_virtual_aw_node_bops_unquantized(self, fw_impl_mock, fw_info_mock):
+        g, _, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                   quantize_a1=False, quantize_w1=False,
+                                                                   quantize_a2=False, quantize_w2=False)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QMaxBit) == 0
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QMaxBit) == 0
+
+        assert ru_calc.compute_node_bops(a1w2, TIC.Any, BM.QMaxBit) == 42 * 32 * 32
+        assert ru_calc.compute_node_bops(a2w3, TIC.Any, BM.QMaxBit) == 142 * 32 * 32
+
+    def test_compute_virtual_aw_node_bops_custom(self, fw_impl_mock, fw_info_mock):
+        g, _, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock,
+                                                                   quantize_a1=False, quantize_w1=False,
+                                                                   quantize_a2=True, quantize_w2=True)
+        custom_qc_a1w2 = build_qc(5, w_attr={'foo': (6, True)})
+        custom_qc_a2w3 = build_qc(7, w_attr={'bar': (3, True)})
+        a_cfg = {a1w2.name: custom_qc_a1w2.activation_quantization_cfg,
+                 a2w3.name: custom_qc_a2w3.activation_quantization_cfg}
+        w_a1w2 = custom_qc_a1w2.weights_quantization_cfg
+        w_a2w3 = custom_qc_a2w3.weights_quantization_cfg
+
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_node_bops(a1w2, TIC.Any, BM.QCustom, act_qcs=a_cfg, w_qc=w_a1w2) == 42 * 5 * 6
+        assert ru_calc.compute_node_bops(a1w2, TIC.AnyQuantized, BM.QCustom, act_qcs=a_cfg, w_qc=w_a1w2) == 0
+
+        assert ru_calc.compute_node_bops(a2w3, TIC.AnyQuantized, BM.QCustom, act_qcs=a_cfg, w_qc=w_a2w3) == 142 * 7 * 3
+
+    @pytest.mark.parametrize('bm', set(BitwidthMode) - {BM.QCustom})
+    def test_node_bops_unexpected_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock, bm):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match=ru_calc.unexpected_qc_error):
+            ru_calc.compute_node_bops(Mock(), TIC.Any, bm, act_qcs=Mock())
+
+        with pytest.raises(ValueError, match=ru_calc.unexpected_qc_error):
+            ru_calc.compute_node_bops(Mock(), TIC.Any, bm, w_qc=Mock())
+
+    def test_node_bops_invalid_custom_qcs(self, graph_mock, fw_impl_mock, fw_info_mock):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match=ru_calc.unexpected_qc_nodes_error):
+            ru_calc.compute_node_bops(Mock(), TIC.Any, BM.QCustom, act_qcs={'unknown': Mock()})
+
+    @pytest.mark.parametrize('target_criterion', set(TIC) - {TIC.Any, TIC.AnyQuantized})
+    def test_node_bops_invalid_criterion(self, graph_mock, fw_impl_mock, fw_info_mock, target_criterion):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        with pytest.raises(ValueError, match='BOPS computation is supported only for Any and AnyQuantized targets.'):
+            ru_calc.compute_node_bops(Mock(), target_criterion, BM.Float)
+
+    def test_compute_bops(self, fw_impl_mock, fw_info_mock,):
+        class BOPNode2:
+            pass
+
+        n1 = build_node('n1', qcs=[build_qc(16, True)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
+                        canonical_weights={'mp': np.zeros((3, 14))},
+                        qcs=[
+                            build_qc(7, w_attr={'mp': (4, True)}),
+                            build_qc(7, w_attr={'mp': (2, True)})
+                        ])
+
+        n3 = build_node('n3', layer_class=BOPNode2, output_shape=(None, 17),
+                        canonical_weights={'sp': np.zeros((3, 14, 15))},
+                        qcs=[build_qc(w_attr={'sp': (5, True)})])
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
+
+        fw_info_mock.get_kernel_op_attributes = lambda node_type: {BOPNode: ['mp'], BOPNode2: ['sp']}.get(node_type, [])
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: {'n2': 42, 'n3': 630}.get(n.name, 0)
+        topo = graph.get_topo_sorted_nodes()
+        graph.get_topo_sorted_nodes = Mock(return_value=topo[::-1])
+
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+        total, detailed = ru_calc.compute_bops(TIC.Any, BM.QMaxBit)
+        assert list(detailed.keys()) == ['n3', 'n2']
+        assert detailed == {'n2': 42 * 16 * 4,
+                            'n3': 630 * 7 * 5}
+        assert total == 42 * 64 + 630 * 35
+
+        custom_qc = build_qc(9, w_attr={'mp': (7, True)})
+        a_cfg = {'n1': build_qc(4, False).activation_quantization_cfg}
+        w_cfg = {'n2': custom_qc.weights_quantization_cfg}
+        total, detailed = ru_calc.compute_bops(TIC.Any, BM.QCustom, a_cfg, w_cfg)
+        assert detailed == {'n2': 42 * 32 * 7,
+                            'n3': 630 * 7 * 5}
+
+    def test_compute_virtual_graph_resources(self, fw_impl_mock, fw_info_mock):
+        g, _, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock, True, True, True, True)
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        ru, detailed = ru_calc.compute_resource_utilization(TIC.Any, BM.QMaxBit, return_detailed=True)
+        assert (sorted(list(detailed[RUTarget.ACTIVATION].values())) ==
+                sorted([24, 24 + 50*2, 50*2+88*5/8, 88*5/8 + 28*7/8, 28*7/8])), detailed[RUTarget.ACTIVATION]
+        assert detailed[RUTarget.WEIGHTS] == {a1w2.name: 42*2, a2w3.name: 142*6/8}
+        assert detailed[RUTarget.BOPS] == {a1w2.name: 42*16*16, a2w3.name: 142*5*6}
+        assert ru == ResourceUtilization(weights_memory=84 + 142*6/8,
+                                         activation_memory=155,
+                                         total_memory=155 + (84 + 142*6/8),
+                                         bops=42*256+142*30)
+
+    def test_virtual_graph_with_virtual_weight(self, fw_impl_mock, fw_info_mock):
+        # virtual weight node wasn't merged into virtual composed node
+        _, n_in, a1w2, a2, a2w3, w3, a3 = self._build_virtual_node_graph(fw_impl_mock, fw_info_mock, True, True, True, True)
+        g = Graph('g', nodes=[w3], input_nodes=[n_in], output_nodes=[a3],
+                  edge_list=[Edge(n_in, w3, 0, 0), Edge(w3, a3, 0, 0)])
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        ru, detailed = ru_calc.compute_resource_utilization(TIC.Any, BM.QMaxBit, return_detailed=True)
+        assert list(detailed[RUTarget.WEIGHTS].values()) == [142 * 6 / 8]
+        assert detailed[RUTarget.BOPS] == {}
+        # the extra cut that is created by virtual weight node. The rest of the cuts must be correct.
+        wa_cut = 2*28*7/8
+        assert sorted(list(detailed[RUTarget.ACTIVATION].values())) == sorted([24, 24+28*7/8, 28*7/8, wa_cut])
+        assert ru == ResourceUtilization(weights_memory=142 * 6 / 8,
+                                         activation_memory=wa_cut,
+                                         total_memory=wa_cut + (142 * 6 / 8),
+                                         bops=0)
+
+    def test_multi_output_input_activation(self, fw_impl_mock, fw_info_mock):
+        """ No bops should be calculated for weight node if its input activation has multiple outputs. """
+        n_in = build_node('in', qcs=[build_qc()], output_shape=(None, 2, 3, 4))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 44),
+                        canonical_weights={'foo': np.zeros((3, 14))},
+                        qcs=[
+                            build_qc(2, w_attr={'foo': (16, True)}),
+                            build_qc(3, w_attr={'foo': (10, True)}),
+                            build_qc(4, w_attr={'foo': (7, True)}),
+                            build_qc(5, w_attr={'foo': (6, True)}),
+                        ])
+        n_out = build_node('out', qcs=[build_qc()], output_shape=(None, 27))
+        g = Graph('g', input_nodes=[n_in], nodes=[n2], output_nodes=[n_out],
+                  edge_list=[Edge(n_in, n2, 0, 0), Edge(n_in, n_out, 0, 0)])
+
+        def get_kernel_attr(node_type):
+            return {BOPNode: ['foo']}.get(node_type) or []
+        fw_info_mock.get_kernel_op_attributes = get_kernel_attr
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: {n2: 42}.get(n, 0)
+
+        ru_calc = ResourceUtilizationCalculator(g, fw_impl_mock, fw_info_mock)
+        assert ru_calc.compute_bops(TIC.Any, BM.Float) == (0, {})
+
+    def _build_regular_node_graph(self, enable_aq, enable_wq):
+        n1 = build_node('n1', qcs=[build_qc(16, enable_aq), build_qc(7, enable_aq)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
+                        canonical_weights={'foo': np.zeros((3, 14)),
+                                           'bar': np.zeros((15, 9, 2, 6))},
+                        qcs=[
+                            build_qc(w_attr={'foo': (4, enable_wq), 'bar': (8, True)}),
+                            build_qc(w_attr={'foo': (2, enable_wq), 'bar': (8, True)})
+                        ])
+        n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17))
+        graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
+        return graph, n1, n2, n3
+
+    def _build_virtual_node_graph(self, fw_impl_mock, fw_info_mock, quantize_w1, quantize_w2, quantize_a1, quantize_a2):
+
+        class BOPNode2:
+            pass
+
+        class ActType:
+            pass
+
+        # define original nodes
+        n_in = build_node('in', qcs=[build_qc()], output_shape=(None, 2, 3, 4))
+        n1 = build_node('n1', qcs=[build_qc(16, quantize_a1),
+                                   build_qc(4, quantize_a1)], output_shape=(None, 5, 10))
+        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 44),
+                        canonical_weights={'foo': np.zeros((3, 14))},
+                        qcs=[
+                            build_qc(2, quantize_a2, w_attr={'foo': (16, quantize_w1)}),
+                            build_qc(3, quantize_a2, w_attr={'foo': (10, quantize_w1)}),
+                            build_qc(4, quantize_a2, w_attr={'foo': (7, quantize_w1)}),
+                            build_qc(5, quantize_a2, w_attr={'foo': (6, quantize_w1)}),
+                        ])
+        n3 = build_node('n3', layer_class=BOPNode2, output_shape=(None, 28),
+                        canonical_weights={'bar': np.zeros((2, 71))},
+                        qcs=[
+                            build_qc(4, w_attr={'bar': (6, quantize_w2)}),
+                            build_qc(5, w_attr={'bar': (5, quantize_w2)}),
+                            build_qc(6, w_attr={'bar': (4, quantize_w2)}),
+                            build_qc(7, w_attr={'bar': (2, quantize_w2)})
+                        ])
+
+        def get_kernel_attr(node_type):
+            return {BOPNode: ['foo'], BOPNode2: ['bar']}.get(node_type, [])
+        fw_info_mock.get_kernel_op_attributes = get_kernel_attr
+        fw_impl_mock.get_node_mac_operations = lambda n, fw_info: {n2: 42, n3: 142}.get(n, 0)
+
+        # virtual aw node made of original nodes
+        a1w2 = VirtualActivationWeightsNode(act_node=n1, weights_node=n2, fw_info=fw_info_mock)
+        a2 = VirtualSplitActivationNode(n2, ActType, {})
+        w3 = VirtualSplitWeightsNode(n3, 'bar')
+        # virtual aw node made of virtual split a, w nodes
+        a2w3 = VirtualActivationWeightsNode(act_node=a2, weights_node=w3, fw_info=fw_info_mock)
+        a3 = VirtualSplitActivationNode(n3, ActType, {})
+        g = Graph('g', nodes=[a1w2, a2w3, a3], input_nodes=[n_in], output_nodes=[w3],
+                  edge_list=[Edge(n_in, a1w2, 0, 0), Edge(a1w2, a2w3, 0, 0), Edge(a2w3, a3, 0, 0)])
+        return g, n_in, a1w2, a2, a2w3, w3, a3

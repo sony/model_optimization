@@ -92,7 +92,7 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
                                    total_memory=ru_data.total_memory - 1 if self.total_memory else np.inf,
                                    bops=int(ru_data.bops * 0.05) if self.bops else np.inf)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         if self.weights_memory or self.activation_memory or self.total_memory or self.bops:
             self.unit_test.assertTrue(any([i != 0 for i in quantization_info.mixed_precision_cfg]))
         else:

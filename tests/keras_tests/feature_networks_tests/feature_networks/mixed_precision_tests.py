@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import typing
 
+import abc
 
 import numpy as np
 import tensorflow as tf
@@ -94,10 +96,18 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
+    @typing.final
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
-        # This is a base test, so it does not check a thing. Only actual tests of mixed precision
-        # compare things to test.
-        raise NotImplementedError
+        # call concrete validation of the specific test
+        self._compare(quantized_model, float_model, input_x, quantization_info)
+        # make sure the final utilization satisfies the target constraints
+        self.unit_test.assertTrue(
+            self.get_resource_utilization().is_satisfied_by(quantization_info.final_resource_utilization))
+
+    @abc.abstractmethod
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+        # test-specific validation, to be implemented by each test
+        raise NotImplementedError()
 
     def verify_quantization(self, quantized_model, input_x, weights_layers_idx, weights_layers_channels_size,
                             activation_layers_idx, unique_tensor_values):
@@ -120,8 +130,6 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         # verifying fake quant nodes output
         for layer_out in layer_outs:
             self.unit_test.assertTrue(np.unique(layer_out).flatten().shape[0] <= unique_tensor_values)
-
-
 class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
@@ -274,7 +282,7 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
     def get_resource_utilization(self):
         return ResourceUtilization(3071, 2079)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
@@ -314,7 +322,7 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
     def get_resource_utilization(self):
         return ResourceUtilization(activation_memory=6507)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
@@ -361,7 +369,7 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
     def get_resource_utilization(self):
         return ResourceUtilization(np.inf, 6407)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
@@ -389,7 +397,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
@@ -436,7 +444,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
         model = keras.Model(inputs=[inputs_1, inputs_2, inputs_3, inputs_4], outputs=outputs)
         return model
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
@@ -458,7 +466,7 @@ class MixedPrecisionTotalMemoryUtilizationSearchTest(MixedPrecisionActivationBas
         # 17920: 8-bit weights, 6176: max cut of input+conv_bn
         return ResourceUtilization(np.inf, np.inf, total_memory=(17920 + 6176) * 4 / 8)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
@@ -480,7 +488,7 @@ class MixedPrecisionMultipleResourcesTightUtilizationSearchTest(MixedPrecisionAc
         activation = 6176 * 4 / 8
         return ResourceUtilization(weights, activation, total_memory=weights + activation)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
@@ -509,7 +517,7 @@ class MixedPrecisionReducedTotalMemorySearchTest(MixedPrecisionActivationBaseTes
         activation = 6176 * 4 / 8    # max cut of input + conv_bn
         return ResourceUtilization(weights, activation, total_memory=(weights + activation) / 2)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
@@ -565,7 +573,7 @@ class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
@@ -602,7 +610,7 @@ class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in
@@ -668,7 +676,7 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
     def get_resource_utilization(self):
         return ResourceUtilization(np.inf, 5410)
 
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+    def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
 
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
