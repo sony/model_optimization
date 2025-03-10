@@ -23,6 +23,7 @@ from networkx import topological_sort
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
@@ -224,6 +225,9 @@ class PytorchModel(torch.nn.Module):
 
         """
         super(PytorchModel, self).__init__()
+        if isinstance(graph, GraphWithFusingMetadata):
+            graph = graph.get_internal_graph()
+
         self.graph = copy.deepcopy(graph)
         delattr(self.graph, 'fqc')
 

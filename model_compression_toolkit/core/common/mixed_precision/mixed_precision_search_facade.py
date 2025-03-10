@@ -20,6 +20,7 @@ from typing import List, Callable, Dict
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -82,6 +83,11 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # Set graph for MP search
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
+    # TODO: The handle of mixed precision with the fused graph will be in a separate PR. Currently, the bit-width
+    #  search is on the "classic" graph.
+    if isinstance(graph, GraphWithFusingMetadata):
+        graph = graph.get_internal_graph()
+
     if target_resource_utilization.bops_restricted():
         # TODO: we only need the virtual graph is both activations and weights are configurable
         # Since Bit-operations count target resource utilization is set, we need to reconstruct the graph for the MP search

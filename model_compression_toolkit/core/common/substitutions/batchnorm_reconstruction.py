@@ -19,11 +19,11 @@ from typing import Callable
 
 import numpy as np
 
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from mct_quantizers import QuantizationMethod
@@ -64,8 +64,8 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         self.epsilon_val = epsilon_val
 
     def substitute(self,
-                   graph: Graph,
-                   source_node: BaseNode) -> Graph:
+                   graph: GraphWithFusingMetadata,
+                   source_node: BaseNode) -> GraphWithFusingMetadata:
         """
         Reconstruct BatchNormalization after linear layers.
 
@@ -142,6 +142,16 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
                                                                     QuantizationConfig(),
                                                                     AttributeQuantizationConfig(
                                                                         enable_weights_quantization=False)))
+
+        fused_op = graph.get_fusing_info().get_fused_node_name(source_node.name)
+        if fused_op:
+            fused_nodes = graph.get_fusing_info().get_fused_nodes(fused_op)
+            assert source_node in fused_nodes
+            fused_nodes.insert(fused_nodes.index(source_node)+1, bn_node)
+            graph.get_fusing_info().remove_fused_operation(fused_op)
+            if graph.get_fusing_info().is_nodes_eligible_to_be_fused(fused_nodes):
+                op_id = graph.get_fusing_info().generate_fused_op_id(fused_nodes)
+                graph.get_fusing_info().add_fused_operation(op_id, fused_nodes)
 
         graph.reconnect_out_edges(current_node=source_node, new_node=bn_node)
         graph.replace_output_node(current_node=source_node, new_node=bn_node)

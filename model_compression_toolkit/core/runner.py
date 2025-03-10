@@ -194,15 +194,17 @@ def core_runner(in_model: Any,
 
     scheduler_info = None
     if core_config.debug_config.simulate_scheduler:
-        graph_to_fuse = copy.deepcopy(tg)
-        fused_nodes_mapping = GraphFuser().create_fused_graph(graph_to_fuse)
-        memory_graph = MemoryGraph(graph_to_fuse)
+        # tg: FusedGraph
+        # graph_to_fuse = copy.deepcopy(tg)
+        # fused_nodes_mapping = GraphFuser().create_fused_graph(graph_to_fuse)
+        fused_graph = GraphFuser().fuse(tg)
+        memory_graph = MemoryGraph(fused_graph)
         schedule, max_cut, cuts = compute_graph_max_cut(memory_graph)
         scheduler_info = SchedulerInfo(
             operators_scheduling=schedule,
             max_cut=float(max_cut),
             cuts=cuts,
-            fused_nodes_mapping=fused_nodes_mapping
+            fused_nodes_mapping=tg.get_fusing_info().get_node_to_fused_node_map()
         )
 
     return tg, bit_widths_config, hessian_info_service, scheduler_info

@@ -20,6 +20,8 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -31,7 +33,6 @@ else:
     from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add, InputLayer
 import numpy as np
 
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualActivationWeightsNode, VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -96,7 +97,7 @@ def representative_dataset():
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
-def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
+def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config) -> GraphWithFusingMetadata:
     fw_info = DEFAULT_KERAS_INFO
     qc = mct.core.QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])})
 
@@ -123,8 +124,11 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, fqc)
+    fusing_info = FusingInfoGenerator(fqc).generate_fusing_info(graph)
+    graph = GraphWithFusingMetadata(graph, fusing_info)
     graph = filter_nodes_candidates(graph)
+
+    graph = graph.get_internal_graph()
 
     return graph
 
