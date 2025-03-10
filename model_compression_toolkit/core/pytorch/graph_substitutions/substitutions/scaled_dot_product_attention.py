@@ -103,7 +103,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         matmul_name = f'{attention_node_name}_matmul1'
         return FunctionalNode(name=matmul_name,
                               framework_attr={},
-                              input_shape=(tuple(q_node.output_shape[0]), tuple(transposed_k_node.output_shape)),
+                              input_shape=(tuple(q_node.output_shape[0]), tuple(transposed_k_node.output_shape[0])),
                               output_shape=tuple(matmul1_output_shape),
                               weights={},
                               layer_class=torch.matmul,

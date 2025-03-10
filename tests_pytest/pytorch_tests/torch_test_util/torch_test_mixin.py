@@ -23,7 +23,7 @@ from model_compression_toolkit.core.pytorch.pytorch_implementation import Pytorc
 
 
 class TorchFwMixin:
-    """ Mixin helper class containing keras-specific definitions. """
+    """ Mixin helper class containing torch-specific definitions. """
     fw_info = DEFAULT_PYTORCH_INFO
     fw_impl = PytorchImplementation()
     attach_to_fw_func = AttachTpcToPytorch().attach
