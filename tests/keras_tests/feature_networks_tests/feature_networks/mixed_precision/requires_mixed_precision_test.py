@@ -73,8 +73,7 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
 
         return compute_resource_utilization_data(in_model=model, representative_data_gen=self.representative_data_gen(),
                                                  core_config=cc, fqc=fqc, fw_info=DEFAULT_KERAS_INFO,
-                                                 fw_impl=KerasImplementation(), transformed_graph=None,
-                                                 mixed_precision_enable=False)
+                                                 fw_impl=KerasImplementation(), transformed_graph=None)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,

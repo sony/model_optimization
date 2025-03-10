@@ -32,12 +32,10 @@ def compute_resource_utilization_data(in_model: Any,
                                       fqc: FrameworkQuantizationCapabilities,
                                       fw_info: FrameworkInfo,
                                       fw_impl: FrameworkImplementation,
-                                      transformed_graph: Graph = None,
-                                      mixed_precision_enable: bool = True) -> ResourceUtilization:
+                                      transformed_graph: Graph = None) -> ResourceUtilization:
     """
-    Compute Resource Utilization information that can be relevant for defining target ResourceUtilization for mixed precision search.
-    Calculates maximal activation tensor size, the sum of the model's weight parameters and the total memory combining both weights
-    and maximal activation tensor size.
+    Compute Resource Utilization of a model with the default single precision quantization.
+    This can serve as a basis for defining target Resource Utilization for mixed precision search.
 
     Args:
         in_model:  Model to build graph from (the model that intended to be quantized).
@@ -47,19 +45,14 @@ def compute_resource_utilization_data(in_model: Any,
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        transformed_graph: An internal graph representation of the input model. Defaults to None.
-                            If no graph is provided, a graph will be constructed using the specified model.
-        mixed_precision_enable: Indicates if mixed precision is enabled, defaults to True.
-                                If disabled, computes resource utilization using base quantization
-                                configurations across all layers.
+        transformed_graph: An internal graph representation of the input model in a single-precision mode. Defaults to
+                           None. If no graph is provided, a graph will be constructed using the specified model.
 
     Returns:
         ResourceUtilization: An object encapsulating the calculated resource utilization computations.
 
     """
     core_config = _create_core_config_for_ru(core_config)
-    # We assume that the resource_utilization_data API is used to compute the model resource utilization for
-    # mixed precision scenario, so we run graph preparation under the assumption of enabled mixed precision.
     if transformed_graph is None:
         transformed_graph = graph_preparation_runner(in_model,
                                                      representative_data_gen,
@@ -68,11 +61,11 @@ def compute_resource_utilization_data(in_model: Any,
                                                      fw_impl,
                                                      fqc,
                                                      bit_width_config=core_config.bit_width_config,
-                                                     mixed_precision_enable=mixed_precision_enable,
+                                                     mixed_precision_enable=False,
                                                      running_gptq=False)
 
     ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
-    ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.Q8Bit,
+    ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.QDefaultSP,
                                                     ru_targets=set(RUTarget) - {RUTarget.BOPS})
     ru.bops, _ = ru_calculator.compute_bops(TargetInclusionCriterion.AnyQuantized, BitwidthMode.Float)
     return ru
