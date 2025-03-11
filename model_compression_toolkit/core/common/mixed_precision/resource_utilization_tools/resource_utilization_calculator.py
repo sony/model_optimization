@@ -544,6 +544,8 @@ class ResourceUtilizationCalculator:
             # we don't need the original node (and cannot use it for custom configuration anyway)
             a_node = n
         else:
+            # if we are running on the original (non-virtual) graph, we only compute bops if it would be computed in an
+            # equivalent virtual graph for consistency.
             a_node = get_input_activation_if_composable(self.graph, n, warn=False)
             if a_node is None:
                 return 0

@@ -165,7 +165,13 @@ class VirtualActivationWeightsNode(BaseNode):
         self.original_weights_node = weights_node
 
         v_candidates = []
-        kernel_attr = fw_info.get_kernel_op_attributes(weights_node.type)[0]
+        kernel_attrs = fw_info.get_kernel_op_attributes(weights_node.type)
+        assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, 'Expected exactly one kernel attr.'
+        kernel_attr = kernel_attrs[0]
+        conf_attrs = [attr for attr in weights_node.weights if weights_node.is_configurable_weight(attr)]
+        if len(conf_attrs) > 1 or len(conf_attrs) == 1 and conf_attrs[0] != kernel_attr:    # pragma: no cover
+            raise NotImplementedError('Only kernel attr can be configurable.')
+
         weights_candidates_quantization_cfg = weights_node.get_unique_weights_candidates(kernel_attr)
         for c_a in act_node.candidates_quantization_cfg:
             for c_w in weights_candidates_quantization_cfg:
@@ -182,7 +188,6 @@ class VirtualActivationWeightsNode(BaseNode):
                 v_candidates.append(composed_candidate)
 
         # sorting the candidates by weights number of bits first and then by activation number of bits (reversed order)
-        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
         v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
