@@ -71,3 +71,7 @@ class Cut:
 
     def __repr__(self):
         return f"<Cut: Nodes={[e.node_name for e in self.mem_elements.elements]}, size={self.memory_size()}>"  # pragma: no cover
+
+    def get_sorted_node_names(self):
+        """ Return sorted node names of memory elements. """
+        return sorted([e.node_name for e in self.mem_elements.elements])
