@@ -151,6 +151,5 @@ class TestGraphMaxCut(unittest.TestCase):
         assert len(set(max_cut_sizes)) == 1
         # nodes within each cut can be in different order, and cuts can be in different order inside cuts list,
         # but overall the cuts should be identical between different runs
-        sorted_cuts_solutions = [sorted(cut.get_sorted_node_names() for cut in cuts) for cuts in cuts_solutions]
+        sorted_cuts_solutions = [sorted(cut.sorted_elements_signature for cut in cuts) for cuts in cuts_solutions]
         assert all(cuts == sorted_cuts_solutions[0] for cuts in sorted_cuts_solutions[1:])
-
