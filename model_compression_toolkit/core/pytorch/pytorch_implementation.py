@@ -62,6 +62,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.sc
     ScaledDotProductDecomposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.transform_function_call_method import \
     TransformFunctionCallMethod
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.convtranspose_dynamic_padding import \
+    ConvtransposeDynamicPadding
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.const_holder_conv import \
     FunctionalConvSubstitution
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
@@ -286,7 +288,8 @@ class PytorchImplementation(FrameworkImplementation):
                 FunctionalBatchNorm(),
                 FunctionalLayerNorm(),
                 FunctionalLinear(),
-                RemoveIdentity()]
+                RemoveIdentity(),
+                ConvtransposeDynamicPadding()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig
