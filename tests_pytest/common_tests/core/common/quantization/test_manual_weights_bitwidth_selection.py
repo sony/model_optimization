@@ -1,65 +1,55 @@
 import pytest
-import numpy as np
-import tensorflow as tf
-
-import model_compression_toolkit as mct
 
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.core.common.quantization.bit_width_config import ManualBitWidthSelection
 from model_compression_toolkit.core import BitWidthConfig
 
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.graph.edge import Edge
+from tests_pytest.test_util.graph_builder_utils import build_node
 
-tf.config.set_visible_devices([], 'GPU')
+### dummy layer classes
+class Conv2D:
+    pass
+class InputLayer:
+    pass
+class Add:
+    pass
+class BatchNormalization:
+    pass
+class ReLU:
+    pass
+class Flatten:
+    pass
+class Dense:
+    pass
 
 ### test model
-def get_test_model():
-    ### Note: This test model is ref for mct
-    ### path: model_optimization/tests/keras_tests/feature_networks_tests/feature_networks/manual_bit_selection.py
+def get_test_graph():
+    n1 = build_node('input', layer_class=InputLayer)
+    conv1 = build_node('conv1', layer_class=Conv2D)
+    add1 = build_node('add1', layer_class=Add)
+    conv2 = build_node('conv2', layer_class=Conv2D)
+    bn1 = build_node('bn1', layer_class=BatchNormalization)
+    relu = build_node('relu1', layer_class=ReLU)
+    add2 = build_node('add2', layer_class=Add)
+    flatten = build_node('flatten', layer_class=Flatten)
+    fc = build_node('fc', layer_class=Dense)
 
-    input_tensor = tf.keras.layers.Input(shape=(224,224,3), name='input')
-    x1 = tf.keras.layers.Conv2D(filters=32, kernel_size=(1, 1), padding='same', name='conv1')(input_tensor)
-    x1 = tf.keras.layers.Add(name='add1')([x1, np.ones((3,), dtype=np.float32)])
-
-    # Second convolutional block
-    x2 = tf.keras.layers.Conv2D(filters=32, kernel_size=(1, 1), padding='same', name='conv2')(x1)
-    x2 = tf.keras.layers.BatchNormalization(name='bn1')(x2)
-    x2 = tf.keras.layers.ReLU(name='relu1')(x2)
-
-    # Addition
-    x = tf.keras.layers.Add(name='add2')([x1, x2])
-
-    # Flatten and fully connected layer
-    x = tf.keras.layers.Flatten()(x)
-    output_tensor = tf.keras.layers.Dense(units=10, activation='softmax', name='fc')(x)
-
-    return tf.keras.Model(inputs=input_tensor, outputs=output_tensor)
-
-def get_test_graph(model):
-
-    from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
-    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-    from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-
-    from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import AttachTpcToKeras
-    from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
-
-
-    fw_info = DEFAULT_KERAS_INFO
-    fw_impl = KerasImplementation()
-
-    target_platform_capabilities = mct.get_target_platform_capabilities(fw_name='tensorflow',
-                                                                        target_platform_name='imx500',
-                                                                        target_platform_version='v1')
-
-    attach2keras = AttachTpcToKeras()
-    target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
-    framework_platform_capabilities = attach2keras.attach(target_platform_capabilities)
-
-    graph = read_model_to_graph(model,
-                                None,
-                                framework_platform_capabilities,
-                                fw_info, fw_impl)
-
+    graph = Graph('g', input_nodes=[n1],
+                  nodes=[conv1,add1, conv2, bn1, relu, add2, flatten],
+                  output_nodes=[fc],
+                  edge_list=[Edge(n1, conv1, 0, 0),
+                             Edge(conv1, add1, 0, 0),
+                             Edge(add1, conv2, 0, 0),
+                             Edge(conv2, bn1, 0, 0),
+                             Edge(bn1, relu, 0, 0),
+                             Edge(relu, add2, 0, 0),
+                             Edge(add1, add2, 0, 0),
+                             Edge(add2, flatten, 0, 0),
+                             Edge(flatten, fc, 0, 0),
+                             ]
+                  )
     return graph
 
 class TestBitWidthConfig:
@@ -68,25 +58,25 @@ class TestBitWidthConfig:
     ### test case
     setter_test_input_0 = {"activation": (None, None),
                            "weights":    (None, None)}
-    setter_test_input_1 = {"activation": (NodeTypeFilter(tf.keras.layers.ReLU), [16]),
+    setter_test_input_1 = {"activation": (NodeTypeFilter(ReLU), [16]),
                            "weights":    (None, None)}
     setter_test_input_2 = {"activation": (None, None),
                            "weights":    (NodeNameFilter("conv2"), [8])}
-    setter_test_input_3 = {"activation": (NodeTypeFilter(tf.keras.layers.ReLU), [16]),
+    setter_test_input_3 = {"activation": (NodeTypeFilter(ReLU), [16]),
                            "weights":    (NodeNameFilter("conv2"), [8])}
-    setter_test_input_4 = {"activation": ([NodeTypeFilter(tf.keras.layers.ReLU), NodeNameFilter("conv1")], [16, 8]),
-                           "weights":    ([NodeTypeFilter(tf.keras.layers.Conv2D), NodeNameFilter("fc")], [16, 2])}
+    setter_test_input_4 = {"activation": ([NodeTypeFilter(ReLU), NodeNameFilter("conv1")], [16, 8]),
+                           "weights":    ([NodeTypeFilter(Conv2D), NodeNameFilter("fc")], [16, 2])}
 
     setter_test_expected_0 = {"activation": (None, None),
                               "weights":    (None, None)}
-    setter_test_expected_1 = {"activation": ([NodeTypeFilter, tf.keras.layers.ReLU, 16]),
+    setter_test_expected_1 = {"activation": ([NodeTypeFilter, ReLU, 16]),
                               "weights":    (None, None)}
     setter_test_expected_2 = {"activation": (None, None),
                               "weights":    ([NodeNameFilter, "conv2", 8]) }
-    setter_test_expected_3 = {"activation": ([NodeTypeFilter, tf.keras.layers.ReLU, 16]),
+    setter_test_expected_3 = {"activation": ([NodeTypeFilter, ReLU, 16]),
                               "weights":    ([NodeNameFilter, "conv2", 8])}
-    setter_test_expected_4 = {"activation": ([NodeTypeFilter, tf.keras.layers.ReLU, 16], [NodeNameFilter, "conv1", 8]),
-                              "weights":    ([NodeTypeFilter, tf.keras.layers.Conv2D, 16], [NodeNameFilter, "fc", 2])}
+    setter_test_expected_4 = {"activation": ([NodeTypeFilter, ReLU, 16], [NodeNameFilter, "conv1", 8]),
+                              "weights":    ([NodeTypeFilter, Conv2D, 16], [NodeNameFilter, "fc", 2])}
 
 
     # test : BitWidthConfig set_manual_activation_bit_width, set_manual_weights_bit_width
@@ -160,19 +150,19 @@ class TestBitWidthConfig:
     getter_test_expected_3 = {"activation": {"ReLU:relu1": 16},
                               "weights": {"Conv2D:conv2": 8}}
     getter_test_expected_4 = {"activation": {"ReLU:relu1": 16, "Conv2D:conv1": 8},
-                              "weights": {"Conv2D:conv2": 16, "Conv2D:conv1": 16, "Dense:fc": 2}}
+                              "weights": {"Conv2D:conv1": 16, "Conv2D:conv2": 16, "Dense:fc": 2}}
 
     # test : BitWidthConfig get_nodes_to_manipulate_bit_widths
-    @pytest.mark.parametrize(("model", "inputs", "expected"), [
-        (get_test_model(), setter_test_input_0, getter_test_expected_0),
-        (get_test_model(), setter_test_input_1, getter_test_expected_1),
-        (get_test_model(), setter_test_input_2, getter_test_expected_2),
-        (get_test_model(), setter_test_input_3, getter_test_expected_3),
-        (get_test_model(), setter_test_input_4, getter_test_expected_4),
+    @pytest.mark.parametrize(("inputs", "expected"), [
+        (setter_test_input_0, getter_test_expected_0),
+        (setter_test_input_1, getter_test_expected_1),
+        (setter_test_input_2, getter_test_expected_2),
+        (setter_test_input_3, getter_test_expected_3),
+        (setter_test_input_4, getter_test_expected_4),
     ])
-    def test_BitWidthConfig_getter(self, model, inputs, expected):
+    def test_BitWidthConfig_getter(self, inputs, expected):
 
-        graph = get_test_graph(model)
+        graph = get_test_graph()
 
         activation = inputs["activation"]
         weights = inputs["weights"]
