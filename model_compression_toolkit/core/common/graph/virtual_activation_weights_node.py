@@ -169,7 +169,7 @@ class VirtualActivationWeightsNode(BaseNode):
         assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, 'Expected exactly one kernel attr.'
         kernel_attr = kernel_attrs[0]
         conf_attrs = [attr for attr in weights_node.weights if weights_node.is_configurable_weight(attr)]
-        if len(conf_attrs) > 1 or len(conf_attrs) == 1 and conf_attrs[0] != kernel_attr:    # pragma: no cover
+        if len(conf_attrs) > 1 or len(conf_attrs) == 1 and not weights_node.is_configurable_weight(kernel_attr):    # pragma: no cover
             raise NotImplementedError('Only kernel attr can be configurable.')
 
         weights_candidates_quantization_cfg = weights_node.get_unique_weights_candidates(kernel_attr)
