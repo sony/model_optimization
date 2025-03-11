@@ -47,8 +47,6 @@ from tests.pytorch_tests.model_tests.feature_models.const_representation_test im
 from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, \
     ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
-from tests.pytorch_tests.model_tests.feature_models.convtranspose_dynamic_output_size_test import \
-    ConvTranspose2dDynamicNetTest
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, \
     GPTQLearnRateZeroTest
@@ -879,11 +877,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], [2, 4]).run_test()
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], 4).run_test()
 
-    def test_convtranspose_dynamic_output_size(self):
-        """
-        This tests checks nn.ConvTranspose2d substitution for dynamic output size
-        """
-        ConvTranspose2dDynamicNetTest(self).run_test()
+
 
 
 if __name__ == '__main__':

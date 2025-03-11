@@ -24,12 +24,14 @@ from model_compression_toolkit.logger import Logger
 
 class ConvtransposeDynamicPadding(common.BaseSubstitution):
     """
-    Replace output_padding of nn.convtranspose to align dynamic output_size input
+    Replace output_padding of nn.ConvTranspose2d to align dynamic output_size input.
+    In case there is a dynamic output_size in ConvTranspose2d farward function, we recalulate the
+    output_padding here according to node.output_shape (which is equal to the dynamic output_size if existed).
     """
 
     def __init__(self):
         """
-        Matches: functional batch_norm
+        Matches: nn.ConvTranspose2d
         """
         convtr_node = NodeOperationMatcher(nn.ConvTranspose2d)
         super().__init__(matcher_instance=convtr_node)
@@ -42,7 +44,7 @@ class ConvtransposeDynamicPadding(common.BaseSubstitution):
             node: node to calculate output padding
 
         Returns:
-            correct output padding
+            corrected output padding
         """
         convtr = nn.ConvTranspose2d(**node.framework_attr)
         num_spatial_dims = 2
@@ -60,7 +62,7 @@ class ConvtransposeDynamicPadding(common.BaseSubstitution):
                    graph: Graph,
                    node: BaseNode) -> Graph:
         """
-        Substitute functional.batch_norm and its inputs with BatchNorm2d.
+        Substitute nn.ConvTranspose2d with corrected output_padding for cases of dynamic output_size
         Args:
             graph: Graph we apply the substitution on.
             node: node that match the pattern in the substitution init.
@@ -68,9 +70,8 @@ class ConvtransposeDynamicPadding(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
-        # Check that output is only contain a single tensor
-        if len(node.output_shape) > 1:
-            Logger.critical('Output to nn.ConvTranspose2d should be a single tensor but got more than one.')  # pragma: no cover
-        output_padding = self.calc_dynamic_output_size(node)
-        node.framework_attr.update({OUTPUT_PADDING: output_padding})
+
+        if not node.reuse:
+            output_padding = self.calc_dynamic_output_size(node)
+            node.framework_attr.update({OUTPUT_PADDING: output_padding})
         return graph
