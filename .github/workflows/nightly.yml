@@ -15,6 +15,9 @@ jobs:
         with:
           python-version: 3.12
 
+      - name: Edit requirements mct-quantizers name # Remove the entire line in requirements.txt so no need special care for the specified version
+        run: |
+          sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -31,9 +34,6 @@ jobs:
       - name: Publish nightly
         run: |
           twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_SSI_DEV_NIGHTLY_KEY }}
-      - name: Edit requirements mct-quantizers name # Remove the entire line in requirements.txt so no need special care for the specified version
-        run: |
-          sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
       - name: Post publish import test
         run: |
           pip install mct-nightly tensorflow torch
