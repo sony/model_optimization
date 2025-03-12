@@ -165,37 +165,85 @@ class FusingInfo:
         graph_nodes = set(graph.nodes())
 
         for op_id, nodes in self._fusing_data.items():
+            node_set = set(nodes)
+            node_index = {node: i for i, node in enumerate(nodes)}  # Track order in fusion pattern
+
             # Check 1: Ensure all nodes exist in the graph
             for node in nodes:
                 if node not in graph_nodes:
                     raise ValueError(f"Fused operation {op_id} contains node {node.name} not in the graph.")
 
-            # Check 2: Verify the sequence forms a linear chain
-            for i in range(len(nodes)):
-                current_node = nodes[i]
-                if i < (len(nodes)-1):
-                    next_node = nodes[i + 1]
+            # Check 2: Verify the sequence respects the fusion pattern
+            for i, node in enumerate(nodes):
+                successors = graph.get_next_nodes(node)
+                predecessors = graph.get_prev_nodes(node)
 
-                    successors = graph.get_next_nodes(current_node)
-                    if len(successors) != 1:
+                if i == 0:
+                    if len(successors) == 0:
+                        raise ValueError(f"Node {node.name} must have at least one successor.")
+                elif 1 <= i < (len(nodes) - 1):
+                    if len(successors) == 0 or len(predecessors) == 0:
+                        raise ValueError(f"Node {node.name} must have at least one predecessor and one successor.")
+                else:
+                    if len(predecessors) == 0:
+                        raise ValueError(f"Node {node.name} must have at least one predecessor.")
+
+                # Ensure all successors are within the fused operation and appear **later** in the order
+                for succ in successors:
+                    if succ in node_set:
+                        if node_index[succ] <= i:
+                            raise ValueError(
+                                f"Fused operation {op_id} has an invalid sequence: node {succ.name} appears before {node.name}."
+                            )
+                    elif i<(len(nodes)-1):
                         raise ValueError(
-                            f"Fused operation {op_id} does not form a linear chain. Every node must have a single successor but {current_node.name} successors are: {successors}."
+                            f"Fused operation {op_id} contains an external successor {succ.name} from node {node.name}."
                         )
-                    if successors[0] != next_node:
+
+                # Ensure all predecessors are within the fused operation and appear **earlier** in the order
+                for pred in predecessors:
+                    if pred in node_set:
+                        if node_index[pred] >= i:
+                            raise ValueError(
+                                f"Fused operation {op_id} has an invalid sequence: node {pred.name} appears after {node.name}."
+                            )
+                    elif i>0 and pred not in graph.get_prev_nodes(nodes[0]):
                         raise ValueError(
-                            f"Fused operation {op_id} does not form a linear chain. Expected to find node {next_node.name}, but found node {successors[0].name}"
+                            f"Fused operation {op_id} contains an external predecessor {pred.name} to node {node.name}."
                         )
-                if i>0:
-                    prev_node_from_fusing_info = nodes[i - 1]
-                    prev_nodes_from_graph = graph.get_prev_nodes(current_node)
-                    if len(prev_nodes_from_graph) != 1:
-                        raise ValueError(
-                            f"Fused operation {op_id} does not form a linear chain. Node {current_node.name} must have exactly one incoming edge, but has {len(prev_nodes_from_graph)}."
-                        )
-                    if prev_nodes_from_graph[0] != prev_node_from_fusing_info:
-                        raise ValueError(
-                            f"Fused operation {op_id} does not form a linear chain. Node {current_node.name} expected an incoming edge from {prev_node_from_fusing_info.name}, but found from {prev_nodes_from_graph[0].name}."
-                        )
+
+        # for op_id, nodes in self._fusing_data.items():
+        #     # Check 1: Ensure all nodes exist in the graph
+        #     for node in nodes:
+        #         if node not in graph_nodes:
+        #             raise ValueError(f"Fused operation {op_id} contains node {node.name} not in the graph.")
+        #
+        #     # Check 2: Verify the sequence forms a linear chain
+        #     for i in range(len(nodes)):
+        #         current_node = nodes[i]
+        #         if i < (len(nodes)-1):
+        #             next_node = nodes[i + 1]
+        #
+        #             successors = graph.get_next_nodes(current_node)
+        #             if len(successors) != 1:
+        #                 raise ValueError(
+        #                     f"Fused operation {op_id} does not form a linear chain. Every node must have a single successor but {current_node.name} successors are: {successors}."
+        #                 )
+        #             if successors[0] != next_node:
+        #                 raise ValueError(
+        #                     f"Fused operation {op_id} does not form a linear chain. Expected to find node {next_node.name}, but found node {successors[0].name}"
+        #                 )
+        #         if i>0:
+        #             prev_node_from_fusing_info = nodes[i - 1]
+        #             prev_nodes_from_graph = graph.get_prev_nodes(current_node)
+        #             if len(prev_nodes_from_graph) != 1:
+        #                 raise ValueError(
+        #                     f"Fused operation {op_id} does not form a linear chain. Node {current_node.name} must have exactly one incoming edge, but has {len(prev_nodes_from_graph)}."
+        #                 )
+        #             if prev_nodes_from_graph[0] != prev_node_from_fusing_info:
+        #                 raise ValueError(
+        #                     f"Fused operation {op_id} does not form a linear chain. Node {current_node.name} expected an incoming edge from {prev_node_from_fusing_info.name}, but found from {prev_nodes_from_graph[0].name}."
+        #                 )
 
     def get_nodes_to_disable_act_quantization(self):
         res_nodes = []
