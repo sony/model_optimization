@@ -13,19 +13,31 @@
 # limitations under the License.
 # ==============================================================================
 
-
+import torch
 import logging
 from typing import Callable, Dict
-
-import numpy as np
-import torch
-from torch.fx import symbolic_trace
 from torch.fx.passes.shape_prop import ShapeProp
+from torch.fx import Tracer, GraphModule
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.reader.graph_builders import edges_builder, nodes_builder
 from model_compression_toolkit.core.pytorch.utils import set_model
+from sony_custom_layers.pytorch import CustomLayer
+
+
+def _trace_model(model: torch.nn.Module) -> GraphModule:
+
+    class MCTTracer(Tracer):
+        def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
+            if isinstance(m, CustomLayer):
+                return True
+            return super().is_leaf_module(m, module_qualified_name)
+
+    tracer = MCTTracer()
+    graph = tracer.trace(model)
+    name = (model.__class__.__name__ if isinstance(model, torch.nn.Module) else model.__name__)
+    return GraphModule(tracer.root, graph, name)
 
 
 def generate_module_dict(model: torch.nn.Module) -> Dict:
@@ -87,7 +99,7 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
     set_model(pytorch_model)
 
     try:
-        symbolic_traced = symbolic_trace(pytorch_model)
+        symbolic_traced = _trace_model(pytorch_model)
     except torch.fx.proxy.TraceError as e:
         Logger.critical(f'Error parsing model with torch.fx\n'
                         f'fx error: {e}')
