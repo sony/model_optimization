@@ -14,14 +14,10 @@
 # ==============================================================================
 import torch
 from torch import nn
-from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
-    AttachTpcToPytorch
 
 import pytest
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-
+from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwMixin
 
 def data_gen():
     yield [torch.rand(1, 10, 28, 32)]
@@ -42,16 +38,14 @@ class Model(nn.Module):
 def test_assert_to_operation(minimal_tpc):
     Model()(next(data_gen())[0])
 
-    fw_impl = PytorchImplementation()
-    fw_info = DEFAULT_PYTORCH_INFO
     model = Model()
 
     with pytest.raises(Exception, match=f"The call method \"to\" is not supported. Please consider moving \"torch.Tensor.to\" operations to init code."):
         _ = read_model_to_graph(model,
                                 data_gen,
-                                fqc=AttachTpcToPytorch().attach(minimal_tpc),
-                                fw_info=fw_info,
-                                fw_impl=fw_impl)
+                                fqc=TorchFwMixin.attach_to_fw_func(minimal_tpc),
+                                fw_info=TorchFwMixin.fw_info,
+                                fw_impl=TorchFwMixin.fw_impl)
 
 
 

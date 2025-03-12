@@ -220,7 +220,7 @@ def nodes_builder(model: GraphModule,
                 node_type = getattr(torch, node.target)
             elif hasattr(torch.Tensor, node.target):
                 node_type = getattr(torch.Tensor, node.target)
-                if node_type==torch._C._TensorBase.to:
+                if node_type==torch.Tensor.to:
                     Logger.critical(f"The call method \"to\" is not supported. Please consider moving \"torch.Tensor.to\" operations to init code.")  # pragma: no cover
             else:
                 Logger.critical(f"The call method '{node.target}' in {node} is not supported.")  # pragma: no cover
