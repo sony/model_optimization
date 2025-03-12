@@ -28,9 +28,8 @@ class KerasFwMixin:
     fw_impl = KerasImplementation()
     attach_to_fw_func = AttachTpcToKeras().attach
 
-    @staticmethod
-    def get_basic_data_gen(shapes: List[Tuple]):
+    def get_basic_data_gen(self, shapes: List[Tuple]):
         """ Generate a basic data generator. """
-        def f(*args, **kwargs):
+        def f():
             yield [np.random.randn(*shape).astype(np.float32) for shape in shapes]
         return f
