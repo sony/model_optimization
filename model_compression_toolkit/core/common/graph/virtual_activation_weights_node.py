@@ -137,13 +137,21 @@ class VirtualActivationWeightsNode(BaseNode):
             weights_node: The original weights node.
             fw_info: A FrameworkInfo object with framework specific information.
         """
+        # Validate weights node
+        kernel_attrs = fw_info.get_kernel_op_attributes(weights_node.type)
+        assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, 'Expected exactly one kernel attr.'
+        kernel_attr = kernel_attrs[0]
+        conf_weights = [attr for attr in weights_node.weights if weights_node.is_configurable_weight(attr)]
+        if len(conf_weights) > 1 or len(conf_weights) == 1 and not weights_node.is_configurable_weight(kernel_attr):
+            raise NotImplementedError('Only kernel weight can be configurable.')    # pragma: no cover
+
         weights = weights_node.weights
         if act_node.weights:
             assert fw_info.get_kernel_op_attributes(act_node)[0] is None, \
                 f'Node {act_node} with kernel cannot be used as activation for VirtualActivationWeightsNode.'
-            if set(weights.keys()).intersection(set(act_node.weights.keys())):
+            if set(weights_node.weights.keys()).intersection(set(act_node.weights.keys())):
                 raise ValueError('Activation and weight nodes are not expected to have the same weight attribute')    # pragma: no cover
-            if any(act_node.is_configurable_weight(attr) for attr in act_node.weights):
+            if act_node.has_any_configurable_weight():
                 raise NotImplementedError('Node with a configurable weight cannot be used as activation for '
                                           'VirtualActivationWeightsNode.')    # pragma: no cover
             # combine weights from activation and weights
@@ -165,13 +173,6 @@ class VirtualActivationWeightsNode(BaseNode):
         self.original_weights_node = weights_node
 
         v_candidates = []
-        kernel_attrs = fw_info.get_kernel_op_attributes(weights_node.type)
-        assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, 'Expected exactly one kernel attr.'
-        kernel_attr = kernel_attrs[0]
-        conf_attrs = [attr for attr in weights_node.weights if weights_node.is_configurable_weight(attr)]
-        if len(conf_attrs) > 1 or len(conf_attrs) == 1 and not weights_node.is_configurable_weight(kernel_attr):    # pragma: no cover
-            raise NotImplementedError('Only kernel attr can be configurable.')
-
         weights_candidates_quantization_cfg = weights_node.get_unique_weights_candidates(kernel_attr)
         for c_a in act_node.candidates_quantization_cfg:
             for c_w in weights_candidates_quantization_cfg:
