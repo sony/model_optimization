@@ -53,11 +53,11 @@ def compute_resource_utilization_data(in_model: Any,
         core_config.quantization_config.weights_error_method = QuantizationErrorMethod.MSE
 
     transformed_graph = graph_preparation_runner(in_model,
-                                                 representative_data_gen,
-                                                 core_config.quantization_config,
-                                                 fw_info,
-                                                 fw_impl,
-                                                 fqc,
+                                                 representative_data_gen=representative_data_gen,
+                                                 quantization_config=core_config.quantization_config,
+                                                 fw_info=fw_info,
+                                                 fw_impl=fw_impl,
+                                                 fqc=fqc,
                                                  bit_width_config=core_config.bit_width_config,
                                                  mixed_precision_enable=False,
                                                  running_gptq=False)
