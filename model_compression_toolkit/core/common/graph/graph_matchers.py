@@ -50,6 +50,7 @@ class NodeOperationMatcher(node_matcher.BaseNodeMatcher):
         if input_node_object.is_match_type(self.operation):
             return True
 
+
 class NodeFrameworkAttrMatcher(node_matcher.BaseNodeMatcher):
     """
     Class NodeFrameworkAttrMatcher to check if a node's attribute has a specific value.
