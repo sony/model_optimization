@@ -13,24 +13,27 @@
 # limitations under the License.
 # ==============================================================================
 from collections import defaultdict
+
 from copy import deepcopy
 from enum import Enum, auto
 from typing import Dict, NamedTuple, Optional, Tuple, List, Iterable, Union, Literal, Sequence
 
-from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_node import WeightAttrT
-from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
+    VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig
+    NodeActivationQuantizationConfig, BaseNodeQuantizationConfig
+from model_compression_toolkit.core.common.substitutions.virtual_activation_weights_composition import \
+    get_input_activation_if_composable
 
 
 class BitwidthMode(Enum):
@@ -101,6 +104,12 @@ class Utilization(NamedTuple):
         return self.bytes < other.bytes
 
 
+NodeName = str
+ActivationQCfgPerNode = Dict[NodeName, NodeActivationQuantizationConfig]
+WeightsQCfgPerNode = Dict[NodeName, NodeWeightsQuantizationConfig]
+DetailedMem = Dict[Union[BaseNode, Cut], float]
+
+
 class ResourceUtilizationCalculator:
     """ Resource utilization calculator. """
 
@@ -110,6 +119,7 @@ class ResourceUtilizationCalculator:
     }
 
     unexpected_qc_error = 'Custom quantization configuration is not expected for non-custom bit mode.'
+    unexpected_qc_nodes_error = 'Custom quantization configuration contains unexpected node names.'
 
     def __init__(self, graph: Graph, fw_impl: FrameworkImplementation, fw_info: FrameworkInfo):
         self.graph = graph
@@ -121,10 +131,11 @@ class ResourceUtilizationCalculator:
         self._act_tensors_size = {}
         self._params_cnt = {}
         for n in graph.nodes:
-            self._act_tensors_size[n] = n.get_total_output_params()
+            self._act_tensors_size[n.name] = n.get_total_output_params()
             if n.weights:
-                self._params_cnt[n] = {k: v.size for k, v in n.weights.items()}
+                self._params_cnt[n.name] = {k: v.size for k, v in n.weights.items()}
         self._cuts: Optional[Dict[Cut, List[BaseNode]]] = None
+        self._nodes_names = set(n.name for n in graph.nodes)
 
     @property
     def cuts(self) -> Dict[Cut, List[BaseNode]]:
@@ -142,10 +153,12 @@ class ResourceUtilizationCalculator:
     def compute_resource_utilization(self,
                                      target_criterion: TargetInclusionCriterion,
                                      bitwidth_mode: BitwidthMode,
-                                     act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None,
-                                     w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]] = None,
+                                     act_qcs: Optional[ActivationQCfgPerNode] = None,
+                                     w_qcs: Optional[WeightsQCfgPerNode] = None,
                                      ru_targets: Iterable[RUTarget] = None,
-                                     allow_unused_qcs: bool = False) -> ResourceUtilization:
+                                     allow_unused_qcs: bool = False,
+                                     return_detailed=False) \
+            -> Union[ResourceUtilization, Tuple[ResourceUtilization, Dict[RUTarget, DetailedMem]]]:
         """
         Compute network's resource utilization.
 
@@ -161,14 +174,17 @@ class ResourceUtilizationCalculator:
             ru_targets: metrics to include for computation. If None, all metrics are calculated.
             allow_unused_qcs: by default, if custom quantization configs are passed, but are not going to be used for
               any of the requested targets, an error is raised. To disable the validation, pass True.
+            return_detailed: whether to return an additional dictionary with detailed utilization per element.
 
         Returns:
-            Resource utilization object.
+            Resource utilization object, or a tuple of resource utilization object and a dict containing detailed
+            memory utilization per ru target: for weights and bops targets - bytes per node,
+                                              for activations and total targets - bytes per cut.
         """
         ru_targets = set(ru_targets) if ru_targets else set(RUTarget)
 
-        if (w_qcs or act_qcs) and bitwidth_mode != BitwidthMode.QCustom:
-            raise ValueError(self.unexpected_qc_error)
+        self._validate_custom_qcs(act_qcs, bitwidth_mode)
+        self._validate_custom_qcs(w_qcs, bitwidth_mode)
 
         if w_qcs and not {RUTarget.WEIGHTS, RUTarget.TOTAL, RUTarget.BOPS}.intersection(ru_targets):
             if not allow_unused_qcs:
@@ -180,31 +196,46 @@ class ResourceUtilizationCalculator:
                 raise ValueError('Activation configuration passed but no relevant ru_targets requested.')
             act_qcs = None
 
-        w_total, a_total = None, None
+        w_total, w_per_node = None, None
         if {RUTarget.WEIGHTS, RUTarget.TOTAL}.intersection(ru_targets):
-            w_total, *_ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
+            w_total, w_per_node, _ = self.compute_weights_utilization(target_criterion, bitwidth_mode, w_qcs)
 
+        a_total, a_per_cut = None, None
         if {RUTarget.ACTIVATION, RUTarget.TOTAL}.intersection(ru_targets):
-            a_total = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
+            a_total, a_per_cut, _ = self.compute_activations_utilization(target_criterion, bitwidth_mode, act_qcs)
 
         ru = ResourceUtilization()
+        detailed = {}
         if RUTarget.WEIGHTS in ru_targets:
             ru.weights_memory = w_total
+            if return_detailed:
+                detailed[RUTarget.WEIGHTS] = {n: u.bytes for n, u in w_per_node.items()}
         if RUTarget.ACTIVATION in ru_targets:
             ru.activation_memory = a_total
+            if return_detailed:
+                detailed[RUTarget.ACTIVATION] = {cut: u.bytes for cut, u in a_per_cut.items()}
         if RUTarget.TOTAL in ru_targets:
             ru.total_memory = w_total + a_total
+            if return_detailed:
+                detailed[RUTarget.TOTAL] = {cut: u.bytes + w_total for cut, u in a_per_cut.items()}
         if RUTarget.BOPS in ru_targets:
-            ru.bops, _ = self.compute_bops(target_criterion, bitwidth_mode, act_qcs=act_qcs, w_qcs=w_qcs)
+            ru.bops, bops_per_node = self.compute_bops(target_criterion, bitwidth_mode, act_qcs=act_qcs, w_qcs=w_qcs)
+            if return_detailed:
+                detailed[RUTarget.BOPS] = bops_per_node
 
-        assert ru.get_restricted_targets() == set(ru_targets), 'Mismatch between the number of requested and computed metrics'
+        assert ru.get_restricted_targets() == set(ru_targets), \
+            'Mismatch between the number of requested and computed metrics'
+
+        if return_detailed:
+            return ru, detailed
+
         return ru
 
     def compute_weights_utilization(self,
                                     target_criterion: TargetInclusionCriterion,
                                     bitwidth_mode: BitwidthMode,
-                                    w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]] = None) \
-            -> Tuple[float, Dict[BaseNode, Utilization], Dict[BaseNode, Dict[str, Utilization]]]:
+                                    w_qcs: Optional[WeightsQCfgPerNode] = None) \
+            -> Tuple[float, Dict[NodeName, Utilization], Dict[NodeName, Dict[str, Utilization]]]:
         """
         Compute graph's weights resource utilization.
 
@@ -220,19 +251,18 @@ class ResourceUtilizationCalculator:
             - Per node total weights utilization. Dict keys are nodes in a topological order.
             - Detailed per node per weight attribute utilization. Dict keys are nodes in a topological order.
         """
-        if w_qcs and bitwidth_mode != BitwidthMode.QCustom:
-            raise ValueError(self.unexpected_qc_error)
+        self._validate_custom_qcs(w_qcs, bitwidth_mode)
 
         node_attrs = self._collect_target_nodes_w_attrs(target_criterion, include_reused=False)
 
-        util_per_node: Dict[BaseNode, Utilization] = {}
+        util_per_node: Dict[NodeName, Utilization] = {}
         util_per_node_per_weight = {}
         for n in self._topo_sort(list(node_attrs.keys())):
-            w_qc = w_qcs.get(n) if w_qcs else None
+            w_qc = w_qcs.get(n.name) if w_qcs else None
             node_weights_util, per_weight_util = self.compute_node_weights_utilization(n, node_attrs[n],
                                                                                        bitwidth_mode, w_qc)
-            util_per_node[n] = node_weights_util
-            util_per_node_per_weight[n] = per_weight_util
+            util_per_node[n.name] = node_weights_util
+            util_per_node_per_weight[n.name] = per_weight_util
 
         total_util = sum(util_per_node.values()) if util_per_node else Utilization(0, 0)
         return total_util.bytes, util_per_node, util_per_node_per_weight
@@ -276,7 +306,7 @@ class ResourceUtilizationCalculator:
 
         attr_util = {}
         for attr in weight_attrs:
-            size = self._params_cnt[n][attr]
+            size = self._params_cnt[n.name][attr]
             nbits = self._get_weight_nbits(n, attr, bitwidth_mode, qc)
             bytes_ = size * nbits / 8
             attr_util[attr] = Utilization(size, bytes_)
@@ -287,7 +317,7 @@ class ResourceUtilizationCalculator:
     def compute_activations_utilization(self,
                                         target_criterion: TargetInclusionCriterion,
                                         bitwidth_mode: BitwidthMode,
-                                        act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None):
+                                        act_qcs: Optional[ActivationQCfgPerNode] = None):
         """
         Compute total activations utilization in the graph.
 
@@ -299,14 +329,16 @@ class ResourceUtilizationCalculator:
               activations, if not provided, the default configuration will be extracted from the node.
 
         Returns:
-            Total activation utilization of the network.
+            - Total activation utilization of the network.
+            - Total activation utilization per cut.
+            - Detailed activation utilization per cut per node.
         """
-        return self.compute_activation_utilization_by_cut(target_criterion, bitwidth_mode, act_qcs)[0]
+        return self.compute_activation_utilization_by_cut(target_criterion, bitwidth_mode, act_qcs)
 
     def compute_activation_utilization_by_cut(self,
                                               target_criterion: TargetInclusionCriterion,
                                               bitwidth_mode: BitwidthMode,
-                                              act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None) \
+                                              act_qcs: Optional[ActivationQCfgPerNode] = None) \
             -> Tuple[float, Dict[Cut, Utilization], Dict[Cut, Dict[BaseNode, Utilization]]]:
         """
         Compute graph activation cuts utilization.
@@ -323,8 +355,7 @@ class ResourceUtilizationCalculator:
             - Total activation utilization per cut.
             - Detailed activation utilization per cut per node.
         """
-        if act_qcs and not bitwidth_mode == BitwidthMode.QCustom:
-            raise ValueError(self.unexpected_qc_error)
+        self._validate_custom_qcs(act_qcs, bitwidth_mode)
 
         graph_target_nodes = self._get_target_activation_nodes(target_criterion, include_reused=True)
         # if there are no target activations in the graph, don't waste time looking for cuts
@@ -338,9 +369,9 @@ class ResourceUtilizationCalculator:
             if not cut_target_nodes:
                 continue
             for n in cut_target_nodes:
-                qc = act_qcs.get(n) if act_qcs else None
-                util_per_cut_per_node[cut][n] = self.compute_node_activation_tensor_utilization(n, target_criterion,
-                                                                                                bitwidth_mode, qc)
+                qc = act_qcs.get(n.name) if act_qcs else None
+                util_per_cut_per_node[cut][n.name] = self.compute_node_activation_tensor_utilization(n, target_criterion,
+                                                                                                     bitwidth_mode, qc)
             util_per_cut[cut] = sum(util_per_cut_per_node[cut].values())    # type: ignore
 
         total_util = max(util_per_cut.values())
@@ -349,9 +380,9 @@ class ResourceUtilizationCalculator:
     def compute_activation_tensors_utilization(self,
                                                target_criterion: TargetInclusionCriterion,
                                                bitwidth_mode: BitwidthMode,
-                                               act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None,
+                                               act_qcs: Optional[ActivationQCfgPerNode] = None,
                                                include_reused=False) \
-            -> Tuple[float, Dict[BaseNode, Utilization]]:
+            -> Tuple[float, Dict[NodeName, Utilization]]:
         """
         Compute resource utilization for graph's activations tensors.
 
@@ -362,21 +393,21 @@ class ResourceUtilizationCalculator:
               In custom mode, must provide configuration for all configurable activations. For non-configurable
               activations, if not provided, the default configuration will be extracted from the node.
             include_reused: whether to include reused nodes.
+
         Returns:
             - Total activation utilization of the network.
             - Detailed utilization per node. Dict keys are nodes in a topological order.
 
         """
-        if act_qcs and bitwidth_mode != BitwidthMode.QCustom:
-            raise ValueError(self.unexpected_qc_error)
+        self._validate_custom_qcs(act_qcs, bitwidth_mode)
 
         nodes = self._get_target_activation_nodes(target_criterion, include_reused=include_reused)
 
-        util_per_node: Dict[BaseNode, Utilization] = {}
+        util_per_node: Dict[NodeName, Utilization] = {}
         for n in self._topo_sort(nodes):
-            qc = act_qcs.get(n) if act_qcs else None
+            qc = act_qcs.get(n.name) if act_qcs else None
             util = self.compute_node_activation_tensor_utilization(n, None, bitwidth_mode, qc)
-            util_per_node[n] = util
+            util_per_node[n.name] = util
 
         total_util = max(util_per_node.values()).bytes if util_per_node else 0
         return total_util, util_per_node
@@ -396,6 +427,7 @@ class ResourceUtilizationCalculator:
             qc: activation quantization config for the node. Should be provided only in custom bit mode.
               In custom mode, must be provided if the activation is configurable. For non-configurable activation, if
               not passed, the default configuration will be extracted from the node.
+
         Returns:
             Node's activation utilization.
         """
@@ -408,7 +440,7 @@ class ResourceUtilizationCalculator:
             if not nodes:
                 return Utilization(0, 0)
 
-        size = self._act_tensors_size[n]
+        size = self._act_tensors_size[n.name]
         nbits = self._get_activation_nbits(n, bitwidth_mode, qc)
         bytes_ = size * nbits / 8
         return Utilization(size, bytes_)
@@ -416,9 +448,9 @@ class ResourceUtilizationCalculator:
     def compute_bops(self,
                      target_criterion: TargetInclusionCriterion,
                      bitwidth_mode: BitwidthMode,
-                     act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None,
-                     w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]] = None) \
-            -> Tuple[int, Dict[BaseNode, int]]:
+                     act_qcs: Optional[ActivationQCfgPerNode] = None,
+                     w_qcs: Optional[WeightsQCfgPerNode] = None) \
+            -> Tuple[int, Dict[NodeName, int]]:
         """
         Compute bit operations based on nodes with kernel.
         Note that 'target_criterion' applies to weights, and BOPS are computed for the selected nodes regardless
@@ -438,30 +470,30 @@ class ResourceUtilizationCalculator:
             - Total BOPS count of the network.
             - Detailed BOPS count per node.
         """
-        if target_criterion != TargetInclusionCriterion.AnyQuantized:    # pragma: no cover
-            raise NotImplementedError('BOPS computation is currently only supported for quantized targets.')
-
-        nodes = self._collect_target_nodes_w_attrs(target_criterion, include_reused=True)
-        # filter out nodes with only positional weights # TODO add as arg to get target nodes
-        nodes = [n for n in nodes if n.has_kernel_weight_to_quantize(self.fw_info)]
+        self._validate_custom_qcs(act_qcs, bitwidth_mode)
+        self._validate_custom_qcs(w_qcs, bitwidth_mode)
 
         nodes_bops = {}
-        for n in nodes:
-            w_qc = w_qcs.get(n) if w_qcs else None
-            nodes_bops[n] = self.compute_node_bops(n, bitwidth_mode, act_qcs=act_qcs, w_qc=w_qc)
+        for n in self.graph.get_topo_sorted_nodes():
+            w_qc = w_qcs.get(n.name) if w_qcs else None
+            bops = self.compute_node_bops(n, target_criterion, bitwidth_mode, act_qcs=act_qcs, w_qc=w_qc)
+            if bops:
+                nodes_bops[n.name] = bops
 
         return sum(nodes_bops.values()), nodes_bops
 
     def compute_node_bops(self,
                           n: BaseNode,
+                          target_criterion: Optional[TargetInclusionCriterion],
                           bitwidth_mode: BitwidthMode,
-                          act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]] = None,
+                          act_qcs: Optional[ActivationQCfgPerNode] = None,
                           w_qc: Optional[NodeWeightsQuantizationConfig] = None) -> Union[float, int]:
         """
         Compute Bit Operations of a node.
 
         Args:
             n: node.
+            target_criterion: criterion to include nodes for computation.
             bitwidth_mode: bit-width mode for the computation.
             act_qcs: custom activations quantization configuration. Should be provided for custom bit mode only.
               In custom mode, must provide configuration for all configurable activations. For non-configurable
@@ -473,26 +505,58 @@ class ResourceUtilizationCalculator:
         Returns:
             Node's BOPS count.
         """
-        node_mac = self.fw_impl.get_node_mac_operations(n, self.fw_info)
-        if node_mac == 0:    # pragma: no cover
+        if target_criterion is None:
+            target_criterion = TargetInclusionCriterion.Any
+        if target_criterion not in [TargetInclusionCriterion.AnyQuantized, TargetInclusionCriterion.Any]:
+            raise ValueError('BOPS computation is supported only for Any and AnyQuantized targets.')
+
+        self._validate_custom_qcs(act_qcs, bitwidth_mode)
+        self._validate_custom_qcs(w_qc, bitwidth_mode)
+
+        if isinstance(n, VirtualSplitWeightsNode):
+            # Virtual weights node can only be present if it couldn't be merged into VirtualActivationWeightsNode.
+            # This means that during MP search we cannot compute bops for all A/W nbits combinations. To prevent
+            # inconsistencies we ignore such nodes for bops computation.
+            return 0
+
+        # Fetch the original weights node for mac computation (VirtualActivationWeightsNode input/output shapes are
+        # based on the activation original node, not weights original node)
+        orig_w_node = n
+        if isinstance(n, VirtualActivationWeightsNode):
+            orig_w_node = n.original_weights_node
+            if isinstance(orig_w_node, VirtualSplitWeightsNode):
+                orig_w_node = orig_w_node.origin_node
+
+        # check if the node has kernel
+        kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
+        if len(kernel_attrs) > 1:  # pragma: no cover
+            raise NotImplementedError('Multiple kernel attributes are not supported for BOPS computation.')
+        if not kernel_attrs or not kernel_attrs[0]:
+            return 0
+
+        kernel_attr = kernel_attrs[0]
+        node_mac = self.fw_impl.get_node_mac_operations(orig_w_node, self.fw_info)
+        if node_mac == 0:
             return node_mac
 
-        incoming_edges = self.graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
-        # TODO temporary adding this for const_representation test in torch which has Linear with const input
-        if not incoming_edges:    # pragma: no cover
+        # find the activation node from which to get quantization info and for which to look in custom configuration
+        if isinstance(n, VirtualActivationWeightsNode):
+            # we don't need the original node (and cannot use it for custom configuration anyway)
+            a_node = n
+        else:
+            # if we are running on the original (non-virtual) graph, we only compute bops if it would be computed in an
+            # equivalent virtual graph for consistency.
+            a_node = get_input_activation_if_composable(self.graph, n, warn=False)
+            if a_node is None:
+                return 0
+
+        if (target_criterion == TargetInclusionCriterion.AnyQuantized and
+                not (a_node.is_activation_quantization_enabled() or n.is_weights_quantization_enabled(kernel_attr))):
             return 0
-        assert len(incoming_edges) == 1, \
-            f'Unexpected number of inputs {len(incoming_edges)} for BOPS calculation. Expected 1.'
-        input_act_node = incoming_edges[0].source_node
-        act_qc = act_qcs.get(input_act_node) if act_qcs else None
-        a_nbits = self._get_activation_nbits(input_act_node, bitwidth_mode, act_qc)
 
-        kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
-        if len(kernel_attrs) > 1:    # pragma: no cover
-            raise NotImplementedError('Multiple kernel attributes are not supported for BOPS computation.')
-        kernel_attr = kernel_attrs[0]
+        act_qc = act_qcs.get(a_node.name) if act_qcs else None
+        a_nbits = self._get_activation_nbits(a_node, bitwidth_mode, act_qc)
         w_nbits = self._get_weight_nbits(n, kernel_attr, bitwidth_mode, w_qc)
-
         node_bops = a_nbits * w_nbits * node_mac
         return node_bops
 
@@ -531,10 +595,11 @@ class ResourceUtilizationCalculator:
         """
         nodes_attrs = {n: attrs for n in self.graph.nodes
                        if (attrs := self._get_target_weight_attrs(n, target_criterion))
-                           and (include_reused or not n.reuse)}
+                       and (include_reused or not n.reuse)}
         return nodes_attrs
 
-    def _get_target_weight_attrs(self, n: BaseNode, target_criterion: TargetInclusionCriterion) -> List[str]:
+    @staticmethod
+    def _get_target_weight_attrs(n: BaseNode, target_criterion: TargetInclusionCriterion) -> List[str]:
         """
         Collect weight attributes of a node per criterion.
 
@@ -692,3 +757,30 @@ class ResourceUtilizationCalculator:
             return w_qcs[0].weights_n_bits
 
         raise ValueError(f'Unknown mode {bitwidth_mode.name}')    # pragma: no cover
+
+    def _validate_custom_qcs(self,
+                             qcs: Union[BaseNodeQuantizationConfig, Dict[NodeName, BaseNodeQuantizationConfig]],
+                             bitwidth_mode: BitwidthMode):
+        """
+        Validate custom quantization configuration.
+
+        Args:
+            qcs: either a mapping from nodes names to quantization configuration, or just a quantization configuration.
+            bitwidth_mode: bit mode.
+
+        Raises:
+            ValueError: if validation fails.
+
+        """
+        if qcs is None:
+            return
+
+        if bitwidth_mode != BitwidthMode.QCustom:
+            raise ValueError(self.unexpected_qc_error)
+
+        if isinstance(qcs, (NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig)):
+            return
+
+        unknown_nodes = set(qcs.keys()) - self._nodes_names
+        if unknown_nodes:
+            raise ValueError(self.unexpected_qc_nodes_error, unknown_nodes)

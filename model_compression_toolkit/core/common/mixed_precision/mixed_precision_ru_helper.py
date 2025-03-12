@@ -19,7 +19,6 @@ import numpy as np
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
@@ -27,9 +26,6 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     NodeActivationQuantizationConfig
 
-
-# TODO take into account Virtual nodes. Are candidates defined with respect to virtual or original nodes?
-#  Can we use the virtual graph only for bops and the original graph for everything else?
 
 class MixedPrecisionRUHelper:
     """ Helper class for resource utilization computations for mixed precision optimization. """
@@ -65,7 +61,7 @@ class MixedPrecisionRUHelper:
             ru[RUTarget.ACTIVATION] = np.array(list(au.values()))
 
         if RUTarget.BOPS in ru_targets:
-            ru[RUTarget.BOPS] = self._bops_utilization(mp_cfg)
+            ru[RUTarget.BOPS] = self._bops_utilization(act_qcs=act_qcs, w_qcs=w_qcs)
 
         if RUTarget.TOTAL in ru_targets:
             raise ValueError('Total target should be computed based on weights and activations targets.')
@@ -88,8 +84,8 @@ class MixedPrecisionRUHelper:
         """
         mp_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
         node_qcs = {n: n.candidates_quantization_cfg[mp_cfg[i]] for i, n in enumerate(mp_nodes)}
-        act_qcs = {n: cfg.activation_quantization_cfg for n, cfg in node_qcs.items()}
-        w_qcs = {n: cfg.weights_quantization_cfg for n, cfg in node_qcs.items()}
+        act_qcs = {n.name: cfg.activation_quantization_cfg for n, cfg in node_qcs.items()}
+        w_qcs = {n.name: cfg.weights_quantization_cfg for n, cfg in node_qcs.items()}
         return act_qcs, w_qcs
 
     def _weights_utilization(self, w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]]) -> Dict[BaseNode, float]:
@@ -137,51 +133,25 @@ class MixedPrecisionRUHelper:
         cuts_util = {c: u.bytes for c, u in cuts_util.items()}
         return cuts_util
 
-    def _bops_utilization(self, mp_cfg: List[int]) -> np.ndarray:
+    def _bops_utilization(self,
+                          act_qcs: Optional[Dict[BaseNode, NodeActivationQuantizationConfig]],
+                          w_qcs: Optional[Dict[BaseNode, NodeWeightsQuantizationConfig]]) -> np.ndarray:
         """
-        Computes a resource utilization vector with the respective bit-operations (BOPS) count for each configurable node,
-        according to the given mixed-precision configuration of a virtual graph with composed nodes.
+        Computes a resource utilization vector with the respective bit-operations (BOPS) count
+        according to the given mixed-precision configuration.
 
         Args:
-            mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
+            act_qcs: nodes activation configuration or None.
+            w_qcs: nodes quantization configuration to compute, or None.
+              Either both are provided, or both are None.
 
         Returns:
             A vector of node's BOPS count.
         """
-        # bops is computed for all nodes, so non-configurable memory is already covered by the computation of
-        # configurable nodes
-        if not mp_cfg:
+        assert [act_qcs, w_qcs].count(None) in [0, 2], 'act_qcs and w_qcs should both be provided or both be None.'
+        if act_qcs is None:
             return np.array([])
 
-        # TODO keeping old implementation for now
-        virtual_bops_nodes = [n for n in self.graph.get_topo_sorted_nodes() if isinstance(n, VirtualActivationWeightsNode)]
-
-        mp_nodes = self.graph.get_configurable_sorted_nodes_names(self.fw_info)
-
-        bops = [n.get_bops_count(self.fw_impl, self.fw_info, candidate_idx=_get_node_cfg_idx(n, mp_cfg, mp_nodes))
-                for n in virtual_bops_nodes]
-
-        return np.array(bops)
-
-
-def _get_node_cfg_idx(node: BaseNode, mp_cfg: List[int], sorted_configurable_nodes_names: List[str]) -> int:
-    """
-    Returns the index of a node's quantization configuration candidate according to the given
-    mixed-precision configuration. If the node is not configurable, then it must have a single configuration,
-    therefore, the index 0 is returned.
-
-    Args:
-        node: A node to get its candidate configuration index.
-        mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
-        sorted_configurable_nodes_names: A list of configurable nodes names.
-
-    Returns: An index (integer) of a node's quantization configuration candidate.
-    """
-
-    if node.name in sorted_configurable_nodes_names:
-        node_idx = sorted_configurable_nodes_names.index(node.name)
-        return mp_cfg[node_idx]
-    else:    # pragma: no cover
-        assert len(node.candidates_quantization_cfg) > 0, \
-            "Any node should have at least one candidate configuration."
-        return 0
+        _, detailed_bops = self.ru_calculator.compute_bops(TargetInclusionCriterion.Any, BitwidthMode.QCustom,
+                                                           act_qcs=act_qcs, w_qcs=w_qcs)
+        return np.array(list(detailed_bops.values()))
