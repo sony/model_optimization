@@ -97,7 +97,7 @@ def representative_dataset():
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
-def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config) -> GraphWithFusingMetadata:
+def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
     fw_info = DEFAULT_KERAS_INFO
     qc = mct.core.QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])})
 
@@ -127,7 +127,6 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     fusing_info = FusingInfoGenerator(fqc).generate_fusing_info(graph)
     graph = GraphWithFusingMetadata(graph, fusing_info)
     graph = filter_nodes_candidates(graph)
-
     graph = graph.get_internal_graph()
 
     return graph
