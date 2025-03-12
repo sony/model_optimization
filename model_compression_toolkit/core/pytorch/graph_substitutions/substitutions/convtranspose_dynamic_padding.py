@@ -25,7 +25,7 @@ from model_compression_toolkit.logger import Logger
 class ConvtransposeDynamicPadding(common.BaseSubstitution):
     """
     Replace output_padding of nn.ConvTranspose2d to align dynamic output_size input.
-    In case there is a dynamic output_size in ConvTranspose2d farward function, we recalulate the
+    In case there is a dynamic output_size in ConvTranspose2d forward function, we recalculate the
     output_padding here according to node.output_shape (which is equal to the dynamic output_size if existed).
     """
 
