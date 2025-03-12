@@ -163,7 +163,6 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     # Layer fusing
     ######################################
-    # transformed_graph = fusion(transformed_graph, fqc)
     fusing_info = FusingInfoGenerator(fqc).generate_fusing_info(transformed_graph)
     transformed_graph = GraphWithFusingMetadata(transformed_graph, fusing_info)
 

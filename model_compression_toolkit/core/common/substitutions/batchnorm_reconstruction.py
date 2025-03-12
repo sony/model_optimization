@@ -143,6 +143,10 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
                                                                     AttributeQuantizationConfig(
                                                                         enable_weights_quantization=False)))
 
+        # Check if the source node was part of a fusion. If so, there are two cases:
+        # either this is no longer a fusion, and the fusion info should be updated by removing
+        # the current info, or this creates a new fusion and the old pattern should be
+        # replaced with the new one.
         fused_op = graph.get_fusing_info().get_fused_node_name(source_node.name)
         if fused_op:
             fused_nodes = graph.get_fusing_info().get_fused_nodes(fused_op)
