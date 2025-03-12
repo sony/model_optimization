@@ -28,7 +28,7 @@ def build_mp_config_options_for_kernel_bias_ops(base_w_config, base_op_config,
         base_w_config: base config for weights.
         base_op_config: base config for operator.
         w_nbits: bit configurations for weights.
-        a_nbit: bit configurations for activation.
+        a_nbits: bit configurations for activation.
 
     Returns:
 
