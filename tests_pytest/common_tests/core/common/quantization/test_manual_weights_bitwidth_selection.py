@@ -179,15 +179,15 @@ class TestBitWidthConfig:
         get_manual_bit_dict = manual_bit_cfg.get_nodes_to_manipulate_bit_widths(graph)
 
         if activation[0] is not None:
-            for idx, (key, val) in enumerate(get_manual_bit_dict["activation"].items()):
+            for idx, (key, val) in enumerate(get_manual_bit_dict.activation_nodes_to_change_bit_width.items()):
                 assert str(key) == list(activation_expected.keys())[idx]
                 assert val == list(activation_expected.values())[idx]
         else:
-            assert get_manual_bit_dict["activation"] == activation_expected
+            assert get_manual_bit_dict.activation_nodes_to_change_bit_width == activation_expected
 
         if weights[0] is not None:
-            for idx, (key, val) in enumerate(get_manual_bit_dict["weights"].items()):
+            for idx, (key, val) in enumerate(get_manual_bit_dict.weights_nodes_to_change_bit_width.items()):
                 assert str(key) == list(weights_expected.keys())[idx]
                 assert val == list(weights_expected.values())[idx]
         else:
-            assert get_manual_bit_dict["weights"] == weights_expected
+            assert get_manual_bit_dict.weights_nodes_to_change_bit_width == weights_expected

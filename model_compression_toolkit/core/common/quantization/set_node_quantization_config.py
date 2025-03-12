@@ -20,7 +20,7 @@ from typing import List, Tuple, Dict, Optional
 from mct_quantizers.common.constants import WEIGHTS_N_BITS, ACTIVATION_N_BITS
 from model_compression_toolkit.constants import WEIGHTS_ATTRIBUTE, ACTIVATION_ATTRIBUTE
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig, NodesToChangeBitWidth
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -67,11 +67,13 @@ def set_quantization_configuration_to_graph(graph: Graph,
         Logger.warning("Using the HMSE error method for weights quantization parameters search. "
                        "Note: This method may significantly increase runtime during the parameter search process.")
 
-    nodes_to_manipulate_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_bit_widths(graph)
+    nodes_to_manipulate_bit_widths = NodesToChangeBitWidth() if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_bit_widths(graph)
+    print('nodes_to_manipulate_bit_widths', nodes_to_manipulate_bit_widths)
+    print('zzz', nodes_to_manipulate_bit_widths.activation_nodes_to_change_bit_width)
 
     for n in graph.nodes:
-        manual_bit_width_override = {ACTIVATION_ATTRIBUTE: nodes_to_manipulate_bit_widths.get(ACTIVATION_ATTRIBUTE).get(n),
-                                     WEIGHTS_ATTRIBUTE: nodes_to_manipulate_bit_widths.get(WEIGHTS_ATTRIBUTE).get(n)}
+        manual_bit_width_override = {ACTIVATION_ATTRIBUTE: nodes_to_manipulate_bit_widths.activation_nodes_to_change_bit_width.get(n),
+                                     WEIGHTS_ATTRIBUTE: nodes_to_manipulate_bit_widths.weights_nodes_to_change_bit_width.get(n)}
         set_quantization_configs_to_node(node=n,
                                          graph=graph,
                                          quant_config=quant_config,
