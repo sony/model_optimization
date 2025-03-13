@@ -31,7 +31,7 @@ class ManualBitWidthSelection:
        bit_width (int): The bit width to be applied to the selected nodes.
    """
     filter: BaseNodeMatcher
-    bit_width: int
+    bit_width: int = 0
 
 @dataclass
 class ManualWeightsBitWidthSelection(ManualBitWidthSelection):
@@ -42,12 +42,13 @@ class ManualWeightsBitWidthSelection(ManualBitWidthSelection):
        filter (BaseNodeMatcher): The filter used to select nodes for bit width manipulation.
        bit_width (int): The bit width to be applied to the selected nodes.
    """
-    val: int
+    kernel_bit_width: int = 0
+    bias_bit_width: int = 0
 
-
-def _set_manual_bit_width(filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
-                         bit_widths: Union[List[int], int]):
-
+def _expand_to_list_filter_and_bit_width(
+        filters: Union[List[BaseNodeMatcher]],
+        bit_widths: Union[List[int], int]
+):
     filters = [filters] if not isinstance(filters, list) else filters
     bit_widths = [bit_widths] if not isinstance(bit_widths, list) else bit_widths
     if len(bit_widths) > 1 and len(bit_widths) != len(filters):
@@ -73,7 +74,11 @@ def _make_nodes_to_change_bit_width(graph, manual_bit_width_selection_list):
             if n in unit_nodes_to_change_bit_width:
                 Logger.info(
                     f"Node {n} has an existing manual bit width configuration of {unit_nodes_to_change_bit_width.get(n)}. A new manual configuration request of {manual_bit_width_selection.bit_width} has been received, and the previous value is being overridden.")
-            unit_nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width})
+            if isinstance(manual_bit_width_selection_list,  ManualBitWidthSelection):
+                unit_nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width})
+            elif isinstance(manual_bit_width_selection_list, ManualWeightsBitWidthSelection):
+                unit_nodes_to_change_bit_width.update({n: [manual_bit_width_selection.kernel_bit_width, manual_bit_width_selection.bias_bit_width]})
+
 
     return unit_nodes_to_change_bit_width
 
@@ -104,24 +109,30 @@ class BitWidthConfig:
             bit_widths (Union[List[int], int]): The bit widths to be applied to the selected nodes.
             If a single value is given it will be applied to all the filters
         """
-        bit_widths, filters = _set_manual_bit_width(filters, bit_widths)
+        bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, bit_widths)
         for bit_width, filter in zip (bit_widths, filters):
             self.manual_activation_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
 
     def set_manual_weights_bit_width(self,
                                         filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
-                                        bit_widths: Union[List[int], int]):
+                                        kernel_bit_widths: Union[List[int], int],
+                                        bias_bit_widths: Union[List[int], int]
+                                     ):
         """
         Add a manual bit-width selection for weights to the configuration.
 
         Args:
             filters (Union[List[BaseNodeMatcher], BaseNodeMatcher]): The filters used to select nodes for bit-width manipulation.
-            bit_widths (Union[List[int], int]): The bit widths to be applied to the selected nodes.
+            kernel_bit_widths (Union[List[int], int]): The bit widths for kernel to be applied to the selected nodes.
+            bias_bit_widths (Union[List[int], int]): The bit widths for bias to be applied to the selected nodes.
             If a single value is given it will be applied to all the filters
         """
-        bit_widths, filters = _set_manual_bit_width(filters, bit_widths)
-        for bit_width, filter in zip (bit_widths, filters):
-            self.manual_weights_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
+        kernel_bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, kernel_bit_widths)
+        bias_bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, bias_bit_widths)
+        print("kernel_bit_widths", kernel_bit_widths)
+        print("bias_bit_widths", bias_bit_widths)
+        for kernel_bit_width, bias_bit_width, filter in zip (kernel_bit_widths, bias_bit_widths, filters):
+            self.manual_weights_bit_width_selection_list += [ManualWeightsBitWidthSelection(filter, kernel_bit_width=kernel_bit_width, bias_bit_width=bias_bit_width)]
 
     def get_nodes_to_manipulate_bit_widths(self, graph: Graph) -> NodesToChangeBitWidth:
         """
@@ -136,6 +147,5 @@ class BitWidthConfig:
         activation_nodes_to_change_bit_width = _make_nodes_to_change_bit_width(graph, self.manual_activation_bit_width_selection_list)
         weights_nodes_to_change_bit_width = _make_nodes_to_change_bit_width(graph, self.manual_weights_bit_width_selection_list)
 
-        #nodes_to_change_bit_width = {ACTIVATION_ATTRIBUTE: activation_nodes_to_change_bit_width, WEIGHTS_ATTRIBUTE: weights_nodes_to_change_bit_width}
         nodes_to_change_bit_width = NodesToChangeBitWidth(activation_nodes_to_change_bit_width, weights_nodes_to_change_bit_width)
         return nodes_to_change_bit_width
