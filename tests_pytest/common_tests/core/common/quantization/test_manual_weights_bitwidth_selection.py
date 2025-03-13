@@ -8,6 +8,8 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
 from tests_pytest.test_util.graph_builder_utils import build_node
 
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+
 ### dummy layer classes
 class Conv2D:
     pass
@@ -61,22 +63,22 @@ class TestBitWidthConfig:
     setter_test_input_1 = {"activation": (NodeTypeFilter(ReLU), [16]),
                            "weights":    (None, None, None)}
     setter_test_input_2 = {"activation": (None, None),
-                           "weights":    (NodeNameFilter("conv2"), [8], 16)}
+                           "weights":    (NodeNameFilter("conv2"), [8], KERNEL_ATTR)}
     setter_test_input_3 = {"activation": (NodeTypeFilter(ReLU), [16]),
-                           "weights":    (NodeNameFilter("conv2"), [8], 16)}
+                           "weights":    (NodeNameFilter("conv2"), [8], KERNEL_ATTR)}
     setter_test_input_4 = {"activation": ([NodeTypeFilter(ReLU), NodeNameFilter("conv1")], [16, 8]),
-                           "weights":    ([NodeTypeFilter(Conv2D), NodeNameFilter("fc")], [16, 2], [8, 4])}
+                           "weights":    ([NodeTypeFilter(Conv2D), NodeNameFilter("fc")], [16, 2], [KERNEL_ATTR, BIAS_ATTR])}
 
     setter_test_expected_0 = {"activation": (None, None),
                               "weights":    (None, None, None)}
     setter_test_expected_1 = {"activation": ([NodeTypeFilter, ReLU, 16]),
                               "weights":    (None, None, None)}
     setter_test_expected_2 = {"activation": (None, None),
-                              "weights":    ([NodeNameFilter, "conv2", 8, 16]) }
+                              "weights":    ([NodeNameFilter, "conv2", 8, KERNEL_ATTR]) }
     setter_test_expected_3 = {"activation": ([NodeTypeFilter, ReLU, 16]),
-                              "weights":    ([NodeNameFilter, "conv2", 8, 16])}
+                              "weights":    ([NodeNameFilter, "conv2", 8, KERNEL_ATTR])}
     setter_test_expected_4 = {"activation": ([NodeTypeFilter, ReLU, 16], [NodeNameFilter, "conv1", 8]),
-                              "weights":    ([NodeTypeFilter, Conv2D, 16, 8], [NodeNameFilter, "fc", 2, 4])}
+                              "weights":    ([NodeTypeFilter, Conv2D, 16, KERNEL_ATTR], [NodeNameFilter, "fc", 2, BIAS_ATTR])}
 
 
     # test : BitWidthConfig set_manual_activation_bit_width, set_manual_weights_bit_width
@@ -119,8 +121,8 @@ class TestBitWidthConfig:
                     assert mb_cfg.filter.node_name == exp[1]
 
                 ### check setting bit_width
-                assert mb_cfg.kernel_bit_width == exp[2]
-                assert mb_cfg.bias_bit_width == exp[3]
+                assert mb_cfg.bit_width == exp[2]
+                assert mb_cfg.attr == exp[3]
             else:
                 assert mb_cfg.filter is None
 
@@ -163,11 +165,11 @@ class TestBitWidthConfig:
     getter_test_expected_1 = {"activation":{"ReLU:relu1": 16},
                               "weights": {}}
     getter_test_expected_2 = {"activation":{},
-                              "weights": {"Conv2D:conv2": [8, 16]}}
+                              "weights": {"Conv2D:conv2": [8, KERNEL_ATTR]}}
     getter_test_expected_3 = {"activation": {"ReLU:relu1": 16},
-                              "weights": {"Conv2D:conv2": [8, 16]}}
+                              "weights": {"Conv2D:conv2": [8, KERNEL_ATTR]}}
     getter_test_expected_4 = {"activation": {"ReLU:relu1": 16, "Conv2D:conv1": 8},
-                              "weights": {"Conv2D:conv1": [16, 8], "Conv2D:conv2": [16, 8], "Dense:fc": [2, 4]}}
+                              "weights": {"Conv2D:conv1": [16, KERNEL_ATTR], "Conv2D:conv2": [16, KERNEL_ATTR], "Dense:fc": [2, BIAS_ATTR]}}
 
     # test : BitWidthConfig get_nodes_to_manipulate_bit_widths
     @pytest.mark.parametrize(("inputs", "expected"), [

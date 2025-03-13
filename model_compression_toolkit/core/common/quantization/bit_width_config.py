@@ -31,7 +31,7 @@ class ManualBitWidthSelection:
        bit_width (int): The bit width to be applied to the selected nodes.
    """
     filter: BaseNodeMatcher
-    bit_width: int = 0
+    bit_width: int
 
 @dataclass
 class ManualWeightsBitWidthSelection(ManualBitWidthSelection):
@@ -40,26 +40,31 @@ class ManualWeightsBitWidthSelection(ManualBitWidthSelection):
 
    Attributes:
        filter (BaseNodeMatcher): The filter used to select nodes for bit width manipulation.
-       bit_width (int): The bit width to be applied to the selected nodes.
+       attr (str): The attribute used to select nodes for bit width manipulation. [KERNEL_ATTR|BIAS_ATTR]
    """
-    kernel_bit_width: int = 0
-    bias_bit_width: int = 0
+    attr: str
+
+def _expand_to_list_core(
+        filters: Union[List[BaseNodeMatcher]],
+        vals: Union[List[any], any]):
+    vals = [vals] if not isinstance(vals, list) else vals
+    if len(vals) > 1 and len(vals) != len(filters):
+        Logger.critical(f"Configuration Error: The number of provided bit_width values {len(vals)} "
+                        f"must match the number of filters {len(filters)}, or a single bit_width value "
+                        f"should be provided for all filters.")
+    elif len(vals) == 1 and len(filters) > 1:
+        vals = [vals[0] for f in filters]
+    return vals
 
 def _expand_to_list_filter_and_bit_width(
         filters: Union[List[BaseNodeMatcher]],
-        bit_widths: Union[List[int], int]
-):
+        bit_widths: Union[List[int], int],
+        attrs: Union[List[str], str] = None):
     filters = [filters] if not isinstance(filters, list) else filters
-    bit_widths = [bit_widths] if not isinstance(bit_widths, list) else bit_widths
-    if len(bit_widths) > 1 and len(bit_widths) != len(filters):
-        Logger.critical(f"Configuration Error: The number of provided bit_width values {len(bit_widths)} "
-                        f"must match the number of filters {len(filters)}, or a single bit_width value "
-                        f"should be provided for all filters.")
-    elif len(bit_widths) == 1 and len(filters) > 1:
-        bit_widths = [bit_widths[0] for f in filters]
+    bit_widths = _expand_to_list_core(filters, bit_widths)
+    attrs = _expand_to_list_core(filters, attrs)
 
-    return bit_widths, filters
-
+    return attrs, bit_widths, filters
 
 def _make_nodes_to_change_bit_width(graph, manual_bit_width_selection_list):
     unit_nodes_to_change_bit_width = {}
@@ -77,7 +82,7 @@ def _make_nodes_to_change_bit_width(graph, manual_bit_width_selection_list):
             if isinstance(manual_bit_width_selection_list,  ManualBitWidthSelection):
                 unit_nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width})
             elif isinstance(manual_bit_width_selection_list, ManualWeightsBitWidthSelection):
-                unit_nodes_to_change_bit_width.update({n: [manual_bit_width_selection.kernel_bit_width, manual_bit_width_selection.bias_bit_width]})
+                unit_nodes_to_change_bit_width.update({n: [manual_bit_width_selection.bit_width, manual_bit_width_selection.attr]})
 
 
     return unit_nodes_to_change_bit_width
@@ -109,30 +114,27 @@ class BitWidthConfig:
             bit_widths (Union[List[int], int]): The bit widths to be applied to the selected nodes.
             If a single value is given it will be applied to all the filters
         """
-        bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, bit_widths)
+        _, bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, bit_widths)
         for bit_width, filter in zip (bit_widths, filters):
             self.manual_activation_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
 
     def set_manual_weights_bit_width(self,
                                         filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
-                                        kernel_bit_widths: Union[List[int], int],
-                                        bias_bit_widths: Union[List[int], int]
+                                        bit_widths: Union[List[int], int],
+                                        attrs: Union[List[str], str]
                                      ):
         """
         Add a manual bit-width selection for weights to the configuration.
 
         Args:
             filters (Union[List[BaseNodeMatcher], BaseNodeMatcher]): The filters used to select nodes for bit-width manipulation.
-            kernel_bit_widths (Union[List[int], int]): The bit widths for kernel to be applied to the selected nodes.
-            bias_bit_widths (Union[List[int], int]): The bit widths for bias to be applied to the selected nodes.
+            bit_widths (Union[List[int], int]): The bit widths for kernel to be applied to the selected nodes.
+            attrs (Union[List[str], str]): The attributes used to select nodes for bit width manipulation. [KERNEL_ATTR|BIAS_ATTR]
             If a single value is given it will be applied to all the filters
         """
-        kernel_bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, kernel_bit_widths)
-        bias_bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, bias_bit_widths)
-        print("kernel_bit_widths", kernel_bit_widths)
-        print("bias_bit_widths", bias_bit_widths)
-        for kernel_bit_width, bias_bit_width, filter in zip (kernel_bit_widths, bias_bit_widths, filters):
-            self.manual_weights_bit_width_selection_list += [ManualWeightsBitWidthSelection(filter, kernel_bit_width=kernel_bit_width, bias_bit_width=bias_bit_width)]
+        attrs, bit_widths, filters = _expand_to_list_filter_and_bit_width(filters, bit_widths, attrs)
+        for attr, bit_width, filter in zip (attrs, bit_widths, filters):
+            self.manual_weights_bit_width_selection_list += [ManualWeightsBitWidthSelection(filter, bit_width, attr)]
 
     def get_nodes_to_manipulate_bit_widths(self, graph: Graph) -> NodesToChangeBitWidth:
         """
