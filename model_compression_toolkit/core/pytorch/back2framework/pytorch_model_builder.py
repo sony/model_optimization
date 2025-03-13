@@ -227,7 +227,12 @@ class PytorchModel(torch.nn.Module):
         super(PytorchModel, self).__init__()
 
         self.graph = copy.deepcopy(graph)
-        delattr(self.graph.get_internal_graph(), 'fqc')
+        if isinstance(graph, Graph): # Pruning still uses Graph and not GraphWithFusingMetadata
+            delattr(self.graph, 'fqc')
+        elif isinstance(graph, GraphWithFusingMetadata):
+            delattr(self.graph.get_internal_graph(), 'fqc')
+        else:
+            raise ValueError(f"The graph should be of type {type(Graph)} or {type(GraphWithFusingMetadata)} but is {type(graph)}}")
 
         self.node_sort = list(topological_sort(self.graph))
         self.node_to_activation_quantization_holder = {}
