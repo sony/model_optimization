@@ -3,8 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-from model_compression_toolkit.core import DEFAULTCONFIG, QuantizationConfig
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
@@ -13,13 +12,12 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
-import model_compression_toolkit as mct
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
 if tf.__version__ < "2.6":
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Activation, ReLU, Add
+    from tensorflow.keras.layers import Conv2D, Dense, Activation, ReLU, Add
 else:
-    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Activation, ReLU, Add
+    from keras.layers import Conv2D, Dense, Activation, ReLU, Add
 
 keras = tf.keras
 layers = keras.layers
@@ -192,7 +190,7 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_1(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
 
     def test_layer_fusing_2(self):
         expected_fusions = [[Conv2D, Activation], [Conv2D, ReLU], [Conv2D, tf.nn.sigmoid], [Conv2D, Activation]]
@@ -214,7 +212,7 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_2(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
 
     def test_layer_fusing_3(self):
         expected_fusions = [[Conv2D, Activation]]
@@ -230,7 +228,7 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_3(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
 
     def test_layer_fusing_4(self):
         expected_fusions = [[Conv2D, Activation, Add], [Conv2D, Activation, Add], [Conv2D, Activation],
@@ -252,4 +250,4 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_4(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
