@@ -190,7 +190,7 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_1(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
 
     def test_layer_fusing_2(self):
         expected_fusions = [[Conv2D, Activation], [Conv2D, ReLU], [Conv2D, tf.nn.sigmoid], [Conv2D, Activation]]
@@ -212,7 +212,7 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_2(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
 
     def test_layer_fusing_3(self):
         expected_fusions = [[Conv2D, Activation]]
@@ -228,7 +228,7 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_3(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
 
     def test_layer_fusing_4(self):
         expected_fusions = [[Conv2D, Activation, Add], [Conv2D, Activation, Add], [Conv2D, Activation],
@@ -250,4 +250,4 @@ class TestLayerFusing(unittest.TestCase):
                                                   representative_dataset, lambda name, _tp: get_tpc_4(),
                                                   attach2fw=AttachTpcToKeras(), qc=qc)
 
-        self._compare(fusion_graph.fused_nodes, expected_fusions)
+        self._compare(fusion_graph.get_fusing_info().get_all_fused_operations().values(), expected_fusions)
