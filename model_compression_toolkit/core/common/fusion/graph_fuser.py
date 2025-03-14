@@ -37,7 +37,6 @@ class GraphFuser:
         The fusion process involves:
             1. Creating new fused nodes to represent these groups.
             2. Updating the graph structure to replace the original nodes with fused nodes.
-            3. Maintaining mapping of original node names to their fused node names.
 
         Args:
             graph: Graph to fuse its nodes.
@@ -46,14 +45,10 @@ class GraphFuser:
             Mapping of original node names to their fused node names
         """
         # Iterate through each group of nodes to be fused
-        graph = copy.deepcopy(fused_graph) # this is the "dummy" new graph
+        graph = copy.deepcopy(fused_graph) # this will be the new fused graph
         for fused_node_id, fused_nodes_list in graph.get_fusing_info().get_all_fused_operations().items():
             new_fused_node = self._create_fused_node(fused_node_id, fused_nodes_list)
-            new_fused_nodes_list = []
-            for n in fused_nodes_list:
-                x = graph.get_internal_graph().find_node_by_name(n.name)
-                assert len(x)==1
-                new_fused_nodes_list.append(x[0])
+            new_fused_nodes_list = [graph.get_internal_graph().find_node_by_name(n.name)[0] for n in fused_nodes_list]
             self._replace_nodes_with_fused_node(graph.get_internal_graph(), new_fused_nodes_list, new_fused_node)
         return graph.get_internal_graph()
 
@@ -72,14 +67,17 @@ class GraphFuser:
         # Create a new node with a name that reflects its components
         # Use the input shape of the first node and output shape of the last node
         fused_node_name = fused_node_id
-        # candidates_quantization_cfg
+
+        # TODO: consider replacing the fused node with a sub-model to allow inference on it, etc.
         fused_node = BaseNode(name=fused_node_name,
                               framework_attr={},
                               input_shape=nodes[0].input_shape,
                               output_shape=nodes[-1].output_shape,
-                              weights={},
+                              weights={}, # TODO: update with weights of all nodes
                               layer_class=FusedLayerType)
 
+        # Create candidates for this node (we assume that the weights configuration should be taken from the first node, and the activaion configuration
+        # is the output quantization configuration of the last node. We ignore all configurations of middle nodes.
         weight_cfgs = [c.weights_quantization_cfg for c in nodes[0].candidates_quantization_cfg]
         activation_cfgs = [c.activation_quantization_cfg for c in nodes[-1].candidates_quantization_cfg]
         if weight_cfgs and activation_cfgs:
@@ -89,6 +87,7 @@ class GraphFuser:
                 for w, a in combinations
             ]
 
+        # Keep the final configurations if they were set already.
         fused_node.final_weights_quantization_cfg = nodes[0].final_weights_quantization_cfg
         fused_node.final_activation_quantization_cfg = nodes[-1].final_activation_quantization_cfg
 

@@ -93,18 +93,17 @@ class GraphWithFusingMetadata:
         #  future, define explicit modification methods (e.g., remove_node)
         #  in FusedGraph for better efficiency.
 
-        attr = getattr(self._internal_graph, name)
+        graph_attr = getattr(self._internal_graph, name)
         # Only wrap methods or functions, excluding properties and descriptors
-        if isinstance(attr, (types.MethodType, types.FunctionType)):
-            @wraps(attr)
+        if isinstance(graph_attr, (types.MethodType, types.FunctionType)):
+            @wraps(graph_attr)
             def wrapper(*args, **kwargs):
-                result = attr(*args, **kwargs)
+                result = graph_attr(*args, **kwargs)
                 self._fusing_info.validate(self._internal_graph)
                 return result
-
             return wrapper
 
-        return attr
+        return graph_attr
 
     def __iter__(self) -> Iterator[BaseNode]:
         """
@@ -165,4 +164,7 @@ class GraphWithFusingMetadata:
                 qc.activation_quantization_cfg.enable_activation_quantization = False
 
     def validate(self):
+        """
+        Check if the internal graph and fusing data are consistent.
+        """
         return self._fusing_info.validate(self._internal_graph)
