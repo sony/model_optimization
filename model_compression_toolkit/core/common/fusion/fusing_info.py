@@ -23,16 +23,16 @@ import copy
 class FusingInfo:
     """
     A class to manage fusing information, mapping fused operation IDs to sets of nodes.
-    Designed to be extensible and type-safe.
     """
 
     def __init__(self, fqc: FrameworkQuantizationCapabilities, fusing_data: Optional[Dict[str, List[BaseNode]]] = None):
         """
-        Initialize the FusingInfo with an optional dictionary of fusing data.
+        Initialize the FusingInfo with an fqc and an optional dictionary of fusing data.
 
         Args:
             fusing_data (Optional[Dict[str, Set[BaseNode]]]): A dictionary mapping
                 fused operation IDs to sets of nodes. Defaults to an empty dict.
+            fqc: FrameworkQuantizationCapabilities the fusing info was derived from.
         """
         self.fqc = fqc
         self._fusing_data = fusing_data or {}
@@ -139,8 +139,19 @@ class FusingInfo:
         """
         return copy.deepcopy(self._fusing_data)
 
+
     @staticmethod
     def generate_fused_op_id(nodes: List[BaseNode]) -> str:
+        """
+        Generates an identifier for a fused operation by concatenating
+        the names of the given nodes with a prefix.
+
+        Args:
+            nodes (List[BaseNode]): A list of nodes to be fused.
+
+        Returns:
+            str: An identifier string for the fused operation.
+        """
         id = 'FusedNode_' + '_'.join([node.name for node in nodes])
         return id
 
@@ -148,114 +159,129 @@ class FusingInfo:
         """
         Validate that the fusing information is consistent with the given graph.
 
-        This method checks:
-        1. All nodes in the fusing data exist in the graph.
-        2. Each fused sequence forms a linear chain in the graph, meaning:
+        This method performs the following checks:
+
+        1. **All nodes in the fusing data exist in the graph.**
+        2. **Each fused sequence forms a valid linear chain in the graph:**
            - Each node (except the last) has exactly one successor, which is the next node in the sequence.
-           - Each node (except the first) has exactly one incoming edge, which is from the previous node in the sequence.
-        3. Each fused sequence matches one of the predefined fusing patterns.
+           - Each node (except the first) has exactly one predecessor, which is the previous node in the sequence.
+        3. **Each fused sequence does not have unexpected external connections:**
+           - No node in the sequence should have an external successor unless it is the last node.
+           - No node in the sequence should have an external predecessor unless it is the first node.
 
         Args:
-            graph: The graph to validate against, expected to have methods like
-                   nodes(), get_next_nodes(node), and incoming_edges(node).
+            graph: The computational graph to validate against. It is expected to have:
+                   - `nodes()`: Returns a set of all nodes.
+                   - `get_next_nodes(node)`: Returns a list of direct successor nodes.
+                   - `get_prev_nodes(node)`: Returns a list of direct predecessor nodes.
 
         Raises:
             ValueError: If any validation check fails.
         """
-        graph_nodes = set(graph.nodes())
+        graph_nodes = set(graph.get_topo_sorted_nodes())  # Retrieve all nodes from the graph
 
         for op_id, nodes in self._fusing_data.items():
-            node_set = set(nodes)
-            node_index = {node: i for i, node in enumerate(nodes)}  # Track order in fusion pattern
+            node_set = set(nodes)  # Set of nodes in the current fusion sequence
+            node_index = {node: i for i, node in enumerate(nodes)}  # Map node to its position in sequence
 
-            # Check 1: Ensure all nodes exist in the graph
+            # Check 1: Ensure all fused nodes exist in the graph
             for node in nodes:
                 if node not in graph_nodes:
-                    raise ValueError(f"Fused operation {op_id} contains node {node.name} not in the graph.")
+                    raise ValueError(f"Fused operation {op_id} contains node {node.name} not present in the graph.")
 
-            # Check 2: Verify the sequence respects the fusion pattern
+            # Check 2: Validate the fusion sequence forms a valid linear chain
             for i, node in enumerate(nodes):
-                successors = graph.get_next_nodes(node)
-                predecessors = graph.get_prev_nodes(node)
+                successors = graph.get_next_nodes(node)  # Direct successors of the current node
+                predecessors = graph.get_prev_nodes(node)  # Direct predecessors of the current node
 
+                # First node in the sequence: Must have at least one successor
                 if i == 0:
                     if len(successors) == 0:
-                        raise ValueError(f"Node {node.name} must have at least one successor.")
+                        raise ValueError(f"First node {node.name} in fused operation {op_id} must have a successor.")
+
+                # Middle nodes: Must have both a predecessor and a successor
                 elif 1 <= i < (len(nodes) - 1):
-                    if len(successors) == 0 or len(predecessors) == 0:
-                        raise ValueError(f"Node {node.name} must have at least one predecessor and one successor.")
+                    if len(predecessors) == 0 or len(successors) == 0:
+                        raise ValueError(
+                            f"Node {node.name} in fused operation {op_id} must have both a predecessor and a successor.")
+
+                # Last node in the sequence: Must have at least one predecessor
                 else:
                     if len(predecessors) == 0:
-                        raise ValueError(f"Node {node.name} must have at least one predecessor.")
+                        raise ValueError(f"Last node {node.name} in fused operation {op_id} must have a predecessor.")
 
-                # Ensure all successors are within the fused operation and appear **later** in the order
+                # Check 3: Ensure successor relationships are within the fused sequence
                 for succ in successors:
-                    if succ in node_set:
+                    if succ in node_set:  # If successor is within fusion sequence, it must appear later
                         if node_index[succ] <= i:
                             raise ValueError(
-                                f"Fused operation {op_id} has an invalid sequence: node {succ.name} appears before {node.name}."
+                                f"Fused operation {op_id} has an invalid sequence: "
+                                f"node {succ.name} appears before {node.name}."
                             )
-                    elif i<(len(nodes)-1):
+                    elif i < (len(nodes) - 1):  # If not last node, external successor is not allowed
                         raise ValueError(
-                            f"Fused operation {op_id} contains an external successor {succ.name} from node {node.name}."
+                            f"Fused operation {op_id} contains an external successor {succ.name} "
+                            f"from node {node.name}, which is invalid."
                         )
 
-                # Ensure all predecessors are within the fused operation and appear **earlier** in the order
+                # Check 4: Ensure predecessor relationships are within the fused sequence
                 for pred in predecessors:
-                    if pred in node_set:
+                    if pred in node_set:  # If predecessor is within fusion sequence, it must appear earlier
                         if node_index[pred] >= i:
                             raise ValueError(
-                                f"Fused operation {op_id} has an invalid sequence: node {pred.name} appears after {node.name}."
+                                f"Fused operation {op_id} has an invalid sequence: "
+                                f"node {pred.name} appears after {node.name}."
                             )
-                    elif i>0 and pred not in graph.get_prev_nodes(nodes[0]):
+                    elif i > 0 and pred not in graph.get_prev_nodes(
+                            nodes[0]):  # External predecessors allowed only for first node
                         raise ValueError(
-                            f"Fused operation {op_id} contains an external predecessor {pred.name} to node {node.name}."
+                            f"Fused operation {op_id} contains an external predecessor {pred.name} "
+                            f"to node {node.name}, which is invalid."
                         )
 
-        # for op_id, nodes in self._fusing_data.items():
-        #     # Check 1: Ensure all nodes exist in the graph
-        #     for node in nodes:
-        #         if node not in graph_nodes:
-        #             raise ValueError(f"Fused operation {op_id} contains node {node.name} not in the graph.")
-        #
-        #     # Check 2: Verify the sequence forms a linear chain
-        #     for i in range(len(nodes)):
-        #         current_node = nodes[i]
-        #         if i < (len(nodes)-1):
-        #             next_node = nodes[i + 1]
-        #
-        #             successors = graph.get_next_nodes(current_node)
-        #             if len(successors) != 1:
-        #                 raise ValueError(
-        #                     f"Fused operation {op_id} does not form a linear chain. Every node must have a single successor but {current_node.name} successors are: {successors}."
-        #                 )
-        #             if successors[0] != next_node:
-        #                 raise ValueError(
-        #                     f"Fused operation {op_id} does not form a linear chain. Expected to find node {next_node.name}, but found node {successors[0].name}"
-        #                 )
-        #         if i>0:
-        #             prev_node_from_fusing_info = nodes[i - 1]
-        #             prev_nodes_from_graph = graph.get_prev_nodes(current_node)
-        #             if len(prev_nodes_from_graph) != 1:
-        #                 raise ValueError(
-        #                     f"Fused operation {op_id} does not form a linear chain. Node {current_node.name} must have exactly one incoming edge, but has {len(prev_nodes_from_graph)}."
-        #                 )
-        #             if prev_nodes_from_graph[0] != prev_node_from_fusing_info:
-        #                 raise ValueError(
-        #                     f"Fused operation {op_id} does not form a linear chain. Node {current_node.name} expected an incoming edge from {prev_node_from_fusing_info.name}, but found from {prev_nodes_from_graph[0].name}."
-        #                 )
 
     def get_nodes_to_disable_act_quantization(self):
+        """
+        Get a list of nodes for which activation quantization should be disabled.
+
+        In a fused operation, activation quantization is typically disabled for all nodes
+        except the last one in the sequence to ensure proper data flow and prevent
+        redundant quantization operations.
+
+        Returns:
+            List[BaseNode]: A list of nodes for which activation quantization should be disabled.
+        """
         res_nodes = []
+
+        # Iterate over all fused sequences in _fusing_data
         for nodes in self._fusing_data.values():
+            # Add all nodes except the last one in each fusion sequence
             res_nodes.extend(nodes[:-1])
+
         return res_nodes
 
     def is_nodes_eligible_to_be_fused(self, nodes: List[BaseNode]) -> bool:
+        """
+        Check whether the given nodes are eligible to be fused based on predefined fusing patterns.
+
+        This method retrieves the fusing patterns from `self.fqc` and verifies whether the
+        given sequence of nodes matches any of the valid patterns.
+
+        Args:
+            nodes (List[BaseNode]): The list of nodes to check for fusion eligibility.
+
+        Returns:
+            bool: True if the nodes can be fused according to fusing patterns, otherwise False.
+        """
         fusing_patterns = self.fqc.get_fusing_patterns()
+
+        # If no fusing patterns are defined, fusion is not possible
         if not fusing_patterns:
             return False
+
+        # Check if the provided nodes match a valid fusion pattern
         return is_valid_fusion(fusing_patterns=fusing_patterns, nodes=nodes)
+
 
     def __repr__(self) -> str:
         """
@@ -375,7 +401,8 @@ def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx
     valid_fusing_patterns = []
     for i, fusing_pattern in enumerate(fusing_patterns):
         if idx < len(fusing_pattern):
-            if ((type(fusing_pattern[idx]) == LayerFilterParams and node.is_match_filter_params(fusing_pattern[idx])) or node.is_match_type(fusing_pattern[idx])):
+            if ((type(fusing_pattern[idx]) == LayerFilterParams and node.is_match_filter_params(
+                    fusing_pattern[idx])) or node.is_match_type(fusing_pattern[idx])):
                 valid_fusing_patterns.append(fusing_pattern)
 
     # Return only valid patterns for this node

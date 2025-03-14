@@ -232,7 +232,7 @@ class PytorchModel(torch.nn.Module):
         elif isinstance(graph, GraphWithFusingMetadata):
             delattr(self.graph.get_internal_graph(), 'fqc')
         else:
-            raise ValueError(f"The graph should be of type {type(Graph)} or {type(GraphWithFusingMetadata)} but is {type(graph)}}")
+            raise ValueError(f"The graph should be of type {type(Graph)} or {type(GraphWithFusingMetadata)} but is {type(graph)}.")
 
         self.node_sort = list(topological_sort(self.graph))
         self.node_to_activation_quantization_holder = {}
