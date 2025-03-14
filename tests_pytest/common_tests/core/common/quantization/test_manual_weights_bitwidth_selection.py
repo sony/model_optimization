@@ -55,9 +55,7 @@ def get_test_graph():
     return graph
 
 class TestBitWidthConfig:
-
-    #######################################################################################################
-    ### test case
+    # test case
     setter_test_input_0 = {"activation": (None, None),
                            "weights":    (None, None, None)}
     setter_test_input_1 = {"activation": (NodeTypeFilter(ReLU), [16]),
@@ -89,7 +87,7 @@ class TestBitWidthConfig:
         (setter_test_input_3, setter_test_expected_3),
         (setter_test_input_4, setter_test_expected_4),
     ])
-    def test_BitWidthConfig_setter(self, inputs, expected):
+    def test_bit_width_config_setter(self, inputs, expected):
 
         def check_param(mb_cfg, exp):
             ### check setting config class (expected ManualBitWidthSelection)
@@ -157,7 +155,6 @@ class TestBitWidthConfig:
                 check_param_for_weights(w_mb_cfg, weights_expected[idx])
 
 
-    #######################################################################################################
     ### test case
     ### Note: setter inputs reuse getters test inputs
     getter_test_expected_0 = {"activation":{},
@@ -179,7 +176,7 @@ class TestBitWidthConfig:
         (setter_test_input_3, getter_test_expected_3),
         (setter_test_input_4, getter_test_expected_4),
     ])
-    def test_BitWidthConfig_getter(self, inputs, expected):
+    def test_bit_width_config_getter(self, inputs, expected):
 
         graph = get_test_graph()
 
@@ -195,19 +192,20 @@ class TestBitWidthConfig:
         if weights[0] is not None:
             manual_bit_cfg.set_manual_weights_bit_width(weights[0], weights[1], weights[2])
 
-        get_manual_bit_dict = manual_bit_cfg.get_nodes_to_manipulate_bit_widths(graph)
+        get_manual_bit_dict_activation = manual_bit_cfg.get_nodes_to_manipulate_activation_bit_widths(graph)
+        get_manual_bit_dict_weights = manual_bit_cfg.get_nodes_to_manipulate_weights_bit_widths(graph)
 
         if activation[0] is not None:
-            for idx, (key, val) in enumerate(get_manual_bit_dict.activation_nodes_to_change_bit_width.items()):
+            for idx, (key, val) in enumerate(get_manual_bit_dict_activation.items()):
                 assert str(key) == list(activation_expected.keys())[idx]
                 assert val == list(activation_expected.values())[idx]
         else:
-            assert get_manual_bit_dict.activation_nodes_to_change_bit_width == activation_expected
+            assert get_manual_bit_dict_activation == activation_expected
 
         if weights[0] is not None:
-            for idx, (key, val) in enumerate(get_manual_bit_dict.weights_nodes_to_change_bit_width.items()):
+            for idx, (key, val) in enumerate(get_manual_bit_dict_weights.items()):
                 assert str(key) == list(weights_expected.keys())[idx]
                 assert val[0] == list(weights_expected.values())[idx][0]
                 assert val[1] == list(weights_expected.values())[idx][1]
         else:
-            assert get_manual_bit_dict.weights_nodes_to_change_bit_width == weights_expected
+            assert get_manual_bit_dict_weights == weights_expected
