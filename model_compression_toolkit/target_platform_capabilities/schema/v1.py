@@ -74,6 +74,7 @@ class OperatorSetNames(str, Enum):
     TOPK = "TopK"
     FAKE_QUANT = "FakeQuant"
     COMBINED_NON_MAX_SUPPRESSION = "CombinedNonMaxSuppression"
+    BOX_DECODE = "BoxDecode"
     ZERO_PADDING2D = "ZeroPadding2D"
     CAST = "Cast"
     RESIZE = "Resize"
