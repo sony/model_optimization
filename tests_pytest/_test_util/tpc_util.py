@@ -14,23 +14,28 @@
 # ==============================================================================
 from typing import Iterable
 
+from mct_quantizers import QuantizationMethod
+
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, \
-    QuantizationConfigOptions
+    QuantizationConfigOptions, OpQuantizationConfig, Signedness, TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
 
 
-def build_mp_config_options_for_kernel_bias_ops(base_w_config, base_op_config,
-                                                w_nbits: Iterable[int], a_nbits: Iterable[int]):
+def build_mp_config_options_for_kernel_bias_ops(base_w_config: AttributeQuantizationConfig,
+                                                base_op_config: OpQuantizationConfig,
+                                                w_nbits: Iterable[int],
+                                                a_nbits: Iterable[int]) -> QuantizationConfigOptions:
     """
     Build mixed precision configuration for operators with kernel and bias (bias is not configurable).
 
     Args:
-        base_w_config: base config for weights.
+        base_w_config: base attribute config for kernel.
         base_op_config: base config for operator.
-        w_nbits: bit configurations for weights.
+        w_nbits: bit configurations for kernel.
         a_nbits: bit configurations for activation.
 
     Returns:
+        QuantizationConfigOptions object.
 
     """
     mp_configs = []
@@ -43,3 +48,31 @@ def build_mp_config_options_for_kernel_bias_ops(base_w_config, base_op_config,
                 activation_n_bits=a_nbit
             ))
     return QuantizationConfigOptions(quantization_configurations=mp_configs, base_config=base_op_config)
+
+
+def minimal_tpc():
+    """
+    Minimal TPC. Is intended to be used in integration tests, when real TPC (as opposed to mock) is needed,
+    but we don't care about its content.
+
+    There is also a fixture form by the same name.
+    """
+    op_cfg = OpQuantizationConfig(
+        default_weight_attr_config={},
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=[8],
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        simd_size=32,
+        signedness=Signedness.AUTO)
+
+    cfg_options = QuantizationConfigOptions(quantization_configurations=[op_cfg])
+
+    return TargetPlatformCapabilities(default_qco=cfg_options,
+                                      tpc_platform_type='test',
+                                      operator_set=None,
+                                      fusing_patterns=None)
