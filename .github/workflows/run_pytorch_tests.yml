@@ -24,7 +24,7 @@ jobs:
           sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
           python -m pip install --upgrade pip
           pip install -r requirements.txt          
-          pip install torch==${{ inputs.torch-version }} torchvision onnx onnxruntime onnxruntime-extensions
+          pip install torch==${{ inputs.torch-version }} torchvision onnx onnxruntime "onnxruntime-extensions<0.14"
           pip install pytest pytest-mock
           pip check
       - name: Run unittests
