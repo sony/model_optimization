@@ -34,6 +34,8 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     TargetInclusionCriterion, BitwidthMode
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_ru_helper import \
     MixedPrecisionRUHelper
+from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
+    MixedPrecisionIntegerLPSolver
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.logger import Logger
@@ -85,24 +87,49 @@ class MixedPrecisionSearchManager:
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.mp_graph,
                                                                        original_graph=self.original_graph)
 
-    def search(self):
+    def search(self) -> List[int]:
         """
         Run mixed precision search.
 
         Returns:
             Indices of the selected bit-widths candidates.
         """
-        # import here to prevent circular dependency
-        # TODO: remove search manager dependency from linear_programming
-        from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
-            mp_integer_programming_search
-        config = mp_integer_programming_search(self, self.target_resource_utilization)
+        candidates_sensitivity = self._build_sensitivity_mapping()
+        candidates_ru = self._compute_relative_ru_matrices()
+        rel_target_ru = self._get_relative_ru_constraint_per_mem_element()
+        solver = MixedPrecisionIntegerLPSolver(candidates_sensitivity, candidates_ru, rel_target_ru)
+        config = solver.run()
 
         if self.using_virtual_graph:
             config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(config)
         return config
 
-    def build_sensitivity_mapping(self, eps: float = EPS) -> Dict[int, Dict[int, float]]:
+    def _get_relative_ru_constraint_per_mem_element(self) -> Dict[RUTarget, np.ndarray]:
+        """
+        Computes resource utilization constraint with respect to the minimal bit configuration, i.e. corresponding
+        constraint for each memory element is the relative utilization between the target utilization and
+        element's utilization for min-bit configuration.
+
+        Returns:
+            A dictionary of relative resource utilization constraints per ru target.
+
+        Raises:
+            ValueError: if target resource utilization cannot be satisfied (utilization for the minimal bit
+              configuration exceeds the requested target utilization for any target).
+        """
+        target_ru = self.target_resource_utilization.get_resource_utilization_dict(restricted_only=True)
+        rel_target_ru = {
+            ru_target: ru - self.min_ru[ru_target] for ru_target, ru in target_ru.items()
+        }
+        unsatisfiable_targets = {
+            ru_target.value: target_ru[ru_target] for ru_target, ru in rel_target_ru.items() if any(ru < 0)
+        }
+        if unsatisfiable_targets:
+            raise ValueError(f"The model cannot be quantized to meet the specified resource utilization for the "
+                             f"following targets: {unsatisfiable_targets}")
+        return rel_target_ru
+
+    def _build_sensitivity_mapping(self, eps: float = EPS) -> Dict[int, Dict[int, float]]:
         """
         This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
         It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
@@ -209,7 +236,7 @@ class MixedPrecisionSearchManager:
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
-    def compute_resource_utilization_matrices(self) -> Dict[RUTarget, np.ndarray]:
+    def _compute_relative_ru_matrices(self) -> Dict[RUTarget, np.ndarray]:
         """
         Computes and builds a resource utilization matrix for all restricted targets, to be used for the
         mixed-precision search problem formalization.
