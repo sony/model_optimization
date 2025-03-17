@@ -48,11 +48,11 @@ class FusingInfo:
         self._fusing_data = fusing_data or {}
         self._node_to_fused_node_map: Dict[str, str] = {}
         if fusing_data:
-            self._update_node_mapping()
+            self._init_node_mapping()
 
-    def _update_node_mapping(self) -> None:
+    def _init_node_mapping(self) -> None:
         """
-        Update the node-to-fused-node mapping based on the current fusing data.
+        Init the node-to-fused-node mapping based on the initial fusing data.
         """
         self._node_to_fused_node_map.clear()
         for op_id, nodes in self._fusing_data.items():
@@ -65,7 +65,7 @@ class FusingInfo:
 
         Args:
             op_id (str): The identifier for the fused operation.
-            nodes (Set[BaseNode]): The set of nodes that form the fused operation.
+            nodes (List[BaseNode]): The list of nodes that form the fused operation.
 
         Raises:
             ValueError: If the operation ID already exists.
@@ -116,15 +116,15 @@ class FusingInfo:
         """
         return self._node_to_fused_node_map.copy()
 
-    def get_fused_nodes(self, op_id: str) -> Optional[Set[BaseNode]]:
+    def get_fused_nodes(self, op_id: str) -> Optional[List[BaseNode]]:
         """
-        Retrieve the set of nodes for a given fused operation ID.
+        Retrieve the list of nodes for a given fused operation ID.
 
         Args:
             op_id (str): The identifier for the fused operation.
 
         Returns:
-            Optional[Set[BaseNode]]: The set of nodes for the operation, or None if not found.
+            Optional[List[BaseNode]]: The list of nodes for the operation, or None if not found.
         """
         return self._fusing_data.get(op_id)
 
@@ -142,12 +142,12 @@ class FusingInfo:
 
     def get_all_fused_operations(self) -> Dict[str, List[BaseNode]]:
         """
-        Retrieve a copy of all fused operations.
+        Retrieve fused information.
 
         Returns:
-            Dict[str, Set[BaseNode]]: A copy of the fusing data.
+            Dict[str, List[BaseNode]]: The fusing data.
         """
-        return copy.deepcopy(self._fusing_data)
+        return self._fusing_data
 
 
     @staticmethod
