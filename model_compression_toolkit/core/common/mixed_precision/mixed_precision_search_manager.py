@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import itertools
+
 import copy
 from collections import defaultdict
 
@@ -75,34 +77,34 @@ class MixedPrecisionSearchManager:
         self.target_resource_utilization = target_resource_utilization
 
         self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
-        self.layer_to_bitwidth_mapping = self.get_search_space()
 
         self.ru_targets = target_resource_utilization.get_restricted_targets()
         self.ru_helper = MixedPrecisionRUHelper(self.mp_graph, fw_info, fw_impl)
 
-        self.min_ru_config = self.mp_graph.get_min_candidates_config(fw_info)
-        self.max_ru_config = self.mp_graph.get_max_candidates_config(fw_info)
+        self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
+        self.max_ru_config: Dict[BaseNode, int] = self.mp_graph.get_max_candidates_config(fw_info)
         self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, self.min_ru_config)
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.mp_graph,
                                                                        original_graph=self.original_graph)
 
-    def search(self) -> List[int]:
+    def search(self) -> Dict[BaseNode, int]:
         """
         Run mixed precision search.
 
         Returns:
             Indices of the selected bit-widths candidates.
         """
-        candidates_sensitivity = self._build_sensitivity_mapping()
+        layers_candidates_sensitivity: Dict[BaseNode, List[float]] = self._build_sensitivity_mapping()
         candidates_ru = self._compute_relative_ru_matrices()
         rel_target_ru = self._get_relative_ru_constraint_per_mem_element()
-        solver = MixedPrecisionIntegerLPSolver(candidates_sensitivity, candidates_ru, rel_target_ru)
-        config = solver.run()
+        solver = MixedPrecisionIntegerLPSolver(layers_candidates_sensitivity, candidates_ru, rel_target_ru)
+        mp_config = solver.run()
 
         if self.using_virtual_graph:
-            config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(config)
-        return config
+            mp_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(mp_config)
+
+        return mp_config
 
     def _get_relative_ru_constraint_per_mem_element(self) -> Dict[RUTarget, np.ndarray]:
         """
@@ -129,8 +131,9 @@ class MixedPrecisionSearchManager:
                              f"following targets: {unsatisfiable_targets}")
         return rel_target_ru
 
-    def _build_sensitivity_mapping(self, eps: float = EPS) -> Dict[int, Dict[int, float]]:
+    def _build_sensitivity_mapping(self, eps: float = EPS) -> Dict[BaseNode, List[float]]:
         """
+        # TODO
         This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
         It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
         For each node and some possible node's bitwidth (according to the given search space), we use
@@ -148,9 +151,11 @@ class MixedPrecisionSearchManager:
         """
 
         Logger.info('Starting to evaluate metrics')
-        layer_to_metrics_mapping = {}
 
-        compute_metric = self.sensitivity_evaluator.compute_metric
+        def compute_metric(cfg, node_idx=None, baseline_cfg=None):
+            return self.sensitivity_evaluator.compute_metric(list(cfg.values()),
+                                                             node_idx,
+                                                             list(baseline_cfg.values()) if baseline_cfg else None)
         if self.using_virtual_graph:
             origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
                 self.max_ru_config)
@@ -158,19 +163,17 @@ class MixedPrecisionSearchManager:
         else:
             max_config_value = compute_metric(self.max_ru_config)
 
-        for node_idx, layer_possible_bitwidths_indices in tqdm(self.layer_to_bitwidth_mapping.items(),
-                                                               total=len(self.layer_to_bitwidth_mapping)):
-            layer_to_metrics_mapping[node_idx] = {}
-
-            for bitwidth_idx in layer_possible_bitwidths_indices:
-                if self.max_ru_config[node_idx] == bitwidth_idx:
+        layer_to_metrics_mapping = defaultdict(list)
+        for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes)):
+            for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
+                if self.max_ru_config[node] == bitwidth_idx:
                     # This is a computation of the metric for the max configuration, assign pre-calculated value
-                    layer_to_metrics_mapping[node_idx][bitwidth_idx] = max_config_value
+                    layer_to_metrics_mapping[node].append(max_config_value)
                     continue
 
                 # Create a configuration that differs at one layer only from the baseline model
                 mp_model_configuration = self.max_ru_config.copy()
-                mp_model_configuration[node_idx] = bitwidth_idx
+                mp_model_configuration[node] = bitwidth_idx
 
                 # Build a distance matrix using the function we got from the framework implementation.
                 if self.using_virtual_graph:
@@ -180,8 +183,8 @@ class MixedPrecisionSearchManager:
                             mp_model_configuration,
                             changed_virtual_nodes_idx=[node_idx],
                             original_base_config=origin_max_config)
-                    origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
-                                                    c != origin_mp_model_configuration[i]]
+                    origin_changed_nodes_indices = [i for i, (n, c) in enumerate(origin_max_config.items()) if
+                                                    c != origin_mp_model_configuration[n]]
                     metric_value = compute_metric(
                         origin_mp_model_configuration,
                         origin_changed_nodes_indices,
@@ -191,8 +194,8 @@ class MixedPrecisionSearchManager:
                         mp_model_configuration,
                         [node_idx],
                         self.max_ru_config)
-
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = max(metric_value, max_config_value + eps)
+                metric_value = max(metric_value, max_config_value + eps)
+                layer_to_metrics_mapping[node].append(metric_value)
 
         # Finalize distance metric mapping
         self.finalize_distance_metric(layer_to_metrics_mapping)
@@ -221,22 +224,6 @@ class MixedPrecisionSearchManager:
 
         return graph, False
 
-    def get_search_space(self) -> Dict[int, List[int]]:
-        """
-        The search space is a mapping from a node's index to a list of integers (possible bitwidths candidates indeces
-        for the node).
-
-        Returns:
-            The entire search space of the graph.
-        """
-
-        indices_mapping = {}
-        for idx, n in enumerate(self.mp_topo_configurable_nodes):
-            # For each node, get all possible bitwidth indices for it
-            # (which is a list from 0 to the length of the candidates mp_config list of the node).
-            indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
-        return indices_mapping
-
     def _compute_relative_ru_matrices(self) -> Dict[RUTarget, np.ndarray]:
         """
         Computes and builds a resource utilization matrix for all restricted targets, to be used for the
@@ -248,12 +235,14 @@ class MixedPrecisionSearchManager:
             per ru target. Num memory elements depends on the target, e.g. num cuts or 1 for cumulative metrics.
         """
         rus_per_candidate = defaultdict(list)
-        for c, c_n in enumerate(self.mp_topo_configurable_nodes):
-            for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
-                if candidate_idx == self.min_ru_config[c]:
+        for node in self.mp_topo_configurable_nodes:
+            for candidate_idx, _ in enumerate(node.candidates_quantization_cfg):
+                if candidate_idx == self.min_ru_config[node]:
                     candidate_rus = self.min_ru
                 else:
-                    candidate_rus = self.compute_ru_for_candidate(c, candidate_idx)
+                    cfg = self.min_ru_config.copy()
+                    cfg[node] = candidate_idx
+                    candidate_rus = self.ru_helper.compute_utilization(self.ru_targets, cfg)
 
                 for target, ru in candidate_rus.items():
                     rus_per_candidate[target].append(ru)
@@ -262,41 +251,25 @@ class MixedPrecisionSearchManager:
         relative_rus = {target: np.array(ru) - self.min_ru[target] for target, ru in rus_per_candidate.items()}
         return relative_rus
 
-    def compute_ru_for_candidate(self, conf_node_idx: int, candidate_idx: int) -> Dict[RUTarget, np.ndarray]:
+    @staticmethod
+    def copy_config_with_replacement(mp_cfg: Dict[BaseNode, int], node: BaseNode, candidate_idx: int) -> Dict[BaseNode, int]:
         """
-        Computes a resource utilization vector after replacing the given node's configuration candidate in the minimal
-        target configuration with the given candidate index.
+        Create a copy of the given mixed-precision configuration and update the candidate index for a specific node.
 
         Args:
-            conf_node_idx: The index of a node in a sorted configurable nodes list.
-            candidate_idx: Quantization config candidate to be used for the node's resource utilization computation.
+            mp_cfg: Mixed-precision configuration.
+            node: Node to update the config for.
+            candidate_idx: A new candidate index to configure.
 
         Returns:
-            Node's resource utilization vector.
-
-        """
-        cfg = self.replace_config_in_index(self.min_ru_config, conf_node_idx, candidate_idx)
-        return self.ru_helper.compute_utilization(self.ru_targets, cfg)
-
-    @staticmethod
-    def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:
-        """
-        Replacing the quantization configuration candidate in a given mixed-precision configuration at the given
-        index (node's index) with the given value (candidate index).
-
-        Args:
-            mp_cfg: Mixed-precision configuration (list of candidates' indices)
-            idx: A configurable node's index.
-            value: A new candidate index to configure.
-
-        Returns: A new mixed-precision configuration.
+            A new mixed-precision configuration.
 
         """
         updated_cfg = mp_cfg.copy()
-        updated_cfg[idx] = value
+        updated_cfg[node] = candidate_idx
         return updated_cfg
 
-    def compute_resource_utilization_for_config(self, config: List[int]) -> ResourceUtilization:
+    def compute_resource_utilization_for_config(self, config: Dict[BaseNode, int]) -> ResourceUtilization:
         """
         Computes the resource utilization values for a given mixed-precision configuration.
 
@@ -313,7 +286,7 @@ class MixedPrecisionSearchManager:
             w_qcs=w_qcs, ru_targets=self.ru_targets, allow_unused_qcs=True)
         return ru
 
-    def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[int, Dict[int, float]]):
+    def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[BaseNode, List[float]]):
         """
         Finalizing the distance metric building.
         The method checks to see if the maximal distance value is larger than a given threshold, and if so,
@@ -321,21 +294,21 @@ class MixedPrecisionSearchManager:
         Modification to the dictionary is done inplace.
 
         Args:
-            layer_to_metrics_mapping: A mapping between a node index to a mapping between
-            a bitwidth index to a distance value.
+            layer_to_metrics_mapping: A mapping between a node to a list of distance values per bitwidth candidate.
 
         """
         # normalize metric for numerical stability
+        max_dist = max(itertools.chain.from_iterable(layer_to_metrics_mapping.values()))
+        # max_dist = max([max([d for b, d in dists.items()]) for layer, dists in layer_to_metrics_mapping.items()])
 
-        max_dist = max([max([d for b, d in dists.items()]) for layer, dists in layer_to_metrics_mapping.items()])
         if max_dist >= self.sensitivity_evaluator.quant_config.metric_normalization_threshold:
             Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
                            f"this can cause numerical issues."
                            f"The program will proceed with mixed precision search after scaling the metric values,"
                            f"which can lead to unstable results.")
             for layer, dists in layer_to_metrics_mapping.items():
-                for b, d in dists.items():
-                    layer_to_metrics_mapping[layer][b] /= max_dist
+                for i, _ in enumerate(dists):
+                    layer_to_metrics_mapping[layer][i] /= max_dist
 
 
 class ConfigReconstructionHelper:
@@ -362,8 +335,9 @@ class ConfigReconstructionHelper:
         self.original_graph = original_graph
         self.fw_info = original_graph.fw_info
 
-        self.virtual_sorted_nodes_names = self.virtual_graph.get_configurable_sorted_nodes_names(self.fw_info)
-        self.origin_sorted_conf_nodes_names = self.original_graph.get_configurable_sorted_nodes_names(self.fw_info)
+        self.virtual_sorted_conf_nodes_names = self.virtual_graph.get_configurable_sorted_nodes_names(self.fw_info)
+        self.origin_sorted_conf_nodes = self.original_graph.get_configurable_sorted_nodes(self.fw_info)
+        self.origin_sorted_conf_nodes_names = [n.name for n in self.origin_sorted_conf_nodes]
 
         self.origin_node_idx_to_cfg = {}
 
@@ -375,9 +349,9 @@ class ConfigReconstructionHelper:
         self.origin_node_idx_to_cfg = {}
 
     def reconstruct_config_from_virtual_graph(self,
-                                              virtual_mp_cfg: List[int],
+                                              virtual_mp_cfg: Dict[BaseNode, int],
                                               changed_virtual_nodes_idx: List[int] = None,
-                                              original_base_config: List[int] = None) -> List[int]:
+                                              original_base_config: Dict[BaseNode, int] = None) -> Dict[BaseNode, int]:
         """
         Reconstructs the original config for a given virtual graph mixed-precision config.
         It iterates over all virtual configurable node (that has some chosen bit-width virtual candidate)
@@ -405,21 +379,21 @@ class ConfigReconstructionHelper:
                 [(idx, self.virtual_graph.get_configurable_sorted_nodes(self.fw_info)[idx]) for idx in changed_virtual_nodes_idx]
             # Iterating only over the virtual nodes that have updated config
             for virtual_node_idx, n in updated_virtual_nodes:
-                self.reconstruct_node_config(n, virtual_mp_cfg, virtual_node_idx)
+                self.reconstruct_node_config(n, list(virtual_mp_cfg.values()), virtual_node_idx)
             # Updating reconstructed config for all other nodes based on provided base_config
             original_sorted_conf_nodes = self.original_graph.get_configurable_sorted_nodes(self.fw_info)
-            for i in range(len(original_base_config)):
+            for i, (n, qc_ind) in enumerate(original_base_config.items()):
                 if i not in list(self.origin_node_idx_to_cfg.keys()):
-                    self.update_config_at_original_idx(n=original_sorted_conf_nodes[i],
-                                                       origin_cfg_idx=original_base_config[i])
+                    self.update_config_at_original_idx(n=n, origin_cfg_idx=qc_ind)
         else:
             # Reconstruct entire config
             for virtual_node_idx, n in enumerate(self.virtual_graph.get_configurable_sorted_nodes(self.fw_info)):
-                self.reconstruct_node_config(n, virtual_mp_cfg, virtual_node_idx)
+                self.reconstruct_node_config(n, list(virtual_mp_cfg.values()), virtual_node_idx)
 
         res_config = [self.origin_node_idx_to_cfg[key] for key in sorted(self.origin_node_idx_to_cfg.keys())]
         self._clear_reconstruction_dict()
-        return res_config
+        assert len(res_config) == len(self.origin_sorted_conf_nodes)
+        return {n: candidate_idx for n, candidate_idx in zip(self.origin_sorted_conf_nodes, res_config)}
 
     def reconstruct_node_config(self,
                                 n: BaseNode,
@@ -539,7 +513,7 @@ class ConfigReconstructionHelper:
         """
 
         activation_bitwidth = activation_node.candidates_quantization_cfg[virtual_mp_cfg[
-            self.virtual_sorted_nodes_names.index(activation_node.name)]].activation_quantization_cfg.activation_n_bits
+            self.virtual_sorted_conf_nodes_names.index(activation_node.name)]].activation_quantization_cfg.activation_n_bits
 
         kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
 
@@ -575,7 +549,7 @@ class ConfigReconstructionHelper:
         kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
 
         weights_bitwidth = (weights_node.candidates_quantization_cfg[virtual_mp_cfg[
-            self.virtual_sorted_nodes_names.index(weights_node.name)]]
+            self.virtual_sorted_conf_nodes_names.index(weights_node.name)]]
                             .weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits)
 
         activation_bitwidth = virtual_node.candidates_quantization_cfg[
@@ -613,7 +587,7 @@ class ConfigReconstructionHelper:
         if isinstance(activation_node, VirtualActivationWeightsNode):
             if activation_node.original_activation_node.is_activation_quantization_enabled() and not \
                     activation_node.original_activation_node.is_all_activation_candidates_equal():
-                assert activation_node.name in self.virtual_sorted_nodes_names  # Sanity check
+                assert activation_node.name in self.virtual_sorted_conf_nodes_names  # Sanity check
                 # The original node is both weights and activation configurable
                 self.retrieve_activation_weights_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
@@ -621,7 +595,7 @@ class ConfigReconstructionHelper:
                 self.retrieve_weights_only_config(weights_node.origin_node, virtual_node, virtual_cfg_idx)
         else:
             assert isinstance(activation_node, VirtualSplitActivationNode)  # Sanity check
-            if activation_node.name in self.virtual_sorted_nodes_names:
+            if activation_node.name in self.virtual_sorted_conf_nodes_names:
                 self.retrieve_activation_weights_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
                 # The original node is only weights configurable
@@ -655,7 +629,7 @@ class ConfigReconstructionHelper:
             kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
             if weights_node.original_weights_node.is_weights_quantization_enabled(kernel_attr) and not \
                     weights_node.original_weights_node.is_all_weights_candidates_equal(kernel_attr):
-                assert weights_node.name in self.virtual_sorted_nodes_names  # Sanity check
+                assert weights_node.name in self.virtual_sorted_conf_nodes_names  # Sanity check
                 # The original node is both weights and activation configurable
                 self.retrieve_weights_activation_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:

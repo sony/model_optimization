@@ -16,6 +16,7 @@
 from typing import List, Tuple, Dict
 
 from model_compression_toolkit.core import ResourceUtilization
+from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
@@ -23,9 +24,9 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
 from model_compression_toolkit.logger import Logger
 
 
-def greedy_solution_refinement_procedure(mp_solution: List[int],
+def greedy_solution_refinement_procedure(mp_solution: Dict[BaseNode, int],
                                          search_manager: MixedPrecisionSearchManager,
-                                         target_resource_utilization: ResourceUtilization) -> List[int]:
+                                         target_resource_utilization: ResourceUtilization) -> Dict[BaseNode, int]:
     """
     A greedy procedure to try and improve a mixed-precision solution that was found by a mixed-precision optimization
     algorithm.
@@ -50,6 +51,8 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
         Logger.info(f'Target resource utilization constraint BOPs - Skipping MP greedy solution refinement')
         return mp_solution
 
+    assert search_manager.using_virtual_graph is False
+
     new_solution = mp_solution.copy()
     changed = True
 
@@ -58,17 +61,16 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
         nodes_ru = {}
         nodes_next_candidate = {}
 
-        for node_idx in range(len(mp_solution)):
-            if new_solution[node_idx] == 0:
+        for node in search_manager.mp_topo_configurable_nodes:
+            if new_solution[node] == 0:
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
-            current_node = search_manager.mp_topo_configurable_nodes[node_idx]
-            node_candidates = current_node.candidates_quantization_cfg
+            node_candidates = node.candidates_quantization_cfg
 
             # only weights kernel attribute is quantized with weights mixed precision
             valid_candidates = _get_valid_candidates_indices(node_candidates,
-                                                             new_solution[node_idx],
+                                                             new_solution[node],
                                                              target_resource_utilization.activation_restricted(),
                                                              target_resource_utilization.weight_restricted()
                                                              )
@@ -77,7 +79,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             updated_ru = []
             for valid_idx in valid_candidates:
                 node_updated_ru = search_manager.compute_resource_utilization_for_config(
-                    config=search_manager.replace_config_in_index(new_solution, node_idx, valid_idx))
+                    config=search_manager.copy_config_with_replacement(new_solution, node, valid_idx))
                 updated_ru.append(node_updated_ru)
 
             # filter out new configs that don't hold the resource utilization restrictions
@@ -88,8 +90,8 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 sorted_by_ru = sorted(node_filtered_ru, key=lambda node_ru: (node_ru[1].total_memory,
                                                                              node_ru[1].weights_memory,
                                                                              node_ru[1].activation_memory))
-                nodes_ru[node_idx] = sorted_by_ru[0][1]
-                nodes_next_candidate[node_idx] = sorted_by_ru[0][0]
+                nodes_ru[node] = sorted_by_ru[0][1]
+                nodes_next_candidate[node] = sorted_by_ru[0][0]
 
         if len(nodes_ru) > 0:
             # filter out new configs that don't hold the ru restrictions
@@ -102,7 +104,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             new_solution[node_idx_to_upgrade] = nodes_next_candidate[node_idx_to_upgrade]
             changed = True
 
-    if any([mp_solution[i] != new_solution[i] for i in range(len(mp_solution))]):
+    if any([mp_solution[n] != new_solution[n] for n in mp_solution]):
         Logger.info(f'Greedy MP algorithm changed configuration from (numbers represent indices of the '
                     f'chosen bit-width candidate for each layer):\n{mp_solution}\nto\n{new_solution}')
 
