@@ -90,7 +90,7 @@ class ScaleEqualizationBaseTest(BasePytorchTest):
             beta = float_model_layer2_weight / quantized_model_layer2_weight
 
             self.unit_test.assertTrue(np.allclose(alpha, beta, atol=1e-5))
-            self.unit_test.assertTrue(np.alltrue(alpha <= 1.0))
+            self.unit_test.assertTrue(np.all(alpha <= 1.0))
             self.unit_test.assertTrue(np.allclose(alpha, scale_factor, atol=1e-5))
 
 
