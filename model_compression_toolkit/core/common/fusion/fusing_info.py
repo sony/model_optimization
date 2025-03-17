@@ -22,7 +22,16 @@ import copy
 
 class FusingInfo:
     """
-    A class to manage fusing information, mapping fused operation IDs to sets of nodes.
+    This class manages information about fused operations in a graph.
+
+    The key responsibility of this class is maintaining a mapping between original nodes
+    and their corresponding fused operation IDs. This mapping helps track which nodes
+    belong to fused operations and validate this info is correct after changes in the graph.
+
+    The core structures maintained are:
+    - `_fusing_data`: A dictionary mapping fused operation IDs to lists of nodes that belong to that operation.
+    - `_node_to_fused_node_map`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
+
     """
 
     def __init__(self, fqc: FrameworkQuantizationCapabilities, fusing_data: Optional[Dict[str, List[BaseNode]]] = None):
@@ -30,9 +39,10 @@ class FusingInfo:
         Initialize the FusingInfo with an fqc and an optional dictionary of fusing data.
 
         Args:
-            fusing_data (Optional[Dict[str, Set[BaseNode]]]): A dictionary mapping
-                fused operation IDs to sets of nodes. Defaults to an empty dict.
             fqc: FrameworkQuantizationCapabilities the fusing info was derived from.
+            fusing_data (Optional[Dict[str, List[BaseNode]]]): A dictionary mapping
+                fused operation IDs to sets of nodes. Default is None which then an empty mapping is set.
+
         """
         self.fqc = fqc
         self._fusing_data = fusing_data or {}
