@@ -19,6 +19,10 @@ from typing import Set, Optional, List, Dict, Any, Tuple
 from model_compression_toolkit.core.common import BaseNode
 import copy
 
+# The prefix of each fused operator (the suffix is a combination of the
+# nodes names that combine the fused operator).
+FUSED_OP_ID_PREFIX = "FusedNode_"
+
 
 class FusingInfo:
     """
@@ -49,7 +53,7 @@ class FusingInfo:
         self.fqc = fqc
         self._fusing_data = fusing_data or {}
         for op_id, op_nodes in self._fusing_data.items():
-            assert isinstance(op_id, str) and op_id.startswith("FusedNode_"), f"Found invalid fused op id: {op_id}"
+            assert isinstance(op_id, str) and op_id.startswith(FUSED_OP_ID_PREFIX), f"Found invalid fused op id: {op_id}"
             assert isinstance(op_nodes, tuple) and len(op_nodes) > 1 and all(isinstance(n, BaseNode) for n in op_nodes), f"Found invalid fused op nodes: {op_nodes}"
 
         self._node_to_fused_node_map: Dict[str, str] = {}
@@ -65,19 +69,20 @@ class FusingInfo:
             for node in nodes:
                 self._node_to_fused_node_map[node.name] = op_id
 
-    def add_fused_operation(self, op_id: str, nodes: List[BaseNode]) -> None:
+    def add_fused_operation(self, op_id: str, nodes: Tuple[BaseNode]) -> None:
         """
         Add a new fused operation with the given ID and set of nodes.
 
         Args:
             op_id (str): The identifier for the fused operation.
-            nodes (List[BaseNode]): The list of nodes that form the fused operation.
+            nodes (Tuple[BaseNode]): The tuple of nodes that form the fused operation.
 
         Raises:
             ValueError: If the operation ID already exists.
         """
         if op_id in self._fusing_data:
             raise ValueError(f"Fused operation {op_id} already exists.")
+        assert isinstance(nodes, tuple), f"Expected nodes to be a tuple but its type is {type(nodes)}"
         self._fusing_data[op_id] = nodes
         # Update the mapping for these nodes
         for node in nodes:
@@ -146,7 +151,7 @@ class FusingInfo:
         """
         return any(node in nodes for nodes in self._fusing_data.values())
 
-    def get_all_fused_operations(self) -> Dict[str, List[BaseNode]]:
+    def get_all_fused_operations(self) -> Dict[str, Tuple[BaseNode]]:
         """
         Retrieve fused information.
 
@@ -168,7 +173,7 @@ class FusingInfo:
         Returns:
             str: An identifier string for the fused operation.
         """
-        id = 'FusedNode_' + '_'.join([node.name for node in nodes])
+        id = FUSED_OP_ID_PREFIX + '_'.join([node.name for node in nodes])
         return id
 
     def validate(self, graph) -> None:

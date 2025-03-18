@@ -16,7 +16,7 @@
 import pytest
 from unittest.mock import Mock
 
-from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator, FUSED_OP_ID_PREFIX
 from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common import BaseNode
 
@@ -128,8 +128,8 @@ def test_fusing_info_operation_contents(mock_graph, fusing_info_generator, mock_
     fi = fusing_info_generator.generate_fusing_info(mock_graph)
     fused_operations = fi.get_all_fused_operations()
 
-    expected_op1_id = "FusedNode_conv_relu"
-    expected_op2_id = "FusedNode_linear_softmax"
+    expected_op1_id = f"{FUSED_OP_ID_PREFIX}conv_relu"
+    expected_op2_id = f"{FUSED_OP_ID_PREFIX}linear_softmax"
 
     assert expected_op1_id in fused_operations, f"{expected_op1_id} not found"
     assert expected_op2_id in fused_operations, f"{expected_op2_id} not found"
@@ -151,8 +151,8 @@ def test_fusing_info_node_mapping(mock_graph, fusing_info_generator, mock_nodes)
 
     conv_node, relu_node, linear_node, softmax_node = mock_nodes
 
-    expected_op1_id = "FusedNode_conv_relu"
-    expected_op2_id = "FusedNode_linear_softmax"
+    expected_op1_id = f"{FUSED_OP_ID_PREFIX}conv_relu"
+    expected_op2_id = f"{FUSED_OP_ID_PREFIX}linear_softmax"
 
     assert node_to_fused_map[conv_node.name] == expected_op1_id
     assert node_to_fused_map[relu_node.name] == expected_op1_id
@@ -167,8 +167,6 @@ def test_fusing_info_validation(mock_graph, fusing_info_generator):
     """
     fi = fusing_info_generator.generate_fusing_info(mock_graph)
     fi.validate(mock_graph)
-
-
 
 
 def test_fusing_info_validation_failure_topology_change(mock_graph, fusing_info_generator, mock_nodes):
