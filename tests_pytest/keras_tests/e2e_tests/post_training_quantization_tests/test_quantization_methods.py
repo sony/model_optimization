@@ -30,22 +30,12 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import generate_tpc
 
 INPUT_SHAPE = (224, 224, 3)
-
-
-@pytest.fixture
-def rep_data_gen():
-    np.random.seed(42)
-
-    def representative_dataset():
-        for _ in range(2):
-            yield [np.random.randn(2, *INPUT_SHAPE)]
-
-    return representative_dataset
+NUM_CHANNELS = {layers.Conv2D: 2, layers.Dense: 10}
 
 
 def model_basic():
     inputs = layers.Input(shape=INPUT_SHAPE)
-    x = layers.Conv2D(2, 3, padding='same')(inputs)
+    x = layers.Conv2D(NUM_CHANNELS[layers.Conv2D], 3, padding='same')(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
     return tf.keras.models.Model(inputs=inputs, outputs=x)
@@ -53,22 +43,22 @@ def model_basic():
 
 def model_residual():
     inputs = layers.Input(shape=INPUT_SHAPE)
-    x1 = layers.Conv2D(2, 3, padding='same')(inputs)
+    x1 = layers.Conv2D(NUM_CHANNELS[layers.Conv2D], 3, padding='same')(inputs)
     x1 = layers.ReLU()(x1)
 
-    x2 = layers.Conv2D(2, 3, padding='same')(x1)
+    x2 = layers.Conv2D(NUM_CHANNELS[layers.Conv2D], 3, padding='same')(x1)
     x2 = layers.BatchNormalization()(x2)
     x2 = layers.ReLU()(x2)
 
     x = layers.Add()([x1, x2])
 
     x = layers.Flatten()(x)
-    x = layers.Dense(units=10, activation='softmax')(x)
+    x = layers.Dense(units=NUM_CHANNELS[layers.Dense], activation='softmax')(x)
 
     return keras.Model(inputs=inputs, outputs=x)
 
 
-def set_tpc(weights_quantization_method, per_channel):
+def _get_tpc(weights_quantization_method, per_channel):
     # TODO: currently, running E2E test with IMX500 V4 TPC from tests package
     #  we need to select a default TPC for tests, which is the one we want to verify e2e for.
 
@@ -98,26 +88,45 @@ def set_tpc(weights_quantization_method, per_channel):
 
 
 @pytest.fixture
-def tpc_factory():
-    def _tpc_factory(quant_method, per_channel):
-        return set_tpc(quant_method, per_channel)
-    return _tpc_factory
+def rep_data_gen():
+    np.random.seed(42)
+
+    def representative_dataset():
+        for _ in range(2):
+            yield [np.random.randn(2, *INPUT_SHAPE)]
+
+    return representative_dataset
 
 
-class TestPostTrainingQuantizationApi:
+@pytest.fixture(params=[QuantizationMethod.POWER_OF_TWO,
+                        QuantizationMethod.SYMMETRIC,
+                        QuantizationMethod.UNIFORM])
+def quant_method(request):
+    return request.param
+
+
+@pytest.fixture(params=[True, False])
+def per_channel(request):
+    return request.param
+
+
+@pytest.fixture
+def tpc(quant_method, per_channel):
+    return _get_tpc(quant_method, per_channel)
+
+
+@pytest.fixture(params=[model_basic, model_residual])
+def model(request):
+    return request.param()
+
+
+class TestPTQWithQuantizationMethods:
     # TODO: add tests for:
     #   1) activation only, W&A, LUT quantizer (separate)
-    #   2) extend to also test with different settings features (bc, snc, etc.)
-    #   3) advanced models and operators
+    #   2) advanced models and operators
 
-    @pytest.mark.parametrize("quant_method", [QuantizationMethod.POWER_OF_TWO,
-                                              QuantizationMethod.SYMMETRIC,
-                                              QuantizationMethod.UNIFORM])
-    @pytest.mark.parametrize("per_channel", [True, False])
-    @pytest.mark.parametrize("model", [model_basic(), model_residual()])
-    def test_ptq_pot_weights_only(self, model, rep_data_gen, tpc_factory, quant_method, per_channel):
+    def test_ptq_weights_only_quantization_methods(self, model, rep_data_gen, quant_method, per_channel, tpc):
 
-        tpc = tpc_factory(quant_method, per_channel)
         q_model, quantization_info = keras_post_training_quantization(model, rep_data_gen,
                                                                       target_platform_capabilities=tpc)
 
@@ -126,16 +135,10 @@ class TestPostTrainingQuantizationApi:
         # Assert quantization properties
         quantized_conv_layers = [l for l in q_model.layers if isinstance(l, KerasQuantizationWrapper)]
         for quantize_wrapper in quantized_conv_layers:
-            assert isinstance(quantize_wrapper.layer,
-                              (layers.Conv2D, layers.DepthwiseConv2D, layers.Dense, layers.Conv2DTranspose))
+            assert isinstance(quantize_wrapper.layer, (layers.Conv2D, layers.Dense))
 
-            if isinstance(quantize_wrapper.layer, layers.DepthwiseConv2D):
-                weights_quantizer = quantize_wrapper.weights_quantizers[DEPTHWISE_KERNEL]
-                num_output_channels = (quantize_wrapper.layer.depthwise_kernel.shape[-1]
-                                       * quantize_wrapper.layer.depthwise_kernel.shape[-2])
-            else:
-                weights_quantizer = quantize_wrapper.weights_quantizers[KERNEL]
-                num_output_channels = quantize_wrapper.layer.kernel.shape[-1]
+            weights_quantizer = quantize_wrapper.weights_quantizers[KERNEL]
+            num_output_channels = NUM_CHANNELS[type(quantize_wrapper.layer)]
 
             params_shape = num_output_channels if per_channel else 1
             self._verify_weights_quantizer_params(weights_quantizer, params_shape, quant_method, per_channel)
