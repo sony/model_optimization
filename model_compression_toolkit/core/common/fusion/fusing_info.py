@@ -14,6 +14,7 @@
 #  ==============================================================================
 
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams, FrameworkQuantizationCapabilities
+from dataclasses import dataclass, field
 
 from typing import Optional, List, Dict, Any, Tuple
 from model_compression_toolkit.core.common import BaseNode
@@ -24,6 +25,7 @@ import copy
 FUSED_OP_ID_PREFIX = "FusedNode_"
 
 
+@dataclass
 class FusingInfo:
     """
     This class manages information about fused operations in a graph.
@@ -33,41 +35,30 @@ class FusingInfo:
     belong to fused operations and validate this info is correct after changes in the graph.
 
     The core structures maintained are:
-    - `_fusing_data`: A dictionary mapping fused operation IDs to lists of nodes that belong to that operation.
-    - `_node_to_fused_node_map`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
+    - `fusing_data`: A dictionary mapping fused operation IDs to lists of nodes that belong to that operation.
+    - `node_to_fused_node_map`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
 
     """
+    fusing_patterns: any
+    fusing_data: Dict[str, Tuple['BaseNode']] = field(default_factory=dict)
+    node_to_fused_node_map: Dict[str, str] = field(init=False, default_factory=dict)
 
-    def __init__(self,
-                 fusing_patterns,
-                 fusing_data: Optional[Dict[str, Tuple[BaseNode]]] = None):
-        """
-        Initialize the FusingInfo with an fqc and an optional dictionary of fusing data.
-
-        Args:
-            fusing_patterns:
-            fusing_data (Optional[Dict[str, List[BaseNode]]]): A dictionary mapping
-                fused operation IDs to sets of nodes. Default is None which then an empty mapping is set.
-
-        """
-        self._fusing_patterns = fusing_patterns
-        self._fusing_data = fusing_data or {}
-        for op_id, op_nodes in self._fusing_data.items():
+    def __post_init__(self):
+        """Validates and initializes mappings after dataclass instantiation."""
+        for op_id, op_nodes in self.fusing_data.items():
             assert isinstance(op_id, str) and op_id.startswith(FUSED_OP_ID_PREFIX), f"Found invalid fused op id: {op_id}"
             assert isinstance(op_nodes, tuple) and len(op_nodes) > 1 and all(isinstance(n, BaseNode) for n in op_nodes), f"Found invalid fused op nodes: {op_nodes}"
 
-        self._node_to_fused_node_map: Dict[str, str] = {}
-        if fusing_data:
-            self._init_node_mapping()
+        self._init_node_mapping()
 
     def _init_node_mapping(self) -> None:
         """
         Init the node-to-fused-node mapping based on the initial fusing data.
         """
-        self._node_to_fused_node_map.clear()
-        for op_id, nodes in self._fusing_data.items():
+        self.node_to_fused_node_map.clear()
+        for op_id, nodes in self.fusing_data.items():
             for node in nodes:
-                self._node_to_fused_node_map[node.name] = op_id
+                self.node_to_fused_node_map[node.name] = op_id
 
     def add_fused_operation(self, op_id: str, nodes: Tuple[BaseNode]) -> None:
         """
@@ -80,13 +71,13 @@ class FusingInfo:
         Raises:
             ValueError: If the operation ID already exists.
         """
-        if op_id in self._fusing_data:
+        if op_id in self.fusing_data:
             raise ValueError(f"Fused operation {op_id} already exists.")
         assert isinstance(nodes, tuple), f"Expected nodes to be a tuple but its type is {type(nodes)}"
-        self._fusing_data[op_id] = nodes
+        self.fusing_data[op_id] = nodes
         # Update the mapping for these nodes
         for node in nodes:
-            self._node_to_fused_node_map[node.name] = op_id
+            self.node_to_fused_node_map[node.name] = op_id
 
     def remove_fused_operation(self, op_id: str) -> None:
         """
@@ -98,13 +89,13 @@ class FusingInfo:
         Raises:
             ValueError: If the operation ID does not exist.
         """
-        if op_id not in self._fusing_data:
+        if op_id not in self.fusing_data:
             raise ValueError(f"Fused operation {op_id} does not exist.")
         # Remove nodes from the mapping
-        nodes = self._fusing_data[op_id]
+        nodes = self.fusing_data[op_id]
         for node in nodes:
-            self._node_to_fused_node_map.pop(node.name, None)
-        del self._fusing_data[op_id]
+            self.node_to_fused_node_map.pop(node.name, None)
+        del self.fusing_data[op_id]
 
     def get_fused_node_name(self, node_name: str) -> Optional[str]:
         """
@@ -116,7 +107,7 @@ class FusingInfo:
         Returns:
             The name of the fused node containing this node, or None if not fused.
         """
-        return self._node_to_fused_node_map.get(node_name)
+        return self.node_to_fused_node_map.get(node_name)
 
     def get_node_to_fused_node_map(self) -> Dict[str, str]:
         """
@@ -125,7 +116,7 @@ class FusingInfo:
         Returns:
             A dictionary mapping each original node name to its fused node name.
         """
-        return self._node_to_fused_node_map.copy()
+        return self.node_to_fused_node_map.copy()
 
     def get_fused_nodes(self, op_id: str) -> Optional[List[BaseNode]]:
         """
@@ -137,7 +128,7 @@ class FusingInfo:
         Returns:
             Optional[List[BaseNode]]: The list of nodes for the operation, or None if not found.
         """
-        return self._fusing_data.get(op_id)
+        return self.fusing_data.get(op_id)
 
     def is_node_in_fused_op(self, node: BaseNode) -> bool:
         """
@@ -149,7 +140,7 @@ class FusingInfo:
         Returns:
             bool: True if the node is in any fused operation, False otherwise.
         """
-        return any(node in nodes for nodes in self._fusing_data.values())
+        return any(node in nodes for nodes in self.fusing_data.values())
 
     def get_all_fused_operations(self) -> Dict[str, Tuple[BaseNode]]:
         """
@@ -158,7 +149,7 @@ class FusingInfo:
         Returns:
             Dict[str, List[BaseNode]]: The fusing data.
         """
-        return self._fusing_data
+        return self.fusing_data
 
 
     @staticmethod
@@ -201,7 +192,7 @@ class FusingInfo:
         """
         graph_nodes = set(graph.get_topo_sorted_nodes())  # Retrieve all nodes from the graph
 
-        for op_id, nodes in self._fusing_data.items():
+        for op_id, nodes in self.fusing_data.items():
             node_set = set(nodes)  # Set of nodes in the current fusion sequence
             node_index = {node: i for i, node in enumerate(nodes)}  # Map node to its position in sequence
 
@@ -287,14 +278,14 @@ class FusingInfo:
         """
         fusing_data_repr = "\n".join(
             f"  {op_id}: [{', '.join(node.name for node in nodes)}]"
-            for op_id, nodes in self._fusing_data.items()
+            for op_id, nodes in self.fusing_data.items()
         )
         mapping_repr = ", ".join(
-            f"{node} -> {op_id}" for node, op_id in self._node_to_fused_node_map.items()
+            f"{node} -> {op_id}" for node, op_id in self.node_to_fused_node_map.items()
         )
         return (
             f"FusingInfo(\n"
-            f"  Total fused operations: {len(self._fusing_data)}\n"
+            f"  Total fused operations: {len(self.fusing_data)}\n"
             f"  Fusing Data:\n{fusing_data_repr}\n"
             f"  Node-to-Fused Mapping:\n  {mapping_repr}\n"
             f")"
@@ -368,9 +359,7 @@ class FusingInfoGenerator:
 
             # Check if the sequence forms a valid fusion
             if is_valid_fusion(self._fusing_patterns, current_sequence):
-                # fused_op_id = f"fused_op_{fused_op_counter}"
                 fused_op_id = FusingInfo.generate_fused_op_id(current_sequence)
-                # fused_op_counter += 1
                 assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
                 fusing_info[fused_op_id] = tuple(current_sequence)
                 fused_nodes.update(current_sequence)
