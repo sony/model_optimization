@@ -82,6 +82,24 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
                                                               running_gptq=False)
         return graph_with_fusion_metadata
 
+    def test_disable_act_quantization(self, graph_with_fusion_metadata):
+        """Tests that the correct nodes have activation quantization disabled after
+        calling _disable_nodes_activation_quantization.
+        """
+        for node in graph_with_fusion_metadata.nodes:
+            for qc in node.candidates_quantization_cfg:
+                qc.activation_quantization_cfg.enable_activation_quantization = True
+
+        graph_with_fusion_metadata._disable_nodes_activation_quantization()
+        disabled_nodes = [
+            node.name for node in graph_with_fusion_metadata.nodes
+            if all(not qc.activation_quantization_cfg.enable_activation_quantization
+                   for qc in node.candidates_quantization_cfg)
+        ]
+
+        expected = ['conv', 'linear']
+        assert sorted(disabled_nodes) == expected, f"Expected {expected}, but got {sorted(disabled_nodes)}"
+
     def test_fail_validate_after_node_removal(self, graph_with_fusion_metadata):
         """
         Tests validation failure after removing a node that is part of a fusion pattern.

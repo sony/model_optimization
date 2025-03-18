@@ -15,7 +15,7 @@
 
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams, FrameworkQuantizationCapabilities
 
-from typing import Set, Optional, List, Dict, Any
+from typing import Set, Optional, List, Dict, Any, Tuple
 from model_compression_toolkit.core.common import BaseNode
 import copy
 
@@ -34,7 +34,9 @@ class FusingInfo:
 
     """
 
-    def __init__(self, fqc: FrameworkQuantizationCapabilities, fusing_data: Optional[Dict[str, List[BaseNode]]] = None):
+    def __init__(self,
+                 fqc: FrameworkQuantizationCapabilities,
+                 fusing_data: Optional[Dict[str, Tuple[BaseNode]]] = None):
         """
         Initialize the FusingInfo with an fqc and an optional dictionary of fusing data.
 
@@ -46,6 +48,10 @@ class FusingInfo:
         """
         self.fqc = fqc
         self._fusing_data = fusing_data or {}
+        for op_id, op_nodes in self._fusing_data.items():
+            assert isinstance(op_id, str) and op_id.startswith("FusedNode_"), f"Found invalid fused op id: {op_id}"
+            assert isinstance(op_nodes, tuple) and len(op_nodes) > 1 and all(isinstance(n, BaseNode) for n in op_nodes), f"Found invalid fused op nodes: {op_nodes}"
+
         self._node_to_fused_node_map: Dict[str, str] = {}
         if fusing_data:
             self._init_node_mapping()
@@ -249,27 +255,6 @@ class FusingInfo:
                             f"to node {node.name}, which is invalid."
                         )
 
-
-    def get_nodes_to_disable_act_quantization(self):
-        """
-        Get a list of nodes for which activation quantization should be disabled.
-
-        In a fused operation, activation quantization is typically disabled for all nodes
-        except the last one in the sequence to ensure proper data flow and prevent
-        redundant quantization operations.
-
-        Returns:
-            List[BaseNode]: A list of nodes for which activation quantization should be disabled.
-        """
-        res_nodes = []
-
-        # Iterate over all fused sequences in _fusing_data
-        for nodes in self._fusing_data.values():
-            # Add all nodes except the last one in each fusion sequence
-            res_nodes.extend(nodes[:-1])
-
-        return res_nodes
-
     def is_nodes_eligible_to_be_fused(self, nodes: List[BaseNode]) -> bool:
         """
         Check whether the given nodes are eligible to be fused based on predefined fusing patterns.
@@ -353,7 +338,7 @@ class FusingInfoGenerator:
         nodes = graph.get_topo_sorted_nodes()
 
         # Initialize structures to track fusions
-        fusing_info: Dict[str, List['BaseNode']] = {}
+        fusing_info: Dict[str, Tuple['BaseNode']] = {}
         fused_nodes = set()  # Tracks nodes already in a fusion
 
         # Process each node in topological order
@@ -392,7 +377,7 @@ class FusingInfoGenerator:
                 fused_op_id = FusingInfo.generate_fused_op_id(current_sequence)
                 # fused_op_counter += 1
                 assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
-                fusing_info[fused_op_id] = current_sequence
+                fusing_info[fused_op_id] = tuple(current_sequence)
                 fused_nodes.update(current_sequence)
 
         return FusingInfo(fusing_data=fusing_info, fqc=self.fqc)

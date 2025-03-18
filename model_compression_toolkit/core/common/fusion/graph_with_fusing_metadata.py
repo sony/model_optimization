@@ -153,12 +153,9 @@ class GraphWithFusingMetadata:
 
     def _disable_nodes_activation_quantization(self):
         """
-        Disable activation for non-quantization needed due to fusion
-        Args:
-            nodes: nodes to update their activation quantization
+        Disable activation quantization for nodes inside the fused operators.
         """
-        # TODO: temp disable activation quantization to keep similar functionality. This will be removed in the future
-        nodes_to_disable = self._fusing_info.get_nodes_to_disable_act_quantization()
+        nodes_to_disable = [node for nodes in self._fusing_info.get_all_fused_operations().values() for node in nodes[:-1]]
         for node in nodes_to_disable:
             for qc in node.candidates_quantization_cfg:
                 qc.activation_quantization_cfg.enable_activation_quantization = False

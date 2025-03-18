@@ -169,15 +169,6 @@ def test_fusing_info_validation(mock_graph, fusing_info_generator):
     fi.validate(mock_graph)
 
 
-def test_fusing_info_disable_act_quantization(mock_graph, fusing_info_generator, mock_nodes):
-    """
-    Tests that the correct nodes have activation quantization disabled.
-    - Expects only Conv2D and Linear nodes to have activation quantization disabled.
-    """
-    fi = fusing_info_generator.generate_fusing_info(mock_graph)
-    nodes_to_disable = fi.get_nodes_to_disable_act_quantization()
-    conv_node, _, linear_node, _ = mock_nodes
-    assert nodes_to_disable == [conv_node, linear_node], "Incorrect nodes to disable activation quantization"
 
 
 def test_fusing_info_validation_failure_topology_change(mock_graph, fusing_info_generator, mock_nodes):
