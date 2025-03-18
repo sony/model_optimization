@@ -15,7 +15,7 @@
 
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams, FrameworkQuantizationCapabilities
 
-from typing import Set, Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any, Tuple
 from model_compression_toolkit.core.common import BaseNode
 import copy
 
@@ -39,18 +39,18 @@ class FusingInfo:
     """
 
     def __init__(self,
-                 fqc: FrameworkQuantizationCapabilities,
+                 fusing_patterns,
                  fusing_data: Optional[Dict[str, Tuple[BaseNode]]] = None):
         """
         Initialize the FusingInfo with an fqc and an optional dictionary of fusing data.
 
         Args:
-            fqc: FrameworkQuantizationCapabilities the fusing info was derived from.
+            fusing_patterns:
             fusing_data (Optional[Dict[str, List[BaseNode]]]): A dictionary mapping
                 fused operation IDs to sets of nodes. Default is None which then an empty mapping is set.
 
         """
-        self.fqc = fqc
+        self._fusing_patterns = fusing_patterns
         self._fusing_data = fusing_data or {}
         for op_id, op_nodes in self._fusing_data.items():
             assert isinstance(op_id, str) and op_id.startswith(FUSED_OP_ID_PREFIX), f"Found invalid fused op id: {op_id}"
@@ -273,14 +273,12 @@ class FusingInfo:
         Returns:
             bool: True if the nodes can be fused according to fusing patterns, otherwise False.
         """
-        fusing_patterns = self.fqc.get_fusing_patterns()
-
         # If no fusing patterns are defined, fusion is not possible
-        if not fusing_patterns:
+        if not self._fusing_patterns:
             return False
 
         # Check if the provided nodes match a valid fusion pattern
-        return is_valid_fusion(fusing_patterns=fusing_patterns, nodes=nodes)
+        return is_valid_fusion(fusing_patterns=self._fusing_patterns, nodes=nodes)
 
 
     def __repr__(self) -> str:
@@ -304,14 +302,8 @@ class FusingInfo:
 
 
 class FusingInfoGenerator:
-    def __init__(self, fqc):
-        """
-        Initialize the FusingInfoGenerator with a TPC object.
-
-        Args:
-            fqc: Target Platform Capabilities object providing fusing patterns.
-        """
-        self.fqc = fqc
+    def __init__(self, fusing_patterns):
+        self._fusing_patterns = fusing_patterns
 
     def generate_fusing_info(self, graph) -> FusingInfo:
         """
@@ -331,13 +323,11 @@ class FusingInfoGenerator:
             - Fusions are linear sequences (each node has exactly one successor).
             - Each node belongs to at most one fused operation.
         """
-        # Retrieve fusing patterns from TPC
-        fusing_patterns = self.fqc.get_fusing_patterns()
-        if not fusing_patterns:
-            return FusingInfo(fqc=self.fqc)
+        if not self._fusing_patterns:
+            return FusingInfo(fusing_patterns=self._fusing_patterns)
 
         # Determine the maximum length of fusing patterns
-        max_layers_fusing = max(len(p) for p in fusing_patterns)
+        max_layers_fusing = max(len(p) for p in self._fusing_patterns)
 
         # Get nodes in topological order
         nodes = graph.get_topo_sorted_nodes()
@@ -352,7 +342,7 @@ class FusingInfoGenerator:
                 continue  # Skip nodes already fused
 
             # Start with all possible patterns
-            candidate_patterns = copy.deepcopy(fusing_patterns)
+            candidate_patterns = copy.deepcopy(self._fusing_patterns)
             current_sequence = []
             current_node = node
 
@@ -377,7 +367,7 @@ class FusingInfoGenerator:
                 current_node = next_node
 
             # Check if the sequence forms a valid fusion
-            if is_valid_fusion(fusing_patterns, current_sequence):
+            if is_valid_fusion(self._fusing_patterns, current_sequence):
                 # fused_op_id = f"fused_op_{fused_op_counter}"
                 fused_op_id = FusingInfo.generate_fused_op_id(current_sequence)
                 # fused_op_counter += 1
@@ -385,7 +375,7 @@ class FusingInfoGenerator:
                 fusing_info[fused_op_id] = tuple(current_sequence)
                 fused_nodes.update(current_sequence)
 
-        return FusingInfo(fusing_data=fusing_info, fqc=self.fqc)
+        return FusingInfo(fusing_data=fusing_info, fusing_patterns=self._fusing_patterns)
 
 
 def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx: int = 0) -> List[List[Any]]:

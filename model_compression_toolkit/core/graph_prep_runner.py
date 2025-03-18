@@ -163,10 +163,8 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     # Layer fusing
     ######################################
-    fusing_info = FusingInfoGenerator(fqc).generate_fusing_info(transformed_graph)
+    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(transformed_graph)
     transformed_graph = GraphWithFusingMetadata(transformed_graph, fusing_info)
-
-
 
     ######################################
     # Channel equalization

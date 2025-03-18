@@ -38,15 +38,11 @@ class MockBaseNode:
 
 
 @pytest.fixture
-def mock_fqc():
+def fusing_patterns():
     """
-    Creates a mock FrameworkQuantizationCapabilities object.
     - Returns predefined fusing patterns: Conv2D + ReLU and Linear + Softmax.
     """
-    mock = Mock(spec=FrameworkQuantizationCapabilities)
-    mock.get_fusing_patterns.return_value = [["Conv2d", "ReLU"],
-                                             ["Linear", "Softmax"]]
-    return mock
+    return [["Conv2d", "ReLU"], ["Linear", "Softmax"]]
 
 
 @pytest.fixture
@@ -103,11 +99,11 @@ def mock_graph(mock_nodes):
 
 
 @pytest.fixture
-def fusing_info_generator(mock_fqc):
+def fusing_info_generator(fusing_patterns):
     """
-    Creates a FusingInfoGenerator using the mock quantization capabilities.
+    Creates a FusingInfoGenerator using the fusing patterns.
     """
-    return FusingInfoGenerator(mock_fqc)
+    return FusingInfoGenerator(fusing_patterns)
 
 
 def test_fusing_info_number_of_operations(mock_graph, fusing_info_generator):
