@@ -21,8 +21,10 @@ from tensorflow.keras import layers
 
 from mct_quantizers import QuantizationMethod, KerasQuantizationWrapper
 from mct_quantizers.keras.metadata import MetadataLayer
+from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
+    WeightsUniformInferableQuantizer
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.keras.constants import KERNEL, DEPTHWISE_KERNEL
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.ptq import keras_post_training_quantization
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
     AttributeQuantizationConfig, Signedness
@@ -115,9 +117,9 @@ def tpc(quant_method, per_channel):
     return _get_tpc(quant_method, per_channel)
 
 
-@pytest.fixture(params=[model_basic, model_residual])
-def model(request):
-    return request.param()
+@pytest.fixture(params=[(model_basic, {"expected_num_quantized": 1}), (model_residual, {"expected_num_quantized": 3})])
+def model_scenario(request):
+    return request.param
 
 
 class TestPTQWithQuantizationMethods:
@@ -125,12 +127,13 @@ class TestPTQWithQuantizationMethods:
     #   1) activation only, W&A, LUT quantizer (separate)
     #   2) advanced models and operators
 
-    def test_ptq_weights_only_quantization_methods(self, model, rep_data_gen, quant_method, per_channel, tpc):
-
+    def test_ptq_weights_only_quantization_methods(self, model_scenario, rep_data_gen, quant_method, per_channel, tpc):
+        model, expected_values = model_scenario
+        model = model()
         q_model, quantization_info = keras_post_training_quantization(model, rep_data_gen,
                                                                       target_platform_capabilities=tpc)
 
-        self._verify_quantized_model_structure(model, q_model, quantization_info)
+        self._verify_quantized_model_structure(q_model, quantization_info, expected_values['expected_num_quantized'])
 
         # Assert quantization properties
         quantized_conv_layers = [l for l in q_model.layers if isinstance(l, KerasQuantizationWrapper)]
@@ -150,17 +153,20 @@ class TestPTQWithQuantizationMethods:
         assert weights_quantizer.quantization_method[0] == quant_method
 
         if quant_method == QuantizationMethod.POWER_OF_TWO:
+            assert isinstance(weights_quantizer, WeightsPOTInferableQuantizer)
             assert len(weights_quantizer.threshold) == exp_params_shape
             for t in weights_quantizer.threshold:
                 assert np.log2(np.abs(t)).astype(int) == np.log2(np.abs(t))
         elif quant_method == QuantizationMethod.SYMMETRIC:
+            assert isinstance(weights_quantizer, WeightsSymmetricInferableQuantizer)
             assert len(weights_quantizer.threshold) == exp_params_shape
         elif quant_method == QuantizationMethod.UNIFORM:
+            assert isinstance(weights_quantizer, WeightsUniformInferableQuantizer)
             assert len(weights_quantizer.min_range) == exp_params_shape
             assert len(weights_quantizer.max_range) == exp_params_shape
 
     @staticmethod
-    def _verify_quantized_model_structure(model, q_model, quantization_info):
+    def _verify_quantized_model_structure(q_model, quantization_info, expected_num_quantized):
         assert isinstance(q_model, keras.Model)
         assert quantization_info is not None and isinstance(quantization_info, UserInformation)
 
@@ -169,9 +175,6 @@ class TestPTQWithQuantizationMethods:
             "Expects BN folding in quantized model."
         assert len([l for l in q_model.layers if isinstance(l, MetadataLayer)]) == 1, \
             "Expects quantized model to have a metadata stored in a dedicated layer."
-        original_conv_layers = [l for l in model.layers if
-                                isinstance(l, (layers.Conv2D, layers.DepthwiseConv2D, layers.Dense))]
-        quantized_conv_layers = [l for l in q_model.layers if isinstance(l, KerasQuantizationWrapper)]
-        assert len(original_conv_layers) > 0
-        assert len(original_conv_layers) == len(quantized_conv_layers), \
+        quantized_layers = [l for l in q_model.layers if isinstance(l, KerasQuantizationWrapper)]
+        assert len(quantized_layers) == expected_num_quantized, \
             "Expects all conv layers from the original model to be wrapped with a KerasQuantizationWrapper."
