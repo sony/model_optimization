@@ -16,6 +16,7 @@
 import copy
 from typing import List
 
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
@@ -45,7 +46,13 @@ class GraphFuser:
             Mapping of original node names to their fused node names
         """
         # Iterate through each group of nodes to be fused
-        graph = copy.deepcopy(fused_graph) # this will be the new fused graph
+        graph = copy.deepcopy(fused_graph)
+        fi = FusingInfoGenerator(fused_graph.get_fusing_info().fqc).generate_fusing_info(fused_graph.get_internal_graph())
+        if fi != graph.get_fusing_info():
+            raise ValueError(
+                f"Found mismatch between expected fusing information and existing fusing information. Expected: \n"
+                f"{fi}, Existing: \n{graph.get_fusing_info()}")
+
         for fused_node_id, fused_nodes_list in graph.get_fusing_info().get_all_fused_operations().items():
             new_fused_node = self._create_fused_node(fused_node_id, fused_nodes_list)
             new_fused_nodes_list = [graph.get_internal_graph().find_node_by_name(n.name)[0] for n in fused_nodes_list]
