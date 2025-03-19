@@ -58,8 +58,8 @@ class BitWidthConfig:
     manual_weights_bit_width_selection_list: List[ManualWeightsBitWidthSelection] = field(default_factory=list)
 
     def set_manual_activation_bit_width(self,
-                                        filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
-                                        bit_widths: Union[List[int], int]):
+                                            filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
+                                            bit_widths: Union[List[int], int]):
         """
         Add a manual bit-width selection for activation to the configuration.
 
@@ -77,8 +77,7 @@ class BitWidthConfig:
     def set_manual_weights_bit_width(self,
                                         filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
                                         bit_widths: Union[List[int], int],
-                                        attrs: Union[List[WeightAttrT], WeightAttrT]
-                                     ):
+                                        attrs: Union[List[WeightAttrT], WeightAttrT]):
         """
         Add a manual bit-width selection for weights to the configuration.
 
@@ -193,7 +192,7 @@ class BitWidthConfig:
                     unit_nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width})
                 elif type(manual_bit_width_selection) is ManualWeightsBitWidthSelection:
                     if len(n.get_node_weights_attributes()) == 0:
-                        Logger.critical(f'The requested attribute to change the bit width for {n} is not existing.')
+                        Logger.critical(f'The requested attribute to change the bit width for {n} does not exist.')
 
                     if n in unit_nodes_to_change_bit_width:
                         if unit_nodes_to_change_bit_width[n][1] == manual_bit_width_selection.attr:
