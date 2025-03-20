@@ -51,25 +51,34 @@ class ResourceUtilization:
     bops: float = np.inf
 
     def weight_restricted(self):
-        return self.weights_memory < np.inf
+        return self._is_restricted(self.weights_memory)
 
     def activation_restricted(self):
-        return self.activation_memory < np.inf
+        return self._is_restricted(self.activation_memory)
 
     def total_mem_restricted(self):
-        return self.total_memory < np.inf
+        return self._is_restricted(self.total_memory)
 
     def bops_restricted(self):
-        return self.bops < np.inf
+        return self._is_restricted(self.bops)
 
-    def get_resource_utilization_dict(self) -> Dict[RUTarget, float]:
+    def get_resource_utilization_dict(self, restricted_only: bool = False) -> Dict[RUTarget, float]:
         """
-        Returns: a dictionary with the ResourceUtilization object's values for each resource utilization target.
+        Get resource utilization as a dictionary.
+
+        Args:
+            restricted_only: whether to include only targets with restricted utilization.
+
+        Returns:
+            A dictionary containing the resource utilization with targets as keys.
         """
-        return {RUTarget.WEIGHTS: self.weights_memory,
-                RUTarget.ACTIVATION: self.activation_memory,
-                RUTarget.TOTAL: self.total_memory,
-                RUTarget.BOPS: self.bops}
+        ru_dict = {RUTarget.WEIGHTS: self.weights_memory,
+                   RUTarget.ACTIVATION: self.activation_memory,
+                   RUTarget.TOTAL: self.total_memory,
+                   RUTarget.BOPS: self.bops}
+        if restricted_only:
+            ru_dict = {k: v for k, v in ru_dict.items() if self._is_restricted(v)}
+        return ru_dict
 
     def is_satisfied_by(self, ru: 'ResourceUtilization') -> bool:
         """
@@ -114,3 +123,6 @@ class ResourceUtilization:
         if RUTarget.BOPS in targets:
             summary.append(f"BOPS: {self.bops}")
         return ', '.join(summary)
+
+    def _is_restricted(self, v):
+        return v < np.inf
