@@ -57,6 +57,8 @@ FLOAT_BITWIDTH = 32
 # In Mixed-Precision, a node can have multiple candidates for weights and activations quantization configuration.
 # In order to display a single view of a node (for example, for logging in TensorBoard) we need to track the attributes
 # that are shared among different candidates:
+WEIGHTS_ATTRIBUTE = 'weights'
+ACTIVATION_ATTRIBUTE = 'activation'
 WEIGHTS_NBITS_ATTRIBUTE = 'weights_n_bits'
 CORRECTED_BIAS_ATTRIBUTE = 'corrected_bias'
 ACTIVATION_N_BITS_ATTRIBUTE = 'activation_n_bits'
