@@ -16,6 +16,8 @@ from typing import Callable, Union
 from functools import partial
 
 from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
@@ -181,6 +183,7 @@ if FOUND_TORCH:
 
         user_info.mixed_precision_cfg = bit_widths_config
 
+        qat_model.graph = qat_model.graph.get_internal_graph()
         # Remove fw_info from graph to enable saving the pytorch model (fw_info can not be pickled)
         delattr(qat_model.graph, 'fw_info')
 

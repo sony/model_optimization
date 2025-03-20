@@ -92,7 +92,7 @@ class LayerFusingTest1(BaseLayerFusingTest):
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
                                            attach2fw=self.attach2fw)
 
-        self._compare(graph.fused_nodes)
+        self._compare(graph.get_fusing_info().get_all_fused_operations().values())
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
@@ -142,7 +142,7 @@ class LayerFusingTest2(BaseLayerFusingTest):
                                                custom_tpc_opset_to_layer={"AnyAct": CustomOpsetLayers([ReLU, relu6, relu, SiLU, Sigmoid,
                                                                                       LayerFilterParams(Hardtanh, min_val=0)])}))
 
-        self._compare(graph.fused_nodes)
+        self._compare(graph.get_fusing_info().get_all_fused_operations().values())
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
@@ -202,7 +202,7 @@ class LayerFusingTest3(BaseLayerFusingTest):
                                            qc=QuantizationConfig(
                                                custom_tpc_opset_to_layer={"AnyAct": CustomOpsetLayers([ReLU, relu6, relu])}))
 
-        self._compare(graph.fused_nodes)
+        self._compare(graph.get_fusing_info().get_all_fused_operations().values())
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):
@@ -270,7 +270,7 @@ class LayerFusingTest4(BaseLayerFusingTest):
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
                                            attach2fw=AttachTpcToPytorch())
 
-        self._compare(graph.fused_nodes)
+        self._compare(graph.get_fusing_info().get_all_fused_operations().values())
 
     class LayerFusingNetTest(nn.Module):
         def __init__(self):

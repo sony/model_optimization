@@ -23,6 +23,7 @@ from networkx import topological_sort
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
@@ -224,8 +225,14 @@ class PytorchModel(torch.nn.Module):
 
         """
         super(PytorchModel, self).__init__()
+
         self.graph = copy.deepcopy(graph)
-        delattr(self.graph, 'fqc')
+        if isinstance(graph, Graph): # Pruning still uses Graph and not GraphWithFusingMetadata
+            delattr(self.graph, 'fqc')
+        elif isinstance(graph, GraphWithFusingMetadata):
+            delattr(self.graph.get_internal_graph(), 'fqc')
+        else:
+            raise ValueError(f"The graph should be of type {type(Graph)} or {type(GraphWithFusingMetadata)} but is {type(graph)}.")
 
         self.node_sort = list(topological_sort(self.graph))
         self.node_to_activation_quantization_holder = {}
