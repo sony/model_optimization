@@ -12,11 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+from collections import defaultdict
 
-from typing import Callable, Dict, List
+from tqdm import tqdm
+
+from typing import Dict, List, Tuple
 
 import numpy as np
 
+from model_compression_toolkit.constants import EPS
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -29,7 +34,10 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     TargetInclusionCriterion, BitwidthMode
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_ru_helper import \
     MixedPrecisionRUHelper
+from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
+    MixedPrecisionIntegerLPSolver
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.logger import Logger
 
 
@@ -43,8 +51,7 @@ class MixedPrecisionSearchManager:
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
-                 target_resource_utilization: ResourceUtilization,
-                 original_graph: Graph = None):
+                 target_resource_utilization: ResourceUtilization):
         """
 
         Args:
@@ -54,35 +61,165 @@ class MixedPrecisionSearchManager:
             sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
                 a bit-width configuration for the MP model.
             target_resource_utilization: Target Resource Utilization to bound our feasible solution space s.t the configuration does not violate it.
-            original_graph: In case we have a search over a virtual graph (if we have BOPS utilization target), then this argument
-                will contain the original graph (for config reconstruction purposes).
         """
 
-        self.graph = graph
-        self.original_graph = graph if original_graph is None else original_graph
         self.fw_info = fw_info
         self.fw_impl = fw_impl
+
+        self.original_graph = graph
+        # graph for mp search
+        self.mp_graph, self.using_virtual_graph = self._get_mp_graph(graph, target_resource_utilization)
+        del graph  # so that it's not used by mistake
+
         self.sensitivity_evaluator = sensitivity_evaluator
-        self.layer_to_bitwidth_mapping = self.get_search_space()
-        self.compute_metric_fn = self.get_sensitivity_metric()
-        self._cuts = None
-
-        # To define RU Total constraints we need to compute weights and activations even if they have no constraints
-        # TODO currently this logic is duplicated in linear_programming.py
-        targets = target_resource_utilization.get_restricted_targets()
-        if RUTarget.TOTAL in targets:
-            targets = targets.union({RUTarget.ACTIVATION, RUTarget.WEIGHTS}) - {RUTarget.TOTAL}
-        self.ru_targets_to_compute = targets
-
-        self.ru_helper = MixedPrecisionRUHelper(graph, fw_info, fw_impl)
         self.target_resource_utilization = target_resource_utilization
-        self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
-        self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
-        self.min_ru = self.ru_helper.compute_utilization(self.ru_targets_to_compute, self.min_ru_config)
-        self.non_conf_ru_dict = self.ru_helper.compute_utilization(self.ru_targets_to_compute, None)
 
-        self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.graph,
+        self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
+        self.layer_to_bitwidth_mapping = self.get_search_space()
+
+        self.ru_targets = target_resource_utilization.get_restricted_targets()
+        self.ru_helper = MixedPrecisionRUHelper(self.mp_graph, fw_info, fw_impl)
+
+        self.min_ru_config = self.mp_graph.get_min_candidates_config(fw_info)
+        self.max_ru_config = self.mp_graph.get_max_candidates_config(fw_info)
+        self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, self.min_ru_config)
+
+        self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.mp_graph,
                                                                        original_graph=self.original_graph)
+
+    def search(self) -> List[int]:
+        """
+        Run mixed precision search.
+
+        Returns:
+            Indices of the selected bit-widths candidates.
+        """
+        candidates_sensitivity = self._build_sensitivity_mapping()
+        candidates_ru = self._compute_relative_ru_matrices()
+        rel_target_ru = self._get_relative_ru_constraint_per_mem_element()
+        solver = MixedPrecisionIntegerLPSolver(candidates_sensitivity, candidates_ru, rel_target_ru)
+        config = solver.run()
+
+        if self.using_virtual_graph:
+            config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(config)
+        return config
+
+    def _get_relative_ru_constraint_per_mem_element(self) -> Dict[RUTarget, np.ndarray]:
+        """
+        Computes resource utilization constraint with respect to the minimal bit configuration, i.e. corresponding
+        constraint for each memory element is the relative utilization between the target utilization and
+        element's utilization for min-bit configuration.
+
+        Returns:
+            A dictionary of relative resource utilization constraints per ru target.
+
+        Raises:
+            ValueError: if target resource utilization cannot be satisfied (utilization for the minimal bit
+              configuration exceeds the requested target utilization for any target).
+        """
+        target_ru = self.target_resource_utilization.get_resource_utilization_dict(restricted_only=True)
+        rel_target_ru = {
+            ru_target: ru - self.min_ru[ru_target] for ru_target, ru in target_ru.items()
+        }
+        unsatisfiable_targets = {
+            ru_target.value: target_ru[ru_target] for ru_target, ru in rel_target_ru.items() if any(ru < 0)
+        }
+        if unsatisfiable_targets:
+            raise ValueError(f"The model cannot be quantized to meet the specified resource utilization for the "
+                             f"following targets: {unsatisfiable_targets}")
+        return rel_target_ru
+
+    def _build_sensitivity_mapping(self, eps: float = EPS) -> Dict[int, Dict[int, float]]:
+        """
+        This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
+        It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
+        For each node and some possible node's bitwidth (according to the given search space), we use
+        the framework function compute_metric_fn in order to infer
+        a batch of images, and compute (using the inference results) the sensitivity metric of
+        the configured mixed-precision model.
+
+        Args:
+            eps: Epsilon value to manually increase metric value (if necessary) for numerical stability
+
+        Returns:
+            Mapping from each node's index in a graph, to a dictionary from the bitwidth index (of this node) to
+            the sensitivity of the model.
+
+        """
+
+        Logger.info('Starting to evaluate metrics')
+        layer_to_metrics_mapping = {}
+
+        compute_metric = self.sensitivity_evaluator.compute_metric
+        if self.using_virtual_graph:
+            origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
+                self.max_ru_config)
+            max_config_value = compute_metric(origin_max_config)
+        else:
+            max_config_value = compute_metric(self.max_ru_config)
+
+        for node_idx, layer_possible_bitwidths_indices in tqdm(self.layer_to_bitwidth_mapping.items(),
+                                                               total=len(self.layer_to_bitwidth_mapping)):
+            layer_to_metrics_mapping[node_idx] = {}
+
+            for bitwidth_idx in layer_possible_bitwidths_indices:
+                if self.max_ru_config[node_idx] == bitwidth_idx:
+                    # This is a computation of the metric for the max configuration, assign pre-calculated value
+                    layer_to_metrics_mapping[node_idx][bitwidth_idx] = max_config_value
+                    continue
+
+                # Create a configuration that differs at one layer only from the baseline model
+                mp_model_configuration = self.max_ru_config.copy()
+                mp_model_configuration[node_idx] = bitwidth_idx
+
+                # Build a distance matrix using the function we got from the framework implementation.
+                if self.using_virtual_graph:
+                    # Reconstructing original graph's configuration from virtual graph's configuration
+                    origin_mp_model_configuration = \
+                        self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
+                            mp_model_configuration,
+                            changed_virtual_nodes_idx=[node_idx],
+                            original_base_config=origin_max_config)
+                    origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
+                                                    c != origin_mp_model_configuration[i]]
+                    metric_value = compute_metric(
+                        origin_mp_model_configuration,
+                        origin_changed_nodes_indices,
+                        origin_max_config)
+                else:
+                    metric_value = compute_metric(
+                        mp_model_configuration,
+                        [node_idx],
+                        self.max_ru_config)
+
+                layer_to_metrics_mapping[node_idx][bitwidth_idx] = max(metric_value, max_config_value + eps)
+
+        # Finalize distance metric mapping
+        self.finalize_distance_metric(layer_to_metrics_mapping)
+
+        return layer_to_metrics_mapping
+
+    def _get_mp_graph(self, graph: Graph, target_resource_utilization: ResourceUtilization) -> Tuple[Graph, bool]:
+        """
+        Get graph for mixed precision search. Virtual graph is built if bops is restricted and both activation and
+        weights are configurable.
+
+        Args:
+            graph: input graph.
+            target_resource_utilization: target resource utilization.
+
+        Returns:
+            Graph for mixed precision search (virtual or original), and a boolean flag whether a virtual graph has been
+            constructed.
+        """
+        if (target_resource_utilization.bops_restricted() and
+                graph.has_any_configurable_activation() and
+                graph.has_any_configurable_weights()):
+            mp_graph = substitute(copy.deepcopy(graph),
+                                  self.fw_impl.get_substitutions_virtual_weights_activation_coupling())
+            return mp_graph, True
+
+        return graph, False
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
@@ -94,56 +231,38 @@ class MixedPrecisionSearchManager:
         """
 
         indices_mapping = {}
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes(self.fw_info)
-        for idx, n in enumerate(nodes_to_configure):
+        for idx, n in enumerate(self.mp_topo_configurable_nodes):
             # For each node, get all possible bitwidth indices for it
             # (which is a list from 0 to the length of the candidates mp_config list of the node).
             indices_mapping[idx] = list(range(len(n.candidates_quantization_cfg)))  # all search_methods space
         return indices_mapping
 
-    def get_sensitivity_metric(self) -> Callable:
+    def _compute_relative_ru_matrices(self) -> Dict[RUTarget, np.ndarray]:
         """
-
-        Returns: Return a function (from the framework implementation) to compute a metric that
-        indicates the similarity of the mixed-precision model (to the float model) for a given
-        mixed-precision configuration.
-
-        """
-        # Get from the framework an evaluation function on how a MP configuration,
-        # affects the expected loss.
-
-        return self.sensitivity_evaluator.compute_metric
-
-    def compute_resource_utilization_matrix(self, target: RUTarget) -> np.ndarray:
-        """
-        Computes and builds a resource utilization matrix, to be used for the mixed-precision search problem formalization.
+        Computes and builds a resource utilization matrix for all restricted targets, to be used for the
+        mixed-precision search problem formalization.
         Utilization is computed relative to the minimal configuration, i.e. utilization for it will be 0.
 
-        Args:
-            target: The resource target for which the resource utilization is calculated (a RUTarget value).
-
         Returns:
-            A resource utilization matrix of shape (num configurations, num memory elements). Num memory elements
-            depends on the target, e.g. num nodes or num cuts, for which utilization is computed.
+            A dictionary containing resource utilization matrix of shape (num configurations, num memory elements)
+            per ru target. Num memory elements depends on the target, e.g. num cuts or 1 for cumulative metrics.
         """
-        assert isinstance(target, RUTarget), f"{target} is not a valid resource target"
-
-        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
-
-        ru_matrix = []
-        for c, c_n in enumerate(configurable_sorted_nodes):
+        rus_per_candidate = defaultdict(list)
+        for c, c_n in enumerate(self.mp_topo_configurable_nodes):
             for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
                 if candidate_idx == self.min_ru_config[c]:
-                    candidate_rus = self.min_ru[target]
+                    candidate_rus = self.min_ru
                 else:
-                    candidate_rus = self.compute_node_ru_for_candidate(c, candidate_idx, target)
+                    candidate_rus = self.compute_ru_for_candidate(c, candidate_idx)
 
-                ru_matrix.append(np.asarray(candidate_rus))
+                for target, ru in candidate_rus.items():
+                    rus_per_candidate[target].append(ru)
 
-        np_ru_matrix = np.array(ru_matrix) - self.min_ru[target]    # num configurations X num elements
-        return np_ru_matrix
+        # Each target contains a matrix of num configurations X num elements
+        relative_rus = {target: np.array(ru) - self.min_ru[target] for target, ru in rus_per_candidate.items()}
+        return relative_rus
 
-    def compute_node_ru_for_candidate(self, conf_node_idx: int, candidate_idx: int, target: RUTarget) -> np.ndarray:
+    def compute_ru_for_candidate(self, conf_node_idx: int, candidate_idx: int) -> Dict[RUTarget, np.ndarray]:
         """
         Computes a resource utilization vector after replacing the given node's configuration candidate in the minimal
         target configuration with the given candidate index.
@@ -151,13 +270,13 @@ class MixedPrecisionSearchManager:
         Args:
             conf_node_idx: The index of a node in a sorted configurable nodes list.
             candidate_idx: Quantization config candidate to be used for the node's resource utilization computation.
-            target: The target for which the resource utilization is calculated (a RUTarget value).
 
-        Returns: Node's resource utilization vector.
+        Returns:
+            Node's resource utilization vector.
 
         """
         cfg = self.replace_config_in_index(self.min_ru_config, conf_node_idx, candidate_idx)
-        return self.ru_helper.compute_utilization({target}, cfg)[target]
+        return self.ru_helper.compute_utilization(self.ru_targets, cfg)
 
     @staticmethod
     def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:
@@ -191,7 +310,7 @@ class MixedPrecisionSearchManager:
         act_qcs, w_qcs = self.ru_helper.get_quantization_candidates(config)
         ru = self.ru_helper.ru_calculator.compute_resource_utilization(
             target_criterion=TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs,
-            w_qcs=w_qcs, ru_targets=self.ru_targets_to_compute, allow_unused_qcs=True)
+            w_qcs=w_qcs, ru_targets=self.ru_targets, allow_unused_qcs=True)
         return ru
 
     def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[int, Dict[int, float]]):

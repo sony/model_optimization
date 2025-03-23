@@ -431,8 +431,7 @@ class ResourceUtilizationCalculator:
         Returns:
             Node's activation utilization.
         """
-        if qc and bitwidth_mode != BitwidthMode.QCustom:
-            raise ValueError(self.unexpected_qc_error)
+        self._validate_custom_qcs(qc, bitwidth_mode)
 
         if target_criterion:
             # only check whether the node meets the criterion
@@ -470,9 +469,6 @@ class ResourceUtilizationCalculator:
             - Total BOPS count of the network.
             - Detailed BOPS count per node.
         """
-        self._validate_custom_qcs(act_qcs, bitwidth_mode)
-        self._validate_custom_qcs(w_qcs, bitwidth_mode)
-
         nodes_bops = {}
         for n in self.graph.get_topo_sorted_nodes():
             w_qc = w_qcs.get(n.name) if w_qcs else None
