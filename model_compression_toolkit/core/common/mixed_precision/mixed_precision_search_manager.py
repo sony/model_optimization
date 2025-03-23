@@ -17,7 +17,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -199,7 +199,7 @@ class MixedPrecisionSearchManager:
 
         return layer_to_metrics_mapping
 
-    def _get_mp_graph(self, graph, target_resource_utilization):
+    def _get_mp_graph(self, graph: Graph, target_resource_utilization: ResourceUtilization) -> Tuple[Graph, bool]:
         """
         Get graph for mixed precision search. Virtual graph is built if bops is restricted and both activation and
         weights are configurable.
@@ -209,7 +209,8 @@ class MixedPrecisionSearchManager:
             target_resource_utilization: target resource utilization.
 
         Returns:
-            Graph for mixed precision search (virtual or original).
+            Graph for mixed precision search (virtual or original), and a boolean flag whether a virtual graph has been
+            constructed.
         """
         if (target_resource_utilization.bops_restricted() and
                 graph.has_any_configurable_activation() and
