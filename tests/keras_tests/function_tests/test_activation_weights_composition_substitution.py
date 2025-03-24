@@ -20,7 +20,7 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
-from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import FusingMetadataWrapper
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
@@ -125,7 +125,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
     fusing_info = FusingInfoGenerator(fqc).generate_fusing_info(graph)
-    graph = GraphWithFusingMetadata(graph, fusing_info)
+    graph = FusingMetadataWrapper(graph, fusing_info)
     graph = filter_nodes_candidates(graph)
     graph = graph.get_internal_graph()
 

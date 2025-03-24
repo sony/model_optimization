@@ -17,7 +17,7 @@ import copy
 from typing import List
 
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
-from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
 from itertools import product
@@ -32,7 +32,7 @@ class FusedLayerType:
         self.__name__ = 'FusedLayer'
 
 class GraphFuser:
-    def fuse(self, fused_graph: GraphWithFusingMetadata):
+    def fuse(self, fused_graph: FusingMetadataWrapper):
         """
         GraphFuser is responsible for fusing nodes in a networkx graph.
         The fusion process involves:

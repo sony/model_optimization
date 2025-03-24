@@ -20,7 +20,7 @@ from tensorflow.keras.layers import Conv2D, ReLU, Input, InputLayer
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import CustomOpsetLayers
-from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
+from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import FusingMetadataWrapper
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
@@ -60,7 +60,7 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
                                                     quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
     fusing_info = FusingInfoGenerator(fqc).generate_fusing_info(graph)
-    graph = GraphWithFusingMetadata(graph, fusing_info)
+    graph = FusingMetadataWrapper(graph, fusing_info)
 
     return graph
 

@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from tests_pytest._fw_tests_common_base.base_graph_with_fusion_metadata_test import BaseGraphWithFusingMetadataTest
+from tests_pytest._fw_tests_common_base.base_fusion_metadata_wrapper_test import BaseGraphWithFusingMetadataTest
 from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMixin
 
 import keras

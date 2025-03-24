@@ -18,7 +18,7 @@ from typing import Callable, Any
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
@@ -164,7 +164,7 @@ def get_finalized_graph(initial_graph: Graph,
     # Layer fusing
     ######################################
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(transformed_graph)
-    transformed_graph = GraphWithFusingMetadata(transformed_graph, fusing_info)
+    transformed_graph = FusingMetadataWrapper(transformed_graph, fusing_info)
 
     ######################################
     # Channel equalization

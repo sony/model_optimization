@@ -20,7 +20,7 @@ from typing import List, Callable, Dict
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -85,7 +85,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
     # TODO: The handle of mixed precision with the fused graph will be in a separate PR. Currently, the bit-width
     #  search is on the "classic" graph.
-    if isinstance(graph, GraphWithFusingMetadata):
+    if isinstance(graph, FusingMetadataWrapper):
         graph = graph.get_internal_graph()
 
     if target_resource_utilization.bops_restricted():

@@ -16,8 +16,6 @@ from typing import Callable, Union
 from functools import partial
 
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.fusion.graph_with_fusing_metadata import GraphWithFusingMetadata
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch

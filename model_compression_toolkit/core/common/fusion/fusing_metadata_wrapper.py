@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 
 
 
-class GraphWithFusingMetadata:
+class FusingMetadataWrapper:
     def __init__(self, graph: Graph, fusing_info: FusingInfo):
         """
         Initialize with a graph and its fusing information.
