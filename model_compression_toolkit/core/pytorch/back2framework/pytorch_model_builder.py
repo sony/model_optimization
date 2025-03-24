@@ -226,14 +226,15 @@ class PytorchModel(torch.nn.Module):
         """
         super(PytorchModel, self).__init__()
 
-        self.graph = copy.deepcopy(graph)
-        if isinstance(graph, Graph): # Pruning still uses Graph and not GraphWithFusingMetadata
-            delattr(self.graph, 'fqc')
-        elif isinstance(graph, FusingMetadataWrapper):
-            delattr(self.graph.get_internal_graph(), 'fqc')
-        else:
-            raise ValueError(f"The graph should be of type {type(Graph)} or {type(FusingMetadataWrapper)} but is {type(graph)}.")
+        graph = copy.deepcopy(graph)
+        # Some parts (like pruning) still use the graph without the fusing metadata, thus
+        # we need to check for its type.
+        if isinstance(graph, FusingMetadataWrapper):
+            graph = graph.get_internal_graph()
 
+        delattr(graph, 'fqc')
+
+        self.graph = graph
         self.node_sort = list(topological_sort(self.graph))
         self.node_to_activation_quantization_holder = {}
         self.append2output = append2output
