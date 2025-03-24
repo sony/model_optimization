@@ -23,14 +23,6 @@ from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 
 
-class FusedLayerType:
-    """
-    Used to represent the type of fused layers, since __name__
-    is accessed when the graph is displayed.
-    """
-    def __init__(self):
-        self.__name__ = 'FusedLayer'
-
 
 class GraphWithFusingMetadata:
     def __init__(self, graph: Graph, fusing_info: FusingInfo):

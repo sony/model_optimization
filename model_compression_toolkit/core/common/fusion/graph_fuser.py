@@ -156,3 +156,5 @@ class GraphFuser:
 
         # Finally, add the new fused node to the graph
         graph.add_node(fused_node)
+
+
