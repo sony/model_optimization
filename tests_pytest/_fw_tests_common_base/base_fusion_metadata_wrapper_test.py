@@ -22,16 +22,17 @@ import pytest
 
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-from model_compression_toolkit.core import QuantizationConfig
+from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 
 
 class BaseGraphWithFusingMetadataTest(abc.ABC):
 
-    fw_impl: Any
-    fw_info: Any
+    fw_impl: FrameworkImplementation
+    fw_info: FrameworkInfo
     attach_to_fw_func: Callable
 
     def _data_gen(self):
