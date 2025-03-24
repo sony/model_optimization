@@ -32,33 +32,38 @@ class FusedLayerType:
         self.__name__ = 'FusedLayer'
 
 class GraphFuser:
-    def fuse(self, fused_graph: FusingMetadataWrapper) -> Graph:
+    def apply_node_fusion(self, wrapper: FusingMetadataWrapper) -> Graph:
         """
-        GraphFuser is responsible for fusing nodes in the wrapped graph in FusingMetadataWrapper.
-        The fusion process involves:
-            1. Creating new fused nodes to represent these groups.
-            2. Updating the wrapped graph structure to replace the original nodes with fused nodes.
+        Applies node fusion to the graph contained in the given FusingMetadataWrapper.
+
+        The fusion process includes:
+            1. Generating new fused nodes to replace groups of original nodes.
+            2. Updating the graph structure to replace those nodes with the fused representations.
 
         Args:
-            fused_graph: Graph to fuse its nodes.
+            wrapper: A wrapper object that contains the graph and its fusing metadata.
 
         Returns:
-            The wrapped graph in fused_graph after replacing its nodes that should be fused with
-            their fused nodes representation.
+            The updated graph with fused nodes replacing the original node groups.
         """
-        # Iterate through each group of nodes to be fused
-        graph = copy.deepcopy(fused_graph)
-        fi = FusingInfoGenerator(fused_graph.get_fusing_info().fqc).generate_fusing_info(fused_graph.get_internal_graph())
-        if fi != graph.get_fusing_info():
-            raise ValueError(
-                f"Found mismatch between expected fusing information and existing fusing information. Expected: \n"
-                f"{fi}, Existing: \n{graph.get_fusing_info()}")
+        wrapper_copy = copy.deepcopy(wrapper)
+        expected_fusing_info = FusingInfoGenerator(wrapper.get_fusing_info().fqc).generate_fusing_info(
+            wrapper.get_internal_graph())
 
-        for fused_node_id, fused_nodes_list in graph.get_fusing_info().get_all_fused_operations().items():
-            new_fused_node = self._create_fused_node(fused_node_id, fused_nodes_list)
-            new_fused_nodes_list = [graph.get_internal_graph().find_node_by_name(n.name)[0] for n in fused_nodes_list]
-            self._replace_nodes_with_fused_node(graph.get_internal_graph(), new_fused_nodes_list, new_fused_node)
-        return graph.get_internal_graph()
+        if expected_fusing_info != wrapper_copy.get_fusing_info():
+            raise ValueError(
+                f"Mismatch between expected and existing fusing information.\n"
+                f"Expected:\n{expected_fusing_info}\nExisting:\n{wrapper_copy.get_fusing_info()}"
+            )
+
+        for fused_node_id, original_nodes in wrapper_copy.get_fusing_info().get_all_fused_operations().items():
+            fused_node = self._create_fused_node(fused_node_id,
+                                                 original_nodes)
+            self._replace_nodes_with_fused_node(wrapper_copy.get_internal_graph(),
+                                                original_nodes,
+                                                fused_node)
+
+        return wrapper_copy.get_internal_graph()
 
 
     @staticmethod
@@ -74,10 +79,8 @@ class GraphFuser:
         """
         # Create a new node with a name that reflects its components
         # Use the input shape of the first node and output shape of the last node
-        fused_node_name = fused_node_id
-
         # TODO: consider replacing the fused node with a sub-model to allow inference on it, etc.
-        fused_node = BaseNode(name=fused_node_name,
+        fused_node = BaseNode(name=fused_node_id,
                               framework_attr={},
                               input_shape=nodes[0].input_shape,
                               output_shape=nodes[-1].output_shape,
