@@ -8,6 +8,7 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
 from tests_pytest.test_util.graph_builder_utils import build_node
 
+
 TEST_KERNEL = 'kernel'
 TEST_BIAS = 'bias'
 
@@ -26,6 +27,7 @@ class Flatten:
     pass
 class Dense:
     pass
+
 
 ### test model
 def get_test_graph():
@@ -55,6 +57,7 @@ def get_test_graph():
                   )
     return graph
 
+
 class TestBitWidthConfig:
     # test case for set_manual_activation_bit_width
     test_input_0 = (None, None)
@@ -81,6 +84,7 @@ class TestBitWidthConfig:
             ### check setting filter for NodeFilter and NodeInfo
             if mb_cfg.filter is not None:
                 assert isinstance(mb_cfg.filter, exp[0])
+
                 if isinstance(mb_cfg.filter, NodeTypeFilter):
                     assert mb_cfg.filter.node_type == exp[1]
                 elif isinstance(mb_cfg.filter, NodeNameFilter):
@@ -104,6 +108,7 @@ class TestBitWidthConfig:
                     check_param_for_activation(a_mb_cfg, expected[idx])
         except Exception as e:
             assert str(e) == expected[0]
+
 
     # test case for set_manual_weights_bit_width
     test_input_0 = (None, None, None)
@@ -155,6 +160,7 @@ class TestBitWidthConfig:
         except Exception as e:
             assert str(e) == expected[0]
 
+
     # test case for get_nodes_to_manipulate_activation_bit_widths
     test_input_0 = (NodeTypeFilter(ReLU), 16)
     test_input_1 = (NodeNameFilter('relu1'), 16)
@@ -184,19 +190,23 @@ class TestBitWidthConfig:
             assert str(key) == list(expected.keys())[idx]
             assert val == list(expected.values())[idx]
 
+
     # test case for get_nodes_to_manipulate_weights_bit_widths
     test_input_0 = (NodeTypeFilter(ReLU), 16, TEST_KERNEL)
     test_input_1 = (NodeNameFilter('relu1'), 16, TEST_BIAS)
     test_input_2 = ([NodeTypeFilter(ReLU), NodeNameFilter("conv1")], [16, 8], [TEST_KERNEL, TEST_BIAS])
+    test_input_3 = ([NodeNameFilter("conv1"), NodeNameFilter("conv1")], [4, 8], [TEST_KERNEL, TEST_BIAS])
 
-    test_expected_0 = ({"ReLU:relu1": [16, TEST_KERNEL]})
-    test_expected_1 = ({"ReLU:relu1": [16, TEST_BIAS]})
-    test_expected_2 = ({"ReLU:relu1": [16, TEST_KERNEL], "Conv2D:conv1": [8, TEST_BIAS]})
+    test_expected_0 = ({"ReLU:relu1": [[16, TEST_KERNEL]]})
+    test_expected_1 = ({"ReLU:relu1": [[16, TEST_BIAS]]})
+    test_expected_2 = ({"ReLU:relu1": [[16, TEST_KERNEL]], "Conv2D:conv1": [[8, TEST_BIAS]]})
+    test_expected_3 = ({"Conv2D:conv1": [[4, TEST_KERNEL], [8, TEST_BIAS]]})
 
     @pytest.mark.parametrize(("inputs", "expected"), [
         (test_input_0, test_expected_0),
         (test_input_1, test_expected_1),
         (test_input_2, test_expected_2),
+        (test_input_3, test_expected_3),
     ])
     def test_get_nodes_to_manipulate_weights_bit_widths(self, inputs, expected):
         fl_list = inputs[0] if isinstance(inputs[0], list) else [inputs[0]]
