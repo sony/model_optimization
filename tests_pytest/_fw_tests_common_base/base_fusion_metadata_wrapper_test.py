@@ -37,14 +37,20 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
 
     def _data_gen(self):
         raise NotImplementedError()
+
     def _get_model(self):
         raise NotImplementedError()
 
     @pytest.fixture
     def minimal_tpc_with_fusing(self, default_quant_cfg_options):
         """
-        Creates a minimal Target Platform Capabilities (TPC) configuration that supports specific fusions.
-        This fixture defines allowed operations and fusing patterns for testing.
+        Fixture that provides a minimal Target Platform Capabilities (TPC) config used by the
+        `graph_with_fusion_metadata` fixture.
+
+        minimal_tpc_with_fusing is used as a fixture to provide graph_with_fusion_metadata, which is a required
+        fixture for the actual test functions. While minimal_tpc_with_fusing itself isn’t used directly in tests,
+        defining it as a fixture makes its usage cleaner.
+
         """
         return schema.TargetPlatformCapabilities(
             default_qco=default_quant_cfg_options,
