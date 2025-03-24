@@ -309,7 +309,7 @@ class FusingInfoGenerator:
             and values are lists of BaseNode objects representing nodes in that fusion.
 
         Notes:
-            - Assumes filter_fusing_patterns and is_valid_fusion functions are defined elsewhere.
+            - Assumes get_valid_fusing_patterns_for_node and is_valid_fusion functions are defined elsewhere.
             - Nodes are processed in topological order to respect operation sequence.
             - Fusions are linear sequences (each node has exactly one successor).
             - Each node belongs to at most one fused operation.
@@ -340,7 +340,7 @@ class FusingInfoGenerator:
             # Try to build a sequence up to max_layers_fusing length
             for i in range(max_layers_fusing):
                 # Filter patterns based on current node at position i
-                candidate_patterns = filter_fusing_patterns(candidate_patterns, current_node, i)
+                candidate_patterns = get_valid_fusing_patterns_for_node(candidate_patterns, current_node, i)
                 if not candidate_patterns:
                     break  # No patterns match, stop extending
 
@@ -367,13 +367,17 @@ class FusingInfoGenerator:
         return FusingInfo(fusing_data=fusing_info, fusing_patterns=self._fusing_patterns)
 
 
-def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx: int = 0) -> List[List[Any]]:
+def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
+                                       node: BaseNode,
+                                       idx: int = 0) -> List[List[Any]]:
     """
-    Update relevant fusing patterns object if layer number 'idx' inside the fusion matches the node
+    Returns only the fusing patterns where a specific layer (at index idx) matches the given node — either by type or filter params.
+
     Args:
         fusing_patterns: supported fusings
         node: node to decide if it can be a part of fusion
         idx: index of layer in the fusion
+
     Returns:
         fusing_patterns after filtering non-relevant fusions
     """
