@@ -32,18 +32,19 @@ class FusedLayerType:
         self.__name__ = 'FusedLayer'
 
 class GraphFuser:
-    def fuse(self, fused_graph: FusingMetadataWrapper):
+    def fuse(self, fused_graph: FusingMetadataWrapper) -> Graph:
         """
-        GraphFuser is responsible for fusing nodes in a networkx graph.
+        GraphFuser is responsible for fusing nodes in the wrapped graph in FusingMetadataWrapper.
         The fusion process involves:
             1. Creating new fused nodes to represent these groups.
-            2. Updating the graph structure to replace the original nodes with fused nodes.
+            2. Updating the wrapped graph structure to replace the original nodes with fused nodes.
 
         Args:
-            graph: Graph to fuse its nodes.
+            fused_graph: Graph to fuse its nodes.
 
         Returns:
-            Mapping of original node names to their fused node names
+            The wrapped graph in fused_graph after replacing its nodes that should be fused with
+            their fused nodes representation.
         """
         # Iterate through each group of nodes to be fused
         graph = copy.deepcopy(fused_graph)
