@@ -40,7 +40,7 @@ class FusingMetadataWrapper:
         # TODO: temp disable activation quantization to keep similar functionality. This will be removed in the future
         self._disable_nodes_activation_quantization()
 
-    # We added __getstate__ and __setstate__ to FusedGraph to fix a recursion error during copy.deepcopy. Without
+    # We added __getstate__ and __setstate__ to FusingMetadataWrapper to fix a recursion error during copy.deepcopy. Without
     # these, deepcopy endlessly traverses attributes via __getattr__, causing a loop. Now, __getstate__ defines what
     # to copy (self._graph and self._fusing_info), and __setstate__ rebuilds the object, ensuring a clean copy
     # without recursion, assuming Graph and FusingInfo are copyable.
@@ -64,7 +64,7 @@ class FusingMetadataWrapper:
 
     def __getattr__(self, name: str) -> Any:
         """
-        Delegate attribute access to the underlying graph if not found in FusedGraph.
+        Delegate attribute access to the underlying graph if not found in FusingMetadataWrapper.
 
         Ensures that if the accessed attribute is a callable (e.g., a method like remove_node),
         it is wrapped so that the fusing information is validated after execution.
@@ -83,7 +83,7 @@ class FusingMetadataWrapper:
         # TODO: Optimize validation by restricting it to known modifying methods to improve efficiency. For now,
         #  validating after every method call ensures correctness. In the
         #  future, define explicit modification methods (e.g., remove_node)
-        #  in FusedGraph for better efficiency.
+        #  in FusingMetadataWrapper for better efficiency.
 
         graph_attr = getattr(self._internal_graph, name)
         # Only wrap methods or functions, excluding properties and descriptors
@@ -99,9 +99,9 @@ class FusingMetadataWrapper:
 
     def __iter__(self) -> Iterator[BaseNode]:
         """
-        Make FusedGraph iterable by delegating to the underlying graph's iterator.
+        Make FusingMetadataWrapper iterable by delegating to the wrapped graph's iterator.
 
-        This allows FusedGraph to be used in contexts expecting an iterable of nodes,
+        This allows FusingMetadataWrapper to be used in contexts expecting an iterable of nodes,
         such as topological_sort, without requiring changes to external code.
 
         Returns:
@@ -111,9 +111,9 @@ class FusingMetadataWrapper:
 
     def __getitem__(self, key: Any) -> Any:
         """
-        Delegate subscripting to the underlying graph.
+        Delegate subscripting to the wrapped graph.
 
-        This enables FusedGraph to support dictionary-like access (e.g., graph[node][child])
+        This enables FusingMetadataWrapper to support dictionary-like access (e.g., graph[node][child])
         as required by operations like topological_generations in NetworkX, maintaining
         compatibility with code expecting a subscriptable Graph object.
 
@@ -121,7 +121,7 @@ class FusingMetadataWrapper:
             key: The key (e.g., node) to look up in the graph.
 
         Returns:
-            The value associated with the key in the underlying graph.
+            The value associated with the key in the wrapped graph.
 
         Raises:
             KeyError: If the key doesn't exist in self._graph.
