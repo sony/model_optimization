@@ -12,28 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from dataclasses import dataclass, field
+
 from typing import List, Set
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements
 
 
+@dataclass(frozen=True)
 class Cut:
     """
     A Cut object that contains a set of ordered nodes and their memory elements.
+
+    Args:
+        op_order: A list of the cut's nodes (model layers), ordered by their addition to the cut (first-to-last).
+        op_record: A (unordered) set of the nodes in the cut.
+        mem_elements: MemoryElements object which represents the activation tensors of the cut's nodes.
     """
+    op_order: List[BaseNode]
+    op_record: Set[BaseNode]
+    mem_elements: MemoryElements
 
-    def __init__(self, op_order: List[BaseNode], op_record: Set[BaseNode], mem_elements: MemoryElements):
-        """
-        Args:
-            op_order: A list of the cut's nodes (model layers), ordered by their addition to the cut (first-to-last).
-            op_record: A (unordered) set of the nodes in the cut.
-            mem_elements: MemoryElements object which represents the activation tensors of the cut's nodes.
-        """
+    _sorted_elements_signature: str = field(init=False, default=None)
 
-        self.op_order = op_order
-        self.op_record = op_record
-        self.mem_elements = mem_elements
+    @property
+    def sorted_elements_signature(self):
+        if self._sorted_elements_signature is None:
+            object.__setattr__(self, '_sorted_elements_signature',
+                               '_'.join(sorted([e.node_name for e in self.mem_elements.elements])))
+        return self._sorted_elements_signature
 
     def memory_size(self) -> float:
         """

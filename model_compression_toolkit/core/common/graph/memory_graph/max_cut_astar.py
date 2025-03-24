@@ -232,7 +232,8 @@ class MaxCutAstar:
         max_cut_len = max([len(routes[c]) for c in open_list])
         ordered_cuts_list = sorted(open_list,
                                    key=lambda c: (self.accumulate(costs[c], self.estimate(c, estimate)),
-                                                  max_cut_len - len(routes[c])))
+                                                  max_cut_len - len(routes[c]),
+                                                  c.sorted_elements_signature))
 
         assert len(ordered_cuts_list) > 0
         return ordered_cuts_list[0]

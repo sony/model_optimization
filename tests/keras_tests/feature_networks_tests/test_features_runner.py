@@ -63,8 +63,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer imp
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.manual_bit_selection import ManualBitWidthSelectionTest, \
     Manual16BitWidthSelectionTest, Manual16BitWidthSelectionMixedPrecisionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision.requires_mixed_precision_test import \
-    RequiresMixedPrecision, RequiresMixedPrecisionWeights
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
     MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, \
@@ -246,13 +244,6 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_weights_only_activation_conf(self):
         MixedPrecisionWeightsOnlyConfigurableActivationsTest(self).run_test()
 
-    def test_requires_mixed_precision(self):
-        RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
-        RequiresMixedPrecision(self, activation_memory=True).run_test()
-        RequiresMixedPrecision(self, total_memory=True).run_test()
-        RequiresMixedPrecision(self, bops=True).run_test()
-        RequiresMixedPrecision(self).run_test()
-
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPrecisionSearchPartWeightsLayersTest(self).run_test()
 
@@ -322,11 +313,10 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
         MixedPrecisionWeightsOnlyBopsTest(self).run_test()
         MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        # TODO: uncomment these tests when the issue of combined BOPs and other RU metrics is solved.
-        # MixedPrecisionBopsAndWeightsUtilizationTest(self).run_test()
-        # MixedPrecisionBopsAndActivationUtilizationTest(self).run_test()
-        # MixedPrecisionBopsAndTotalUtilizationTest(self).run_test()
-        # MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndWeightsUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndActivationUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndTotalUtilizationTest(self).run_test()
+        MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_name_filter(self):

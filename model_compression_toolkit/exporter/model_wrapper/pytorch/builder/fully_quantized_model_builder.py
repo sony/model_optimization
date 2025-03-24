@@ -45,6 +45,10 @@ if FOUND_TORCH:
         """
         weight_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         if len(weight_quantizers) > 0:
+            # Set reuse for weight quantizers if node is reused
+            for _, quantizer in weight_quantizers.items():
+                if node.reuse_group:
+                    quantizer.enable_reuse_quantizer()
             # for positional weights we need to extract the weight's value.
             weights_values = {attr: fw_impl.to_tensor(node.get_weights_by_keys(attr))
                               for attr in weight_quantizers if isinstance(attr, int)}

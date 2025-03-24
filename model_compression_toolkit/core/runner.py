@@ -32,8 +32,6 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
-    requires_mixed_precision
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
@@ -95,16 +93,8 @@ def core_runner(in_model: Any,
                             "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
         if target_resource_utilization.activation_restricted() or target_resource_utilization.total_mem_restricted():
             Logger.warning("Using an experimental feature max-cut for activation memory utilization estimation.")
-        # Determine whether to use mixed precision or single precision based on target_resource_utilization.
-        if requires_mixed_precision(in_model,
-                                    target_resource_utilization,
-                                    representative_data_gen,
-                                    core_config,
-                                    fqc,
-                                    fw_info,
-                                    fw_impl):
-            core_config.mixed_precision_config.set_mixed_precision_enable()
-            Logger.info('Mixed precision enabled.')
+        core_config.mixed_precision_config.set_mixed_precision_enable()
+        Logger.info('Mixed precision enabled.')
 
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen,
@@ -229,8 +219,8 @@ def _set_final_resource_utilization(graph: Graph,
     final_ru = None
     if ru_targets:
         ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
-        w_qcs = {n: n.final_weights_quantization_cfg for n in graph.nodes}
-        a_qcs = {n: n.final_activation_quantization_cfg for n in graph.nodes}
+        w_qcs = {n.name: n.final_weights_quantization_cfg for n in graph.nodes}
+        a_qcs = {n.name: n.final_activation_quantization_cfg for n in graph.nodes}
         final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
                                                               BitwidthMode.QCustom, act_qcs=a_qcs, w_qcs=w_qcs,
                                                               ru_targets=ru_targets, allow_unused_qcs=True)

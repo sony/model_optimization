@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Optional
 
 from model_compression_toolkit.core.common import BaseNode, Graph, BaseSubstitution
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
+    VirtualSplitWeightsNode
 
 
 class BaseVirtualActivationWeightsComposition(BaseSubstitution):
@@ -39,26 +41,18 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
+        if not isinstance(weights_node, VirtualSplitWeightsNode):
+            raise TypeError(f'Matched node {weights_node} was expected to be of type VirtualSplitWeightsNode. '
+                            f'This substitution is expected to be called after activation-weights split.')
 
-        predecessors = graph.get_prev_nodes(weights_node)
-        if len(predecessors) != 1:
-            return graph
-
-        act_node = predecessors[0]
-
-        if len(graph.out_edges(act_node)) > 1:
-            Logger.warning(f"Node {act_node.name} has multiple outgoing edges, which is not supported with "
-                           f"mixed-precision bit-operations utilization, thus, edge {act_node.name} --> {weights_node.name} "
-                           f"would not be counted in the bit-operations calculations.")
+        act_node = get_input_activation_if_composable(graph, weights_node, warn=True)
+        if act_node is None:
             return graph
 
         # Virtual composed activation-weights node
-        # we pass a dummy initialization dict to initialize the super BaseNode class,
-        # the actual arguments values are irrelevant because they are being overridden or not used
         v_node = VirtualActivationWeightsNode(act_node,
                                               weights_node,
-                                              fw_info=graph.fw_info,
-                                              **weights_node.__dict__)
+                                              fw_info=graph.fw_info)
 
         # Update graph
         graph.add_node(v_node)
@@ -71,3 +65,29 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
         graph.remove_node(act_node)
 
         return graph
+
+
+def get_input_activation_if_composable(graph: Graph, weights_node: BaseNode, warn: bool) -> Optional[BaseNode]:
+    """
+    Get input activation node for composition, or None if not composable.
+
+    Args:
+        graph: graph.
+        weights_node: weights node for composition.
+        warn: whether to log a warning if not composable.
+
+    Returns:
+        Input activation node or None.
+    """
+    predecessors = graph.get_prev_nodes(weights_node)
+    assert len(predecessors) == 1, (f'Weights node is expected to have exactly one input, '
+                                    f'node {weights_node} has {len(predecessors)}')
+    act_node = predecessors[0]
+    if len(graph.out_edges(act_node)) > 1:
+        if warn:
+            Logger.warning(f"Node {act_node.name} has multiple outgoing edges, which is not supported with "
+                           f"mixed-precision search under bit-operations constraint. In such case, it might result in "
+                           f"incorrect resource utilization computation and suboptimal bits selection.")
+        return None
+
+    return act_node

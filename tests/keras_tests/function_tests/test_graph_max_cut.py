@@ -139,3 +139,17 @@ class TestGraphMaxCut(unittest.TestCase):
         self.assertIsNotNone(cuts)
         self.assertTrue(len(cuts) > 0)
         self.assertTrue(max_cut_size >= memory_graph.memory_lbound_single_op)
+
+    def test_graph_max_cut_deterministic_order(self):
+        input_shape = (8, 8, 3)
+        model = complex_model(input_shape)
+        graph = model_reader(model)
+
+        solutions = [compute_graph_max_cut(MemoryGraph(graph)) for _ in range(10)]
+
+        schedules, max_cut_sizes, cuts_solutions = zip(*solutions)
+        assert len(set(max_cut_sizes)) == 1
+        # nodes within each cut can be in different order, and cuts can be in different order inside cuts list,
+        # but overall the cuts should be identical between different runs
+        sorted_cuts_solutions = [sorted(cut.sorted_elements_signature for cut in cuts) for cuts in cuts_solutions]
+        assert all(cuts == sorted_cuts_solutions[0] for cuts in sorted_cuts_solutions[1:])
