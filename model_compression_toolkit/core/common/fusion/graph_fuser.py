@@ -87,6 +87,13 @@ class GraphFuser:
                               weights={}, # TODO: update with weights of all nodes
                               layer_class=FusedLayerType)
 
+        # Ensure weights quantization config is None for all nodes except the first
+        for n in nodes[1:]:
+            for c in n.candidates_quantization_cfg:
+                assert c.weights_quantization_cfg is None, (
+                    f"Expected weights_quantization_cfg to be None for node {n}, but got {c.weights_quantization_cfg}"
+                )
+
         # Create candidates for this node (we assume that the weights configuration should be taken from the first node, and the activaion configuration
         # is the output quantization configuration of the last node. We ignore all configurations of middle nodes.
         weight_cfgs = [c.weights_quantization_cfg for c in nodes[0].candidates_quantization_cfg]
