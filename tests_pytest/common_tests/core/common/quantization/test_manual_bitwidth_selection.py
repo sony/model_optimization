@@ -6,7 +6,7 @@ from model_compression_toolkit.core import BitWidthConfig
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
-from tests_pytest.test_util.graph_builder_utils import build_node
+from tests_pytest._test_util.graph_builder_utils import build_node
 
 
 TEST_KERNEL = 'kernel'
