@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.model_collector import create_stats_collector_for_node, create_tensor2node, ModelCollector
-from tests_pytest._test_util.graph_builder_utils import build_node, DummyLayer, build_qc
+from tests_pytest._test_util.graph_builder_utils import build_node, DummyLayer, build_nbits_qc as build_qc
 
 
 @pytest.fixture

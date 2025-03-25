@@ -32,7 +32,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     Utilization, ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from tests_pytest._test_util.graph_builder_utils import build_node, build_qc, full_attr_name
+from tests_pytest._test_util.graph_builder_utils import build_node, full_attr_name, build_nbits_qc as build_qc
 
 BM = BitwidthMode
 TIC = TargetInclusionCriterion
@@ -844,7 +844,7 @@ class TestComputeWeightUtilization:
 
     def test_compute_w_utilization_no_targets(self, graph_mock, fw_impl_mock, fw_info_mock):
         graph_mock.nodes = [
-            build_node('n1', qcs=build_qc()),
+            build_node('n1', qcs=[build_qc()]),
             build_node('n2', canonical_weights={'foo': np.ones((5,))}, qcs=[build_qc(w_attr={'foo': (8, True)})])
         ]
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
