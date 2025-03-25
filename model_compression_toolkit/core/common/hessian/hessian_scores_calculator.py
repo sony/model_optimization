@@ -16,6 +16,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Any
 
+from sony_custom_layers.pytorch import NMSResults
+
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest
@@ -85,6 +87,9 @@ class HessianScoresCalculator(ABC):
         """
         unfold_tensors = []
         for tensor in tensors_to_unfold:
+            if isinstance(tensor, NMSResults):
+                tensor = list(tensor)  # convert named tuple to list
+
             if isinstance(tensor, List):
                 unfold_tensors += tensor
             else:
