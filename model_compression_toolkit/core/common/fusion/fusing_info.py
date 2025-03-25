@@ -244,8 +244,7 @@ class FusingInfo:
                                 f"Fused operation {op_id} has an invalid sequence: "
                                 f"node {pred.name} appears after {node.name}."
                             )
-                    elif i > 0 and pred not in graph.get_prev_nodes(
-                            nodes[0]):  # External predecessors allowed only for first node
+                    elif i > 0 and pred not in graph.get_prev_nodes(nodes[0]):  # External predecessors allowed only for first node
                         raise ValueError(
                             f"Fused operation {op_id} contains an external predecessor {pred.name} "
                             f"to node {node.name}, which is invalid."
@@ -317,52 +316,38 @@ class FusingInfoGenerator:
         if not self._fusing_patterns:
             return FusingInfo(fusing_patterns=self._fusing_patterns)
 
-        # Determine the maximum length of fusing patterns
-        max_layers_fusing = max(len(p) for p in self._fusing_patterns)
+        # Find max fusion
+        max_layers_fusing = 0 if len(self._fusing_patterns) == 0 else max([len(fusing_pattern) for fusing_pattern in self._fusing_patterns])
 
-        # Get nodes in topological order
+        # Travel along the graph to find layers for fusing
         nodes = graph.get_topo_sorted_nodes()
 
-        # Initialize structures to track fusions
         fusing_info: Dict[str, Tuple['BaseNode']] = {}
-        fused_nodes = set()  # Tracks nodes already in a fusion
+        fused_nodes = []  # nodes that are participating in fusing
 
-        # Process each node in topological order
         for node in nodes:
+            # Skip if already in fusing
             if node in fused_nodes:
-                continue  # Skip nodes already fused
-
-            # Start with all possible patterns
-            candidate_patterns = copy.deepcopy(self._fusing_patterns)
-            current_sequence = []
-            current_node = node
-
-            # Try to build a sequence up to max_layers_fusing length
+                continue
+            # Start fusing search
+            fusing_nodes = []  # nodes that are candidates for participating in fusing
+            patterns = copy.deepcopy(self._fusing_patterns)
+            next_nodes = [node]
             for i in range(max_layers_fusing):
-                # Filter patterns based on current node at position i
-                candidate_patterns = get_valid_fusing_patterns_for_node(candidate_patterns, current_node, i)
-                if not candidate_patterns:
-                    break  # No patterns match, stop extending
-
-                current_sequence.append(current_node)
-                next_nodes = graph.get_next_nodes(current_node)
-
-                # Ensure the sequence is linear (exactly one successor)
-                if len(next_nodes) != 1:
+                patterns = get_valid_fusing_patterns_for_node(patterns, next_nodes[0], i)
+                if len(patterns) == 0:  # Give up if no more fusion pattern
+                    break
+                fusing_nodes.append(next_nodes[0])
+                next_nodes = graph.get_next_nodes(fusing_nodes[-1])
+                if len(next_nodes) != 1:  # Give up if node has more than one connection (not supported for fusion)
                     break
 
-                next_node = next_nodes[0]
-                if next_node in fused_nodes:
-                    break  # Avoid overlapping with existing fusions
-
-                current_node = next_node
-
-            # Check if the sequence forms a valid fusion
-            if is_valid_fusion(self._fusing_patterns, current_sequence):
-                fused_op_id = FusingInfo.generate_fused_op_id(current_sequence)
+            # New fusion
+            if is_valid_fusion(self._fusing_patterns, fusing_nodes):
+                fused_op_id = FusingInfo.generate_fused_op_id(fusing_nodes)
                 assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
-                fusing_info[fused_op_id] = tuple(current_sequence)
-                fused_nodes.update(current_sequence)
+                fusing_info[fused_op_id] = tuple(fusing_nodes)
+                fused_nodes.extend(fusing_nodes)
 
         return FusingInfo(fusing_data=fusing_info, fusing_patterns=self._fusing_patterns)
 

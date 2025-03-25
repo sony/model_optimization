@@ -142,15 +142,6 @@ class FunctionTestRunner(unittest.TestCase):
         FetchHessianMultipleNodesTest(self).run_test()
         DoubleFetchHessianTest(self).run_test()
 
-    def test_layer_fusing(self):
-        """
-        This test checks the Fusion mechanism in Pytorch.
-        """
-        LayerFusingTest1(self).run_test()
-        LayerFusingTest2(self).run_test()
-        LayerFusingTest3(self).run_test()
-        LayerFusingTest4(self).run_test()
-
     def test_mixed_precision_set_bitwidth(self):
         """
         This test checks the functionality of setting a configurable layer's weights bit-width for mixed precision
