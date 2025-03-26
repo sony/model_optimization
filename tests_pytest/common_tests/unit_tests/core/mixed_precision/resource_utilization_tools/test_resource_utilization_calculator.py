@@ -298,6 +298,7 @@ class TestComputeActivationTensorsUtilization:
         mp_reuse = build_node('mp_reuse', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(16)], reuse=True)
         noq = build_node('noq', output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False)])
         graph_mock.nodes = [mp_reuse, noq]
+        graph_mock.find_prev_act_config_node = lambda x: x
 
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         # _get_activation_nbits is already fully checked, just make sure we use it, and use correctly
