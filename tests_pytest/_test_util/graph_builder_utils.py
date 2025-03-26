@@ -70,7 +70,7 @@ def full_attr_name(canonical_name: Union[str, dict, Iterable]):
 
 
 def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, ()),
-                   convert_canonical_attr=True) -> CandidateNodeQuantizationConfig:
+                   convert_canonical_attr=True, qp_enable=False) -> CandidateNodeQuantizationConfig:
     """
     Build quantization config with configurable nbits and enabling/disabling quantization only.
 
@@ -102,7 +102,7 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
         default_weight_attr_config=AttributeQuantizationConfig(weights_n_bits=pos_attr[0],
                                                                enable_weights_quantization=pos_attr[1]),
         activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-        quantization_preserving=False,
+        quantization_preserving=qp_enable,
         supported_input_activation_n_bits=[2, 4, 8],
         fixed_scale=None,
         fixed_zero_point=None,

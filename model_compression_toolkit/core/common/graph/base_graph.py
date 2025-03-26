@@ -696,6 +696,23 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         sorted_conf_activation = self.get_sorted_activation_configurable_nodes()
         return [(n, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
 
+    def get_act_config_node(self, node: BaseNode) -> BaseNode:
+        """
+        For a node with quantization_preserving == True, get the previous non-quantization_preserving node
+        to get activation quantization config from. If quantization_preserving is False return node.
+        Args:
+            node: quantization preserving node.
+
+        Returns:
+            The node that the quantization preserving node should get the activation quantization from.
+
+        """
+        while node.is_quantization_preserving():
+            prev_nodes = self.get_prev_nodes(node)
+            assert len(prev_nodes) == 1, "Activation preserving node should not have more than 1 input."
+            node = prev_nodes[0]
+        return node
+
     def update_fused_nodes(self, fusion: List[Any]):
         """
         Updates the graphs fusions list with a new list of nodes that have been fused.
