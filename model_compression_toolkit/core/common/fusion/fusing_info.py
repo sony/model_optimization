@@ -264,11 +264,11 @@ class FusingInfo:
             bool: True if the nodes can be fused according to fusing patterns, otherwise False.
         """
         # If no fusing patterns are defined, fusion is not possible
-        if not self._fusing_patterns:
+        if not self.fusing_patterns:
             return False
 
         # Check if the provided nodes match a valid fusion pattern
-        return is_valid_fusion(fusing_patterns=self._fusing_patterns, nodes=nodes)
+        return is_valid_fusion(fusing_patterns=self.fusing_patterns, nodes=nodes)
 
 
     def __repr__(self) -> str:

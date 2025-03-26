@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from tests_pytest._fw_tests_common_base.base_fusion_metadata_wrapper_test import BaseGraphWithFusingMetadataTest
+from tests_pytest._fw_tests_common_base.fusing.base_fusion_metadata_wrapper_test import BaseGraphWithFusingMetadataTest
 from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwMixin
 
 import torch.nn as nn

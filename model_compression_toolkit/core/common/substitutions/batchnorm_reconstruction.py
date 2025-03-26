@@ -150,14 +150,13 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         fi = graph.get_fusing_info()
         fused_op = fi.get_fused_node_name(source_node.name)
         if fused_op:
-            fused_nodes = fi.get_fused_nodes(fused_op)
+            fused_nodes = list(fi.get_fused_nodes(fused_op))
             assert source_node in fused_nodes
-            fused_nodes = copy.deepcopy(fused_nodes)
             fused_nodes.insert(fused_nodes.index(source_node)+1, bn_node)
             fi.remove_fused_operation(fused_op)
             if fi.is_nodes_eligible_to_be_fused(fused_nodes):
                 op_id = fi.generate_fused_op_id(fused_nodes)
-                fi.add_fused_operation(op_id, fused_nodes)
+                fi.add_fused_operation(op_id, tuple(fused_nodes))
 
         graph.reconnect_out_edges(current_node=source_node, new_node=bn_node)
         graph.replace_output_node(current_node=source_node, new_node=bn_node)

@@ -14,7 +14,7 @@
 # ==============================================================================
 import numpy as np
 from pulp import *
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget
 
