@@ -696,14 +696,24 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [(n, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
 
 
-    def is_single_activation_cfg(self):
+    def has_any_configurable_activation(self) -> bool:
         """
-        Checks whether all nodes in the graph that have activation quantization are quantized with the same bit-width.
+        Checks whether any node in the graph has a configurable activation quantization.
 
-        Returns: True if all quantization config candidates of all nodes have the same activation quantization bit-width.
-
+        Returns:
+            Whether any node in the graph has a configurable activation quantization.
         """
-        return all([n.is_all_activation_candidates_equal() for n in self.nodes])
+        return any([n.has_configurable_activation() for n in self.nodes])
+
+    def has_any_configurable_weights(self):
+        """
+        Checks whether any node in the graph has any configurable weights quantization.
+
+        Returns:
+            Whether any node in the graph has any configurable weights quantization.
+        """
+
+        return any([n.has_any_configurable_weight() for n in self.nodes])
 
     def replace_node(self, node_to_replace: BaseNode, new_node: BaseNode):
         """
