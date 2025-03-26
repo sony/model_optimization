@@ -28,6 +28,7 @@ from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
+from tests_pytest._test_util.tpc_util import minimal_cfg_options
 
 
 class BaseFusingInfoGeneratorTest(abc.ABC):
@@ -50,7 +51,7 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
         raise NotImplementedError()
 
     @pytest.fixture
-    def graph_with_fusion_metadata(self, default_quant_cfg_options):
+    def graph_with_fusion_metadata(self):
         """
         Creates a graph with fusing metadata based on a generated model and a predefined configuration.
         Ensures all required components (framework implementation, framework info, etc.) are present.
@@ -61,7 +62,7 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
         assert self.attach_to_fw_func is not None
         assert self.expected_fi is not None
 
-        self.fqc = self.attach_to_fw_func(self._get_tpc(default_quant_cfg_options),
+        self.fqc = self.attach_to_fw_func(self._get_tpc(minimal_cfg_options()),
                                           self._get_qc().custom_tpc_opset_to_layer)
 
         graph_with_fusion_metadata = graph_preparation_runner(self._get_model(),

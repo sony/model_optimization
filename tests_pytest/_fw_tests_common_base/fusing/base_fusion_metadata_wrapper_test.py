@@ -29,6 +29,7 @@ from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
+from tests_pytest._test_util.tpc_util import minimal_cfg_options
 
 
 class BaseGraphWithFusingMetadataTest(abc.ABC):
@@ -45,7 +46,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         raise NotImplementedError()
 
     @pytest.fixture
-    def minimal_tpc_with_fusing(self, default_quant_cfg_options):
+    def minimal_tpc_with_fusing(self):
         """
         Fixture that provides a minimal Target Platform Capabilities (TPC) config used by the
         `graph_with_fusion_metadata` fixture.
@@ -56,7 +57,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
 
         """
         return schema.TargetPlatformCapabilities(
-            default_qco=default_quant_cfg_options,
+            default_qco=minimal_cfg_options(),
             tpc_platform_type='test',
             operator_set=[schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
                           schema.OperatorsSet(name=schema.OperatorSetNames.RELU),
