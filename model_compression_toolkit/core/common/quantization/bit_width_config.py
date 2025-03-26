@@ -211,12 +211,19 @@ class BitWidthConfig:
 
             for n in filtered_nodes:
                 attr_to_change_bit_width = []
-
+                
                 attrs_str = n.get_node_weights_attributes()
                 if len(attrs_str) == 0:
                     Logger.critical(f'The requested attribute {manual_bit_width_selection.attr} to change the bit width for {n} does not exist.')
 
-                attr = [attr_str for attr_str in attrs_str if attr_str.find(manual_bit_width_selection.attr) != -1]
+                attr = []
+                for attr_str in attrs_str:
+                    if isinstance(attr_str, str) and isinstance(manual_bit_width_selection.attr, str):
+                        if attr_str.find(manual_bit_width_selection.attr) != -1:
+                            attr.append(attr_str)
+                    elif isinstance(attr_str, int) and isinstance(manual_bit_width_selection.attr, int):
+                        if attr_str == manual_bit_width_selection.attr:
+                            attr.append(attr_str)
                 if len(attr) == 0:
                     Logger.critical(f'The requested attribute {manual_bit_width_selection.attr} to change the bit width for {n} does not exist.')
 
