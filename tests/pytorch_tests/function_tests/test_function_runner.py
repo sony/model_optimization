@@ -20,8 +20,6 @@ from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCol
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
 from tests.pytorch_tests.function_tests.get_gptq_config_test import TestGetGPTQConfig
-from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
-    LayerFusingTest4
 from tests.pytorch_tests.function_tests.set_device_test import SetDeviceTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
     TestSetLayerToBitwidthActivation
