@@ -297,3 +297,94 @@ class TestFusingComplexPatterns(BaseTestFusingInfoGeneratorPytorch):
                 return y
 
         return Model()
+
+class TestFusingConvSwishWithMultiSuccessors(BaseTestFusingInfoGeneratorPytorch):
+    fusing_patterns = [
+        schema.Fusing(operator_groups=(
+            schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
+            schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)))
+    ]
+
+    expected_fi = FusingInfo(
+        fusing_patterns=fusing_patterns,
+        fusing_data={
+            "FusedNode_conv1_swish": (
+                build_node(name="conv1"),
+                build_node(name="swish")
+            )
+        }
+    )
+
+    def _get_tpc(self, default_quant_cfg_options):
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
+        swish = schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)
+        return schema.TargetPlatformCapabilities(
+            default_qco=default_quant_cfg_options,
+            tpc_platform_type="test",
+            operator_set=[conv, swish],
+            fusing_patterns=self.fusing_patterns
+        )
+
+    def _get_model(self):
+        class Model(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.conv1 = nn.Conv2d(3, 16, kernel_size=3, padding=1)
+                self.swish = nn.SiLU()
+                self.branch1 = nn.Conv2d(16, 8, kernel_size=1)
+                self.branch2 = nn.Conv2d(16, 8, kernel_size=1)
+
+            def forward(self, x):
+                x = self.conv1(x)
+                x = self.swish(x)
+                b1 = self.branch1(x)
+                b2 = self.branch2(x)
+                return b1 + b2
+
+        return Model()
+
+class TestFusingConvReluWithMultiPredecessors(BaseTestFusingInfoGeneratorPytorch):
+    fusing_patterns = [
+        schema.Fusing(operator_groups=(
+            schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
+            schema.OperatorsSet(name=schema.OperatorSetNames.RELU)))
+    ]
+
+    expected_fi = FusingInfo(
+        fusing_patterns=fusing_patterns,
+        fusing_data={
+            "FusedNode_conv3_relu": (
+                build_node(name="conv3"),
+                build_node(name="relu")
+            )
+        }
+    )
+
+    def _get_tpc(self, default_quant_cfg_options):
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
+        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+        return schema.TargetPlatformCapabilities(
+            default_qco=default_quant_cfg_options,
+            tpc_platform_type="test",
+            operator_set=[conv, relu],
+            fusing_patterns=self.fusing_patterns
+        )
+
+    def _get_model(self):
+        class Model(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.conv1 = nn.Conv2d(3, 16, kernel_size=3, padding=1)
+                self.conv2 = nn.Conv2d(3, 16, kernel_size=3, padding=1)
+                self.conv3 = nn.Conv2d(16, 16, kernel_size=3, padding=1)
+                self.relu = nn.ReLU()
+
+            def forward(self, x):
+                x1 = self.conv1(x)
+                x2 = self.conv2(x)
+                merged = x1 + x2
+                x3 = self.conv3(merged)
+                return self.relu(x3)
+
+        return Model()
+

@@ -242,10 +242,85 @@ class TestFusingComplexPatternsKeras(BaseTestFusingInfoGeneratorKeras):
         x4 = layers.Flatten()(x4)
         x4 = layers.Dense(16, name="dense1")(x4)
         x4 = tf.nn.swish(x4)
+
         x4 = layers.Dense(16, name="dense2")(x4)
         outputs = tf.nn.swish(x4)
 
         return Model(inputs=inputs, outputs=outputs)
 
+class TestFusingConvSwishWithMultiSuccessorsKeras(BaseTestFusingInfoGeneratorKeras):
+    fusing_patterns = [
+        schema.Fusing(operator_groups=(
+            schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
+            schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)))
+    ]
 
+    expected_fi = FusingInfo(
+        fusing_patterns=fusing_patterns,
+        fusing_data={
+            "FusedNode_conv1_swish": (
+                build_node(name="conv1"),
+                build_node(name="swish")
+            )
+        }
+    )
+
+    def _get_tpc(self, default_quant_cfg_options):
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
+        swish = schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)
+        return schema.TargetPlatformCapabilities(
+            default_qco=default_quant_cfg_options,
+            tpc_platform_type="test",
+            operator_set=[conv, swish],
+            fusing_patterns=self.fusing_patterns
+        )
+
+    def _get_model(self):
+        inputs = Input(shape=(32, 32, 3))
+        x = layers.Conv2D(16, (3, 3), padding='same', name="conv1")(inputs)
+        x = layers.Activation(tf.nn.swish, name="swish")(x)
+
+        # Multiple successors of swish
+        branch1 = layers.Conv2D(8, (1, 1), name="branch1")(x)
+        branch2 = layers.Conv2D(8, (1, 1), name="branch2")(x)
+        outputs = layers.Add(name="add")([branch1, branch2])
+        return Model(inputs=inputs, outputs=outputs)
+
+class TestFusingConvReluWithMultiPredecessorsKeras(BaseTestFusingInfoGeneratorKeras):
+    fusing_patterns = [
+        schema.Fusing(operator_groups=(
+            schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
+            schema.OperatorsSet(name=schema.OperatorSetNames.RELU)))
+    ]
+
+    expected_fi = FusingInfo(
+        fusing_patterns=fusing_patterns,
+        fusing_data={
+            "FusedNode_conv3_relu": (
+                build_node(name="conv3"),
+                build_node(name="relu")
+            )
+        }
+    )
+
+    def _get_tpc(self, default_quant_cfg_options):
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
+        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+        return schema.TargetPlatformCapabilities(
+            default_qco=default_quant_cfg_options,
+            tpc_platform_type="test",
+            operator_set=[conv, relu],
+            fusing_patterns=self.fusing_patterns
+        )
+
+    def _get_model(self):
+        inputs = Input(shape=(32, 32, 3))
+        x1 = layers.Conv2D(16, (3, 3), padding='same', name="conv1")(inputs)
+        x2 = layers.Conv2D(16, (3, 3), padding='same', name="conv2")(inputs)
+
+        # Merge before relu
+        merged = layers.Add(name="merge")([x1, x2])
+        x = layers.Conv2D(16, (3, 3), padding='same', name="conv3")(merged)
+        outputs = layers.ReLU(name="relu")(x)
+        return Model(inputs=inputs, outputs=outputs)
 
