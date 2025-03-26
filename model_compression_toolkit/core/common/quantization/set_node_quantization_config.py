@@ -65,7 +65,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
         Logger.warning("Using the HMSE error method for weights quantization parameters search. "
                        "Note: This method may significantly increase runtime during the parameter search process.")
 
-    nodes_to_manipulate_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_bit_widths(graph)
+    nodes_to_manipulate_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_activation_bit_widths(graph)
 
     for n in graph.nodes:
         set_quantization_configs_to_node(node=n,
