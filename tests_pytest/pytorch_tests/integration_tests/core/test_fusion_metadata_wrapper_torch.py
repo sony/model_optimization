@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-
 from tests_pytest._fw_tests_common_base.base_fusion_metadata_wrapper_test import BaseGraphWithFusingMetadataTest
 from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwMixin
 
 import torch.nn as nn
 
 class TestGraphWithFusionMetadataPytorch(BaseGraphWithFusingMetadataTest, TorchFwMixin):
+
+    layer_class_relu = nn.ReLU
 
     def _data_gen(self):
         return self.get_basic_data_gen(shapes=[(1, 3, 5, 5)])()

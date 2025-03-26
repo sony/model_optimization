@@ -27,6 +27,7 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
+from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
 
 
 class BaseGraphWithFusingMetadataTest(abc.ABC):
@@ -34,6 +35,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
     fw_impl: FrameworkImplementation
     fw_info: FrameworkInfo
     attach_to_fw_func: Callable
+    layer_class_relu: Any  # needed for test_fail_validate_after_adding_node_that_adds_a_fusion
 
     def _data_gen(self):
         raise NotImplementedError()
@@ -63,7 +65,12 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
                                                             schema.OperatorsSet(name=schema.OperatorSetNames.RELU))),
                              schema.Fusing(
                                  operator_groups=(schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED),
-                                                  schema.OperatorsSet(name=schema.OperatorSetNames.SOFTMAX)))]
+                                                  schema.OperatorsSet(name=schema.OperatorSetNames.SOFTMAX))),
+                             schema.Fusing(
+                                 operator_groups=(schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED),
+                                                  schema.OperatorsSet(name=schema.OperatorSetNames.SOFTMAX),
+                                                  schema.OperatorsSet(name=schema.OperatorSetNames.RELU)))
+                             ]
         )
 
     @pytest.fixture
@@ -178,5 +185,45 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         relu_node = graph_copy.find_node_by_name('relu')[0]
         with pytest.raises(ValueError):
             graph_copy.remove_edge(conv_node, relu_node)
+
+    # def test_fail_validate_after_adding_node_that_adds_a_fusion(self, graph_with_fusion_metadata):
+    #     pass
+    #     # TODO: run graph fuser and see it passes
+    #     # class GraphFuser:
+    #     #     def apply_node_fusion(self, wrapper: FusingMetadataWrapper) -> Graph:
+    #     # TODO: Add a new node of relu after the softmax
+    #     # TODO: run graph fuser again and see it raises an exception
+    #
+    #
+
+    def test_fail_validate_after_adding_node_that_adds_a_fusion(self, graph_with_fusion_metadata):
+        """
+        Tests validation failure after introducing a new fusion pattern by adding a node.
+        - Adds a ReLU node after Softmax.
+        - The resulting pattern FullyConnected -> Softmax -> ReLU is a defined fusion.
+        - Since this pattern didn't exist in the original graph, re-running fusing should raise an error.
+        """
+        # Step 1: Validate original graph (should pass)
+        graph_with_fusion_metadata.validate()
+        fuser = GraphFuser()
+        fuser.apply_node_fusion(graph_with_fusion_metadata)
+
+        # Step 2: Add ReLU node after softmax
+        softmax_node = graph_with_fusion_metadata.find_node_by_name('softmax')[0]
+        relu_node = BaseNode(
+            name='new_relu',
+            framework_attr={},
+            input_shape=softmax_node.output_shape,
+            output_shape=softmax_node.output_shape,
+            weights={},
+            layer_class=self.layer_class_relu
+        )
+        graph_with_fusion_metadata.add_node(relu_node)
+        graph_with_fusion_metadata.add_edge(softmax_node, relu_node, **{EDGE_SOURCE_INDEX: 0, EDGE_SINK_INDEX: 0})
+
+        # Step 3: Run fuser and expect failure due to unexpected new fusion
+        with pytest.raises(ValueError):
+            fuser.apply_node_fusion(graph_with_fusion_metadata)
+
 
 

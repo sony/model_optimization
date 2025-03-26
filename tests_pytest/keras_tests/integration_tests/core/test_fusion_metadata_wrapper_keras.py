@@ -20,6 +20,9 @@ from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMix
 import keras
 
 class TestGraphWithFusionMetadataKeras(BaseGraphWithFusingMetadataTest, KerasFwMixin):
+
+    layer_class_relu = keras.layers.ReLU
+
     def _data_gen(self):
         return self.get_basic_data_gen(shapes=[(1, 3, 5, 5)])()
 

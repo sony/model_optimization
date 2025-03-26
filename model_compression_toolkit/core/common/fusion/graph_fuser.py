@@ -47,8 +47,7 @@ class GraphFuser:
             The updated graph with fused nodes replacing the original node groups.
         """
         wrapper_copy = copy.deepcopy(wrapper)
-        expected_fusing_info = FusingInfoGenerator(wrapper.get_fusing_info().fqc).generate_fusing_info(
-            wrapper.get_internal_graph())
+        expected_fusing_info = FusingInfoGenerator(wrapper_copy.get_fusing_info().fusing_patterns).generate_fusing_info(wrapper_copy.get_internal_graph())
 
         if expected_fusing_info != wrapper_copy.get_fusing_info():
             raise ValueError(
@@ -90,8 +89,8 @@ class GraphFuser:
         # Ensure weights quantization config is None for all nodes except the first
         for n in nodes[1:]:
             for c in n.candidates_quantization_cfg:
-                assert c.weights_quantization_cfg is None, (
-                    f"Expected weights_quantization_cfg to be None for node {n}, but got {c.weights_quantization_cfg}"
+                assert len(c.weights_quantization_cfg.all_weight_attrs) == 0, (
+                    f"Expected weights_quantization_cfg to have no attributes to quantize, but found attributes {c.weights_quantization_cfg.all_weight_attrs} for node {n}"
                 )
 
         # Create candidates for this node (we assume that the weights configuration should be taken from the first node, and the activaion configuration
