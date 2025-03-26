@@ -69,22 +69,6 @@ def search_bit_width(graph: Graph,
 
     """
 
-    # # target_resource_utilization have to be passed. If it was not passed, the facade is not supposed to get here by now.
-    # if target_resource_utilization is None:
-    #     Logger.critical("Target ResourceUtilization is required for the bit-width search method's configuration.")  # pragma: no cover
-    #
-    # # Set graph for MP search
-    # graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
-    # # TODO: The handle of mixed precision with the fused graph will be in a separate PR. Currently, the bit-width
-    # #  search is on the "classic" graph.
-    # if isinstance(graph, FusingMetadataWrapper):
-    #     graph = graph.get_internal_graph()
-    #
-    # if target_resource_utilization.bops_restricted():
-    #     # TODO: we only need the virtual graph is both activations and weights are configurable
-    #     # Since Bit-operations count target resource utilization is set, we need to reconstruct the graph for the MP search
-    #     graph = substitute(graph, fw_impl.get_substitutions_virtual_weights_activation_coupling())
-
     assert target_resource_utilization.is_any_restricted()
 
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
