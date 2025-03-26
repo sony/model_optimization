@@ -25,6 +25,7 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
@@ -74,7 +75,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         )
 
     @pytest.fixture
-    def graph_with_fusion_metadata(self, minimal_tpc_with_fusing):
+    def graph_with_fusion_metadata(self, minimal_tpc_with_fusing) -> FusingMetadataWrapper:
         """
         Creates a graph with fusing metadata based on a generated model and a predefined configuration.
         Ensures all required components (framework implementation, framework info, etc.) are present.
@@ -95,6 +96,19 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
                                                               mixed_precision_enable=False,
                                                               running_gptq=False)
         return graph_with_fusion_metadata
+
+    def test_expected_fusing_info(self, graph_with_fusion_metadata: FusingMetadataWrapper):
+        """
+        Test that the FusingMetadataWrapper contains expected metadata regard the fusing that should
+        be found in the model.
+        """
+        actual_fi = graph_with_fusion_metadata.get_fusing_info()
+        assert len(actual_fi.get_all_fused_operations()) == 2
+        assert sorted(actual_fi.get_all_fused_operations().keys()) == ['FusedNode_conv_relu', 'FusedNode_linear_softmax']
+        assert actual_fi.node_to_fused_node_map == {'conv': 'FusedNode_conv_relu',
+                                                    'relu': 'FusedNode_conv_relu',
+                                                    'linear': 'FusedNode_linear_softmax',
+                                                    'softmax': 'FusedNode_linear_softmax'}
 
     def test_disable_act_quantization(self, graph_with_fusion_metadata):
         """Tests that the correct nodes have activation quantization disabled after
@@ -153,6 +167,32 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         relu_node = graph_with_fusion_metadata.find_node_by_name('relu')[0]
         with pytest.raises(ValueError):
             graph_with_fusion_metadata.remove_edge(conv_node, relu_node)
+        with pytest.raises(ValueError):
+            graph_with_fusion_metadata.validate()
+
+        # After updating the fusing info, make sure validation passes
+        graph_with_fusion_metadata.get_fusing_info().remove_fused_operation('FusedNode_conv_relu')
+        graph_with_fusion_metadata.validate()
+
+    def test_valid_change_in_graph(self, graph_with_fusion_metadata):
+        """
+        Tests validation passes after changing the graph with a change that should not
+        affect the fusing metadata.
+        """
+        graph_with_fusion_metadata.validate()
+        # Add softmax node after current softmax
+        softmax_node = graph_with_fusion_metadata.find_node_by_name('softmax')[0]
+        new_softmax_node = BaseNode(
+            name='new_softmax',
+            framework_attr={},
+            input_shape=softmax_node.output_shape,
+            output_shape=softmax_node.output_shape,
+            weights={},
+            layer_class='softmax'
+        )
+        graph_with_fusion_metadata.add_node(new_softmax_node)
+        graph_with_fusion_metadata.add_edge(softmax_node, new_softmax_node, **{EDGE_SOURCE_INDEX: 0, EDGE_SINK_INDEX: 0})
+        graph_with_fusion_metadata.validate()
 
     def test_fail_validate_after_modifying_node_inputs(self, graph_with_fusion_metadata):
         """
@@ -185,16 +225,6 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         relu_node = graph_copy.find_node_by_name('relu')[0]
         with pytest.raises(ValueError):
             graph_copy.remove_edge(conv_node, relu_node)
-
-    # def test_fail_validate_after_adding_node_that_adds_a_fusion(self, graph_with_fusion_metadata):
-    #     pass
-    #     # TODO: run graph fuser and see it passes
-    #     # class GraphFuser:
-    #     #     def apply_node_fusion(self, wrapper: FusingMetadataWrapper) -> Graph:
-    #     # TODO: Add a new node of relu after the softmax
-    #     # TODO: run graph fuser again and see it raises an exception
-    #
-    #
 
     def test_fail_validate_after_adding_node_that_adds_a_fusion(self, graph_with_fusion_metadata):
         """

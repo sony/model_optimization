@@ -44,7 +44,7 @@ def graph_preparation_runner(in_model: Any,
                              bit_width_config: BitWidthConfig = None,
                              tb_w: TensorboardWriter = None,
                              mixed_precision_enable: bool = False,
-                             running_gptq: bool = False) -> Graph:
+                             running_gptq: bool = False) -> FusingMetadataWrapper:
     """
     Runs all required preparations in order to build a quantization graph from the given model,
     quantization configuration and target platform specifications.
