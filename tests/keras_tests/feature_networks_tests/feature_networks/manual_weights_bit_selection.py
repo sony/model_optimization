@@ -151,9 +151,7 @@ class ManualWeightsBitWidthSelectionTest(BaseKerasFeatureNetworkTest):
 
 class ManualWeightsBias2BitWidthSelectionTest(ManualWeightsBitWidthSelectionTest):
     """
-    This test check the manual bit width configuration.
-    Call it with a layer type filter or list of layer type filters, bit width or list of bit widths.
-    Uses the manual bit width API in the "get_core_configs" method.
+    This test check the 2 bit manual weights bit width configuration of bias.
     """
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs(kernel_cfg_nbits=8, bias_cfg_nbits=2, enable_bias_weights_quantization=True))
@@ -170,9 +168,7 @@ class ManualWeightsBias2BitWidthSelectionTest(ManualWeightsBitWidthSelectionTest
 
 class ManualWeightsBias4BitWidthSelectionTest(ManualWeightsBitWidthSelectionTest):
     """
-    This test check the manual bit width configuration.
-    Call it with a layer type filter or list of layer type filters, bit width or list of bit widths.
-    Uses the manual bit width API in the "get_core_configs" method.
+    This test check the 4 bit manual weights bit width configuration of bias.
     """
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs(kernel_cfg_nbits=8, bias_cfg_nbits=4, enable_bias_weights_quantization=True))
@@ -189,9 +185,7 @@ class ManualWeightsBias4BitWidthSelectionTest(ManualWeightsBitWidthSelectionTest
 
 class ManualWeightsBias8BitWidthSelectionTest(ManualWeightsBitWidthSelectionTest):
     """
-    This test check the manual bit width configuration.
-    Call it with a layer type filter or list of layer type filters, bit width or list of bit widths.
-    Uses the manual bit width API in the "get_core_configs" method.
+    This test check the 8 bit manual weights bit width configuration of bias.
     """
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs(kernel_cfg_nbits=8, bias_cfg_nbits=8, enable_bias_weights_quantization=True))
@@ -208,9 +202,7 @@ class ManualWeightsBias8BitWidthSelectionTest(ManualWeightsBitWidthSelectionTest
 
 class ManualWeightsBias32BitWidthSelectionTest(ManualWeightsBitWidthSelectionTest):
     """
-    This test check the manual bit width configuration.
-    Call it with a layer type filter or list of layer type filters, bit width or list of bit widths.
-    Uses the manual bit width API in the "get_core_configs" method.
+    This test check the 32 bit manual weights bit width configuration of bias.
     """
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs(kernel_cfg_nbits=8, bias_cfg_nbits=32, enable_bias_weights_quantization=True))

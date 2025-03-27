@@ -65,8 +65,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.manual_bit_select
     Manual16BitWidthSelectionTest, Manual16BitWidthSelectionMixedPrecisionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.manual_weights_bit_selection import ManualWeightsBitWidthSelectionTest, \
     ManualWeightsBias2BitWidthSelectionTest, ManualWeightsBias4BitWidthSelectionTest, ManualWeightsBias8BitWidthSelectionTest, ManualWeightsBias32BitWidthSelectionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision.requires_mixed_precision_test import \
-    RequiresMixedPrecision, RequiresMixedPrecisionWeights
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
     MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, \
@@ -163,7 +161,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.sigmoid_mul_subst
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_func_substitutions_test import \
     ConvFuncSubstitutionsTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, BIAS, KERAS_KERNEL
+from model_compression_toolkit.target_platform_capabilities.constants import BIAS, KERAS_KERNEL
 
 layers = tf.keras.layers
 
@@ -249,13 +247,6 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_weights_only_activation_conf(self):
         MixedPrecisionWeightsOnlyConfigurableActivationsTest(self).run_test()
 
-    def test_requires_mixed_precision(self):
-        RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
-        RequiresMixedPrecision(self, activation_memory=True).run_test()
-        RequiresMixedPrecision(self, total_memory=True).run_test()
-        RequiresMixedPrecision(self, bops=True).run_test()
-        RequiresMixedPrecision(self).run_test()
-
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPrecisionSearchPartWeightsLayersTest(self).run_test()
 
@@ -325,11 +316,10 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
         MixedPrecisionWeightsOnlyBopsTest(self).run_test()
         MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        # TODO: uncomment these tests when the issue of combined BOPs and other RU metrics is solved.
-        # MixedPrecisionBopsAndWeightsUtilizationTest(self).run_test()
-        # MixedPrecisionBopsAndActivationUtilizationTest(self).run_test()
-        # MixedPrecisionBopsAndTotalUtilizationTest(self).run_test()
-        # MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndWeightsUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndActivationUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndTotalUtilizationTest(self).run_test()
+        MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_name_filter(self):
@@ -962,7 +952,10 @@ class FeatureNetworkTest(unittest.TestCase):
         ManualBitWidthSelectionTest(self, [NodeNameFilter('add2'), NodeNameFilter('relu1')], 4).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeNameFilter('add2')], [4, 2]).run_test()
 
-    def test_weights_invalid_bit_width_selection(self):
+    def test_invalid_weights_bit_width_selection(self):
+        """
+        This test checks the invalid bit-width in the manual weights bit-width selection feature.
+        """
         with self.assertRaises(Exception) as context:
             ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [11], [KERAS_KERNEL]).run_test()
         # Check that the correct exception message was raised
@@ -975,9 +968,9 @@ class FeatureNetworkTest(unittest.TestCase):
         self.assertEqual(str(context.exception),
                          "Manually selected weights bit-width [[7, 'kernel']] is invalid for node Dense:fc.")
 
-    def test_weights_exceptions_manual_selection(self):
+    def test_exceptions_manual_weights_selection(self):
         """
-        This test checks the execptions in the manual bit-width selection feature.
+        This test checks the execptions in the manual weights bit-width selection feature.
         """
         # Node name doesn't exist in graph
         with self.assertRaises(Exception) as context:
@@ -995,9 +988,9 @@ class FeatureNetworkTest(unittest.TestCase):
         self.assertEqual(str(context.exception),
                          "Configuration Error: The number of provided bit_width values 2 must match the number of filters 3, or a single bit_width value should be provided for all filters.")
 
-    def test_weights_manual_bit_width_selection(self):
+    def test_manual_weights_bit_width_selection(self):
         """
-        This test checks the manual bit-width selection feature.
+        This test checks the manual weights bit-width selection feature.
         """
         ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [2], [KERAS_KERNEL]).run_test()
         ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [4], [KERAS_KERNEL]).run_test()

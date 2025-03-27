@@ -62,7 +62,6 @@ from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import 
 from tests.pytorch_tests.model_tests.feature_models.manual_weights_bit_selection import ManualWeightsBitWidthByLayerTypeTest, ManualWeightsBitWidthByLayerNameTest,\
     ManualWeightsBias2BitWidthByLayerTypeTest, ManualWeightsBias4BitWidthByLayerTypeTest, ManualWeightsBias8BitWidthByLayerTypeTest, ManualWeightsBias32BitWidthByLayerTypeTest,\
     ManualWeightsBias2BitWidthByLayerNameTest, ManualWeightsBias4BitWidthByLayerNameTest, ManualWeightsBias8BitWidthByLayerNameTest, ManualWeightsBias32BitWidthByLayerNameTest
-    
 from tests.pytorch_tests.model_tests.feature_models.matmul_test import MatMulFNetTest, MatMulOpNetTest
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
@@ -629,11 +628,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
         MixedPrecisionWeightsOnlyBopsTest(self).run_test()
         MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        # TODO: uncomment these tests when the issue of combined BOPs and other RU metrics is solved.
-        # MixedPrecisionBopsAndWeightsMemoryUtilizationTest(self).run_test()
-        # MixedPrecisionBopsAndActivationMemoryUtilizationTest(self).run_test()
-        # MixedPrecisionBopsAndTotalMemoryUtilizationTest(self).run_test()
-        # MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndWeightsMemoryUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndActivationMemoryUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndTotalMemoryUtilizationTest(self).run_test()
+        MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_mixed_precision_distance_functions(self):
@@ -883,6 +881,9 @@ class FeatureModelsTestRunner(unittest.TestCase):
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], 4).run_test()
 
     def test_invalid_weights_bit_width_selection(self):
+        """
+        This test checks the invalid bit-width in the manual weights bit-width selection feature.
+        """
         with self.assertRaises(Exception) as context:
             ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [7], [PYTORCH_KERNEL]).run_test()
         # Check that the correct exception message was raised
@@ -900,7 +901,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_exceptions_manual_weights_selection(self):
         """
-        This test checks the execptions in the manual bit-width selection feature.
+        This test checks the execptions in the manual weights bit-width selection feature.
         """
         # Node name doesn't exist in graph
         with self.assertRaises(Exception) as context:
@@ -918,7 +919,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_manual_weights_bit_width_selection_by_layer_type(self):
         """
-        This test checks the manual bit-width selection feature by layer type filtering.
+        This test checks the manual weights bit-width selection feature by layer type filtering.
         """
         ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [2], [PYTORCH_KERNEL]).run_test()
         ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [4], [PYTORCH_KERNEL]).run_test()
@@ -937,7 +938,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_manual_weights_bit_width_selection_by_layer_name(self):
         """
-        This test checks the manual bit-width selection feature by layer name filtering.
+        This test checks the manual weights bit-width selection feature by layer name filtering.
         """
         ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [2], [PYTORCH_KERNEL]).run_test()
         ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [4], [PYTORCH_KERNEL]).run_test()

@@ -129,10 +129,11 @@ class BaseManualWeightsBitWidthSelectionTest(MixedPrecisionActivationBaseTest):
 
 class ManualWeightsBitWidthByLayerTypeTest(BaseManualWeightsBitWidthSelectionTest):
     """
-        This test check the manual bit width configuration.
-        Call it with a layer type filter or list of layer type filters, bit width or list of bit widths.
-        Uses the manual bit width API in the "get_core_configs" method.
-        """
+    This test check the manual weights bit width configuration.
+    Call it with a layer type filter or list of layer type filters, bit width or list of bit widths,
+    attribute or list of attribute.
+    Uses the manual bit width API in the "get_core_configs" method.
+    """
     def __init__(self, unit_test, filters, bit_widths, attrs):
         self.filters = filters
         self.bit_widths = bit_widths
@@ -152,7 +153,7 @@ class ManualWeightsBitWidthByLayerTypeTest(BaseManualWeightsBitWidthSelectionTes
                 self.functional_names.append([filter.node_type.__name__, [bit_width, attr]])
 
         super().__init__(unit_test)
-  
+
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # in the compare we need bit_widths to be a list
         bit_widths = [self.bit_widths] if not isinstance(self.bit_widths, list) else self.bit_widths
@@ -166,7 +167,7 @@ class ManualWeightsBitWidthByLayerTypeTest(BaseManualWeightsBitWidthSelectionTes
                     bitwidth_attrs = []
                     for layer_type in self.layer_types:
                         if layer_type[0] == type(layer.layer):
-                            bitwidth_attrs.append(layer_type[1]) 
+                            bitwidth_attrs.append(layer_type[1])
 
                     for bitwidth_attr in bitwidth_attrs:
                         bitwidth = bitwidth_attr[0]
@@ -181,6 +182,9 @@ class ManualWeightsBitWidthByLayerTypeTest(BaseManualWeightsBitWidthSelectionTes
 
 
 class ManualWeightsBias2BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerTypeTest):
+    """
+    This test check the 2 bit manual weights bit width configuration of bias by layer type.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
@@ -209,6 +213,9 @@ class ManualWeightsBias2BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerType
 
 
 class ManualWeightsBias4BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerTypeTest):
+    """
+    This test check the 4 bit manual weights bit width configuration of bias by layer type.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
@@ -237,6 +244,9 @@ class ManualWeightsBias4BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerType
 
 
 class ManualWeightsBias8BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerTypeTest):
+    """
+    This test check the 8 bit manual weights bit width configuration of bias by layer type.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
@@ -265,6 +275,9 @@ class ManualWeightsBias8BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerType
 
 
 class ManualWeightsBias32BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerTypeTest):
+    """
+    This test check the 32 bit manual weights bit width configuration of bias by layer type.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
@@ -294,8 +307,9 @@ class ManualWeightsBias32BitWidthByLayerTypeTest(ManualWeightsBitWidthByLayerTyp
 
 class ManualWeightsBitWidthByLayerNameTest(BaseManualWeightsBitWidthSelectionTest):
     """
-    This test check the manual bit width configuration.
-    Call it with a name filter or list of name filters, bit width or list of bit widths.
+    This test check the manual weights bit width configuration.
+    Call it with a layer name filter or list of layer name filters, bit width or list of bit widths,
+    attribute or list of attribute.
     Uses the manual bit width API in the "get_core_configs" method.
     """
     def __init__(self, unit_test, filters, bit_widths, attrs):
@@ -328,7 +342,7 @@ class ManualWeightsBitWidthByLayerNameTest(BaseManualWeightsBitWidthSelectionTes
                     bitwidth_attrs = []
                     for layer_name in self.layer_names:
                         if layer_name[0] == name:
-                            bitwidth_attrs.append(layer_name[1]) 
+                            bitwidth_attrs.append(layer_name[1])
 
                     for bitwidth_attr in bitwidth_attrs:
                         bitwidth = bitwidth_attr[0]
@@ -343,6 +357,9 @@ class ManualWeightsBitWidthByLayerNameTest(BaseManualWeightsBitWidthSelectionTes
 
 
 class ManualWeightsBias2BitWidthByLayerNameTest(ManualWeightsBitWidthByLayerNameTest):
+    """
+    This test check the 2 bit manual weights bit width configuration of bias by layer name.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
@@ -371,6 +388,9 @@ class ManualWeightsBias2BitWidthByLayerNameTest(ManualWeightsBitWidthByLayerName
 
 
 class ManualWeightsBias4BitWidthByLayerNameTest(ManualWeightsBitWidthByLayerNameTest):
+    """
+    This test check the 4 bit manual weights bit width configuration of bias by layer name.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
@@ -399,6 +419,9 @@ class ManualWeightsBias4BitWidthByLayerNameTest(ManualWeightsBitWidthByLayerName
 
 
 class ManualWeightsBias8BitWidthByLayerNameTest(ManualWeightsBitWidthByLayerNameTest):
+    """
+    This test check the 8 bit manual weights bit width configuration of bias by layer name.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
@@ -427,6 +450,9 @@ class ManualWeightsBias8BitWidthByLayerNameTest(ManualWeightsBitWidthByLayerName
 
 
 class ManualWeightsBias32BitWidthByLayerNameTest(ManualWeightsBitWidthByLayerNameTest):
+    """
+    This test check the 32 bit manual weights bit width configuration of bias by layer name.
+    """
     def get_tpc(self):
         mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8), (16, 8), (8, 16), (4, 16), (2, 16), (16, 16)]
         kernel_weights_n_bits = 16
