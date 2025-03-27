@@ -18,7 +18,8 @@ from typing import Callable, Any
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -43,7 +44,7 @@ def graph_preparation_runner(in_model: Any,
                              bit_width_config: BitWidthConfig = None,
                              tb_w: TensorboardWriter = None,
                              mixed_precision_enable: bool = False,
-                             running_gptq: bool = False) -> Graph:
+                             running_gptq: bool = False) -> FusingMetadataWrapper:
     """
     Runs all required preparations in order to build a quantization graph from the given model,
     quantization configuration and target platform specifications.
@@ -136,6 +137,7 @@ def get_finalized_graph(initial_graph: Graph,
         node.prior_info = fw_impl.get_node_prior_info(node=node,
                                                       fw_info=fw_info,
                                                       graph=graph)
+
     ##################################################
     # Graph substitution (pre statistics collection)
     ##################################################
@@ -161,7 +163,8 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     # Layer fusing
     ######################################
-    transformed_graph = fusion(transformed_graph, fqc)
+    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(transformed_graph)
+    transformed_graph = FusingMetadataWrapper(transformed_graph, fusing_info)
 
     ######################################
     # Channel equalization

@@ -92,7 +92,7 @@ def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
                                        qc=QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])}))
 
     # Split graph substitution
-    split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+    split_graph = substitute(copy.deepcopy(graph.get_internal_graph()), [WeightsActivationSplit()])
 
     return graph, split_graph
 

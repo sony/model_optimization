@@ -25,6 +25,7 @@ from model_compression_toolkit.constants import EPS
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitWeightsNode, VirtualSplitActivationNode
@@ -65,6 +66,11 @@ class MixedPrecisionSearchManager:
 
         self.fw_info = fw_info
         self.fw_impl = fw_impl
+
+        # TODO: The handle of mixed precision with the fused graph will be in a separate PR. Currently, the bit-width
+        #  search is on the "classic" graph.
+        if isinstance(graph, FusingMetadataWrapper):
+            graph = graph.get_internal_graph()
 
         self.original_graph = graph
         # graph for mp search

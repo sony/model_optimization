@@ -18,6 +18,9 @@ from typing import List, Callable
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
+from model_compression_toolkit.core.common.hessian import HessianInfoService
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.hessian import HessianInfoService
@@ -65,6 +68,7 @@ def search_bit_width(graph: Graph,
         bit-width index on the node).
 
     """
+
     assert target_resource_utilization.is_any_restricted()
 
     # If we only run weights compression with MP than no need to consider activation quantization when computing the

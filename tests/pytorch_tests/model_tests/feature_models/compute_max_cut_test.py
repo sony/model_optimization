@@ -15,6 +15,7 @@
 
 import torch.nn as nn
 import model_compression_toolkit as mct
+from model_compression_toolkit.core.common.fusion.fusing_info import FUSED_OP_ID_PREFIX
 from tests.common_tests.helpers.tpcs_for_tests.v2.tpc import get_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
@@ -54,15 +55,15 @@ class ComputeMaxCutTest(BasePytorchFeatureNetworkTest):
         _metadata = get_metadata(quantized_model)
         self.unit_test.assertEqual(_metadata['scheduling_info']['operators_scheduling'],
                                    ['DummyPlaceHolder:x',
-                                    'FusedLayerType:FusedNode_conv2d_1_bn_relu_1',
-                                    'FusedLayerType:FusedNode_conv2d_2_bn_relu_2',
+                                    f'FusedLayerType:{FUSED_OP_ID_PREFIX}conv2d_1_bn_relu_1',
+                                    f'FusedLayerType:{FUSED_OP_ID_PREFIX}conv2d_2_bn_relu_2',
                                     'add:add'])
         self.unit_test.assertEqual(_metadata['scheduling_info']['max_cut'], 256 * 3)
 
         expected_fused_nodes_mapping = {
-            'conv2d_1_bn': 'FusedNode_conv2d_1_bn_relu_1',
-            'relu_1': 'FusedNode_conv2d_1_bn_relu_1',
-            'conv2d_2_bn': 'FusedNode_conv2d_2_bn_relu_2',
-            'relu_2': 'FusedNode_conv2d_2_bn_relu_2'
+            'conv2d_1_bn': f"{FUSED_OP_ID_PREFIX}conv2d_1_bn_relu_1",
+            'relu_1': f"{FUSED_OP_ID_PREFIX}conv2d_1_bn_relu_1",
+            'conv2d_2_bn': f"{FUSED_OP_ID_PREFIX}conv2d_2_bn_relu_2",
+            'relu_2': f"{FUSED_OP_ID_PREFIX}conv2d_2_bn_relu_2"
         }
         self.unit_test.assertEqual(_metadata['scheduling_info']['fused_nodes_mapping'], expected_fused_nodes_mapping)

@@ -20,6 +20,8 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -31,7 +33,6 @@ else:
     from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add, InputLayer
 import numpy as np
 
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualActivationWeightsNode, VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -123,7 +124,6 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, fqc)
     graph = filter_nodes_candidates(graph)
 
     return graph
@@ -231,12 +231,12 @@ class TestActivationWeightsComposition(unittest.TestCase):
         self.assertTrue(len(sorted_v_nodes[1].candidates_quantization_cfg) == 9)
         # Conv2-Activation node
         self.assertTrue(isinstance(sorted_v_nodes[2], VirtualSplitActivationNode))
-        self.assertTrue(len(sorted_v_nodes[2].candidates_quantization_cfg) == 1)
+        self.assertTrue(len(sorted_v_nodes[2].candidates_quantization_cfg) == 3) # since we do not run fusion, there are three possible activations for the conv
         # Relu1-ConvTranspose composed node
         self.assertTrue(len(sorted_v_nodes[3].candidates_quantization_cfg) == 9)
         # ConvTranspose Activation
         self.assertTrue(isinstance(sorted_v_nodes[4], VirtualSplitActivationNode))
-        self.assertTrue(len(sorted_v_nodes[4].candidates_quantization_cfg) == 1)
+        self.assertTrue(len(sorted_v_nodes[4].candidates_quantization_cfg) == 3) # since we do not run fusion, there are three possible activations for the conv
         # Relu2-Depthwise composed node
         self.assertTrue(len(sorted_v_nodes[5].candidates_quantization_cfg) == 9)
         # Depthwise-Dense composed node

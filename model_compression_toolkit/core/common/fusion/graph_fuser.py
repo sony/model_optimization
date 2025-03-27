@@ -1,4 +1,4 @@
-#  Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
+#  Copyright 2025 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,10 +13,14 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from typing import Dict, List
+import copy
+from typing import List
 
-from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.graph.base_graph import OutTensor
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
+from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
+from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
+from itertools import product
 
 
 class FusedLayerType:
@@ -27,35 +31,42 @@ class FusedLayerType:
     def __init__(self):
         self.__name__ = 'FusedLayer'
 
-
 class GraphFuser:
-
-    def create_fused_graph(self, graph: Graph) -> Dict[str, str]:
+    def apply_node_fusion(self, wrapper: FusingMetadataWrapper) -> Graph:
         """
-        GraphFuser is responsible for fusing nodes in a networkx graph.
-        The fusion process involves:
-            1. Creating new fused nodes to represent these groups.
-            2. Updating the graph structure to replace the original nodes with fused nodes.
-            3. Maintaining mapping of original node names to their fused node names.
+        Applies node fusion to the graph contained in the given FusingMetadataWrapper.
+
+        The fusion process includes:
+            1. Generating new fused nodes to replace groups of original nodes.
+            2. Updating the graph structure to replace those nodes with the fused representations.
 
         Args:
-            graph: Graph to fuse its nodes.
+            wrapper: A wrapper object that contains the graph and its fusing metadata.
 
         Returns:
-            Mapping of original node names to their fused node names
+            The updated graph with fused nodes replacing the original node groups.
         """
-        fused_nodes_mapping = {}
-        # Iterate through each group of nodes to be fused
-        for fused_nodes_list in graph.fused_nodes:
-            new_fused_node = self._create_fused_node(fused_nodes_list)
-            self._replace_nodes_with_fused_node(graph, fused_nodes_list, new_fused_node)
-            # Update the mapping to keep track of which original nodes are now part of which fused nodes
-            for node in fused_nodes_list:
-                fused_nodes_mapping[node.name] = new_fused_node.name
-        return fused_nodes_mapping
+        wrapper_copy = copy.deepcopy(wrapper)
+        expected_fusing_info = FusingInfoGenerator(wrapper_copy.get_fusing_info().fusing_patterns).generate_fusing_info(wrapper_copy.get_internal_graph())
+
+        if expected_fusing_info != wrapper_copy.get_fusing_info():
+            raise ValueError(
+                f"Mismatch between expected and existing fusing information.\n"
+                f"Expected:\n{expected_fusing_info}\nExisting:\n{wrapper_copy.get_fusing_info()}"
+            )
+
+        for fused_node_id, original_nodes in wrapper_copy.get_fusing_info().get_all_fused_operations().items():
+            fused_node = self._create_fused_node(fused_node_id,
+                                                 original_nodes)
+            self._replace_nodes_with_fused_node(wrapper_copy.get_internal_graph(),
+                                                original_nodes,
+                                                fused_node)
+
+        return wrapper_copy.get_internal_graph()
+
 
     @staticmethod
-    def _create_fused_node(nodes: List[BaseNode]) -> BaseNode:
+    def _create_fused_node(fused_node_id: str, nodes: List[BaseNode]) -> BaseNode:
         """
         Create a new node that represents the fusion of the given nodes.
 
@@ -67,15 +78,34 @@ class GraphFuser:
         """
         # Create a new node with a name that reflects its components
         # Use the input shape of the first node and output shape of the last node
-        fused_node = BaseNode(name='FusedNode_' + '_'.join([node.name for node in nodes]),
+        # TODO: consider replacing the fused node with a sub-model to allow inference on it, etc.
+        fused_node = BaseNode(name=fused_node_id,
                               framework_attr={},
                               input_shape=nodes[0].input_shape,
                               output_shape=nodes[-1].output_shape,
-                              weights={},
+                              weights={}, # TODO: update with weights of all nodes
                               layer_class=FusedLayerType)
 
-        # Preserve the final activation quantization configuration
-        # This is important for maintaining the correct behavior of the fused node
+        # Ensure weights quantization config is None for all nodes except the first
+        for n in nodes[1:]:
+            for c in n.candidates_quantization_cfg:
+                assert len(c.weights_quantization_cfg.all_weight_attrs) == 0, (
+                    f"Expected weights_quantization_cfg to have no attributes to quantize, but found attributes {c.weights_quantization_cfg.all_weight_attrs} for node {n}"
+                )
+
+        # Create candidates for this node (we assume that the weights configuration should be taken from the first node, and the activaion configuration
+        # is the output quantization configuration of the last node. We ignore all configurations of middle nodes.
+        weight_cfgs = [c.weights_quantization_cfg for c in nodes[0].candidates_quantization_cfg]
+        activation_cfgs = [c.activation_quantization_cfg for c in nodes[-1].candidates_quantization_cfg]
+        if weight_cfgs and activation_cfgs:
+            combinations = list(product(weight_cfgs, activation_cfgs))
+            fused_node.candidates_quantization_cfg = [
+                CandidateNodeQuantizationConfig(weights_quantization_cfg=w, activation_quantization_cfg=a)
+                for w, a in combinations
+            ]
+
+        # Keep the final configurations if they were set already.
+        fused_node.final_weights_quantization_cfg = nodes[0].final_weights_quantization_cfg
         fused_node.final_activation_quantization_cfg = nodes[-1].final_activation_quantization_cfg
 
         return fused_node
@@ -136,3 +166,5 @@ class GraphFuser:
 
         # Finally, add the new fused node to the graph
         graph.add_node(fused_node)
+
+
