@@ -85,6 +85,9 @@ class HessianScoresCalculator(ABC):
         """
         unfold_tensors = []
         for tensor in tensors_to_unfold:
+            if is_tuple_of_tensors(tensor):
+                tensor = list(tensor)  # converts named tuple to list
+
             if isinstance(tensor, List):
                 unfold_tensors += tensor
             else:
