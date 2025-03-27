@@ -113,3 +113,12 @@ def clip_inf_values_float16(tensor: Tensor) -> Tensor:
     tensor[inf_mask] = MAX_FLOAT16 * torch.sign(tensor[inf_mask])
 
     return tensor
+
+
+def is_tuple_of_tensors(obj):
+    if not isinstance(obj, tuple):
+        return False
+    for item in obj:
+        if not isinstance(item, torch.Tensor):
+            return False
+    return True

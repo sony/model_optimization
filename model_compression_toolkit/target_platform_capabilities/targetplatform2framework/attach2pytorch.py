@@ -32,8 +32,7 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2fw import \
     AttachTpcToFramework
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Eq
-from sony_custom_layers.pytorch import MulticlassNMS, MulticlassNMSWithIndices, multiclass_nms_with_indices, \
-    FasterRCNNBoxDecode, multiclass_nms
+from sony_custom_layers.pytorch import MulticlassNMS, MulticlassNMSWithIndices, FasterRCNNBoxDecode
 
 
 class AttachTpcToPytorch(AttachTpcToFramework):
@@ -99,8 +98,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.L2NORM: [LayerFilterParams(torch.nn.functional.normalize,
                                                         Eq('p', 2) | Eq('p', None))],
             OperatorSetNames.SSD_POST_PROCESS: [],  # no such operator in pytorch
-            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [multiclass_nms, multiclass_nms_with_indices, MulticlassNMS,
-                                                            MulticlassNMSWithIndices],  # no such operator in pytorch
+            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [MulticlassNMS, MulticlassNMSWithIndices],  # no such operator in pytorch
             OperatorSetNames.BOX_DECODE: [FasterRCNNBoxDecode]
         }
 
