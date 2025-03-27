@@ -138,12 +138,14 @@ def _run_operation(n: BaseNode,
                          for t in input_tensors]
         _tensor_input_allocs = None
 
-    if n.inputs_as_list:
-        if isinstance(n, FunctionalNode) and isinstance(op_func, PytorchQuantizationWrapper):
+    if isinstance(n, FunctionalNode) and n.inputs_as_list:
+        if isinstance(op_func, PytorchQuantizationWrapper):
             # in wrapped nodes, the op args & kwargs are already in the PytorchQuantizationWrapper.
             out_tensors_of_n_float = op_func(*input_tensors)
         else:
             out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
+    elif n.inputs_as_list:
+        out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
         if isinstance(op_func, PytorchQuantizationWrapper) and isinstance(n, FunctionalNode) and n.functional_op is not torch.gather:
             # in wrapped nodes, the op args & kwargs are already in the PytorchQuantizationWrapper.
