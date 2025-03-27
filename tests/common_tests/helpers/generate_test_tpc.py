@@ -205,7 +205,9 @@ def generate_test_attr_configs(default_cfg_nbits: int = 8,
                                kernel_cfg_nbits: int = 8,
                                kernel_cfg_quantizatiom_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
                                enable_kernel_weights_quantization: bool = True,
-                               kernel_lut_values_bitwidth: int = None):
+                               kernel_lut_values_bitwidth: int = None,
+                               enable_bias_weights_quantization: bool = False,
+                               bias_cfg_nbits: int = FLOAT_BITWIDTH):
     default_weight_attr_config = schema.AttributeQuantizationConfig(
         weights_quantization_method=default_cfg_quantizatiom_method,
         weights_n_bits=default_cfg_nbits,
@@ -222,9 +224,9 @@ def generate_test_attr_configs(default_cfg_nbits: int = 8,
 
     bias_config = schema.AttributeQuantizationConfig(
         weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
-        weights_n_bits=FLOAT_BITWIDTH,
+        weights_n_bits=bias_cfg_nbits,
         weights_per_channel_threshold=False,
-        enable_weights_quantization=False,
+        enable_weights_quantization=enable_bias_weights_quantization,
         lut_values_bitwidth=None)
 
     return {DEFAULT_WEIGHT_ATTR_CONFIG: default_weight_attr_config,
