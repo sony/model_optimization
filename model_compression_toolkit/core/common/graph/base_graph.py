@@ -696,7 +696,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         sorted_conf_activation = self.get_sorted_activation_configurable_nodes()
         return [(n, n.final_activation_quantization_cfg.activation_n_bits) for n in sorted_conf_activation]
 
-    def find_prev_act_config_node(self, node: BaseNode) -> BaseNode:
+    def retrieve_preserved_quantization_node(self, node: BaseNode) -> BaseNode:
         """
         For a node with quantization_preserving == True, get the previous non-quantization_preserving node
         to get activation quantization config from. If quantization_preserving is False return node.

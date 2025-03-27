@@ -37,6 +37,8 @@ from tests_pytest._test_util.graph_builder_utils import build_node, full_attr_na
 BM = BitwidthMode
 TIC = TargetInclusionCriterion
 
+_identity_func = lambda x: x
+
 
 class TestUtilization:
     def test_operations(self):
@@ -298,7 +300,7 @@ class TestComputeActivationTensorsUtilization:
         mp_reuse = build_node('mp_reuse', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(16)], reuse=True)
         noq = build_node('noq', output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False)])
         graph_mock.nodes = [mp_reuse, noq]
-        graph_mock.find_prev_act_config_node = lambda x: x
+        graph_mock.retrieve_preserved_quantization_node = _identity_func
 
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         # _get_activation_nbits is already fully checked, just make sure we use it, and use correctly
@@ -460,6 +462,7 @@ class TestActivationMaxCutUtilization:
         graph_mock.nodes = nodes
         # use the Graph original method (need to bind it to graph_mock instance)
         graph_mock.find_node_by_name = MethodType(Graph.find_node_by_name, graph_mock)
+        graph_mock.retrieve_preserved_quantization_node = _identity_func
 
         # we should not use total size, setting it to bad number
         cut_elems1 = MemoryElements(elements={ActivationMemoryTensor(mp_reuse.output_shape, 'mp_reuse', 0)}, total_size=-1)

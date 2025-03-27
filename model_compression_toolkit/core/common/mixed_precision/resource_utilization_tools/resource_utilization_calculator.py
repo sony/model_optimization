@@ -369,7 +369,7 @@ class ResourceUtilizationCalculator:
             if not cut_target_nodes:
                 continue
             for n in cut_target_nodes:
-                qc = act_qcs.get(self.graph.find_prev_act_config_node(n).name) if act_qcs else None
+                qc = act_qcs.get(self.graph.retrieve_preserved_quantization_node(n).name) if act_qcs else None
                 util_per_cut_per_node[cut][n.name] = self.compute_node_activation_tensor_utilization(n, target_criterion,
                                                                                                      bitwidth_mode, qc)
             util_per_cut[cut] = sum(util_per_cut_per_node[cut].values())    # type: ignore
@@ -440,7 +440,7 @@ class ResourceUtilizationCalculator:
                 return Utilization(0, 0)
 
         size = self._act_tensors_size[n.name]
-        nbits = self._get_activation_nbits(self.graph.find_prev_act_config_node(n), bitwidth_mode, qc)
+        nbits = self._get_activation_nbits(self.graph.retrieve_preserved_quantization_node(n), bitwidth_mode, qc)
         bytes_ = size * nbits / 8
         return Utilization(size, bytes_)
 

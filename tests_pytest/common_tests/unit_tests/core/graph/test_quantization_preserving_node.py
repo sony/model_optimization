@@ -83,7 +83,7 @@ class TestQuantizationPreservingNode:
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0),
                                  Edge(n1, n4, 0, 0), Edge(n4, n5, 0, 0)])
 
-        assert graph.find_prev_act_config_node(n2) is n1
-        assert graph.find_prev_act_config_node(n3) is n1
-        assert graph.find_prev_act_config_node(n4) is n4
-        assert graph.find_prev_act_config_node(n5) is n4
+        assert graph.retrieve_preserved_quantization_node(n2) is n1
+        assert graph.retrieve_preserved_quantization_node(n3) is n1
+        assert graph.retrieve_preserved_quantization_node(n4) is n4
+        assert graph.retrieve_preserved_quantization_node(n5) is n4
