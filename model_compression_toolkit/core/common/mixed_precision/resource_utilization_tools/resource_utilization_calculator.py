@@ -335,13 +335,35 @@ class ResourceUtilizationCalculator:
         """
         return self.compute_activation_utilization_by_cut(target_criterion, bitwidth_mode, act_qcs)
 
+    def _extract_qc(self, n: BaseNode, act_qcs: Optional[ActivationQCfgPerNode] = None
+                    ) -> NodeActivationQuantizationConfig | None:
+        """
+        Extract quantization config the activation configs dictionary is provided. If node is quantization
+        preserving, extract the quantization config from the preceding activation quantized node (i.e.
+        the Quantization the original node preserves).
+
+        Args:
+            n: Node to extract qc for.
+            act_qcs: custom activations quantization configuration. If not provided, the default
+             configuration will be extracted from the node.
+
+        Returns:
+            The relevant quantization config.
+        """
+        if act_qcs:
+            assert not n.is_quantization_preserving() or n.name not in act_qcs, \
+                f"Quantization preserving node {n.name} should not have a qc for this computation."
+            return act_qcs.get(self.graph.retrieve_preserved_quantization_node(n).name)
+        return None
+
     def compute_activation_utilization_by_cut(self,
                                               target_criterion: TargetInclusionCriterion,
                                               bitwidth_mode: BitwidthMode,
                                               act_qcs: Optional[ActivationQCfgPerNode] = None) \
             -> Tuple[float, Dict[Cut, Utilization], Dict[Cut, Dict[BaseNode, Utilization]]]:
         """
-        Compute graph activation cuts utilization.
+        Compute graph activation cuts utilization. If activation quantization configs are provided, then for
+        quantization preserving nodes, get the previous quantized activation node bit-width.
 
         Args:
             target_criterion: criterion to include weights for computation.
@@ -369,7 +391,7 @@ class ResourceUtilizationCalculator:
             if not cut_target_nodes:
                 continue
             for n in cut_target_nodes:
-                qc = act_qcs.get(self.graph.retrieve_preserved_quantization_node(n).name) if act_qcs else None
+                qc = self._extract_qc(n, act_qcs)
                 util_per_cut_per_node[cut][n.name] = self.compute_node_activation_tensor_utilization(n, target_criterion,
                                                                                                      bitwidth_mode, qc)
             util_per_cut[cut] = sum(util_per_cut_per_node[cut].values())    # type: ignore
@@ -384,7 +406,8 @@ class ResourceUtilizationCalculator:
                                                include_reused=False) \
             -> Tuple[float, Dict[NodeName, Utilization]]:
         """
-        Compute resource utilization for graph's activations tensors.
+        Compute resource utilization for graph's activations tensors. If activation quantization configs are provided, then for
+        quantization preserving nodes, get the previous quantized activation node bit-width.
 
         Args:
             target_criterion: criterion to include weights for computation.
@@ -405,7 +428,7 @@ class ResourceUtilizationCalculator:
 
         util_per_node: Dict[NodeName, Utilization] = {}
         for n in self._topo_sort(nodes):
-            qc = act_qcs.get(n.name) if act_qcs else None
+            qc = self._extract_qc(n, act_qcs)
             util = self.compute_node_activation_tensor_utilization(n, None, bitwidth_mode, qc)
             util_per_node[n.name] = util
 
@@ -440,7 +463,7 @@ class ResourceUtilizationCalculator:
                 return Utilization(0, 0)
 
         size = self._act_tensors_size[n.name]
-        nbits = self._get_activation_nbits(self.graph.retrieve_preserved_quantization_node(n), bitwidth_mode, qc)
+        nbits = self._get_activation_nbits(n, bitwidth_mode, qc)
         bytes_ = size * nbits / 8
         return Utilization(size, bytes_)
 
