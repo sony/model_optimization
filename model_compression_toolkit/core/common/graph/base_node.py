@@ -131,6 +131,19 @@ class BaseNode:
                    qc.activation_quantization_cfg.enable_activation_quantization
         return self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization
 
+    def is_quantization_preserving(self) -> bool:
+        """
+        Returns: Whether node activation quantization information is preserved from its inputs.
+        """
+        if self.final_activation_quantization_cfg:
+            # if we have a final configuration, then we only care to check if it enables activation quantization.
+            return self.final_activation_quantization_cfg.quantization_preserving
+
+        for qc in self.candidates_quantization_cfg:
+            assert self.candidates_quantization_cfg[0].activation_quantization_cfg.quantization_preserving == \
+                   qc.activation_quantization_cfg.quantization_preserving
+        return self.candidates_quantization_cfg[0].activation_quantization_cfg.quantization_preserving
+
     def is_weights_quantization_enabled(self, attr_name: str) -> bool:
         """
         Checks whether a node's weights attribute quantization is enabled.
