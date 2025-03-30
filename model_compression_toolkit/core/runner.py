@@ -117,6 +117,15 @@ def core_runner(in_model: Any,
                                          tb_w=tb_w,
                                          hessian_info_service=hessian_info_service)
 
+    # for n in tg.nodes:
+    #     assert all([n.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization == c.activation_quantization_cfg.enable_activation_quantization
+    #                 for c in n.candidates_quantization_cfg])
+    #     assert all([n.candidates_quantization_cfg[0].activation_quantization_cfg.quantization_preserving == c.activation_quantization_cfg.quantization_preserving
+    #                 for c in n.candidates_quantization_cfg])
+    #     print(n.name, n.is_activation_quantization_enabled(), n.is_quantization_preserving())
+    #     if n.is_quantization_preserving():
+    #         print('       ', tg.get_act_config_node(n).name)
+
     ######################################
     # Finalize bit widths
     ######################################

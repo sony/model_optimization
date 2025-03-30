@@ -691,8 +691,7 @@ class ResourceUtilizationCalculator:
             nodes = [n for n in nodes if not n.reuse]
         return nodes
 
-    @classmethod
-    def _get_activation_nbits(cls,
+    def _get_activation_nbits(self,
                               n: BaseNode,
                               bitwidth_mode: BitwidthMode,
                               act_qc: Optional[NodeActivationQuantizationConfig]) -> int:
