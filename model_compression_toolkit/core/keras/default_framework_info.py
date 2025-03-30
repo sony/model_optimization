@@ -25,7 +25,7 @@ else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU  # pragma: no cover
 
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo, DEFAULT_KERNEL_ATTRIBUTES
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
@@ -39,7 +39,7 @@ If a layer that is not listed here is queried, [None] is returned.
 KERNEL_ATTRIBUTES = DefaultDict({Conv2D: [KERNEL],
                                  DepthwiseConv2D: [DEPTHWISE_KERNEL],
                                  Dense: [KERNEL],
-                                 Conv2DTranspose: [KERNEL]}, [None])
+                                 Conv2DTranspose: [KERNEL]}, DEFAULT_KERNEL_ATTRIBUTES)
 
 
 """
