@@ -93,17 +93,27 @@ class MixedPrecisionSearchManager:
         Run mixed precision search.
 
         Returns:
-            Indices of the selected bit-widths candidates.
+            Mapping from nodes to indices of the selected bit-widths candidate.
+        """
+        mp_config = self._prepare_and_run_solver()
+
+        if self.using_virtual_graph:
+            mp_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(mp_config)
+
+        return mp_config
+
+    def _prepare_and_run_solver(self) -> Dict[BaseNode, int]:
+        """
+        Prepare sensitivity and ru data for LP solver and run the solver.
+
+        Returns:
+            Mapping from nodes to indices of the selected bit-widths candidate.
         """
         layers_candidates_sensitivity: Dict[BaseNode, List[float]] = self._build_sensitivity_mapping()
         candidates_ru = self._compute_relative_ru_matrices()
         rel_target_ru = self._get_relative_ru_constraint_per_mem_element()
         solver = MixedPrecisionIntegerLPSolver(layers_candidates_sensitivity, candidates_ru, rel_target_ru)
         mp_config = solver.run()
-
-        if self.using_virtual_graph:
-            mp_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(mp_config)
-
         return mp_config
 
     def _get_relative_ru_constraint_per_mem_element(self) -> Dict[RUTarget, np.ndarray]:
