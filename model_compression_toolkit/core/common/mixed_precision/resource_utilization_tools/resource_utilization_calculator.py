@@ -682,7 +682,7 @@ class ResourceUtilizationCalculator:
         if target_criterion == TargetInclusionCriterion.QConfigurable:
             nodes = [n for n in nodes if n.has_configurable_activation()]
         elif target_criterion == TargetInclusionCriterion.AnyQuantized:
-            nodes = [n for n in nodes if n.is_activation_quantization_enabled()]
+            nodes = [n for n in nodes if n.is_activation_quantization_enabled() or n.is_quantization_preserving()]
         elif target_criterion == TargetInclusionCriterion.QNonConfigurable:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled() and not n.has_configurable_activation()]
         elif target_criterion != TargetInclusionCriterion.Any:    # pragma: no cover
