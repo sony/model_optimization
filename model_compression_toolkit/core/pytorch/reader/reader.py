@@ -36,8 +36,9 @@ def _trace_model(model: torch.nn.Module) -> GraphModule:
 
     tracer = MCTTracer()
     graph = tracer.trace(model)
-    name = (model.__class__.__name__ if isinstance(model, torch.nn.Module) else model.__name__)
-    return GraphModule(tracer.root, graph, name)
+    # handling the possibility that the model might be a torch.nn.Module or just a function
+    model_name = (model.__class__.__name__ if isinstance(model, torch.nn.Module) else model.__name__)
+    return GraphModule(tracer.root, graph, model_name)
 
 
 def generate_module_dict(model: torch.nn.Module) -> Dict:

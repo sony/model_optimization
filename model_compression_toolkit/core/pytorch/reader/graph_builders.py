@@ -318,7 +318,7 @@ def nodes_builder(model: GraphModule,
                 Logger.critical(f'Found FX nodes in framework attributes of {node.name}. This node type should not contain any.')  # pragma: no cover
 
             graph_node_type = BaseNode
-            kwargs = {INPUTS_AS_LIST: inputs_as_list}
+            kwargs = {}
 
         graph_node = graph_node_type(name=node.name,
                                      framework_attr=framework_attr,
