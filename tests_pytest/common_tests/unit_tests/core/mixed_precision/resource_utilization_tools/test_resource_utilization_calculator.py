@@ -472,7 +472,6 @@ class TestActivationMaxCutUtilization:
         graph_mock.nodes = nodes
         # use the Graph original method (need to bind it to graph_mock instance)
         graph_mock.find_node_by_name = MethodType(Graph.find_node_by_name, graph_mock)
-        graph_mock.retrieve_preserved_quantization_node = _identity_func
 
         # we should not use total size, setting it to bad number
         cut_elems1 = MemoryElements(elements={ActivationMemoryTensor(mp_reuse.output_shape, 'mp_reuse', 0)}, total_size=-1)

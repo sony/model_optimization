@@ -31,7 +31,7 @@ def minimal_tpc():
 @fixture
 def graph_mock():
     """ Basic Graph mock. """
-    return Mock(spec_set=Graph, nodes=[])
+    return Mock(spec_set=Graph, nodes=[], retrieve_preserved_quantization_node=lambda x: x)
 
 
 @fixture
