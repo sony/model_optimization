@@ -276,10 +276,6 @@ def nodes_builder(model: GraphModule,
         for weight_name, weight_value in weights.items():
             weights[weight_name] = to_numpy(weight_value)
 
-        # Check if node's first input argument is a list of input fx nodes, such as torch.cat:
-        inputs_as_list = is_instance_first_arg(node, (list, tuple)) and all(
-            [isinstance(n, Node) for n in node.args[0]])
-
         # Initiate graph nodes.
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
@@ -294,6 +290,10 @@ def nodes_builder(model: GraphModule,
                     input_tensors_in_node_kwargs[k] = v
                 else:
                     node_kwargs[k] = v
+
+            # Check if node's first input argument is a list of input fx nodes, such as torch.cat:
+            inputs_as_list = is_instance_first_arg(node, (list, tuple)) and all(
+                [isinstance(n, Node) for n in node.args[0]])
 
             # Build tensor_input_alloc required for the model builder. All input nodes are received as a list in the builder,
             # so tensor_input_alloc is used to allocate each input tensor in the correct place in the node's args & kwargs.
