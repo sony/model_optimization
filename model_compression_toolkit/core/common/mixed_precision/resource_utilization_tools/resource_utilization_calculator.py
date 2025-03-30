@@ -709,7 +709,7 @@ class ResourceUtilizationCalculator:
             Activation bit-width.
         """
         if act_qc:
-            assert bitwidth_mode == BitwidthMode.QCustom and act_qc.enable_activation_quantization
+            assert bitwidth_mode == BitwidthMode.QCustom
             return act_qc.activation_n_bits if act_qc.enable_activation_quantization else FLOAT_BITWIDTH
 
         if bitwidth_mode == BitwidthMode.Float or not (n.is_activation_quantization_enabled() or
