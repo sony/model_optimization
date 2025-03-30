@@ -351,7 +351,7 @@ class ResourceUtilizationCalculator:
             The relevant quantization config.
         """
         if act_qcs:
-            assert not n.is_quantization_preserving() or n.name not in act_qcs, \
+            assert not (n.is_quantization_preserving() and act_qcs.get(n.name) is not None), \
                 f"Quantization preserving node {n.name} should not have a qc for this computation."
             return act_qcs.get(self.graph.retrieve_preserved_quantization_node(n).name)
         return None
