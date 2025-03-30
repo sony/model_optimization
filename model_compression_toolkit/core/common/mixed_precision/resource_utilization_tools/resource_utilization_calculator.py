@@ -336,7 +336,7 @@ class ResourceUtilizationCalculator:
         return self.compute_activation_utilization_by_cut(target_criterion, bitwidth_mode, act_qcs)
 
     def _extract_qc(self, n: BaseNode, act_qcs: Optional[ActivationQCfgPerNode] = None
-                    ) -> NodeActivationQuantizationConfig | None:
+                    ) -> Union[NodeActivationQuantizationConfig, None]:
         """
         Extract quantization config the activation configs dictionary is provided. If node is quantization
         preserving, extract the quantization config from the preceding activation quantized node (i.e.
@@ -710,24 +710,25 @@ class ResourceUtilizationCalculator:
             Activation bit-width.
         """
         if act_qc:
-            assert bitwidth_mode == BitwidthMode.QCustom
+            assert bitwidth_mode == BitwidthMode.QCustom and act_qc.enable_activation_quantization
             return act_qc.activation_n_bits if act_qc.enable_activation_quantization else FLOAT_BITWIDTH
 
-        if bitwidth_mode == BitwidthMode.Float or not n.is_activation_quantization_enabled():
+        if bitwidth_mode == BitwidthMode.Float or not (n.is_activation_quantization_enabled() or
+                                                       n.is_quantization_preserving()):
             return FLOAT_BITWIDTH
 
         if bitwidth_mode == BitwidthMode.Q8Bit:
             return 8
 
-        if bitwidth_mode in cls._bitwidth_mode_fn:
+        if bitwidth_mode in self._bitwidth_mode_fn:
             candidates_nbits = [c.activation_quantization_cfg.activation_n_bits for c in n.candidates_quantization_cfg]
-            return cls._bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
+            return self._bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
 
         if bitwidth_mode in [BitwidthMode.QCustom, BitwidthMode.QDefaultSP]:
-            qcs = n.get_unique_activation_candidates()
+            qcs = self.graph.retrieve_preserved_quantization_node(n).get_unique_activation_candidates()
             if len(qcs) != 1:
                 raise ValueError(f'Could not retrieve the activation quantization candidate for node {n} '
-                                 f'as it has {len(qcs)}!=1 unique candidates .')
+                                 f'as it has {len(qcs)}!=1 unique candidates.')
             return qcs[0].activation_quantization_cfg.activation_n_bits
 
         raise ValueError(f'Unknown mode {bitwidth_mode}')    # pragma: no cover
