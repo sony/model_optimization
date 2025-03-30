@@ -696,14 +696,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             A dict from layer to an index of its minimal candidate.
         """
-
         conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
-        min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
-
-        assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
-            f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
-
-        return {n: lst[0] for n, lst in zip(conf_sorted_nodes, min_cfg_candidates)}
+        return {n: n.find_min_candidate_index() for n in conf_sorted_nodes}
 
     def get_max_candidates_config(self, fw_info: FrameworkInfo) -> Dict[BaseNode, int]:
         """
@@ -718,14 +712,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             A dict from layer to an index of its maximal candidate.
         """
-
         conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
-        max_cfg_candidates = [n.find_max_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
-
-        assert all([len(lst) == 1 for lst in max_cfg_candidates]), \
-            f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
-
-        return {n: lst[0] for n, lst in zip(conf_sorted_nodes, max_cfg_candidates)}
+        return {n: n.find_max_candidate_index() for n in conf_sorted_nodes}
 
     def get_final_weights_config(self, fw_info: FrameworkInfo) -> List[Tuple[BaseNode, int]]:
         """

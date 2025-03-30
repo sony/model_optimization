@@ -416,7 +416,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                                                                                      weights_attr_cfg=attr_cfg,
                                                                                      weights_channels_axis=weights_channels_axis)
 
-    def get_attr_config(self, attr_name: Union[str, int]) -> WeightsAttrQuantizationConfig:
+    def get_attr_config(self, attr_name: 'WeightAttrT') -> WeightsAttrQuantizationConfig:
         """
         Returns a weights attribute config for an attribute that contains the given name.
         If multiple attributes that contain the given name are found - looking for the exact name, otherwise,
@@ -451,7 +451,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         return attr_cfg
 
-    def set_attr_config(self, attr_name: Union[str, int], attr_qc: WeightsAttrQuantizationConfig):
+    def set_attr_config(self, attr_name: 'WeightAttrT', attr_qc: WeightsAttrQuantizationConfig):
         """
         Adding a new attribute with quantization configuration to the node's weights configurations mapping.
 
@@ -465,7 +465,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         else:
             self.attributes_config_mapping[attr_name] = attr_qc
 
-    def has_attribute_config(self, attr_name: Union[str, int]) -> bool:
+    def has_attribute_config(self, attr_name: 'WeightAttrT') -> bool:
         """
         Checks whether the node weights configuration contains a configuration for a given weights attribute.
 
@@ -493,6 +493,14 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         """
         return list(self.pos_attributes_config_mapping.keys()) + list(self.attributes_config_mapping.keys())
 
+    def get_all_weights_configs(self) -> Dict['WeightAttrT', AttributeQuantizationConfig]:
+        """ Get quantization configs for all weights.
+
+            Returns:
+                A dict from weight attribute to its config.
+        """
+        return {attr: self.get_attr_config(attr) for attr in self.all_weight_attrs}
+
     def _extract_config_for_attributes_with_name(self, attr_name) -> Dict[str, WeightsAttrQuantizationConfig]:
         """
         Extract the saved attributes that contain the given attribute name.
@@ -512,7 +520,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         return attrs_with_name
 
     def set_quant_config_attr(self, config_parameter_name: str, config_parameter_value: Any,
-                              attr_name: Union[str, int] = None, *args: List[Any], **kwargs: Dict[str, Any]):
+                              attr_name: 'WeightAttrT' = None, *args: List[Any], **kwargs: Dict[str, Any]):
         """
         This method overrides the parent class set_quant_config_attr to enable setting a specific weights
         attribute config parameter.

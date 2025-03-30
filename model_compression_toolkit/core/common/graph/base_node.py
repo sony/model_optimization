@@ -488,49 +488,35 @@ class BaseNode:
         # for scalar shape (None,) prod returns 1
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
 
-    def find_min_candidates_indices(self) -> List[int]:
+    def find_min_candidate_index(self) -> int:
         """
-        Returns a list with potential minimal candidates.
-        A potential minimal candidate is a candidate which its weights_n_bits and activation_n_bits pair is
-        on the Pareto Front, i.e., there is no other candidate that its n_bits pair exceeds in both entries.
-
-        Returns: A list of indices of potential minimal candidates.
-
+        Returns:
+            The index of the minimal bit-width candidate.
         """
+        aw_nbits = [(c.activation_quantization_cfg.activation_n_bits,
+                     *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weights_configs().values()])
+                    for c in self.candidates_quantization_cfg]
+        min_nbits = min(aw_nbits)
+        min_ind = [i for i, nb in enumerate(aw_nbits) if min_nbits == nb]
+        # check that no other candidate has a lower nbit for any weight
+        if len(min_ind) > 1 or any(nb[i] < min_nbits[i] for i in range(len(min_nbits)) for nb in aw_nbits):
+            raise ValueError('Expected exactly one candidate with min activation and min weights.')
+        return min_ind[0]
 
-        # We assume that the candidates are sorted according to weights_n_bits first and activation_n_bits second
-        # First, we add the last candidate to the set of minimal candidates (candidate, index)
-        first_min = (len(self.candidates_quantization_cfg) - 1,
-                     self.candidates_quantization_cfg[-1].activation_quantization_cfg.activation_n_bits)
-        min_candidates = [first_min]
-
-        # Iterate over all other candidates, and add ones with higher weights_n_bits but smaller activation_n_bits
-        for i, c in reversed(list(enumerate(self.candidates_quantization_cfg))):
-            if c.activation_quantization_cfg.activation_n_bits < first_min[1]:
-                min_candidates.append((i, c))
-
-        return [i for i, a_n_bits in min_candidates]
-
-    def find_max_candidates_indices(self) -> List[int]:
+    def find_max_candidate_index(self) -> int:
         """
-        Returns a list with potential maximal candidates.
-        A potential maximal candidate is a candidate which its weights_n_bits and activation_n_bits pair is
-        on the Pareto Front, i.e., there is no other candidates that its n_bits pair is lower in both entries.
-
-        Returns: A list of indices of potential maximal candidates.
+        Returns:
+            The index of the maximal bit-width candidate.
         """
-
-        # We assume that the candidates are sorted according to weights_n_bits first and activation_n_bits second
-        # First, we add the first candidate to the set of maximal candidates (candidate, index)
-        first_max = (0, self.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits)
-        max_candidates = [first_max]
-
-        # Iterate over all other candidates, and add ones with higher weights_n_bits but smaller activation_n_bits
-        for i, c in enumerate(self.candidates_quantization_cfg):
-            if c.activation_quantization_cfg.activation_n_bits > first_max[1]:
-                max_candidates.append((i, c))
-
-        return [i for i, a_n_bits in max_candidates]
+        aw_nbits = [(c.activation_quantization_cfg.activation_n_bits,
+                     *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weights_configs().values()])
+                    for c in self.candidates_quantization_cfg]
+        max_nbits = max(aw_nbits)
+        max_ind = [i for i, nb in enumerate(aw_nbits) if max_nbits == nb]
+        # check that no other candidate has a higher nbit for any weight
+        if len(max_ind) > 1 or any(nb[i] > max_nbits[i] for i in range(len(max_nbits)) for nb in aw_nbits):
+            raise ValueError('Expected exactly one candidate with max activation and max weights.')
+        return max_ind[0]
 
     def get_unique_weights_candidates(self, attr: str) -> List[Any]:
         """
