@@ -19,8 +19,6 @@ from os import walk, getcwd, getenv
 from os.path import join, isdir, isfile
 import requests
 import re
-# import os
-# os.environ['CURL_CA_BUNDLE'] = ''
 
 
 class TestDocsLinks(unittest.TestCase):
@@ -49,7 +47,7 @@ class TestDocsLinks(unittest.TestCase):
         return False
 
     def test_readme_and_rst_files(self):
-        mct_folder = '/Vols/vol_design/tools/swat/users/eladc/repos/model_optimization'#getcwd()
+        mct_folder = getcwd()
         print("MCT folder:", mct_folder)
         branch_name = getenv("GITHUB_HEAD_REF")
         print("Branch name:", branch_name)
