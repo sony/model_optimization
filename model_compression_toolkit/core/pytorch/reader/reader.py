@@ -15,9 +15,9 @@
 
 import torch
 import logging
-from typing import Callable, Dict
+from typing import Callable, Dict, Union, Any
 from torch.fx.passes.shape_prop import ShapeProp
-from torch.fx import Tracer, GraphModule
+from torch.fx import Tracer, GraphModule, symbolic_trace
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph
@@ -26,7 +26,15 @@ from model_compression_toolkit.core.pytorch.utils import set_model
 from sony_custom_layers.pytorch import CustomLayer
 
 
-def _trace_model(model: torch.nn.Module) -> GraphModule:
+def _trace_model(root: Union[torch.nn.Module, Callable[..., Any]]) -> GraphModule:
+    """
+    Given an ``nn.Module`` or function instance ``root``, this function will return a ``GraphModule``
+    constructed by recording operations seen while tracing through ``root``.
+    This function replaces torch.fx.symbolic_trace in order to handle custom layers tracing - treating them as graph
+    leafs.
+    :param root: Module or function to be traced and converted into a Graph representation.
+    :return: GraphModule: a Module created from the recorded operations from ``root``.
+    """
 
     class MCTTracer(Tracer):
         def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
@@ -35,9 +43,9 @@ def _trace_model(model: torch.nn.Module) -> GraphModule:
             return super().is_leaf_module(m, module_qualified_name)
 
     tracer = MCTTracer()
-    graph = tracer.trace(model)
-    # handling the possibility that the model might be a torch.nn.Module or just a function
-    model_name = (model.__class__.__name__ if isinstance(model, torch.nn.Module) else model.__name__)
+    graph = tracer.trace(root)
+    # handling the possibility that the model (root) might be a torch.nn.Module or a function
+    model_name = (root.__class__.__name__ if isinstance(root, torch.nn.Module) else root.__name__)
     return GraphModule(tracer.root, graph, model_name)
 
 

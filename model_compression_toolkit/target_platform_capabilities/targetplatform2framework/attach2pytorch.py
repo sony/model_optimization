@@ -98,7 +98,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.L2NORM: [LayerFilterParams(torch.nn.functional.normalize,
                                                         Eq('p', 2) | Eq('p', None))],
             OperatorSetNames.SSD_POST_PROCESS: [],  # no such operator in pytorch
-            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [MulticlassNMS, MulticlassNMSWithIndices],  # no such operator in pytorch
+            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [MulticlassNMS, MulticlassNMSWithIndices],
             OperatorSetNames.BOX_DECODE: [FasterRCNNBoxDecode]
         }
 

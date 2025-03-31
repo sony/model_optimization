@@ -15,7 +15,7 @@
 import torch
 from torch import Tensor
 import numpy as np
-from typing import Union, Sequence, Optional, List, Tuple
+from typing import Union, Optional, List, Tuple, Any
 
 from model_compression_toolkit.core.pytorch.constants import MAX_FLOAT16, MIN_FLOAT16
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
@@ -115,7 +115,11 @@ def clip_inf_values_float16(tensor: Tensor) -> Tensor:
     return tensor
 
 
-def is_tuple_of_tensors(obj):
+def is_tuple_of_tensors(obj: Any) -> bool:
+    """
+    :param obj: Object to check its type
+    :return: True if obj is a tuple of tensors, False otherwise
+    """
     if not isinstance(obj, tuple):
         return False
     for item in obj:

@@ -91,7 +91,7 @@ class AttachTpcToKeras(AttachTpcToFramework):
             OperatorSetNames.TOPK: [tf.nn.top_k],
             OperatorSetNames.FAKE_QUANT: [tf.quantization.fake_quant_with_min_max_vars],
             OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [tf.image.combined_non_max_suppression],
-            OperatorSetNames.BOX_DECODE: [],
+            OperatorSetNames.BOX_DECODE: [],  # no such operator in keras
             OperatorSetNames.ZERO_PADDING2D: [ZeroPadding2D],
             OperatorSetNames.CAST: [tf.cast],
             OperatorSetNames.STRIDED_SLICE: [tf.strided_slice],
@@ -101,9 +101,9 @@ class AttachTpcToKeras(AttachTpcToFramework):
             OperatorSetNames.LOG_SOFTMAX: [tf.nn.log_softmax],
             OperatorSetNames.ADD_BIAS: [tf.nn.bias_add],
             OperatorSetNames.L2NORM: [tf.math.l2_normalize],
+            OperatorSetNames.SSD_POST_PROCESS: [SSDPostProcess]
         }
 
-        self._opset2layer[OperatorSetNames.SSD_POST_PROCESS] = [SSDPostProcess]
         self._opset2attr_mapping = {
             OperatorSetNames.CONV: {
                 KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
