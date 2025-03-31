@@ -198,7 +198,6 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         :param attention_node: the node to replace
         :return: A graph after the substitution
         """
-        print("In scale_dot_product_attention substitution@@@@@@@@")
         input_nodes = self._get_attention_input_nodes(graph, attention_node)
         q_node, k_node, v_node = input_nodes["q"], input_nodes["k"], input_nodes["v"]
         transpose_k_node = self._get_transpose_k_node(attention_node.name, k_node)

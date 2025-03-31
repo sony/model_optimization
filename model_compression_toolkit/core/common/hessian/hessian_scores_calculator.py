@@ -19,6 +19,7 @@ from typing import List, Any
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest
+from model_compression_toolkit.core.pytorch.utils import is_tuple_of_tensors
 from model_compression_toolkit.logger import Logger
 
 
@@ -85,6 +86,9 @@ class HessianScoresCalculator(ABC):
         """
         unfold_tensors = []
         for tensor in tensors_to_unfold:
+            if is_tuple_of_tensors(tensor):
+                tensor = list(tensor)  # converts named tuple to list
+
             if isinstance(tensor, List):
                 unfold_tensors += tensor
             else:
