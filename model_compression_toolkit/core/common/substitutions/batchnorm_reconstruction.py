@@ -147,7 +147,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         # either this is no longer a fusion, and the fusion info should be updated by removing
         # the current info, or this creates a new fusion and the old pattern should be
         # replaced with the new one.
-        fi = graph.get_fusing_info()
+        fi = graph.fusing_info
         fused_op = fi.get_fused_node_name(source_node.name)
         if fused_op:
             fused_nodes = list(fi.get_fused_nodes(fused_op))

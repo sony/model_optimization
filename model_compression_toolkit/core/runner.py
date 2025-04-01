@@ -191,7 +191,7 @@ def core_runner(in_model: Any,
             operators_scheduling=schedule,
             max_cut=float(max_cut),
             cuts=cuts,
-            fused_nodes_mapping=tg.get_fusing_info().get_node_to_fused_node_map()
+            fused_nodes_mapping=tg.fusing_info.get_node_to_fused_node_map()
         )
 
     return tg, bit_widths_config, hessian_info_service, scheduler_info
