@@ -227,9 +227,16 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               base_config=base_config,
                               default_config=default_config)
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
+
         # Nodes split and composition substitution
         split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
         v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        graph.skip_validation_check = False
 
         assert split_graph is not graph
         self.assertTrue(len(v_graph.nodes) == 8)

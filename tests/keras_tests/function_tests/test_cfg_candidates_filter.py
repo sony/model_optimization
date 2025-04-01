@@ -58,8 +58,10 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
+
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
-    graph = FusingMetadataWrapper(graph, fusing_info)
+    graph.fusing_info = fusing_info
+    graph.disable_fused_nodes_activation_quantization()
 
     return graph
 
