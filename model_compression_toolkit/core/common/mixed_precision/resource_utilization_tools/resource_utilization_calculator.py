@@ -335,13 +335,35 @@ class ResourceUtilizationCalculator:
         """
         return self.compute_activation_utilization_by_cut(target_criterion, bitwidth_mode, act_qcs)
 
+    def _extract_qc(self, n: BaseNode, act_qcs: Optional[ActivationQCfgPerNode] = None
+                    ) -> Union[NodeActivationQuantizationConfig, None]:
+        """
+        Extract quantization config the activation configs dictionary is provided. If node is quantization
+        preserving, extract the quantization config from the preceding activation quantized node (i.e.
+        the Quantization the original node preserves).
+
+        Args:
+            n: Node to extract qc for.
+            act_qcs: custom activations quantization configuration. If not provided, the default
+             configuration will be extracted from the node.
+
+        Returns:
+            The relevant quantization config.
+        """
+        if act_qcs:
+            assert not (n.is_quantization_preserving() and act_qcs.get(n.name) is not None), \
+                f"Quantization preserving node {n.name} should not have a qc for this computation."
+            return act_qcs.get(self.graph.retrieve_preserved_quantization_node(n).name)
+        return None
+
     def compute_activation_utilization_by_cut(self,
                                               target_criterion: TargetInclusionCriterion,
                                               bitwidth_mode: BitwidthMode,
                                               act_qcs: Optional[ActivationQCfgPerNode] = None) \
             -> Tuple[float, Dict[Cut, Utilization], Dict[Cut, Dict[BaseNode, Utilization]]]:
         """
-        Compute graph activation cuts utilization.
+        Compute graph activation cuts utilization. If activation quantization configs are provided, then for
+        quantization preserving nodes, get the previous quantized activation node bit-width.
 
         Args:
             target_criterion: criterion to include weights for computation.
@@ -369,7 +391,7 @@ class ResourceUtilizationCalculator:
             if not cut_target_nodes:
                 continue
             for n in cut_target_nodes:
-                qc = act_qcs.get(n.name) if act_qcs else None
+                qc = self._extract_qc(n, act_qcs)
                 util_per_cut_per_node[cut][n.name] = self.compute_node_activation_tensor_utilization(n, target_criterion,
                                                                                                      bitwidth_mode, qc)
             util_per_cut[cut] = sum(util_per_cut_per_node[cut].values())    # type: ignore
@@ -384,7 +406,8 @@ class ResourceUtilizationCalculator:
                                                include_reused=False) \
             -> Tuple[float, Dict[NodeName, Utilization]]:
         """
-        Compute resource utilization for graph's activations tensors.
+        Compute resource utilization for graph's activations tensors. If activation quantization configs are provided, then for
+        quantization preserving nodes, get the previous quantized activation node bit-width.
 
         Args:
             target_criterion: criterion to include weights for computation.
@@ -405,7 +428,7 @@ class ResourceUtilizationCalculator:
 
         util_per_node: Dict[NodeName, Utilization] = {}
         for n in self._topo_sort(nodes):
-            qc = act_qcs.get(n.name) if act_qcs else None
+            qc = self._extract_qc(n, act_qcs)
             util = self.compute_node_activation_tensor_utilization(n, None, bitwidth_mode, qc)
             util_per_node[n.name] = util
 
@@ -659,7 +682,7 @@ class ResourceUtilizationCalculator:
         if target_criterion == TargetInclusionCriterion.QConfigurable:
             nodes = [n for n in nodes if n.has_configurable_activation()]
         elif target_criterion == TargetInclusionCriterion.AnyQuantized:
-            nodes = [n for n in nodes if n.is_activation_quantization_enabled()]
+            nodes = [n for n in nodes if n.is_activation_quantization_enabled() or n.is_quantization_preserving()]
         elif target_criterion == TargetInclusionCriterion.QNonConfigurable:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled() and not n.has_configurable_activation()]
         elif target_criterion != TargetInclusionCriterion.Any:    # pragma: no cover
@@ -668,8 +691,7 @@ class ResourceUtilizationCalculator:
             nodes = [n for n in nodes if not n.reuse]
         return nodes
 
-    @classmethod
-    def _get_activation_nbits(cls,
+    def _get_activation_nbits(self,
                               n: BaseNode,
                               bitwidth_mode: BitwidthMode,
                               act_qc: Optional[NodeActivationQuantizationConfig]) -> int:
@@ -690,21 +712,22 @@ class ResourceUtilizationCalculator:
             assert bitwidth_mode == BitwidthMode.QCustom
             return act_qc.activation_n_bits if act_qc.enable_activation_quantization else FLOAT_BITWIDTH
 
-        if bitwidth_mode == BitwidthMode.Float or not n.is_activation_quantization_enabled():
+        if bitwidth_mode == BitwidthMode.Float or not (n.is_activation_quantization_enabled() or
+                                                       n.is_quantization_preserving()):
             return FLOAT_BITWIDTH
 
         if bitwidth_mode == BitwidthMode.Q8Bit:
             return 8
 
-        if bitwidth_mode in cls._bitwidth_mode_fn:
+        if bitwidth_mode in self._bitwidth_mode_fn:
             candidates_nbits = [c.activation_quantization_cfg.activation_n_bits for c in n.candidates_quantization_cfg]
-            return cls._bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
+            return self._bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
 
         if bitwidth_mode in [BitwidthMode.QCustom, BitwidthMode.QDefaultSP]:
-            qcs = n.get_unique_activation_candidates()
+            qcs = self.graph.retrieve_preserved_quantization_node(n).get_unique_activation_candidates()
             if len(qcs) != 1:
                 raise ValueError(f'Could not retrieve the activation quantization candidate for node {n} '
-                                 f'as it has {len(qcs)}!=1 unique candidates .')
+                                 f'as it has {len(qcs)}!=1 unique candidates.')
             return qcs[0].activation_quantization_cfg.activation_n_bits
 
         raise ValueError(f'Unknown mode {bitwidth_mode}')    # pragma: no cover
