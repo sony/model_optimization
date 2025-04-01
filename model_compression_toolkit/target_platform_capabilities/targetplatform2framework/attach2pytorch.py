@@ -32,7 +32,6 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2fw import \
     AttachTpcToFramework
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Eq
-from sony_custom_layers.pytorch import MulticlassNMS, MulticlassNMSWithIndices, FasterRCNNBoxDecode
 
 
 class AttachTpcToPytorch(AttachTpcToFramework):
@@ -98,8 +97,8 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.L2NORM: [LayerFilterParams(torch.nn.functional.normalize,
                                                         Eq('p', 2) | Eq('p', None))],
             OperatorSetNames.SSD_POST_PROCESS: [],  # no such operator in pytorch
-            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [MulticlassNMS, MulticlassNMSWithIndices],  # no such operator in pytorch
-            OperatorSetNames.BOX_DECODE: [FasterRCNNBoxDecode]
+            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [],  # no such operator in pytorch
+            OperatorSetNames.BOX_DECODE: []  # no such operator in pytorch
         }
 
         pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
