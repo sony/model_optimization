@@ -81,26 +81,13 @@ class GraphFuser:
                               framework_attr={},
                               input_shape=nodes[0].input_shape,
                               output_shape=nodes[-1].output_shape,
-                              weights={}, # TODO: update with weights of all nodes
+                              weights={},
                               layer_class=FusedLayerType)
 
-        # Ensure weights quantization config is None for all nodes except the first
-        for n in nodes[1:]:
-            for c in n.candidates_quantization_cfg:
-                assert len(c.weights_quantization_cfg.all_weight_attrs) == 0, (
-                    f"Expected weights_quantization_cfg to have no attributes to quantize, but found attributes {c.weights_quantization_cfg.all_weight_attrs} for node {n}"
-                )
-
-        # Create candidates for this node (we assume that the weights configuration should be taken from the first node, and the activaion configuration
-        # is the output quantization configuration of the last node. We ignore all configurations of middle nodes.
-        weight_cfgs = [c.weights_quantization_cfg for c in nodes[0].candidates_quantization_cfg]
         activation_cfgs = [c.activation_quantization_cfg for c in nodes[-1].candidates_quantization_cfg]
-        if weight_cfgs and activation_cfgs:
-            combinations = list(product(weight_cfgs, activation_cfgs))
-            fused_node.candidates_quantization_cfg = [
-                CandidateNodeQuantizationConfig(weights_quantization_cfg=w, activation_quantization_cfg=a)
-                for w, a in combinations
-            ]
+        fused_node.candidates_quantization_cfg = [
+            CandidateNodeQuantizationConfig(weights_quantization_cfg=None, activation_quantization_cfg=a) for a in
+            activation_cfgs]
 
         # Keep the final configurations if they were set already.
         fused_node.final_weights_quantization_cfg = nodes[0].final_weights_quantization_cfg

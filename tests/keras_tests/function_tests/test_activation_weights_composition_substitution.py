@@ -172,9 +172,16 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
+
         # Nodes split and composition substitution
         split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
         v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        graph.skip_validation_check = False
 
         self._verify_two_conv_with_split_test(graph, v_graph, 9, 9)
 
