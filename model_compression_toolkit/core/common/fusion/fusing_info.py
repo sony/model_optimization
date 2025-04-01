@@ -13,11 +13,10 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from model_compression_toolkit.target_platform_capabilities import LayerFilterParams, FrameworkQuantizationCapabilities
+from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
 from dataclasses import dataclass, field
 
 from typing import Optional, List, Dict, Any, Tuple
-from model_compression_toolkit.core.common import BaseNode
 import copy
 
 # The prefix of each fused operator (the suffix is a combination of the
@@ -39,7 +38,7 @@ class FusingInfo:
     - `node_to_fused_node_map`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
 
     """
-    fusing_patterns: any
+    fusing_patterns: any = None
     fusing_data: Dict[str, Tuple['BaseNode']] = field(default_factory=dict)
     node_to_fused_node_map: Dict[str, str] = field(init=False, default_factory=dict)
 
@@ -47,7 +46,7 @@ class FusingInfo:
         """Validates and initializes mappings after dataclass instantiation."""
         for op_id, op_nodes in self.fusing_data.items():
             assert isinstance(op_id, str) and op_id.startswith(FUSED_OP_ID_PREFIX), f"Found invalid fused op id: {op_id}"
-            assert isinstance(op_nodes, tuple) and len(op_nodes) > 1 and all(isinstance(n, BaseNode) for n in op_nodes), f"Found invalid fused op nodes: {op_nodes}"
+            assert isinstance(op_nodes, tuple) and len(op_nodes) > 1, f"Found invalid fused op nodes: {op_nodes}"
 
         self._init_node_mapping()
 
@@ -60,7 +59,7 @@ class FusingInfo:
             for node in nodes:
                 self.node_to_fused_node_map[node.name] = op_id
 
-    def add_fused_operation(self, op_id: str, nodes: Tuple[BaseNode]) -> None:
+    def add_fused_operation(self, op_id: str, nodes: Tuple['BaseNode']) -> None:
         """
         Add a new fused operation with the given ID and set of nodes.
 
@@ -118,7 +117,7 @@ class FusingInfo:
         """
         return self.node_to_fused_node_map.copy()
 
-    def get_fused_nodes(self, op_id: str) -> Optional[List[BaseNode]]:
+    def get_fused_nodes(self, op_id: str) -> Optional[List['BaseNode']]:
         """
         Retrieve the list of nodes for a given fused operation ID.
 
@@ -130,7 +129,7 @@ class FusingInfo:
         """
         return self.fusing_data.get(op_id)
 
-    def is_node_in_fused_op(self, node: BaseNode) -> bool:
+    def is_node_in_fused_op(self, node: 'BaseNode') -> bool:
         """
         Check if a node is part of any fused operation.
 
@@ -142,7 +141,7 @@ class FusingInfo:
         """
         return any(node in nodes for nodes in self.fusing_data.values())
 
-    def get_all_fused_operations(self) -> Dict[str, Tuple[BaseNode]]:
+    def get_all_fused_operations(self) -> Dict[str, Tuple['BaseNode']]:
         """
         Retrieve fused information.
 
@@ -153,7 +152,7 @@ class FusingInfo:
 
 
     @staticmethod
-    def generate_fused_op_id(nodes: List[BaseNode]) -> str:
+    def generate_fused_op_id(nodes: List['BaseNode']) -> str:
         """
         Generates an identifier for a fused operation by concatenating
         the names of the given nodes with a prefix.
@@ -250,7 +249,7 @@ class FusingInfo:
                             f"to node {node.name}, which is invalid."
                         )
 
-    def is_nodes_eligible_to_be_fused(self, nodes: List[BaseNode]) -> bool:
+    def is_nodes_eligible_to_be_fused(self, nodes: List['BaseNode']) -> bool:
         """
         Check whether the given nodes are eligible to be fused based on predefined fusing patterns.
 
@@ -269,7 +268,6 @@ class FusingInfo:
 
         # Check if the provided nodes match a valid fusion pattern
         return is_valid_fusion(fusing_patterns=self.fusing_patterns, nodes=nodes)
-
 
     def __repr__(self) -> str:
         """
@@ -353,7 +351,7 @@ class FusingInfoGenerator:
 
 
 def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
-                                       node: BaseNode,
+                                       node: 'BaseNode',
                                        idx: int = 0) -> List[List[Any]]:
     """
     Returns only the fusing patterns where a specific layer (at index idx) matches the given node — either by type or filter params.
@@ -377,7 +375,7 @@ def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
     return valid_fusing_patterns
 
 
-def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List[BaseNode]) -> bool:
+def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode']) -> bool:
     """
     Check if the fusion is valid: exist in fusing_patterns
     Args:

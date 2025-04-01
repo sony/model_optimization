@@ -18,7 +18,6 @@ from typing import Callable, Any
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
@@ -44,7 +43,7 @@ def graph_preparation_runner(in_model: Any,
                              bit_width_config: BitWidthConfig = None,
                              tb_w: TensorboardWriter = None,
                              mixed_precision_enable: bool = False,
-                             running_gptq: bool = False) -> FusingMetadataWrapper:
+                             running_gptq: bool = False) -> Graph:
     """
     Runs all required preparations in order to build a quantization graph from the given model,
     quantization configuration and target platform specifications.
@@ -164,7 +163,8 @@ def get_finalized_graph(initial_graph: Graph,
     # Layer fusing
     ######################################
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(transformed_graph)
-    transformed_graph = FusingMetadataWrapper(transformed_graph, fusing_info)
+    transformed_graph.fusing_info = fusing_info
+    transformed_graph.disable_fused_nodes_activation_quantization()
 
     ######################################
     # Channel equalization

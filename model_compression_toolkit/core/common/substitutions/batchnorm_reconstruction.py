@@ -19,7 +19,7 @@ from typing import Callable
 
 import numpy as np
 
-from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
@@ -64,8 +64,8 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         self.epsilon_val = epsilon_val
 
     def substitute(self,
-                   graph: FusingMetadataWrapper,
-                   source_node: BaseNode) -> FusingMetadataWrapper:
+                   graph: Graph,
+                   source_node: BaseNode) -> Graph:
         """
         Reconstruct BatchNormalization after linear layers.
 

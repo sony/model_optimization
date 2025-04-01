@@ -23,9 +23,8 @@ import pytest
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo
-from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
@@ -76,7 +75,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         )
 
     @pytest.fixture
-    def graph_with_fusion_metadata(self, minimal_tpc_with_fusing) -> FusingMetadataWrapper:
+    def graph_with_fusion_metadata(self, minimal_tpc_with_fusing):
         """
         Creates a graph with fusing metadata based on a generated model and a predefined configuration.
         Ensures all required components (framework implementation, framework info, etc.) are present.
@@ -98,12 +97,12 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
                                                               running_gptq=False)
         return graph_with_fusion_metadata
 
-    def test_expected_fusing_info(self, graph_with_fusion_metadata: FusingMetadataWrapper):
+    def test_expected_fusing_info(self, graph_with_fusion_metadata):
         """
-        Test that the FusingMetadataWrapper contains expected metadata regard the fusing that should
+        Test that the graph contains expected metadata regard the fusing that should
         be found in the model.
         """
-        actual_fi = graph_with_fusion_metadata.get_fusing_info()
+        actual_fi = graph_with_fusion_metadata.fusing_info
         assert len(actual_fi.get_all_fused_operations()) == 2
         assert sorted(actual_fi.get_all_fused_operations().keys()) == ['FusedNode_conv_relu', 'FusedNode_linear_softmax']
         assert actual_fi.node_to_fused_node_map == {'conv': 'FusedNode_conv_relu',
@@ -111,7 +110,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
                                                     'linear': 'FusedNode_linear_softmax',
                                                     'softmax': 'FusedNode_linear_softmax'}
 
-    def test_disable_act_quantization(self, graph_with_fusion_metadata):
+    def test_disable_act_quantization(self, graph_with_fusion_metadata: Graph):
         """Tests that the correct nodes have activation quantization disabled after
         calling _disable_nodes_activation_quantization.
         """
@@ -119,7 +118,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
             for qc in node.candidates_quantization_cfg:
                 qc.activation_quantization_cfg.enable_activation_quantization = True
 
-        graph_with_fusion_metadata._disable_nodes_activation_quantization()
+        graph_with_fusion_metadata.disable_fused_nodes_activation_quantization()
         disabled_nodes = [
             node.name for node in graph_with_fusion_metadata.nodes
             if all(not qc.activation_quantization_cfg.enable_activation_quantization
@@ -172,7 +171,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
             graph_with_fusion_metadata.validate()
 
         # After updating the fusing info, make sure validation passes
-        graph_with_fusion_metadata.get_fusing_info().remove_fused_operation('FusedNode_conv_relu')
+        graph_with_fusion_metadata.fusing_info.remove_fused_operation('FusedNode_conv_relu')
         graph_with_fusion_metadata.validate()
 
     def test_valid_change_in_graph(self, graph_with_fusion_metadata):

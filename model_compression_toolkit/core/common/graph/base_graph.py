@@ -15,7 +15,8 @@
 from collections import namedtuple
 
 from copy import copy, deepcopy
-from typing import List, Tuple, Any
+from functools import wraps
+from typing import List, Tuple, Any, Callable
 
 import networkx as nx
 import numpy as np
@@ -23,6 +24,7 @@ import numpy as np
 from networkx.algorithms.dag import topological_sort
 
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.edge import Edge, convert_to_edge
 from model_compression_toolkit.core.common.graph.graph_searches import GraphSearches
@@ -35,6 +37,27 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
+
+
+def validate_graph_after_change(method: Callable) -> Callable:
+    """
+    Decorator for graph-mutating methods. After the decorated method executes,
+    this decorator calls `self.validate()` to ensure the graph remains in a valid state.
+
+    Args:
+        method: The graph-modifying method to wrap.
+
+    Returns:
+        A wrapped method that validates the graph after execution.
+    """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        result = method(self, *args, **kwargs)
+        if not self.skip_validation_check:
+            self.validate()  # calls Graph.validate(). Ensure graph consistency after changes.
+        return result
+    return wrapper
+
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
@@ -63,6 +86,11 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
 
         super().__init__(**attr)
+
+        # This must be set first to ensure it's available when validation runs during graph creation.
+        self.skip_validation_check = False
+        self._fusing_info = FusingInfo()
+
         self.name = name
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
@@ -75,6 +103,15 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                           **e.get_attributes())
         self.user_info = UserInformation()
         self.fw_info = fw_info
+
+    @property
+    def fusing_info(self) -> FusingInfo:
+        return self._fusing_info
+
+    @fusing_info.setter
+    @validate_graph_after_change
+    def fusing_info(self, fusing_info: FusingInfo):
+        self._fusing_info = fusing_info
 
     def set_fw_info(self,
                     fw_info: FrameworkInfo):
@@ -138,6 +175,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return self.output_nodes
 
+    @validate_graph_after_change
     def set_inputs(self,
                    input_nodes: List[BaseNode]):
         """
@@ -148,6 +186,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         self.input_nodes = input_nodes
 
+    @validate_graph_after_change
     def set_outputs(self,
                     output_nodes: List[OutTensor]):
         """
@@ -320,6 +359,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             sort_attr = None
         return [edges_list.source_node for edges_list in self.incoming_edges(node_obj, sort_by_attr=sort_attr)]
 
+    @validate_graph_after_change
     def reconnect_out_edges(self,
                             current_node: BaseNode,
                             new_node: BaseNode):
@@ -336,6 +376,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             self.add_edge(new_node, oe.sink_node, **oe.get_attributes())
             self.remove_edge(current_node, oe.sink_node)
 
+    @validate_graph_after_change
     def reconnect_in_edges(self,
                            current_node: BaseNode,
                            new_node: BaseNode):
@@ -352,6 +393,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             self.add_edge(ie.source_node, new_node, **ie.get_attributes())
             self.remove_edge(ie.source_node, current_node)
 
+    @validate_graph_after_change
     def add_node_with_in_edges(self, new_node: BaseNode, input_nodes: List[BaseNode],
                                input_nodes_output_index: List[int] = []):
         """
@@ -377,6 +419,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         for sink_index, (in_node, source_index) in enumerate(zip(input_nodes, input_nodes_output_index)):
             self.add_edge(in_node, new_node, source_index=source_index, sink_index=sink_index)
 
+    @validate_graph_after_change
     def replace_output_node(self,
                             current_node: BaseNode,
                             new_node: BaseNode):
@@ -399,6 +442,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                 new_graph_outputs[graph_ot_index] = OutTensor(new_node, ot.node_out_index)
         self.set_outputs(new_graph_outputs)
 
+    @validate_graph_after_change
     def replace_input_node(self,
                            current_node: BaseNode,
                            new_node: BaseNode):
@@ -423,6 +467,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             new_graph_inputs.append(new_node)
         self.set_inputs(new_graph_inputs)
 
+    @validate_graph_after_change
     def remove_node(self,
                     node_to_remove: BaseNode,
                     new_graph_inputs: List[BaseNode] = None,
@@ -715,6 +760,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return any([n.has_any_configurable_weight() for n in self.nodes])
 
+    @validate_graph_after_change
     def replace_node(self, node_to_replace: BaseNode, new_node: BaseNode):
         """
         Replaces a node in the graph with a new node.
@@ -840,4 +886,36 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return intermediate_nodes, next_node
 
+    def disable_fused_nodes_activation_quantization(self):
+        """
+        Disable activation quantization for all nodes in fused operations,
+        except for the last node in each fused group.
+        """
+        nodes_to_disable = [node for nodes in self.fusing_info.get_all_fused_operations().values() for node in nodes[:-1]]
+        for node in nodes_to_disable:
+            for qc in node.candidates_quantization_cfg:
+                qc.activation_quantization_cfg.enable_activation_quantization = False
 
+    def validate(self):
+        """
+        Validate that the current state of the graph is consistent with
+        the fusing information (e.g., no missing or incorrect fused node mapping).
+
+        Returns:
+            The result of the FusingInfo validation logic (typically None or raises error).
+        """
+        return self.fusing_info.validate(self)
+
+    @validate_graph_after_change
+    def add_edge(self, *args, **kwargs):
+        """
+        Wrap networkx functions (that modifies the graph) with our validate decorator.
+        """
+        return super().add_edge(*args, **kwargs)
+
+    @validate_graph_after_change
+    def remove_edge(self, *args, **kwargs):
+        """
+        Wrap networkx functions (that modifies the graph) with our validate decorator.
+        """
+        return super().remove_edge(*args, **kwargs)

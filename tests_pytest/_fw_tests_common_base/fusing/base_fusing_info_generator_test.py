@@ -21,12 +21,9 @@ import abc
 import pytest
 
 
-from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo
-from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
-from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
-from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from tests_pytest._test_util.tpc_util import minimal_cfg_options
 
@@ -75,8 +72,8 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
                                                               running_gptq=False)
         return graph_with_fusion_metadata
 
-    def test_expected_fusing_info(self, graph_with_fusion_metadata: FusingMetadataWrapper):
-        actual_fi = graph_with_fusion_metadata.get_fusing_info()
+    def test_expected_fusing_info(self, graph_with_fusion_metadata):
+        actual_fi = graph_with_fusion_metadata.fusing_info
         assert self.expected_fi.node_to_fused_node_map == actual_fi.node_to_fused_node_map
 
 

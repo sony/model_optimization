@@ -14,10 +14,9 @@
 #  ==============================================================================
 
 import copy
-from typing import List
+from typing import List, Tuple
 
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
-from model_compression_toolkit.core.common.fusion.fusing_metadata_wrapper import FusingMetadataWrapper
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
 from itertools import product
@@ -32,41 +31,40 @@ class FusedLayerType:
         self.__name__ = 'FusedLayer'
 
 class GraphFuser:
-    def apply_node_fusion(self, wrapper: FusingMetadataWrapper) -> Graph:
+    def apply_node_fusion(self, graph: Graph) -> Graph:
         """
-        Applies node fusion to the graph contained in the given FusingMetadataWrapper.
+        Applies node fusion to the graph according the fusing_info it has.
 
         The fusion process includes:
             1. Generating new fused nodes to replace groups of original nodes.
             2. Updating the graph structure to replace those nodes with the fused representations.
 
         Args:
-            wrapper: A wrapper object that contains the graph and its fusing metadata.
+            graph: The graph and its fusing metadata.
 
         Returns:
             The updated graph with fused nodes replacing the original node groups.
         """
-        wrapper_copy = copy.deepcopy(wrapper)
-        expected_fusing_info = FusingInfoGenerator(wrapper_copy.get_fusing_info().fusing_patterns).generate_fusing_info(wrapper_copy.get_internal_graph())
+        graph_copy = copy.deepcopy(graph)
+        expected_fusing_info = FusingInfoGenerator(graph_copy.fusing_info.fusing_patterns).generate_fusing_info(graph_copy)
 
-        if expected_fusing_info != wrapper_copy.get_fusing_info():
+        if expected_fusing_info != graph_copy.fusing_info:
             raise ValueError(
                 f"Mismatch between expected and existing fusing information.\n"
-                f"Expected:\n{expected_fusing_info}\nExisting:\n{wrapper_copy.get_fusing_info()}"
+                f"Expected:\n{expected_fusing_info}\nExisting:\n{graph_copy.fusing_info}"
             )
 
-        for fused_node_id, original_nodes in wrapper_copy.get_fusing_info().get_all_fused_operations().items():
-            fused_node = self._create_fused_node(fused_node_id,
-                                                 original_nodes)
-            self._replace_nodes_with_fused_node(wrapper_copy.get_internal_graph(),
-                                                original_nodes,
-                                                fused_node)
+        fused_operations = list(graph_copy.fusing_info.get_all_fused_operations().items())
+        for fused_node_id, original_nodes in fused_operations:
+            fused_node = self._create_fused_node(fused_node_id, original_nodes)
+            graph_copy.fusing_info.remove_fused_operation(fused_node_id)
+            self._replace_nodes_with_fused_node(graph_copy, original_nodes, fused_node)
 
-        return wrapper_copy.get_internal_graph()
+        return graph_copy
 
 
     @staticmethod
-    def _create_fused_node(fused_node_id: str, nodes: List[BaseNode]) -> BaseNode:
+    def _create_fused_node(fused_node_id: str, nodes: Tuple[BaseNode]) -> BaseNode:
         """
         Create a new node that represents the fusion of the given nodes.
 
@@ -112,7 +110,7 @@ class GraphFuser:
 
     @staticmethod
     def _replace_nodes_with_fused_node(graph: Graph,
-                                       nodes_to_fuse: List[BaseNode],
+                                       nodes_to_fuse: Tuple[BaseNode],
                                        fused_node: BaseNode):
         """
         Replace the specified nodes in the graph with a new fused node.
