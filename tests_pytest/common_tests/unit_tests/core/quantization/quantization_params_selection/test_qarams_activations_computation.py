@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     get_activations_qparams
 )
 from model_compression_toolkit.target_platform_capabilities import Signedness, OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 
 
 class TestActivationQParams:
