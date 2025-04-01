@@ -10,4 +10,4 @@ matplotlib<3.10.0
 scipy
 protobuf
 mct-quantizers==1.5.2
-pydantic<2.0
+pydantic
