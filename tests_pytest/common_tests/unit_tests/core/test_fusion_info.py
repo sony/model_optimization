@@ -80,20 +80,22 @@ def mock_graph(mock_nodes):
     graph.nodes.return_value = mock_nodes
     graph.get_topo_sorted_nodes.return_value = mock_nodes
 
-    def get_next_nodes(node):
-        if node in mock_nodes:
-            index = mock_nodes.index(node)
-            return [mock_nodes[index + 1]] if index < len(mock_nodes) - 1 else []
-        return []
+    adjacency = {
+        mock_nodes[0]: [mock_nodes[1]],  # conv -> relu
+        mock_nodes[1]: [mock_nodes[2]],  # relu -> linear
+        mock_nodes[2]: [mock_nodes[3]],  # linear -> softmax
+        mock_nodes[3]: []               # softmax has no outputs
+    }
 
-    def get_prev_nodes(node):
-        if node in mock_nodes:
-            index = mock_nodes.index(node)
-            return [mock_nodes[index - 1]] if index > 0 else []
-        return []
+    reverse_adjacency = {
+        mock_nodes[0]: [],               # conv has no inputs
+        mock_nodes[1]: [mock_nodes[0]],  # relu <- conv
+        mock_nodes[2]: [mock_nodes[1]],  # linear <- relu
+        mock_nodes[3]: [mock_nodes[2]]   # softmax <- linear
+    }
 
-    graph.get_next_nodes.side_effect = get_next_nodes
-    graph.get_prev_nodes.side_effect = get_prev_nodes
+    graph.get_next_nodes.side_effect = lambda node: adjacency.get(node, [])
+    graph.get_prev_nodes.side_effect = lambda node: reverse_adjacency.get(node, [])
 
     return graph
 
