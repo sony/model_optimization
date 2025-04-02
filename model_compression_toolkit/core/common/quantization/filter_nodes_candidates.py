@@ -119,6 +119,8 @@ def filter_node_candidates(node: BaseNode, fw_info) -> List[CandidateNodeQuantiz
         final_candidates = _filter_bit_method_dups(filtered_candidates, kernel_attr)
 
     elif kernel_attr is None or not node.is_weights_quantization_enabled(kernel_attr):
+        # TODO:
+        #  To allow MP on positional weights we need to modify this to consider all weights not only kernel.
         # Remove candidates that have duplicated activation candidates for node with disabled weights quantization.
         # Replacing the weights n_bits in the remained configurations with default value to prevent confusion.
         seen_candidates = set()
