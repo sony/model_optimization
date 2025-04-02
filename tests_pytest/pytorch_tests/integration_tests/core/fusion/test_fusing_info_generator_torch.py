@@ -19,7 +19,8 @@ import torch
 from model_compression_toolkit.core import QuantizationConfig, CustomOpsetLayers
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
-from tests_pytest._fw_tests_common_base.fusing.base_fusing_info_generator_test import BaseFusingInfoGeneratorTest
+from tests_pytest._fw_tests_common_base.fusing.base_fusing_info_generator_test import BaseFusingInfoGeneratorTest, \
+    random_activation_configs
 from tests_pytest._test_util.graph_builder_utils import build_node
 from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwMixin
 
@@ -43,6 +44,9 @@ class BaseTestFusingInfoGeneratorPytorch(BaseFusingInfoGeneratorTest, TorchFwMix
 
 
 class TestFusingConvRelu(BaseTestFusingInfoGeneratorPytorch):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -54,7 +58,7 @@ class TestFusingConvRelu(BaseTestFusingInfoGeneratorPytorch):
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_relu": (
                 build_node(name="conv1_conv2_collapsed"),
-                build_node(name="relu")
+                build_node(name="relu", qcs=qcs)
             )
         }
     )
@@ -85,6 +89,9 @@ class TestFusingConvRelu(BaseTestFusingInfoGeneratorPytorch):
         return Model()
 
 class TestFusingAnyAct(BaseTestFusingInfoGeneratorPytorch):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -94,10 +101,18 @@ class TestFusingAnyAct(BaseTestFusingInfoGeneratorPytorch):
     expected_fi = FusingInfo(
         fusing_patterns=fusing_patterns,
         fusing_data={
-            "FusedNode_conv1_conv2_collapsed_tanh": (build_node(name="conv1_conv2_collapsed"), build_node(name="tanh")),
-            "FusedNode_conv3_relu": (build_node(name="conv3"), build_node(name="relu")),
-            "FusedNode_conv4_sigmoid": (build_node(name="conv4"), build_node(name="sigmoid")),
-            "FusedNode_conv5_swish": (build_node(name="conv5"), build_node(name="swish")),
+            "FusedNode_conv1_conv2_collapsed_tanh":
+                (build_node(name="conv1_conv2_collapsed"),
+                 build_node(name="tanh", qcs=qcs)),
+            "FusedNode_conv3_relu":
+                (build_node(name="conv3"),
+                 build_node(name="relu", qcs=qcs)),
+            "FusedNode_conv4_sigmoid":
+                (build_node(name="conv4"),
+                 build_node(name="sigmoid", qcs=qcs)),
+            "FusedNode_conv5_swish":
+                (build_node(name="conv5"),
+                 build_node(name="swish", qcs=qcs)),
         }
     )
 
@@ -140,6 +155,9 @@ class TestFusingAnyAct(BaseTestFusingInfoGeneratorPytorch):
 
 
 class TestFusingConvReLUOnly(BaseTestFusingInfoGeneratorPytorch):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -149,10 +167,14 @@ class TestFusingConvReLUOnly(BaseTestFusingInfoGeneratorPytorch):
     expected_fi = FusingInfo(
         fusing_patterns=fusing_patterns,
         fusing_data={
-            "FusedNode_conv1_conv2_collapsed_tanh": (build_node(name="conv1_conv2_collapsed"), build_node(name="tanh")),
-            "FusedNode_conv3_relu": (build_node(name="conv3"), build_node(name="relu")),
-            "FusedNode_conv4_sigmoid": (build_node(name="conv4"), build_node(name="sigmoid")),
-            "FusedNode_conv5_swish": (build_node(name="conv5"), build_node(name="swish"))
+            "FusedNode_conv1_conv2_collapsed_tanh":
+                (build_node(name="conv1_conv2_collapsed"), build_node(name="tanh", qcs=qcs)),
+            "FusedNode_conv3_relu":
+                (build_node(name="conv3"), build_node(name="relu", qcs=qcs)),
+            "FusedNode_conv4_sigmoid":
+                (build_node(name="conv4"), build_node(name="sigmoid", qcs=qcs)),
+            "FusedNode_conv5_swish":
+                (build_node(name="conv5"), build_node(name="swish", qcs=qcs))
         }
     )
 
@@ -195,6 +217,9 @@ class TestFusingConvReLUOnly(BaseTestFusingInfoGeneratorPytorch):
 
 
 class TestFusingComplexPatterns(BaseTestFusingInfoGeneratorPytorch):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
                                        schema.OperatorsSet(name=schema.OperatorSetNames.SWISH))),
@@ -219,29 +244,29 @@ class TestFusingComplexPatterns(BaseTestFusingInfoGeneratorPytorch):
             "FusedNode_conv1_swish_add": (
                 build_node(name="conv1"),
                 build_node(name="swish"),
-                build_node(name="add")
+                build_node(name="add", qcs=qcs)
             ),
             "FusedNode_conv2_swish_1_add_1": (
                 build_node(name="conv2"),
                 build_node(name="swish_1"),
-                build_node(name="add_1")
+                build_node(name="add_1", qcs=qcs)
             ),
             "FusedNode_conv3_relu": (
                 build_node(name="conv3"),
-                build_node(name="relu")
+                build_node(name="relu", qcs=qcs)
             ),
             "FusedNode_conv4_relu_1_add_2": (
                 build_node(name="conv4"),
                 build_node(name="relu_1"),
-                build_node(name="add_2")
+                build_node(name="add_2", qcs=qcs)
             ),
             "FusedNode_dense1_swish_2": (
                 build_node(name="dense1"),
-                build_node(name="swish_2")
+                build_node(name="swish_2", qcs=qcs)
             ),
             "FusedNode_dense2_swish_3": (
                 build_node(name="dense2"),
-                build_node(name="swish_3")
+                build_node(name="swish_3", qcs=qcs)
             ),
         }
     )
@@ -299,6 +324,9 @@ class TestFusingComplexPatterns(BaseTestFusingInfoGeneratorPytorch):
         return Model()
 
 class TestFusingConvSwishWithMultiSuccessors(BaseTestFusingInfoGeneratorPytorch):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -310,7 +338,7 @@ class TestFusingConvSwishWithMultiSuccessors(BaseTestFusingInfoGeneratorPytorch)
         fusing_data={
             "FusedNode_conv1_swish": (
                 build_node(name="conv1"),
-                build_node(name="swish")
+                build_node(name="swish", qcs=qcs)
             )
         }
     )
@@ -344,6 +372,9 @@ class TestFusingConvSwishWithMultiSuccessors(BaseTestFusingInfoGeneratorPytorch)
         return Model()
 
 class TestFusingConvReluWithMultiPredecessors(BaseTestFusingInfoGeneratorPytorch):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -355,7 +386,7 @@ class TestFusingConvReluWithMultiPredecessors(BaseTestFusingInfoGeneratorPytorch
         fusing_data={
             "FusedNode_conv3_relu": (
                 build_node(name="conv3"),
-                build_node(name="relu")
+                build_node(name="relu", qcs=qcs)
             )
         }
     )

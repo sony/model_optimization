@@ -194,25 +194,6 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         graph_with_fusion_metadata.add_edge(softmax_node, new_softmax_node, **{EDGE_SOURCE_INDEX: 0, EDGE_SINK_INDEX: 0})
         graph_with_fusion_metadata.validate()
 
-    def test_fail_validate_after_modifying_node_inputs(self, graph_with_fusion_metadata):
-        """
-        Tests validation failure after modifying the input connections of a node.
-        - Adds a new input node and connects it to ReLU.
-        - Expects validation to fail as an additional unexpected input disrupts the expected structure.
-        """
-        new_input_node = BaseNode(
-            name='new_input',
-            framework_attr={},
-            input_shape=None,
-            output_shape=None,
-            weights={},
-            layer_class="Identity"
-        )
-        relu_node = graph_with_fusion_metadata.find_node_by_name('relu')[0]
-        graph_with_fusion_metadata.add_node(new_input_node)
-        with pytest.raises(ValueError):
-            graph_with_fusion_metadata.add_edge(new_input_node, relu_node, **{EDGE_SOURCE_INDEX: 1, EDGE_SINK_INDEX: 1})
-
     def test_fail_validate_after_serialization_deserialization(self, graph_with_fusion_metadata):
         """
         Tests validation failure after serializing and deserializing the graph.

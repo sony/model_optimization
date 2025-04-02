@@ -133,6 +133,11 @@ class GraphFuser:
             for next_node in subsequent_nodes:
                 assert next_node in nodes_to_fuse  # Ensure we're not removing edges outside the fusion
                 graph.remove_edge(current_node, next_node)
+                # next_node can have more incoming edges from other nodes that are not
+                # in the fusion and we should remove them to:
+                in_edges = graph.incoming_edges(next_node)
+                for ie in in_edges:
+                    graph.remove_edge(ie.source_node, next_node)
 
         # Handle the case where fused nodes are part of the graph's outputs
         graph_output_tensors = graph.get_outputs()

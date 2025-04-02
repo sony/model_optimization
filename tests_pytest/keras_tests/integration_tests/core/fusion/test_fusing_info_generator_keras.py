@@ -12,24 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 import tensorflow as tf
 from keras import Input
 from tensorflow.keras import layers, Model
 
 from model_compression_toolkit.core import QuantizationConfig, CustomOpsetLayers
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
-from tests_pytest._fw_tests_common_base.fusing.base_fusing_info_generator_test import BaseFusingInfoGeneratorTest
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
+    CandidateNodeQuantizationConfig
+from tests_pytest._fw_tests_common_base.fusing.base_fusing_info_generator_test import BaseFusingInfoGeneratorTest, \
+    MockNodeActivationQuantizationConfig, random_activation_configs
 from tests_pytest._test_util.graph_builder_utils import build_node
 from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMixin
-
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+
 from tensorflow.keras import backend as K
 
 
 class BaseTestFusingInfoGeneratorKeras(BaseFusingInfoGeneratorTest, KerasFwMixin):
 
-    K.clear_session()  # Reset global layer naming to avoid name conflicts across tests
+    K.clear_session() # Reset global layer naming to avoid name conflicts across tests
 
     def _data_gen(self):
         return self.get_basic_data_gen(shapes=[(1, 16, 16, 3)])()
@@ -42,8 +44,10 @@ class BaseTestFusingInfoGeneratorKeras(BaseFusingInfoGeneratorTest, KerasFwMixin
 
 
 
-
 class TestFusingConvRelu(BaseTestFusingInfoGeneratorKeras):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -55,7 +59,7 @@ class TestFusingConvRelu(BaseTestFusingInfoGeneratorKeras):
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_relu": (
                 build_node(name="conv1_conv2_collapsed"),
-                build_node(name="relu")
+                build_node(name="relu", qcs=qcs)
             )
         }
     )
@@ -80,6 +84,8 @@ class TestFusingConvRelu(BaseTestFusingInfoGeneratorKeras):
 
 class TestFusingAnyActKeras(BaseTestFusingInfoGeneratorKeras):
 
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -89,10 +95,18 @@ class TestFusingAnyActKeras(BaseTestFusingInfoGeneratorKeras):
     expected_fi = FusingInfo(
         fusing_patterns=fusing_patterns,
         fusing_data={
-            "FusedNode_conv1_conv2_collapsed_tanh": (build_node(name="conv1_conv2_collapsed"), build_node(name="tanh")),
-            "FusedNode_conv3_relu": (build_node(name="conv3"), build_node(name="relu")),
-            "FusedNode_conv4_sigmoid": (build_node(name="conv4"), build_node(name="sigmoid")),
-            "FusedNode_conv5_tf.nn.silu": (build_node(name="conv5"), build_node(name="tf.nn.silu")),
+            "FusedNode_conv1_conv2_collapsed_tanh":
+                (build_node(name="conv1_conv2_collapsed"),
+                 build_node(name="tanh", qcs=qcs)),
+            "FusedNode_conv3_relu":
+                (build_node(name="conv3"),
+                 build_node(name="relu", qcs=qcs)),
+            "FusedNode_conv4_sigmoid":
+                (build_node(name="conv4"),
+                 build_node(name="sigmoid", qcs=qcs)),
+            "FusedNode_conv5_tf.nn.silu":
+                (build_node(name="conv5"),
+                 build_node(name="tf.nn.silu", qcs=qcs)),
         }
     )
 
@@ -116,11 +130,14 @@ class TestFusingAnyActKeras(BaseTestFusingInfoGeneratorKeras):
         x = layers.Conv2D(64, kernel_size=(1, 1), name="conv4")(x)
         x = layers.Activation("sigmoid", name="sigmoid")(x)
         x = layers.Conv2D(64, kernel_size=(2, 2), name="conv5")(x)
-        outputs = tf.nn.swish(x)
+        outputs = layers.Activation("swish", name="tf.nn.silu")(x)
         return Model(inputs=inputs, outputs=outputs)
 
 
 class TestFusingConvReLUOnlyKeras(BaseTestFusingInfoGeneratorKeras):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -130,10 +147,18 @@ class TestFusingConvReLUOnlyKeras(BaseTestFusingInfoGeneratorKeras):
     expected_fi = FusingInfo(
         fusing_patterns=fusing_patterns,
         fusing_data={
-            "FusedNode_conv1_conv2_collapsed_tanh": (build_node(name="conv1_conv2_collapsed"), build_node(name="tanh")),
-            "FusedNode_conv3_relu": (build_node(name="conv3"), build_node(name="relu")),
-            "FusedNode_conv4_sigmoid": (build_node(name="conv4"), build_node(name="sigmoid")),
-            "FusedNode_conv5_swish": (build_node(name="conv5"), build_node(name="swish")),
+            "FusedNode_conv1_conv2_collapsed_tanh":
+                (build_node(name="conv1_conv2_collapsed"),
+                 build_node(name="tanh", qcs=qcs)),
+            "FusedNode_conv3_relu":
+                (build_node(name="conv3"),
+                 build_node(name="relu", qcs=qcs)),
+            "FusedNode_conv4_sigmoid":
+                (build_node(name="conv4"),
+                 build_node(name="sigmoid", qcs=qcs)),
+            "FusedNode_conv5_swish":
+                (build_node(name="conv5"),
+                 build_node(name="swish", qcs=qcs)),
         }
     )
 
@@ -159,8 +184,10 @@ class TestFusingConvReLUOnlyKeras(BaseTestFusingInfoGeneratorKeras):
         x = layers.Conv2D(64, kernel_size=(2, 2), name="conv5")(x)
         outputs = layers.Activation(tf.nn.swish, name="swish")(x)
         return Model(inputs=inputs, outputs=outputs)
-
 class TestFusingComplexPatternsKeras(BaseTestFusingInfoGeneratorKeras):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
                                        schema.OperatorsSet(name=schema.OperatorSetNames.SWISH))),
@@ -182,27 +209,27 @@ class TestFusingComplexPatternsKeras(BaseTestFusingInfoGeneratorKeras):
     expected_fi = FusingInfo(
         fusing_patterns=fusing_patterns,
         fusing_data={
-            "FusedNode_conv1_tf.nn.silu_1_add":
+            "FusedNode_conv1_swish1_add":
                 (build_node(name="conv1"),
-                 build_node(name="tf.nn.silu_1"),
-                 build_node(name="add")),
-            "FusedNode_conv2_tf.nn.silu_2_add_1":
+                 build_node(name="swish1"),
+                 build_node(name="add", qcs=qcs)),
+            "FusedNode_conv2_swish2_add_1":
                 (build_node(name="conv2"),
-                 build_node(name="tf.nn.silu_2"),
-                 build_node(name="add_1")),
+                 build_node(name="swish2"),
+                 build_node(name="add_1", qcs=qcs)),
             "FusedNode_conv3_relu":
                 (build_node(name="conv3"),
-                 build_node(name="relu")),
+                 build_node(name="relu", qcs=qcs)),
             "FusedNode_conv4_relu_1_add_2":
                 (build_node(name="conv4"),
                  build_node(name="relu_1"),
-                 build_node(name="add_2")),
-            "FusedNode_dense1_tf.nn.silu_3":
+                 build_node(name="add_2", qcs=qcs)),
+            "FusedNode_dense1_swish3":
                 (build_node(name="dense1"),
-                 build_node(name="tf.nn.silu_3")),
-            "FusedNode_dense2_tf.nn.silu_4":
+                 build_node(name="swish3", qcs=qcs)),
+            "FusedNode_dense2_swish4":
                 (build_node(name="dense2"),
-                 build_node(name="tf.nn.silu_4")),
+                 build_node(name="swish4", qcs=qcs)),
         }
     )
 
@@ -225,11 +252,11 @@ class TestFusingComplexPatternsKeras(BaseTestFusingInfoGeneratorKeras):
         inputs = Input(shape=(32, 32, 3))
 
         x = layers.Conv2D(3, (3, 3), padding='same', name="conv1")(inputs)
-        x = tf.nn.swish(x)
+        x = layers.Activation('swish', name="swish1")(x)
         x = layers.Add(name="add")([x, inputs])
 
         x2 = layers.Conv2D(3, (1, 1), padding='same', name="conv2")(x)
-        x2 = tf.nn.swish(x2)
+        x2 = layers.Activation('swish', name="swish2")(x2)
         x2 = layers.Add(name="add_1")([x, x2])
 
         x3 = layers.Conv2D(3, (3, 3), padding='same', name="conv3")(x2)
@@ -241,14 +268,17 @@ class TestFusingComplexPatternsKeras(BaseTestFusingInfoGeneratorKeras):
 
         x4 = layers.Flatten()(x4)
         x4 = layers.Dense(16, name="dense1")(x4)
-        x4 = tf.nn.swish(x4)
+        x4 = layers.Activation('swish', name="swish3")(x4)
 
         x4 = layers.Dense(16, name="dense2")(x4)
-        outputs = tf.nn.swish(x4)
+        outputs = layers.Activation('swish', name="swish4")(x4)
 
         return Model(inputs=inputs, outputs=outputs)
 
 class TestFusingConvSwishWithMultiSuccessorsKeras(BaseTestFusingInfoGeneratorKeras):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -260,7 +290,7 @@ class TestFusingConvSwishWithMultiSuccessorsKeras(BaseTestFusingInfoGeneratorKer
         fusing_data={
             "FusedNode_conv1_swish": (
                 build_node(name="conv1"),
-                build_node(name="swish")
+                build_node(name="swish", qcs=qcs)
             )
         }
     )
@@ -287,6 +317,9 @@ class TestFusingConvSwishWithMultiSuccessorsKeras(BaseTestFusingInfoGeneratorKer
         return Model(inputs=inputs, outputs=outputs)
 
 class TestFusingConvReluWithMultiPredecessorsKeras(BaseTestFusingInfoGeneratorKeras):
+
+    last_node_activation_nbits, qcs = random_activation_configs()
+
     fusing_patterns = [
         schema.Fusing(operator_groups=(
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
@@ -298,7 +331,7 @@ class TestFusingConvReluWithMultiPredecessorsKeras(BaseTestFusingInfoGeneratorKe
         fusing_data={
             "FusedNode_conv3_relu": (
                 build_node(name="conv3"),
-                build_node(name="relu")
+                build_node(name="relu", qcs=qcs)
             )
         }
     )
