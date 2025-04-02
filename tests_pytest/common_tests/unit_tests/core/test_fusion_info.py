@@ -16,7 +16,7 @@
 import pytest
 from unittest.mock import Mock
 
-from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator, FUSED_OP_ID_PREFIX
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator, FUSED_OP_ID_PREFIX, FusingInfo
 from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common import BaseNode
 
@@ -186,3 +186,36 @@ def test_fusing_info_validation_failure_topology_change(mock_graph, fusing_info_
 
     with pytest.raises(ValueError):
         fusing_info.validate(mock_graph)
+
+def test_add_fused_operation_adds_data(mock_graph, fusing_info_generator):
+    fi = FusingInfo()
+    node1 = MockBaseNode("a")
+    node2 = MockBaseNode("b")
+    op_id = f"{FUSED_OP_ID_PREFIX}a_b"
+    fi.add_fused_operation(op_id, (node1, node2))
+
+    assert op_id in fi.get_all_fused_operations()
+    assert fi.get_fused_node_name("a") == op_id
+    assert fi.get_fused_node_name("b") == op_id
+
+def test_remove_fused_operation_raises_for_missing_op(mock_graph, fusing_info_generator):
+    fi = FusingInfo()
+    with pytest.raises(ValueError, match="Fused operation __fused__missing does not exist"):
+        fi.remove_fused_operation("__fused__missing")
+
+def test_is_node_in_fused_op_returns_true_for_present_node(mock_graph, fusing_info_generator):
+    node1 = MockBaseNode("a")
+    node2 = MockBaseNode("b")
+    fi = FusingInfo(fusing_data={f"{FUSED_OP_ID_PREFIX}a_b": (node1, node2)})
+
+    assert fi.is_node_in_fused_op(node1)
+    assert fi.is_node_in_fused_op(node2)
+
+def test_is_node_in_fused_op_returns_false_for_absent_node(mock_graph, fusing_info_generator):
+    node1 = MockBaseNode("a")
+    node2 = MockBaseNode("b")
+    fi = FusingInfo(fusing_data={f"{FUSED_OP_ID_PREFIX}a_b": (node1, node2)})
+
+    unrelated = MockBaseNode("unrelated")
+    assert not fi.is_node_in_fused_op(unrelated)
+
