@@ -19,11 +19,11 @@ from typing import Callable
 
 import numpy as np
 
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from mct_quantizers import QuantizationMethod
@@ -142,6 +142,21 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
                                                                     QuantizationConfig(),
                                                                     AttributeQuantizationConfig(
                                                                         enable_weights_quantization=False)))
+
+        # Check if the source node was part of a fusion. If so, there are two cases:
+        # either this is no longer a fusion, and the fusion info should be updated by removing
+        # the current info, or this creates a new fusion and the old pattern should be
+        # replaced with the new one.
+        fi = graph.fusing_info
+        fused_op = fi.get_fused_node_name(source_node.name)
+        if fused_op:
+            fused_nodes = list(fi.get_fused_nodes(fused_op))
+            assert source_node in fused_nodes
+            fused_nodes.insert(fused_nodes.index(source_node)+1, bn_node)
+            fi.remove_fused_operation(fused_op)
+            if fi.is_nodes_eligible_to_be_fused(fused_nodes):
+                op_id = fi.generate_fused_op_id(fused_nodes)
+                fi.add_fused_operation(op_id, tuple(fused_nodes))
 
         graph.reconnect_out_edges(current_node=source_node, new_node=bn_node)
         graph.replace_output_node(current_node=source_node, new_node=bn_node)

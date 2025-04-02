@@ -20,6 +20,7 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -31,7 +32,6 @@ else:
     from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add, InputLayer
 import numpy as np
 
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualActivationWeightsNode, VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
@@ -123,7 +123,11 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, fqc)
+
+    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
+    graph.fusing_info = fusing_info
+    graph.disable_fused_nodes_activation_quantization()
+
     graph = filter_nodes_candidates(graph)
 
     return graph
@@ -168,9 +172,16 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
+
         # Nodes split and composition substitution
         split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
         v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        graph.skip_validation_check = False
 
         self._verify_two_conv_with_split_test(graph, v_graph, 9, 9)
 
@@ -184,9 +195,16 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
+
         # Nodes split and composition substitution
         split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
         v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        graph.skip_validation_check = False
 
         self._verify_two_conv_with_split_test(graph, v_graph, 3, 3)
 
@@ -201,9 +219,17 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
+
         # Nodes split and composition substitution
         split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
         v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        graph.skip_validation_check = False
+
         self._verify_two_conv_with_split_test(graph, v_graph, 3, 3)
 
     def test_all_weights_layers_composition(self):
@@ -216,9 +242,16 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               base_config=base_config,
                               default_config=default_config)
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
+
         # Nodes split and composition substitution
         split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
         v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        graph.skip_validation_check = False
 
         assert split_graph is not graph
         self.assertTrue(len(v_graph.nodes) == 8)
@@ -254,8 +287,15 @@ class TestActivationWeightsComposition(unittest.TestCase):
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
+
         split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
         v_graph = substitute(copy.deepcopy(split_graph), [VirtualActivationWeightsComposition()])
+
+        graph.skip_validation_check = False
 
         #  Since the only activation before the convolutions is the Input layer activation, and it goes to both
         # convolutions (the input node has multiple output edges) no composition should be made.
