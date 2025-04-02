@@ -88,7 +88,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         super().__init__(**attr)
 
         # This must be set first to ensure it's available when validation runs during graph creation.
-        self.skip_validation_check = False
+        self._skip_validation_check = False
         self._fusing_info = FusingInfo()
 
         self.name = name
@@ -103,6 +103,16 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                           **e.get_attributes())
         self.user_info = UserInformation()
         self.fw_info = fw_info
+
+    @property
+    def skip_validation_check(self) -> bool:
+        return self._skip_validation_check
+
+    @skip_validation_check.setter
+    def skip_validation_check(self, value: bool):
+        if not isinstance(value, bool):
+            raise ValueError("skip_validation_check must be a boolean.")
+        self._skip_validation_check = value
 
     @property
     def fusing_info(self) -> FusingInfo:
