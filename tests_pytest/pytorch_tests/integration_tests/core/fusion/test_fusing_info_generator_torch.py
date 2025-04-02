@@ -20,7 +20,7 @@ from model_compression_toolkit.core import QuantizationConfig, CustomOpsetLayers
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
 from tests_pytest._fw_tests_common_base.fusing.base_fusing_info_generator_test import BaseFusingInfoGeneratorTest, \
-    random_activation_configs
+    random_activation_configs, get_activation_mp_options
 from tests_pytest._test_util.graph_builder_utils import build_node
 from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwMixin
 
@@ -64,8 +64,10 @@ class TestFusingConvRelu(BaseTestFusingInfoGeneratorPytorch):
     )
 
     def _get_tpc(self, default_quant_cfg_options):
-        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
-        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits))
+        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits))
         return schema.TargetPlatformCapabilities(
             default_qco=default_quant_cfg_options,
             tpc_platform_type="test",
@@ -118,7 +120,8 @@ class TestFusingAnyAct(BaseTestFusingInfoGeneratorPytorch):
 
     def _get_tpc(self, default_quant_cfg_options):
         conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
-        any_act = schema.OperatorsSet(name="AnyAct")
+        any_act = schema.OperatorsSet(name="AnyAct",
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits))
         return schema.TargetPlatformCapabilities(
             default_qco=default_quant_cfg_options,
             tpc_platform_type="test",
@@ -180,7 +183,8 @@ class TestFusingConvReLUOnly(BaseTestFusingInfoGeneratorPytorch):
 
     def _get_tpc(self, default_quant_cfg_options):
         conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
-        any_act = schema.OperatorsSet(name="AnyAct")
+        any_act = schema.OperatorsSet(name="AnyAct",
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits))
         return schema.TargetPlatformCapabilities(
             default_qco=default_quant_cfg_options,
             tpc_platform_type="test",
@@ -274,10 +278,14 @@ class TestFusingComplexPatterns(BaseTestFusingInfoGeneratorPytorch):
     def _get_tpc(self, default_quant_cfg_options):
         opsets = [
             schema.OperatorsSet(name=schema.OperatorSetNames.CONV),
-            schema.OperatorsSet(name=schema.OperatorSetNames.ADD),
-            schema.OperatorsSet(name=schema.OperatorSetNames.RELU),
-            schema.OperatorsSet(name=schema.OperatorSetNames.SWISH),
-            schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED),
+            schema.OperatorsSet(name=schema.OperatorSetNames.ADD,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits)),
+            schema.OperatorsSet(name=schema.OperatorSetNames.RELU,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits)),
+            schema.OperatorsSet(name=schema.OperatorSetNames.SWISH,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits)),
+            schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits)),
         ]
         return schema.TargetPlatformCapabilities(
             default_qco=default_quant_cfg_options,
@@ -345,7 +353,8 @@ class TestFusingConvSwishWithMultiSuccessors(BaseTestFusingInfoGeneratorPytorch)
 
     def _get_tpc(self, default_quant_cfg_options):
         conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
-        swish = schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)
+        swish = schema.OperatorsSet(name=schema.OperatorSetNames.SWISH,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits))
         return schema.TargetPlatformCapabilities(
             default_qco=default_quant_cfg_options,
             tpc_platform_type="test",
@@ -393,7 +402,8 @@ class TestFusingConvReluWithMultiPredecessors(BaseTestFusingInfoGeneratorPytorch
 
     def _get_tpc(self, default_quant_cfg_options):
         conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV)
-        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU,
+                                   qc_options=get_activation_mp_options(self.last_node_activation_nbits))
         return schema.TargetPlatformCapabilities(
             default_qco=default_quant_cfg_options,
             tpc_platform_type="test",

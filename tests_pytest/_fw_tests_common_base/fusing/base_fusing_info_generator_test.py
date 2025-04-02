@@ -28,6 +28,7 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from tests_pytest._test_util.tpc_util import minimal_cfg_options
 
 
 class MockNodeActivationQuantizationConfig:
@@ -45,6 +46,24 @@ def random_activation_configs():
         for nb in bits_list
     ]
     return bits_list, qcs
+
+def get_activation_mp_options(last_node_activation_nbits):
+    options = tuple([schema.OpQuantizationConfig(
+        default_weight_attr_config={},
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=a_nbits,
+        supported_input_activation_n_bits=[8],
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        simd_size=32,
+        signedness=schema.Signedness.AUTO) for a_nbits in last_node_activation_nbits])
+
+    cfg_options = schema.QuantizationConfigOptions(quantization_configurations=options, base_config=options[0])
+
+    return cfg_options
 
 class BaseFusingInfoGeneratorTest(abc.ABC):
 
@@ -66,23 +85,6 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
     def _get_qc(self):
         raise NotImplementedError()
 
-    def get_cfg_options(self):
-        options = tuple([schema.OpQuantizationConfig(
-            default_weight_attr_config={},
-            attr_weights_configs_mapping={},
-            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-            activation_n_bits=a_nbits,
-            supported_input_activation_n_bits=[8],
-            enable_activation_quantization=True,
-            quantization_preserving=False,
-            fixed_scale=None,
-            fixed_zero_point=None,
-            simd_size=32,
-            signedness=schema.Signedness.AUTO) for a_nbits in self.last_node_activation_nbits])
-
-        cfg_options = schema.QuantizationConfigOptions(quantization_configurations=options, base_config=options[0])
-
-        return cfg_options
 
     @pytest.fixture
     def graph_with_fusion_metadata(self):
@@ -97,7 +99,7 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
         assert self.expected_fi is not None
         assert self.last_node_activation_nbits is not None
 
-        self.fqc = self.attach_to_fw_func(self._get_tpc(self.get_cfg_options()),
+        self.fqc = self.attach_to_fw_func(self._get_tpc(minimal_cfg_options()),
                                           self._get_qc().custom_tpc_opset_to_layer)
 
         graph_with_fusion_metadata = graph_preparation_runner(self._get_model(),
