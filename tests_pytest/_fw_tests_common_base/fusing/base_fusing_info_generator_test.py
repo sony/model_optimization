@@ -67,7 +67,7 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
         raise NotImplementedError()
 
     def get_cfg_options(self):
-        options = [schema.OpQuantizationConfig(
+        options = tuple([schema.OpQuantizationConfig(
             default_weight_attr_config={},
             attr_weights_configs_mapping={},
             activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
@@ -78,7 +78,7 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
             fixed_scale=None,
             fixed_zero_point=None,
             simd_size=32,
-            signedness=schema.Signedness.AUTO) for a_nbits in self.last_node_activation_nbits]
+            signedness=schema.Signedness.AUTO) for a_nbits in self.last_node_activation_nbits])
 
         cfg_options = schema.QuantizationConfigOptions(quantization_configurations=options, base_config=options[0])
 
