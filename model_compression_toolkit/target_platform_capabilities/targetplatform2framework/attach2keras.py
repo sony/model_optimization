@@ -93,7 +93,6 @@ class AttachTpcToKeras(AttachTpcToFramework):
             OperatorSetNames.TOPK: [tf.nn.top_k],
             OperatorSetNames.FAKE_QUANT: [tf.quantization.fake_quant_with_min_max_vars],
             OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [tf.image.combined_non_max_suppression],
-            OperatorSetNames.BOX_DECODE: [],  # no such operator in keras
             OperatorSetNames.ZERO_PADDING2D: [ZeroPadding2D],
             OperatorSetNames.CAST: [tf.cast],
             OperatorSetNames.STRIDED_SLICE: [tf.strided_slice],

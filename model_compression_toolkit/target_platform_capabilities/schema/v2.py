@@ -30,72 +30,8 @@ from model_compression_toolkit.target_platform_capabilities.schema.v1 import (
     OperatorsSetBase,
     OperatorsSet,
     OperatorSetGroup,
-    Fusing)
-
-
-class OperatorSetNames(str, Enum):
-    CONV = "Conv"
-    DEPTHWISE_CONV = "DepthwiseConv2D"
-    CONV_TRANSPOSE = "ConvTranspose"
-    FULLY_CONNECTED = "FullyConnected"
-    CONCATENATE = "Concatenate"
-    STACK = "Stack"
-    UNSTACK = "Unstack"
-    GATHER = "Gather"
-    EXPAND = "Expend"
-    BATCH_NORM = "BatchNorm"
-    L2NORM = "L2Norm"
-    RELU = "ReLU"
-    RELU6 = "ReLU6"
-    LEAKY_RELU = "LeakyReLU"
-    ELU = "Elu"
-    HARD_TANH = "HardTanh"
-    ADD = "Add"
-    SUB = "Sub"
-    MUL = "Mul"
-    DIV = "Div"
-    MIN = "Min"
-    MAX = "Max"
-    PRELU = "PReLU"
-    ADD_BIAS = "AddBias"
-    SWISH = "Swish"
-    SIGMOID = "Sigmoid"
-    SOFTMAX = "Softmax"
-    LOG_SOFTMAX = "LogSoftmax"
-    TANH = "Tanh"
-    GELU = "Gelu"
-    HARDSIGMOID = "HardSigmoid"
-    HARDSWISH = "HardSwish"
-    FLATTEN = "Flatten"
-    GET_ITEM = "GetItem"
-    RESHAPE = "Reshape"
-    UNSQUEEZE = "Unsqueeze"
-    SQUEEZE = "Squeeze"
-    PERMUTE = "Permute"
-    TRANSPOSE = "Transpose"
-    DROPOUT = "Dropout"
-    SPLIT_CHUNK = "SplitChunk"
-    MAXPOOL = "MaxPool"
-    AVGPOOL = "AvgPool"
-    SIZE = "Size"
-    SHAPE = "Shape"
-    EQUAL = "Equal"
-    ARGMAX = "ArgMax"
-    TOPK = "TopK"
-    FAKE_QUANT = "FakeQuant"
-    COMBINED_NON_MAX_SUPPRESSION = "CombinedNonMaxSuppression"
-    BOX_DECODE = "BoxDecode"
-    ZERO_PADDING2D = "ZeroPadding2D"
-    CAST = "Cast"
-    RESIZE = "Resize"
-    PAD = "Pad"
-    FOLD = "Fold"
-    STRIDED_SLICE = "StridedSlice"
-    SSD_POST_PROCESS = "SSDPostProcess"
-
-    @classmethod
-    def get_values(cls):
-        return [v.value for v in cls]
+    Fusing,
+    OperatorSetNames)
 
 
 class TargetPlatformCapabilities(BaseModel):
