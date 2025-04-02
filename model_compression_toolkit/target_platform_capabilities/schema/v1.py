@@ -14,7 +14,7 @@
 # ==============================================================================
 import pprint
 from enum import Enum
-from typing import Dict, Any, Union, Tuple, List, Optional, Literal, Annotated
+from typing import Dict, Any, Union, Tuple, List, Optional, Literal, Annotated, ClassVar
 
 from pydantic import BaseModel, Field, root_validator, validator, PositiveInt
 
@@ -647,7 +647,7 @@ class TargetPlatformCapabilities(BaseModel):
     name: Optional[str] = "default_tpc"
     is_simd_padding: bool = False
 
-    SCHEMA_VERSION: int = 1
+    SCHEMA_VERSION: ClassVar[int] = 1
 
     class Config:
         frozen = True
@@ -698,3 +698,22 @@ class TargetPlatformCapabilities(BaseModel):
         Display the TargetPlatformCapabilities.
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
+
+    def to_next_version(self):
+        """
+        In order to preserve compatability between schemas, we create a new TargetPlatformCapabilities instance of the
+        next version and add adaptations if needed
+        :return: TargetPlatformCapabilities instance of the current MCT schema version.
+        """
+        # todo: the import is here because it is initialized after this file if compiled
+        from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import \
+            TargetPlatformCapabilities
+
+        # todo: seems like there are no v1-v2 adaptations to do
+        return TargetPlatformCapabilities(default_qco=self.default_qco,
+                                   operator_set=self.operator_set,
+                                   fusing_patterns=self.fusing_patterns,
+                                   tpc_minor_version=self.tpc_minor_version,
+                                   tpc_patch_version=self.tpc_patch_version,
+                                   tpc_platform_type=self.tpc_platform_type,
+                                   add_metadata=self.add_metadata)

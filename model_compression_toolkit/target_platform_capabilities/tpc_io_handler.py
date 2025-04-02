@@ -13,11 +13,24 @@
 # limitations under the License.
 # ==============================================================================
 from pathlib import Path
-from typing import Union
+from typing import Union, Any
 
-from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformCapabilities as schema_v1
+from model_compression_toolkit.target_platform_capabilities.schema.v2 import TargetPlatformCapabilities as schema_v2
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
-import json
+
+
+SCHEMA_VERSIONS = [schema_v1, schema_v2]
+
+
+def _is_tpc_instance(tpc_obj_or_path: Any):
+    return type(tpc_obj_or_path) in [schema_v1, schema_v2]
+
+
+def _tpc_to_current_schema_version(tpc: TargetPlatformCapabilities):
+    while tpc.SCHEMA_VERSION != TargetPlatformCapabilities.SCHEMA_VERSION:
+        tpc = tpc.to_next_version()
+    return tpc
 
 
 def load_target_platform_capabilities(tpc_obj_or_path: Union[TargetPlatformCapabilities, str]) -> TargetPlatformCapabilities:
@@ -36,10 +49,13 @@ def load_target_platform_capabilities(tpc_obj_or_path: Union[TargetPlatformCapab
             ValueError: If the JSON content is invalid or cannot initialize the TargetPlatformCapabilities.
             TypeError: If the input is neither a TargetPlatformCapabilities nor a valid JSON file path.
         """
-    if isinstance(tpc_obj_or_path, TargetPlatformCapabilities):
-        return tpc_obj_or_path
+    if _is_tpc_instance(tpc_obj_or_path):
+        if tpc_obj_or_path.SCHEMA_VERSION == TargetPlatformCapabilities.SCHEMA_VERSION:
+            return tpc_obj_or_path
+        else:
+            return _tpc_to_current_schema_version(tpc_obj_or_path)
 
-    if isinstance(tpc_obj_or_path, str):
+    if isinstance(tpc_obj_or_path, str): # todo: handle json case
         path = Path(tpc_obj_or_path)
 
         if not path.exists() or not path.is_file():

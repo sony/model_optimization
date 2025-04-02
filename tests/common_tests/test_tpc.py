@@ -13,8 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import os
-
 import unittest
+
+from edgemdt_tpc import get_target_platform_capabilities  # todo: do we want to use attach or isntall edgemdt?
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
@@ -67,6 +68,16 @@ class TPModelInputOutputTests(unittest.TestCase):
         """Test that a valid TargetPlatformCapabilities object is returned unchanged."""
         result = load_target_platform_capabilities(self.tpc)
         self.assertEqual(self.tpc, result)
+
+    def test_schema_compatibility(self):
+        """Test that a valid TargetPlatformCapabilities object is returned unchanged."""
+        tpc_version = "1.0"
+        device_type = "imx500"
+        extended_version = "1.0"  # todo: do we want to test if for all tpc versions?
+        tpc = get_target_platform_capabilities(tpc_version=tpc_version, device_type=device_type)
+        result = load_target_platform_capabilities(tpc)
+        self.assertEqual(result.SCHEMA_VERSION, schema.TargetPlatformCapabilities.SCHEMA_VERSION)
+
 
     def test_invalid_json_parsing(self):
         """Test that invalid JSON content raises a ValueError."""

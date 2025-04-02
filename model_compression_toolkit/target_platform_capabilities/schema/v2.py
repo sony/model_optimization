@@ -14,7 +14,7 @@
 # ==============================================================================
 import pprint
 from enum import Enum
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional, ClassVar
 
 from pydantic import BaseModel, root_validator
 
@@ -124,7 +124,7 @@ class TargetPlatformCapabilities(BaseModel):
     name: Optional[str] = "default_tpc"
     is_simd_padding: bool = False
 
-    SCHEMA_VERSION: int = 2
+    SCHEMA_VERSION: ClassVar[int] = 2
 
     class Config:
         frozen = True
@@ -175,3 +175,6 @@ class TargetPlatformCapabilities(BaseModel):
         Display the TargetPlatformCapabilities.
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
+
+    def to_next_version(self, prev_version_tpc: BaseModel):
+        return self  #  At the moment V2 is the latest schema versiov
