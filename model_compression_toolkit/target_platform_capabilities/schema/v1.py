@@ -705,15 +705,13 @@ class TargetPlatformCapabilities(BaseModel):
         next version and add adaptations if needed
         :return: TargetPlatformCapabilities instance of the current MCT schema version.
         """
-        # todo: the import is here because it is initialized after this file if compiled
-        from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import \
-            TargetPlatformCapabilities
+        # todo: the import is here because mct_current_schema initialized after this file if compiled
+        import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 
-        # todo: seems like there are no v1-v2 adaptations to do
-        return TargetPlatformCapabilities(default_qco=self.default_qco,
-                                   operator_set=self.operator_set,
-                                   fusing_patterns=self.fusing_patterns,
-                                   tpc_minor_version=self.tpc_minor_version,
-                                   tpc_patch_version=self.tpc_patch_version,
-                                   tpc_platform_type=self.tpc_platform_type,
-                                   add_metadata=self.add_metadata)
+        return schema.TargetPlatformCapabilities(default_qco=self.default_qco,
+                                                 operator_set=self.operator_set,
+                                                 fusing_patterns=self.fusing_patterns,
+                                                 tpc_minor_version=self.tpc_minor_version,
+                                                 tpc_patch_version=self.tpc_patch_version,
+                                                 tpc_platform_type=self.tpc_platform_type,
+                                                 add_metadata=self.add_metadata)

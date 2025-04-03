@@ -15,10 +15,9 @@
 import os
 import unittest
 
-from edgemdt_tpc import get_target_platform_capabilities  # todo: do we want to use attach or isntall edgemdt?
-
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v1
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
@@ -71,10 +70,9 @@ class TPModelInputOutputTests(unittest.TestCase):
 
     def test_schema_compatibility(self):
         """Test that a valid TargetPlatformCapabilities object is returned unchanged."""
-        tpc_version = "1.0"
-        device_type = "imx500"
-        extended_version = "1.0"  # todo: do we want to test if for all tpc versions?
-        tpc = get_target_platform_capabilities(tpc_version=tpc_version, device_type=device_type)
+        # tpc = get_target_platform_capabilities(tpc_version=tpc_version, device_type=device_type)
+        # tpc = get_target_platform_capabilities(tpc_version=tpc_version, device_type=device_type)
+        # todo: create tpc using shcema1
         result = load_target_platform_capabilities(tpc)
         self.assertEqual(result.SCHEMA_VERSION, schema.TargetPlatformCapabilities.SCHEMA_VERSION)
 
