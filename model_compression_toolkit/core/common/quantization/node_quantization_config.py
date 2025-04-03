@@ -25,7 +25,9 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
 
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
     QuantizationErrorMethod
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig, \
+from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import \
+    AttributeQuantizationConfig, \
     OpQuantizationConfig
 
 if TYPE_CHECKING:
@@ -209,7 +211,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.shift_negative_activation_correction == other.shift_negative_activation_correction and \
                self.z_threshold == other.z_threshold and \
                self.shift_negative_ratio == other.shift_negative_ratio and \
-               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation 
+               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
 
     def __hash__(self):
         return hash((self.activation_quantization_fn,
@@ -395,9 +397,18 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         for attr in node_attrs_list:
             if isinstance(attr, int):
                 # this is a positional attribute, so it needs to be handled separately.
-                self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
-                                                                                         weights_attr_cfg=op_cfg.default_weight_attr_config,
-                                                                                         weights_channels_axis=weights_channels_axis)
+                attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if
+                                          POS_ATTR in k}
+                if len(attrs_included_in_name) == 0:
+                    attr_cfg = op_cfg.default_weight_attr_config
+                    self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
+                                                                                             weights_attr_cfg=attr_cfg,
+                                                                                             weights_channels_axis=weights_channels_axis)
+                else:
+                    attr_cfg = list(attrs_included_in_name.values())[0]
+                    self.attributes_config_mapping[POS_ATTR] = WeightsAttrQuantizationConfig(qc=qc,
+                                                                                                          weights_attr_cfg=attr_cfg,
+                                                                                                          weights_channels_axis=weights_channels_axis)
             else:
                 # In Tensorflow, the attribute name is composed of the framework attribute name and the layer name,
                 # therefore, we need to look for the attribute in the op_cfg that is contained in the node attribute's name.
