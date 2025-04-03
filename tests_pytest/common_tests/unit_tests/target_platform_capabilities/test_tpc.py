@@ -14,7 +14,6 @@
 # ==============================================================================
 import os
 import pytest
-import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
