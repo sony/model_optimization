@@ -17,7 +17,8 @@ from typing import Callable, Union
 import pytest
 import torch
 
-from model_compression_toolkit.core import ResourceUtilization
+from model_compression_toolkit.core import ResourceUtilization, MpDistanceWeighting, MixedPrecisionQuantizationConfig, \
+    CoreConfig
 from model_compression_toolkit.ptq import pytorch_post_training_quantization
 from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig, \
     OpQuantizationConfig, QuantizationConfigOptions, Signedness, OperatorSetNames, \
@@ -98,7 +99,8 @@ def le(thresh):
 
 class TestMixedPrecisionPTQ(BaseTorchIntegrationTest):
     """ Different ru targets are tested with configurable weights / activations / both.
-        TODO: All tests use the default core and mp config (last/avg, manual nbit, etc are not tested here). """
+        Bops is sanity-run with all distance metrics.
+        No other configurations are tested here. """
     shape = (1, 3, 16, 16)
 
     sp_a_layers = ['inp', 'relu1', 'relu2']
@@ -189,6 +191,21 @@ class TestMixedPrecisionPTQ(BaseTorchIntegrationTest):
         for layer_name, exp_nbit in exp_w_res.items():
             self._validate_weight_nbits(qmodel, layer_name, exp_nbit)
         for layer_name, exp_nbit in exp_a_res.items():
+            self._validate_activation_nbits(qmodel, layer_name, exp_nbit)
+
+    @pytest.mark.parametrize('dist', list(MpDistanceWeighting))
+    def test_bops_with_distance_metric(self, model, datagen, dist):
+        """ Sanity test for bops with all distance metrics. """
+        mp_cfg = MixedPrecisionQuantizationConfig(distance_weighting_method=dist)
+        core_cfg = CoreConfig(mixed_precision_config=mp_cfg)
+        tpc = build_tpc(default_a_bit=4, conv_a_bits=[2, 4, 8, 16], conv_w_bits=[8, 4, 2],
+                        fc_a_bits=[2, 4, 8, 16], fc_w_bits=[16, 8, 4], bn_a_bits=[16, 8, 4, 2])
+        ru = ResourceUtilization(bops=196*216*4*4 + 100*3200*2*2 + 160*200*4*4)
+
+        qmodel, user_info = self._run(model, datagen, tpc, ru, 4, True, core_cfg=core_cfg)
+        for layer_name, exp_nbit in {'conv1': 4, 'conv2': 2, 'fc': 4}.items():
+            self._validate_weight_nbits(qmodel, layer_name, exp_nbit)
+        for layer_name, exp_nbit in {'bn1': 2}.items():
             self._validate_activation_nbits(qmodel, layer_name, exp_nbit)
 
     @pytest.mark.parametrize('a_ru, exp_res, eq_ru', [
@@ -360,9 +377,10 @@ class TestMixedPrecisionPTQ(BaseTorchIntegrationTest):
         for layer, exp_bit in {'conv1': 2, 'conv2': 2, 'fc': 2}.items():
             self._validate_weight_nbits(qmodel, layer, exp_bit)
 
-    def _run(self, model, datagen, tpc, ru, exp_default_abit, eq_ru=True):
+    def _run(self, model, datagen, tpc, ru, exp_default_abit, eq_ru=True, core_cfg=None):
+        core_cfg = core_cfg or CoreConfig()
         qmodel, user_info = pytorch_post_training_quantization(model, datagen, target_resource_utilization=ru,
-                                                               target_platform_capabilities=tpc)
+                                                               core_config=core_cfg, target_platform_capabilities=tpc)
         self._validate_sp_a_layers(qmodel, exp_default_abit)
         self._validate_ru(user_info, ru, eq_ru)
         return qmodel, user_info
