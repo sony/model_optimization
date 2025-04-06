@@ -25,7 +25,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import POS
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig
 
 
-class TestPosAttr:
+class TestPositionalWeightsAttrQuantizationConfig:
     def _create_weights_attr_quantization_config(self, weights_n_bits: int) -> AttributeQuantizationConfig:
         """
         Helper method to create a weights attribute quantization configuration.
