@@ -62,10 +62,7 @@ class TestPositionalWeightsAttrQuantizationConfig:
         Returns:
             OpQuantizationConfig: Class to configure the quantization parameters of an operator.
         """
-        attr_weights_configs_mapping = {}
-
-        for attr, attr_config in zip(pos_weight_attr, pos_weight_attr_config):
-            attr_weights_configs_mapping[attr] = attr_config
+        attr_weights_configs_mapping = dict(zip(pos_weight_attr, pos_weight_attr_config))
 
         op_cfg = OpQuantizationConfig(
             default_weight_attr_config=def_weight_attr_config,

@@ -398,7 +398,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             if isinstance(attr, int):
                 # this is a positional attribute, so it needs to be handled separately.
                 # Search for any keys in the op config's attribute weight config mapping that contain the
-                # POS_ATTR string.If none are found, it indicates that no specific quantization config is defined for
+                # POS_ATTR string. If none are found, it indicates that no specific quantization config is defined for
                 # positional weights, so the default config will be used instead.
                 attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if
                                           POS_ATTR in k}
