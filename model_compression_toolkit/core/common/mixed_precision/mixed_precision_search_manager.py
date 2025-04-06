@@ -131,7 +131,7 @@ class MixedPrecisionSearchManager:
         """
         target_ru = self.target_resource_utilization.get_resource_utilization_dict(restricted_only=True)
         rel_target_ru = {
-            ru_target: ru - self.min_ru[ru_target] for ru_target, ru in target_ru.items()
+            ru_target: (ru - self.min_ru[ru_target]) for ru_target, ru in target_ru.items()
         }
         unsatisfiable_targets = {
             ru_target.value: target_ru[ru_target] for ru_target, ru in rel_target_ru.items() if any(ru < 0)
@@ -141,23 +141,16 @@ class MixedPrecisionSearchManager:
                              f"following targets: {unsatisfiable_targets}")
         return rel_target_ru
 
-    def _build_sensitivity_mapping(self, eps: float = EPS) -> Dict[BaseNode, List[float]]:
+    def _build_sensitivity_mapping(self, eps: float = 1e-6) -> Dict[BaseNode, List[float]]:
         """
-        # TODO
         This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
-        It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
-        For each node and some possible node's bitwidth (according to the given search space), we use
-        the framework function compute_metric_fn in order to infer
-        a batch of images, and compute (using the inference results) the sensitivity metric of
-        the configured mixed-precision model.
 
         Args:
-            eps: Epsilon value to manually increase metric value (if necessary) for numerical stability
+            eps: if sensitivity for a non-max candidate is lower than for a max candidate, we set it to
+              sensitivity of a max candidate + epsilon.
 
         Returns:
-            Mapping from each node's index in a graph, to a dictionary from the bitwidth index (of this node) to
-            the sensitivity of the model.
-
+            Mapping from nodes to their bitwidth candidates sensitivity.
         """
 
         Logger.info('Starting to evaluate metrics')
@@ -208,7 +201,7 @@ class MixedPrecisionSearchManager:
                 layer_to_metrics_mapping[node].append(metric_value)
 
         # Finalize distance metric mapping
-        self.finalize_distance_metric(layer_to_metrics_mapping)
+        self._finalize_distance_metric(layer_to_metrics_mapping)
 
         return layer_to_metrics_mapping
 
@@ -258,7 +251,7 @@ class MixedPrecisionSearchManager:
                     rus_per_candidate[target].append(ru)
 
         # Each target contains a matrix of num configurations X num elements
-        relative_rus = {target: np.array(ru) - self.min_ru[target] for target, ru in rus_per_candidate.items()}
+        relative_rus = {target: (np.array(ru) - self.min_ru[target]) for target, ru in rus_per_candidate.items()}
         return relative_rus
 
     @staticmethod
@@ -296,7 +289,7 @@ class MixedPrecisionSearchManager:
             w_qcs=w_qcs, ru_targets=self.ru_targets, allow_unused_qcs=True)
         return ru
 
-    def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[BaseNode, List[float]]):
+    def _finalize_distance_metric(self, layer_to_metrics_mapping: Dict[BaseNode, List[float]]):
         """
         Finalizing the distance metric building.
         The method checks to see if the maximal distance value is larger than a given threshold, and if so,
@@ -309,7 +302,6 @@ class MixedPrecisionSearchManager:
         """
         # normalize metric for numerical stability
         max_dist = max(itertools.chain.from_iterable(layer_to_metrics_mapping.values()))
-        # max_dist = max([max([d for b, d in dists.items()]) for layer, dists in layer_to_metrics_mapping.items()])
 
         if max_dist >= self.sensitivity_evaluator.quant_config.metric_normalization_threshold:
             Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
@@ -345,7 +337,7 @@ class ConfigReconstructionHelper:
         self.original_graph = original_graph
         self.fw_info = original_graph.fw_info
 
-        self.virtual_sorted_conf_nodes_names = self.virtual_graph.get_configurable_sorted_nodes_names(self.fw_info)
+        self.virtual_sorted_nodes_names = self.virtual_graph.get_configurable_sorted_nodes_names(self.fw_info)
         self.origin_sorted_conf_nodes = self.original_graph.get_configurable_sorted_nodes(self.fw_info)
         self.origin_sorted_conf_nodes_names = [n.name for n in self.origin_sorted_conf_nodes]
 
@@ -523,7 +515,7 @@ class ConfigReconstructionHelper:
         """
 
         activation_bitwidth = activation_node.candidates_quantization_cfg[virtual_mp_cfg[
-            self.virtual_sorted_conf_nodes_names.index(activation_node.name)]].activation_quantization_cfg.activation_n_bits
+            self.virtual_sorted_nodes_names.index(activation_node.name)]].activation_quantization_cfg.activation_n_bits
 
         kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
 
@@ -559,7 +551,7 @@ class ConfigReconstructionHelper:
         kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
 
         weights_bitwidth = (weights_node.candidates_quantization_cfg[virtual_mp_cfg[
-            self.virtual_sorted_conf_nodes_names.index(weights_node.name)]]
+            self.virtual_sorted_nodes_names.index(weights_node.name)]]
                             .weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits)
 
         activation_bitwidth = virtual_node.candidates_quantization_cfg[
@@ -597,7 +589,7 @@ class ConfigReconstructionHelper:
         if isinstance(activation_node, VirtualActivationWeightsNode):
             if activation_node.original_activation_node.is_activation_quantization_enabled() and not \
                     activation_node.original_activation_node.is_all_activation_candidates_equal():
-                assert activation_node.name in self.virtual_sorted_conf_nodes_names  # Sanity check
+                assert activation_node.name in self.virtual_sorted_nodes_names  # Sanity check
                 # The original node is both weights and activation configurable
                 self.retrieve_activation_weights_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
@@ -605,7 +597,7 @@ class ConfigReconstructionHelper:
                 self.retrieve_weights_only_config(weights_node.origin_node, virtual_node, virtual_cfg_idx)
         else:
             assert isinstance(activation_node, VirtualSplitActivationNode)  # Sanity check
-            if activation_node.name in self.virtual_sorted_conf_nodes_names:
+            if activation_node.name in self.virtual_sorted_nodes_names:
                 self.retrieve_activation_weights_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
                 # The original node is only weights configurable
@@ -639,7 +631,7 @@ class ConfigReconstructionHelper:
             kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
             if weights_node.original_weights_node.is_weights_quantization_enabled(kernel_attr) and not \
                     weights_node.original_weights_node.is_all_weights_candidates_equal(kernel_attr):
-                assert weights_node.name in self.virtual_sorted_conf_nodes_names  # Sanity check
+                assert weights_node.name in self.virtual_sorted_nodes_names  # Sanity check
                 # The original node is both weights and activation configurable
                 self.retrieve_weights_activation_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
