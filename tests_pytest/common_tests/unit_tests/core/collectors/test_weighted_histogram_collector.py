@@ -22,22 +22,19 @@ from model_compression_toolkit.logger import Logger
 
 
 @pytest.fixture
-def mock_logger():
-    """Fixture to mock Logger.critical using unittest.mock.Mock."""
-    mock = Mock()
-    Logger.critical = mock  # Override Logger.critical with the mock
-    return mock
-
-
-@pytest.fixture
 def collector():
     """Fixture that returns a WeightedHistogramCollector with a small number of bins for testing."""
     return WeightedHistogramCollector(n_bins=10)
 
 
 class TestCheckBroadcastable:
-    def test_valid_broadcast(self, mock_logger):
+    def test_valid_broadcast(self, monkeypatch):
         """Test cases where broadcasting should succeed without calling Logger.critical."""
+
+        # Using monkeypatch to override Logger.critical with a mock.
+        # This ensures that the original Logger.critical is restored after the test.
+        mock_logger = Mock()
+        monkeypatch.setattr(Logger, "critical", mock_logger)
 
         # Same shape
         x = np.random.rand(4, 5, 6)
@@ -60,8 +57,13 @@ class TestCheckBroadcastable:
         check_broadcastable(x, w)
         mock_logger.assert_not_called()
 
-    def test_invalid_broadcast(self, mock_logger):
+    def test_invalid_broadcast(self, monkeypatch):
         """Test cases where broadcasting should fail and call Logger.critical."""
+
+        # Using monkeypatch to override Logger.critical with a mock.
+        # This ensures that the original Logger.critical is restored after the test.
+        mock_logger = Mock()
+        monkeypatch.setattr(Logger, "critical", mock_logger)
 
         x = np.random.rand(4, 5, 6)
 

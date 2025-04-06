@@ -65,6 +65,7 @@ def search_bit_width(graph: Graph,
         bit-width index on the node).
 
     """
+
     assert target_resource_utilization.is_any_restricted()
 
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
@@ -88,6 +89,11 @@ def search_bit_width(graph: Graph,
     if search_method != BitWidthSearchMethod.INTEGER_PROGRAMMING:
         raise NotImplementedError()
 
+    # Validation is skipped during the mixed-precision search configuration because fusing information is not
+    # relevant for the virtual graph. Therefore, validation checks are disabled before the search begins and
+    # re-enabled once it completes.
+    graph.skip_validation_check = True
+
     # Search manager and LP are highly coupled, so LP search method was moved inside search manager.
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
@@ -95,6 +101,8 @@ def search_bit_width(graph: Graph,
                                                  se,
                                                  target_resource_utilization)
     result_bit_cfg = search_manager.search()
+
+    graph.skip_validation_check = False
 
     if mp_config.refine_mp_solution:
         result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_resource_utilization)

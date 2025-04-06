@@ -27,11 +27,10 @@ jobs:
           pip install tensorflow==${{ inputs.tf-version }} sony-custom-layers 
           pip install pytest pytest-mock
           pip check
-      - name: Run unittests
-        run: |
-          python -m unittest discover tests/keras_tests -v
-
       - name: Run pytest
         run: |
           pytest tests_pytest/keras_tests
+      - name: Run unittests
+        run: |
+          python -m unittest discover tests/keras_tests -v
 
