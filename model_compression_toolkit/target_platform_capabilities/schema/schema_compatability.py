@@ -62,7 +62,7 @@ def tpc_to_current_schema_version(tpc: schema.TargetPlatformCapabilities):
     }
     while tpc.SCHEMA_VERSION < schema.TargetPlatformCapabilities.SCHEMA_VERSION:
         if tpc.SCHEMA_VERSION not in conversion_map:
-            raise Exception(f"TPC using schema version {tpc.SCHEMA_VERSION} which is not in schemas conversion map. "
-                            f"Make sure the schema version is supported, or add it in case it's a new schema version")
+            raise KeyError(f"TPC using schema version {tpc.SCHEMA_VERSION} which is not in schemas conversion map. "
+                           f"Make sure the schema version is supported, or add it in case it's a new schema version")
         tpc = conversion_map[tpc.SCHEMA_VERSION](tpc)
     return tpc
