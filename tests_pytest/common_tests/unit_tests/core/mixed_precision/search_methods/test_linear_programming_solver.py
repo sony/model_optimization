@@ -115,7 +115,7 @@ class TestMixedPrecisionIntegerLPSolver:
         self._run_test(sensitivity, ru, ru_constraints, {'n1': 0, 'n2': 1, 'n3': 1})
 
         # in addition, increase activation ru for one of the cuts of the current optimal candidate of the 3rd layer
-        ru_constraints[RUTarget.ACTIVATION][6, 2] += 0.1
+        ru[RUTarget.ACTIVATION][6, 2] += 0.1
         self._run_test(sensitivity, ru, ru_constraints, {'n1': 0, 'n2': 1, 'n3': 0})
 
         # in addition, increase total ru for one of the cuts of the optimal candidate of the 2nd layer
@@ -124,7 +124,7 @@ class TestMixedPrecisionIntegerLPSolver:
 
         # in addition, increase bops for the optimal candidate of 2nd layer above constraint
         ru[RUTarget.BOPS][4, 0] += 0.1
-        self._run_test(sensitivity, ru, ru_constraints, {'n1': 2, 'n2': 2, 'n3': 0})
+        self._run_test(sensitivity, ru, ru_constraints, {'n1': 2, 'n2': 0, 'n3': 0})
 
     def _run_test(self, sensitivity, ru, ru_constraints, exp_res):
         solver = MixedPrecisionIntegerLPSolver(sensitivity, ru, ru_constraints)
