@@ -15,7 +15,7 @@
 
 
 from typing import Callable, Any, List, Tuple, Union, Dict, TYPE_CHECKING
-
+from enum import Enum, auto
 import numpy as np
 
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
@@ -36,6 +36,14 @@ if TYPE_CHECKING:
 # for its weights and activations quantization, and a different quantization
 # configuration for its activation quantization configuration.
 ##########################################
+
+
+class ActivationQuantizationMode(Enum):
+    """ An enum defining the output activation quantization mode of  a node. """
+    QUANT = auto()
+    FLN_QUANT = auto()
+    PRESERVE_QUANT = auto()
+    NO_QUANT = auto()
 
 
 class BaseNodeQuantizationConfig(object):
@@ -98,8 +106,14 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         self.activation_n_bits = op_cfg.activation_n_bits
         self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
         self.activation_bias_correction_term = None
-        self.enable_activation_quantization = op_cfg.enable_activation_quantization
-        self.quantization_preserving = op_cfg.quantization_preserving
+        if op_cfg.enable_activation_quantization and op_cfg.quantization_preserving:
+            raise ValueError("An OpQuantizationConfig can't have both enable_activation_quantization and quantization_preserving enabled.")
+        if op_cfg.enable_activation_quantization:
+            self.quant_mode = ActivationQuantizationMode.QUANT
+        elif op_cfg.quantization_preserving:
+            self.quant_mode = ActivationQuantizationMode.PRESERVE_QUANT
+        else:
+            self.quant_mode = ActivationQuantizationMode.NO_QUANT
         self.signedness = op_cfg.signedness
         self.activation_channel_equalization = qc.activation_channel_equalization
         self.input_scaling = qc.input_scaling
@@ -110,6 +124,33 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         self.shift_negative_ratio = qc.shift_negative_ratio
         self.shift_negative_threshold_recalculation = qc.shift_negative_threshold_recalculation
         self.concat_threshold_update = qc.concat_threshold_update
+
+    @property
+    def enable_activation_quantization(self):
+        return self.quant_mode == ActivationQuantizationMode.QUANT
+
+    @enable_activation_quantization.setter
+    def enable_activation_quantization(self, enable: bool):
+        assert type(enable) is bool
+        self.quant_mode = ActivationQuantizationMode.QUANT if enable else ActivationQuantizationMode.NO_QUANT
+
+    @property
+    def quantization_preserving(self):
+        return self.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT
+
+    @quantization_preserving.setter
+    def quantization_preserving(self, enable: bool):
+        assert type(enable) is bool
+        self.quant_mode = ActivationQuantizationMode.PRESERVE_QUANT if enable else ActivationQuantizationMode.NO_QUANT
+
+    @property
+    def fln_quantization(self):
+        return self.quant_mode == ActivationQuantizationMode.FLN_QUANT
+
+    @fln_quantization.setter
+    def fln_quantization(self, enable: bool):
+        assert type(enable) is bool
+        self.quant_mode = ActivationQuantizationMode.FLN_QUANT if enable else ActivationQuantizationMode.NO_QUANT
 
     def quantize_node_output(self,
                              tensors: Any) -> Any:
@@ -201,7 +242,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.activation_error_method == other.activation_error_method and \
                self.activation_quantization_method == other.activation_quantization_method and \
                self.activation_n_bits == other.activation_n_bits and \
-               self.enable_activation_quantization == other.enable_activation_quantization and \
+               self.quant_mode == other.quant_mode and \
                self.activation_channel_equalization == other.activation_channel_equalization and \
                self.input_scaling == other.input_scaling and \
                self.min_threshold == other.min_threshold and \
@@ -217,7 +258,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                      self.activation_error_method,
                      self.activation_quantization_method,
                      self.activation_n_bits,
-                     self.enable_activation_quantization,
+                     self.quant_mode,
                      self.activation_channel_equalization,
                      self.input_scaling,
                      self.min_threshold,

@@ -920,7 +920,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         nodes_to_disable = [node for nodes in self.fusing_info.get_all_fused_operations().values() for node in nodes[:-1]]
         for node in nodes_to_disable:
             for qc in node.candidates_quantization_cfg:
-                qc.activation_quantization_cfg.enable_activation_quantization = False
+                qc.activation_quantization_cfg.fln_quantization = True
 
     def validate(self):
         """

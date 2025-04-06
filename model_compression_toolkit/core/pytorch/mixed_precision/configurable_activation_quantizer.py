@@ -63,8 +63,7 @@ class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
         verify_candidates_descending_order(self.node_q_cfg, kernel_attr)
 
         for qc in self.node_q_cfg:
-            if qc.activation_quantization_cfg.enable_activation_quantization != \
-                   self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
+            if qc.activation_quantization_cfg.quant_mode != self.node_q_cfg[0].activation_quantization_cfg.quant_mode:
                 Logger.critical("Unsupported configuration: Mixing candidates with differing activation quantization states (enabled/disabled).")  # pragma: no cover
 
         # Setting layer's activation
