@@ -69,10 +69,13 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
     nodes_to_manipulate_activation_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_activation_bit_widths(graph)
     nodes_to_manipulate_weights_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_weights_bit_widths(graph)
+    print('nodes_to_manipulate_weights_bit_widths:', nodes_to_manipulate_weights_bit_widths)
 
     for n in graph.nodes:
+        print('n', n)
         manual_bit_width_override = {ACTIVATION: nodes_to_manipulate_activation_bit_widths.get(n),
                                      WEIGHTS: nodes_to_manipulate_weights_bit_widths.get(n)}
+        print('manual_bit_width_override', manual_bit_width_override)
         set_quantization_configs_to_node(node=n,
                                          graph=graph,
                                          quant_config=quant_config,
@@ -169,7 +172,13 @@ def set_quantization_configs_to_node(node: BaseNode,
         manual_bit_width_override (Optional[int]): Specifies a custom bit-width to override the node's activation bit-width. Defaults to None.
     """
     node_qc_options = node.get_qco(fqc)
+    print('8 node_qc_options', node_qc_options)
+    print('8', type(node_qc_options.quantization_configurations))
+    #print('8', node_qc_options.quantization_configurations[0].attr_weights_configs_mapping['kernel_attr'].weights_n_bits)
     base_config, node_qc_options_list = filter_node_qco_by_graph(node, fqc, graph, node_qc_options)
+    print('9 base_config', base_config)
+    print('9 base_config.attr_weights_configs_mapping', base_config.attr_weights_configs_mapping)
+    print('9 node_qc_options_list', len(node_qc_options_list), node_qc_options_list)
 
     # If a manual_bit_width_override is given, filter node_qc_options_list to retain only the options with activation bits equal to manual_bit_width_override,
     # and update base_config accordingly.
@@ -192,7 +201,7 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                                   base_config,
                                                                   node,
                                                                   mixed_precision_enable=mixed_precision_enable)
-
+    #print('node.candidates_quantization_cfg', node.candidates_quantization_cfg)
     # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
     # (in reversed order). since only kernel attribute is quantized in weights mixed precision,
     # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
@@ -430,22 +439,30 @@ def filter_weights_qc_options_with_manual_bit_width(
     node_qc_options_weights_list = []
     override_attr, override_bitwidth = [], []
 
+    print('weights_manual_bit_width_override', weights_manual_bit_width_override, type(weights_manual_bit_width_override))
     for weights_manual_bit_width in weights_manual_bit_width_override:
         override_attr.append(weights_manual_bit_width[1])
         override_bitwidth.append(weights_manual_bit_width[0])
 
+    print("zzz", override_attr, override_bitwidth)
     node_qc_options_weights_list = copy.deepcopy(node_qc_options_list)
+    print('yyy', node_qc_options_weights_list)
     for attr, bitwidth in zip(override_attr, override_bitwidth):
+        print("aza", attr, bitwidth)
         for op_cfg in node_qc_options_list:
+            print("bbb", op_cfg)
             if op_cfg in node_qc_options_weights_list:
                 weights_attrs = op_cfg.attr_weights_configs_mapping.keys()
+                print('weights_attrs', weights_attrs)
                 if attr in weights_attrs:
+                    print('chk', attr, weights_attrs)
                     for weights_attr in weights_attrs:
                         if attr == weights_attr and op_cfg.attr_weights_configs_mapping.get(attr).weights_n_bits != bitwidth:
                             node_qc_options_weights_list.remove(op_cfg)
                 else:
                     node_qc_options_weights_list.remove(op_cfg)
-
+    print('node_qc_options_weights_list', node_qc_options_weights_list)
+    print('0 base_config.attr_weights_configs_mapping', base_config.attr_weights_configs_mapping)
     if len(node_qc_options_weights_list) == 0:
         Logger.critical(f"Manually selected weights bit-width {weights_manual_bit_width_override} is invalid for node {node}.")
     else:
@@ -455,19 +472,24 @@ def filter_weights_qc_options_with_manual_bit_width(
         updated_base_config = copy.deepcopy(base_config)
         for attr, bitwidth in zip(override_attr, override_bitwidth):
             Logger.info(f"Setting node {node} bit-width to manually selected {attr} bit-width: {bitwidth} bits.")
-            updated_base_config = updated_base_config.clone_and_edit(attr_to_edit={attr : {WEIGHTS_N_BITS: bitwidth}})
 
+            print('node attr, bitwidth', node, attr, bitwidth)
+            updated_base_config = updated_base_config.clone_and_edit(attr_to_edit={attr : {WEIGHTS_N_BITS: bitwidth}})
+        print('updated_base_config', updated_base_config)
         if updated_base_config in node_qc_options_weights_list:
             # If a base_config with the specified weights_manual_bit_width_override exists in the node_qc_options_list,
             # point the base_config to this option.
+            print('chk0000')
             base_config = node_qc_options_weights_list[node_qc_options_weights_list.index(updated_base_config)]
         else:
             # Choose a different configuration from node_qc_options_list. If multiple options exist, issue a warning.
+            print('chk0001')
             base_config = node_qc_options_weights_list[0]
             if len(node_qc_options_weights_list) > 0 and not mixed_precision_enable:
                 Logger.info(
                     f"Request received to select weights bit-widths {weights_manual_bit_width_override}."
                     f"However, the base configuration for layer type {node.type} is missing in the node_qc_options_list."
                     f" Overriding base_config with an option that uses manually selected weights bit-widths {weights_manual_bit_width_override}.")  # pragma: no cover
+        print('1 base_config', base_config)
 
     return base_config, node_qc_options_weights_list
