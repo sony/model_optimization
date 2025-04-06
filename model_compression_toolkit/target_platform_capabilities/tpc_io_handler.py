@@ -69,7 +69,7 @@ def load_target_platform_capabilities(tpc_obj_or_path: Union[schema.TargetPlatfo
         )
 
     if tpc.SCHEMA_VERSION == schema.TargetPlatformCapabilities.SCHEMA_VERSION:
-        return tpc_obj_or_path
+        return tpc
     return tpc_to_current_schema_version(tpc)
 
 
