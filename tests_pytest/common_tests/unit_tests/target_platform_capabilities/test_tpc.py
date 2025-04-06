@@ -38,36 +38,16 @@ without worrying about manual cleanup. For more details, please see the pytest t
 '''
 
 
-@pytest.fixture
-def tpc():
-    """Fixture that returns a TargetPlatformCapabilities instance for testing."""
-    op1 = schema.OperatorsSet(name="opset1")
-    op2 = schema.OperatorsSet(name="opset2")
-    op3 = schema.OperatorsSet(name="opset3")
-    op12 = schema.OperatorSetGroup(operators_set=[op1, op2])
-    return schema.TargetPlatformCapabilities(
-        default_qco=TEST_QCO,
-        operator_set=(op1, op2, op3),
-        fusing_patterns=(
-            schema.Fusing(operator_groups=(op12, op3)),
-            schema.Fusing(operator_groups=(op1, op2))
-        ),
-        tpc_minor_version=1,
-        tpc_patch_version=0,
-        tpc_platform_type="dump_to_json",
-        add_metadata=False
-    )
-
-
-@pytest.fixture(params=ALL_SCHEMA_VERSIONS)
-def tpc_by_schema_version(request):
-    """Fixture that returns a TargetPlatformCapabilities instance for testing."""
-    selected_schema = request.param
+def get_tpc(selected_schema):
+    """
+    :param selected_schema: A schema to create tpc from
+    :return: TargetPlatformCapabilities instance using the given selected_schema
+    """
     op1 = selected_schema.OperatorsSet(name="opset1")
     op2 = selected_schema.OperatorsSet(name="opset2")
     op3 = selected_schema.OperatorsSet(name="opset3")
     op12 = selected_schema.OperatorSetGroup(operators_set=[op1, op2])
-    yield selected_schema.TargetPlatformCapabilities(
+    return selected_schema.TargetPlatformCapabilities(
         default_qco=TEST_QCO,
         operator_set=(op1, op2, op3),
         fusing_patterns=(
@@ -79,6 +59,19 @@ def tpc_by_schema_version(request):
         tpc_platform_type="dump_to_json",
         add_metadata=False
     )
+
+
+@pytest.fixture
+def tpc():
+    """Fixture that returns a TargetPlatformCapabilities instance of current schema."""
+    return get_tpc(schema)
+
+
+@pytest.fixture(params=ALL_SCHEMA_VERSIONS)
+def tpc_by_schema_version(request):
+    """Fixture that yields a TargetPlatformCapabilities instance for each schema version."""
+    selected_schema = request.param
+    yield get_tpc(selected_schema)
 
 
 @pytest.fixture
@@ -119,7 +112,6 @@ class TestTPModelInputOutput:
         current_version = schema.TargetPlatformCapabilities.SCHEMA_VERSION
         all_supported_versions = [s.TargetPlatformCapabilities.SCHEMA_VERSION for s in ALL_SCHEMA_VERSIONS]
         assert current_version in all_supported_versions, "Current schema need to be added to ALL_SCHEMA_VERSIONS"
-
 
     def test_schema_compatibility(self, tpc_by_schema_version):
         """Tests that tpc of any schema version is supported and can be converted into current schema version"""
