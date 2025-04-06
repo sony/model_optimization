@@ -698,4 +698,3 @@ class TargetPlatformCapabilities(BaseModel):
         Display the TargetPlatformCapabilities.
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
-

@@ -17,7 +17,7 @@ from typing import Union
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import is_tpc_instance, \
-    tpc_to_current_schema_version
+    tpc_to_current_schema_version, all_tpc_types
 
 
 def _get_tpc_from_json(tpc_path):
@@ -42,7 +42,7 @@ def _get_tpc_from_json(tpc_path):
         raise ValueError(f"Unexpected error while initializing TargetPlatformCapabilities: {e}.") from e
 
 
-def load_target_platform_capabilities(tpc_obj_or_path: Union[schema.TargetPlatformCapabilities, str]) -> schema.TargetPlatformCapabilities:
+def load_target_platform_capabilities(tpc_obj_or_path: Union[all_tpc_types] | str) -> schema.TargetPlatformCapabilities:
     """
         Parses the tpc input, which can be either a TargetPlatformCapabilities object
         or a string path to a JSON file.

@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any
+from typing import Any, Union
 
 import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v1
 import model_compression_toolkit.target_platform_capabilities.schema.v2 as schema_v2
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 
-ALL_SCHEMA_VERSIONS = [schema_v1]
+ALL_SCHEMA_VERSIONS = [schema_v1]  # needs to be updated with all active schema versions
+all_tpc_types = tuple([s.TargetPlatformCapabilities for s in ALL_SCHEMA_VERSIONS])
 
 
 def is_tpc_instance(tpc_obj_or_path: Any) -> bool:
@@ -27,11 +28,10 @@ def is_tpc_instance(tpc_obj_or_path: Any) -> bool:
     :param tpc_obj_or_path: Object to check its type
     :return: True if the given object is an instance of a TargetPlatformCapabilities, False otherwise
     """
-    all_tpc_types = [s.TargetPlatformCapabilities for s in ALL_SCHEMA_VERSIONS]
     return type(tpc_obj_or_path) in all_tpc_types
 
 
-def _schema_v1_to_v2(tpc: schema_v1.TargetPlatformCapabilities) -> schema.TargetPlatformCapabilities:
+def _schema_v1_to_v2(tpc: schema_v1.TargetPlatformCapabilities) -> schema_v2.TargetPlatformCapabilities:
     """
     Converts given tpc of schema version 1 to schema version 2
     :return: TargetPlatformCapabilities instance of of schema version 2
@@ -46,13 +46,13 @@ def _schema_v1_to_v2(tpc: schema_v1.TargetPlatformCapabilities) -> schema.Target
                                              add_metadata=tpc.add_metadata)
 
 
-def tpc_to_current_schema_version(tpc: schema.TargetPlatformCapabilities):
+def tpc_to_current_schema_version(tpc: Union[all_tpc_types]) -> schema.TargetPlatformCapabilities:
     """
     Given tpc instance of some schema version, convert it to the current MCT schema version.
 
     In case a new schema is added to MCT, need to add a conversion function from the previous version to the new
     version, e.g. if the current schema version was updated from v4 to v5, need to add _schema_v4_to_v5 function to
-    this file, than and add it to the conversion_map.
+    this file, and add it to the conversion_map.
 
     :param tpc: TargetPlatformCapabilities of some schema version
     :return: TargetPlatformCapabilities with the current MCT schema version
