@@ -13,31 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 from pathlib import Path
-from typing import Union, Any
+from typing import Union
 
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformCapabilities as schema_v1
-from model_compression_toolkit.target_platform_capabilities.schema.v2 import TargetPlatformCapabilities as schema_v2
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-
-
-SCHEMA_VERSIONS = [schema_v1, schema_v2]
-
-
-def _is_tpc_instance(tpc_obj_or_path: Any):
-    return type(tpc_obj_or_path) in [schema_v1, schema_v2]
-
-
-def _tpc_to_current_schema_version(tpc: schema.TargetPlatformCapabilities):
-    while tpc.SCHEMA_VERSION != schema.TargetPlatformCapabilities.SCHEMA_VERSION:
-        tpc = tpc.to_next_version()
-    return tpc
-
-
-def _is_valid_tpc(tpc: schema.TargetPlatformCapabilities):
-    for op in tpc.operator_set:
-        if op.name not in schema.OperatorSetNames.get_values():
-            raise TypeError(f"TPC contains unsupported operator {op.name}")
-    return True
+from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import is_tpc_instance, \
+    tpc_to_current_schema_version
 
 
 def _get_tpc_from_json(tpc_path):
@@ -78,7 +58,7 @@ def load_target_platform_capabilities(tpc_obj_or_path: Union[schema.TargetPlatfo
             ValueError: If the JSON content is invalid or cannot initialize the TargetPlatformCapabilities.
             TypeError: If the input is neither a TargetPlatformCapabilities nor a valid JSON file path.
         """
-    if _is_tpc_instance(tpc_obj_or_path):
+    if is_tpc_instance(tpc_obj_or_path):
         tpc = tpc_obj_or_path
     elif isinstance(tpc_obj_or_path, str):
         tpc = _get_tpc_from_json(tpc_obj_or_path)
@@ -88,26 +68,10 @@ def load_target_platform_capabilities(tpc_obj_or_path: Union[schema.TargetPlatfo
             f"but received type '{type(tpc_obj_or_path).__name__}'."
         )
 
-    # if tpc.SCHEMA_VERSION == schema.TargetPlatformCapabilities.SCHEMA_VERSION:
-    #     return tpc_obj_or_path
-    if _is_valid_tpc(tpc):
-        return _tpc_to_current_schema_version(tpc_obj_or_path)
+    if tpc.SCHEMA_VERSION == schema.TargetPlatformCapabilities.SCHEMA_VERSION:
+        return tpc_obj_or_path
+    return tpc_to_current_schema_version(tpc)
 
-    """
-    questions for tommorow:
-    1. if we apply parser simple tests will fail (e.g defining opset1, opset2, opset3)
-    2. TargetPlatformCapabilities is of different type for each scehma - will need to add every new schema version to list
-    3. what additional items we want to add to parser?
-    4. creating new schema from old schema doesn't fails because we don't have api. creating parser will require to change it every time we create a new schema
-    
-    todo:
-    1. move to_next_version to a seperated file and implement it in a way that all to_next_versions are called for each new version
-    2. create a test that fails if a new schema was created and no to_next_version for it was defined
-    3. change new test to use local schemas and create dummy tpc for each schema version and remove test edgemdt
-    4. delete implementation of _if_valid_schema 
-    
-    
-    """
 
 def export_target_platform_capabilities(model: schema.TargetPlatformCapabilities, export_path: Union[str, Path]) -> None:
     """
@@ -121,7 +85,7 @@ def export_target_platform_capabilities(model: schema.TargetPlatformCapabilities
         ValueError: If the model is not an instance of TargetPlatformCapabilities.
         OSError: If there is an issue writing to the file.
     """
-    if not isinstance(model, schema.TargetPlatformCapabilities):
+    if not is_tpc_instance(model):
         raise ValueError("The provided model is not a valid TargetPlatformCapabilities instance.")
 
     path = Path(export_path)

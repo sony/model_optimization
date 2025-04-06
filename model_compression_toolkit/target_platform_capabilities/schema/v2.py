@@ -112,5 +112,3 @@ class TargetPlatformCapabilities(BaseModel):
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
 
-    def to_next_version(self, prev_version_tpc: BaseModel):
-        return self  # At the moment V2 is the latest schema version

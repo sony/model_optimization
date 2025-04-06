@@ -17,8 +17,10 @@ import pytest
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
+from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import get_config_options_by_operators_set, is_opset_in_model
-from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities, export_target_platform_capabilities
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities, \
+    export_target_platform_capabilities
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 
 # Setup TEST_QC and TEST_QCO for testing.
@@ -34,6 +36,8 @@ to each test function. It is represented as a pathlib.Path object and is automat
 and cleaned up by pytest. You can use it to create temporary files and directories during tests 
 without worrying about manual cleanup. For more details, please see the pytest tmp_path documentation.
 '''
+
+
 @pytest.fixture
 def tpc():
     """Fixture that returns a TargetPlatformCapabilities instance for testing."""
@@ -47,6 +51,28 @@ def tpc():
         fusing_patterns=(
             schema.Fusing(operator_groups=(op12, op3)),
             schema.Fusing(operator_groups=(op1, op2))
+        ),
+        tpc_minor_version=1,
+        tpc_patch_version=0,
+        tpc_platform_type="dump_to_json",
+        add_metadata=False
+    )
+
+
+@pytest.fixture(params=ALL_SCHEMA_VERSIONS)
+def tpc_by_schema_version(request):
+    """Fixture that returns a TargetPlatformCapabilities instance for testing."""
+    selected_schema = request.param
+    op1 = selected_schema.OperatorsSet(name="opset1")
+    op2 = selected_schema.OperatorsSet(name="opset2")
+    op3 = selected_schema.OperatorsSet(name="opset3")
+    op12 = selected_schema.OperatorSetGroup(operators_set=[op1, op2])
+    yield selected_schema.TargetPlatformCapabilities(
+        default_qco=TEST_QCO,
+        operator_set=(op1, op2, op3),
+        fusing_patterns=(
+            selected_schema.Fusing(operator_groups=(op12, op3)),
+            selected_schema.Fusing(operator_groups=(op1, op2))
         ),
         tpc_minor_version=1,
         tpc_patch_version=0,
@@ -87,6 +113,20 @@ class TestTPModelInputOutput:
         # Tests that a valid TPC object is returned unchanged.
         result = load_target_platform_capabilities(tpc)
         assert result == tpc
+
+    def test_new_schema(self):
+        """Tests that current schema is in all schemas list. This test validates new schema was added properly."""
+        current_version = schema.TargetPlatformCapabilities.SCHEMA_VERSION
+        all_supported_versions = [s.TargetPlatformCapabilities.SCHEMA_VERSION for s in ALL_SCHEMA_VERSIONS]
+        assert current_version in all_supported_versions, "Current schema need to be added to ALL_SCHEMA_VERSIONS"
+
+
+    def test_schema_compatibility(self, tpc_by_schema_version):
+        """Tests that tpc of any schema version is supported and can be converted into current schema version"""
+        tpc_by_schema = tpc_by_schema_version
+        result = load_target_platform_capabilities(tpc_by_schema)
+        assert result.SCHEMA_VERSION == schema.TargetPlatformCapabilities.SCHEMA_VERSION, \
+            f"Make sure schema version {result.SCHEMA_VERSION} can be converted into current schema version {result.SCHEMA_VERSION}"
 
     def test_invalid_json_parsing(self, tmp_invalid_json):
         """Tests that invalid JSON content raises a ValueError."""
