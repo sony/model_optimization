@@ -20,6 +20,7 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 
 ALL_SCHEMA_VERSIONS = [schema_v1]  # needs to be updated with all active schema versions
 all_tpc_types = tuple([s.TargetPlatformCapabilities for s in ALL_SCHEMA_VERSIONS])
+tpc_or_str_type = all_tpc_types + (str,)
 
 
 def is_tpc_instance(tpc_obj_or_path: Any) -> bool:
