@@ -16,7 +16,7 @@ from collections import namedtuple
 
 from copy import copy, deepcopy
 from functools import wraps
-from typing import List, Tuple, Any, Callable
+from typing import List, Tuple, Any, Callable, Dict
 
 import networkx as nx
 import numpy as np

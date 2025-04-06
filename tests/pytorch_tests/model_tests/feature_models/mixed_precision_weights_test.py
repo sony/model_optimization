@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import torch
 from torch.nn import Conv2d
 
 from model_compression_toolkit.core import ResourceUtilization
@@ -49,7 +50,7 @@ class MixedPrecisionBaseTest(BasePytorchTest):
         return {"mixed_precision_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 
     def create_feature_network(self, input_shape):
-        raise NotImplementedError()
+        return MixedPrecisionNet(input_shape)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # This is a base test, so it does not check a thing. Only actual tests of mixed precision
@@ -132,3 +133,93 @@ class MixedPrecisionSearchLastLayerDistance(MixedPrecisionBaseTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 1)
+
+
+class MixedPrecisionNet(torch.nn.Module):
+    def __init__(self, input_shape):
+        super(MixedPrecisionNet, self).__init__()
+        _, in_channels, _, _ = input_shape[0]
+        self.conv1 = torch.nn.Conv2d(in_channels, 3, kernel_size=3)
+        self.bn1 = torch.nn.BatchNorm2d(3)
+        self.conv2 = torch.nn.Conv2d(3, 4, kernel_size=5)
+        self.relu = torch.nn.ReLU()
+
+    def forward(self, inp):
+        x = self.conv1(inp)
+        x = self.bn1(x)
+        x = self.conv2(x)
+        output = self.relu(x)
+        return output
+
+
+class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.expected_config = [1]
+
+    def get_core_configs(self):
+        return {"mixed_precision_model": CoreConfig(quantization_config=QuantizationConfig(
+            custom_tpc_opset_to_layer={"Weights": CustomOpsetLayers([torch.nn.Conv2d],
+                                                   {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}),
+                                       "Activations": CustomOpsetLayers([torch.nn.ReLU, torch.add])}
+        ))}
+
+    def get_tpc(self):
+        cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
+
+        act_eight_bit_cfg = cfg.clone_and_edit(activation_n_bits=8,
+                                               attr_weights_configs_mapping={})
+        act_four_bit_cfg = cfg.clone_and_edit(activation_n_bits=4,
+                                              attr_weights_configs_mapping={})
+        act_two_bit_cfg = cfg.clone_and_edit(activation_n_bits=2,
+                                             attr_weights_configs_mapping={})
+
+        mixed_precision_cfg_list = \
+            [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
+        cfg = mixed_precision_cfg_list[0]
+
+        act_mixed_cfg = QuantizationConfigOptions(quantization_configurations=tuple(
+            [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg]),
+            base_config=act_eight_bit_cfg,
+        )
+
+        weight_mixed_cfg = QuantizationConfigOptions(quantization_configurations=tuple(
+            mixed_precision_cfg_list),
+            base_config=cfg,
+        )
+
+        tpc = TargetPlatformCapabilities(
+            default_qco=QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            operator_set=tuple([
+                OperatorsSet(name="Activations", qc_options=act_mixed_cfg),
+                OperatorsSet(name="Weights", qc_options=weight_mixed_cfg)]),
+            name="mp_weights_conf_act_test")
+
+        return {'mixed_precision_model': tpc}
+
+    def create_feature_network(self, input_shape):
+        return MixedPrecisionWeightsTestNet(input_shape)
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(80)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == self.expected_config)
+
+
+class MixedPrecisionWeightsTestNet(torch.nn.Module):
+    def __init__(self, input_shape):
+        super(MixedPrecisionWeightsTestNet, self).__init__()
+        _, in_channels, _, _ = input_shape[0]
+        self.conv1 = torch.nn.Conv2d(in_channels, 3, kernel_size=(3, 3))
+        self.relu = torch.nn.ReLU()
+
+    def forward(self, inp):
+        x = self.conv1(inp)
+        x = torch.add(x, x)
+        output = self.relu(x)
+        return output
