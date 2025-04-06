@@ -54,7 +54,7 @@ def load_target_platform_capabilities(tpc_obj_or_path: Union[TargetPlatformCapab
             raise ValueError(f"Error reading the file '{tpc_obj_or_path}': {e.strerror}.") from e
 
         try:
-            return TargetPlatformCapabilities.parse_raw(data)
+            return TargetPlatformCapabilities.model_validate_json(data)
         except ValueError as e:
             raise ValueError(f"Invalid JSON for loading TargetPlatformCapabilities in '{tpc_obj_or_path}': {e}.") from e
         except Exception as e:
@@ -88,6 +88,6 @@ def export_target_platform_capabilities(model: TargetPlatformCapabilities, expor
 
         # Export the model to JSON and write to the file
         with path.open('w', encoding='utf-8') as file:
-            file.write(model.json(indent=4))
+            file.write(model.model_dump_json(indent=4))
     except OSError as e:
         raise OSError(f"Failed to write to file '{export_path}': {e.strerror}") from e
