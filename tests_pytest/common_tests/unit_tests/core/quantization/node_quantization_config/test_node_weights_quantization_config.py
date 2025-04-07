@@ -107,9 +107,9 @@ class TestPositionalWeightsAttrQuantizationConfig:
                                                           weights_channels_axis=Mock(),
                                                           node_attrs_list=[positional_weight_attr])
 
-        # Check if the positional weight attribute was properly assigned in the attributes configuration mapping.
-        assert len(weights_quant_cfg.pos_attributes_config_mapping) == 0
-        assert weights_quant_cfg.attributes_config_mapping[
+        # Check if the positional weight attribute was properly assigned in the positional attributes configuration
+        # mapping.
+        assert weights_quant_cfg.pos_attributes_config_mapping[
                    positional_weight_attr].weights_n_bits == pos_weight_attr_config.weights_n_bits
 
         # Test using the positional attribute as the key rather than POS_ATTR; this mismatch should cause
@@ -128,9 +128,8 @@ class TestPositionalWeightsAttrQuantizationConfig:
                                                           weights_channels_axis=Mock(),
                                                           node_attrs_list=[positional_weight_attr])
 
-        # Check that the positional weight attribute wasn't assigned to attributes_config_mapping, but was placed in
-        # pos_attributes_config_mapping.
-        assert len(weights_quant_cfg.attributes_config_mapping) == 0
+        # Check if the positional weight attribute was properly assigned in the positional attributes configuration
+        # mapping.
         assert weights_quant_cfg.pos_attributes_config_mapping[
                    positional_weight_attr].weights_n_bits == def_weight_attr_config.weights_n_bits
 
