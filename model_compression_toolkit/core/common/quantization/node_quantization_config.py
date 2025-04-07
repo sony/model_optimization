@@ -460,19 +460,18 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         if attr_name is None:  # pragma: no cover
             Logger.critical("Got 'None' attribute name for retrieving weights attribute quantization configuration.")
 
-        if isinstance(attr_name, int):
+        attrs_with_name = self._extract_config_for_attributes_with_name(attr_name)
+        attr_cfg = None
+        if len(attrs_with_name) == 0 and isinstance(attr_name, int):
             # this is a positional attribute
             attr_cfg = self.pos_attributes_config_mapping.get(attr_name)
-        else:
-            attrs_with_name = self._extract_config_for_attributes_with_name(attr_name)
-            attr_cfg = None
-            if len(attrs_with_name) == 1:
-                attr_cfg = [v for v in attrs_with_name.values()][0]
-            elif len(attrs_with_name) > 1:
-                Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
-                               f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
-                # If no attribute with the exact name then an error would be thrown
-                attr_cfg = self.attributes_config_mapping.get(attr_name)
+        if len(attrs_with_name) == 1:
+            attr_cfg = [v for v in attrs_with_name.values()][0]
+        elif len(attrs_with_name) > 1:
+            Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
+                           f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
+            # If no attribute with the exact name then an error would be thrown
+            attr_cfg = self.attributes_config_mapping.get(attr_name)
 
         if attr_cfg is None:  # pragma: no cover
             Logger.critical(f"Weight attribute '{attr_name}' config could not be found.")
@@ -533,7 +532,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         Returns: A mapping between attributes that contain the given name to their configuration.
 
         """
-        attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
+        attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if str(attr_name) in str(k)}
         if len(attrs_with_name) > 1:
             Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
                            f"{list(attrs_with_name.keys())}.")
