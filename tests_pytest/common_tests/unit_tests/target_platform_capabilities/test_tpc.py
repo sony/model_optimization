@@ -115,7 +115,7 @@ class TestTPModelInputOutput:
     def test_schema_compatibility(self, tpc_by_schema_version):
         """Tests that tpc of any schema version is supported and can be converted into current schema version"""
         tpc_by_schema = tpc_by_schema_version
-        result = tpc_to_current_schema_version(tpc_by_schema)
+        result = load_target_platform_capabilities(tpc_by_schema)
         assert isinstance(result, schema.TargetPlatformCapabilities), \
             f"Make sure schema version {result.SCHEMA_VERSION} can be converted into current schema version {result.SCHEMA_VERSION}"
 
