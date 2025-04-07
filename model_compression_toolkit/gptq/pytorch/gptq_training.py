@@ -197,11 +197,12 @@ class PytorchGPTQTrainer(GPTQTrainer):
         #  quantized, do we need to wrap them as well?
         return layer
 
-    def get_activation_quantizer_holder(self, n: BaseNode) -> Callable:
+    def get_activation_quantizer_holder(self, n: BaseNode, prev_node: BaseNode) -> Callable:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization of a node.
         Args:
             n: Node to attach a PytorchActivationQuantizationHolder to its output.
+            prev_node: Node that activation quantization information is preserved from.
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """

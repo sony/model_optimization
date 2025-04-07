@@ -29,7 +29,7 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quant
     BasePytorchActivationTrainableQuantizer
 
 
-def get_activation_quantizer_holder(n: common.BaseNode,
+def get_activation_quantizer_holder(n: common.BaseNode, prev_node: common.BaseNode,
                                     qat_config: QATConfig) -> Callable:
     """
     Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
@@ -37,6 +37,7 @@ def get_activation_quantizer_holder(n: common.BaseNode,
 
     Args:
         n: Node for which to retrieve anActivationQuantizationHolder to attach to its output.
+        prev_node: Node that activation quantization information is preserved from.
         qat_config: QAT configuration (for example, training methods).
 
     Returns:
