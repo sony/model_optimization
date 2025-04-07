@@ -19,43 +19,19 @@ from pytest import fixture
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.target_platform_capabilities import OpQuantizationConfig, Signedness, \
-    QuantizationConfigOptions, QuantizationMethod, TargetPlatformCapabilities
+from tests_pytest._test_util import tpc_util
 
 
 @fixture
-def default_op_quant_cfg():
-    return OpQuantizationConfig(
-        default_weight_attr_config={},
-        attr_weights_configs_mapping={},
-        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-        activation_n_bits=8,
-        supported_input_activation_n_bits=[8],
-        enable_activation_quantization=True,
-        quantization_preserving=False,
-        fixed_scale=None,
-        fixed_zero_point=None,
-        simd_size=32,
-        signedness=Signedness.AUTO)
-
-
-@fixture
-def default_quant_cfg_options(default_op_quant_cfg):
-    return QuantizationConfigOptions(quantization_configurations=[default_op_quant_cfg])
-
-
-@fixture
-def minimal_tpc(default_quant_cfg_options):
-    return TargetPlatformCapabilities(default_qco=default_quant_cfg_options,
-                                      tpc_platform_type='test',
-                                      operator_set=None,
-                                      fusing_patterns=None)
+def minimal_tpc():
+    """ Minimal TPC as a fixture. """
+    return tpc_util.minimal_tpc()
 
 
 @fixture
 def graph_mock():
     """ Basic Graph mock. """
-    return Mock(spec_set=Graph, nodes=[])
+    return Mock(spec_set=Graph, nodes=[], retrieve_preserved_quantization_node=lambda x: x)
 
 
 @fixture

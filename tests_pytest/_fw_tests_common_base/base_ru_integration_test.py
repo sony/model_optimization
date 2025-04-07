@@ -30,6 +30,7 @@ from model_compression_toolkit.target_platform_capabilities import QuantizationM
     OpQuantizationConfig, QuantizationConfigOptions, Signedness, OperatorsSet, OperatorSetNames, \
     TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+from tests_pytest._test_util.tpc_util import build_mp_config_options_for_kernel_bias_ops
 
 
 def build_tpc():
@@ -58,18 +59,12 @@ def build_tpc():
         attr_weights_configs_mapping={KERNEL_ATTR: default_w_cfg, BIAS_ATTR: AttributeQuantizationConfig()}
     )
 
-    mp_configs = []
     linear_w_min_nbit = 2
     linear_a_min_nbit = 4
-    for w_nbit in [linear_w_min_nbit, linear_w_min_nbit * 2, linear_w_min_nbit * 4]:
-        for a_nbit in [linear_a_min_nbit, linear_a_min_nbit * 2]:
-            attr_cfg = default_w_cfg.clone_and_edit(weights_n_bits=w_nbit)
-            mp_configs.append(default_w_op_cfg.clone_and_edit(
-                attr_weights_configs_mapping={KERNEL_ATTR: attr_cfg, BIAS_ATTR: AttributeQuantizationConfig()},
-                activation_n_bits=a_nbit
-            ))
-    mp_cfg_options = QuantizationConfigOptions(quantization_configurations=mp_configs,
-                                               base_config=default_w_op_cfg)
+    mp_cfg_options = build_mp_config_options_for_kernel_bias_ops(base_w_config=default_w_cfg,
+                                                                 base_op_config=default_w_op_cfg,
+                                                                 w_nbits=[linear_w_min_nbit*i for i in (1, 2, 4)],
+                                                                 a_nbits=[linear_a_min_nbit*i for i in (1, 2)])
 
     linear_ops = [OperatorsSet(name=opset, qc_options=mp_cfg_options) for opset in (OperatorSetNames.CONV,
                                                                                     OperatorSetNames.CONV_TRANSPOSE,
@@ -217,8 +212,14 @@ class BaseRUIntegrationTester(abc.ABC):
         assert self._extract_values(detailed_orig[RUTarget.WEIGHTS]) == exp_w_ru
         assert self._extract_values(detailed_orig[RUTarget.BOPS]) == exp_bops
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
         virtual_graph = substitute(copy.deepcopy(graph),
                                    self.fw_impl.get_substitutions_virtual_weights_activation_coupling())
+        graph.skip_validation_check = False
+
         assert len(virtual_graph.nodes) == 8
         assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualActivationWeightsNode)]) == 1
         assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualSplitActivationNode)]) == 3

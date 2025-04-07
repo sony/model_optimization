@@ -32,10 +32,12 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     Utilization, ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from tests_pytest._test_util.graph_builder_utils import build_node, build_qc, full_attr_name
+from tests_pytest._test_util.graph_builder_utils import build_node, full_attr_name, build_nbits_qc as build_qc
 
 BM = BitwidthMode
 TIC = TargetInclusionCriterion
+
+_identity_func = lambda x: x
 
 
 class TestUtilization:
@@ -296,8 +298,10 @@ class TestComputeActivationTensorsUtilization:
     """ Tests for activation tensors utilization public apis. """
     def test_compute_node_activation_tensor_utilization(self, graph_mock, fw_impl_mock, fw_info_mock):
         mp_reuse = build_node('mp_reuse', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(16)], reuse=True)
+        qp = build_node('qp', output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False, q_preserving=True)])
         noq = build_node('noq', output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False)])
-        graph_mock.nodes = [mp_reuse, noq]
+        graph_mock.nodes = [mp_reuse, qp, noq]
+        graph_mock.retrieve_preserved_quantization_node = lambda n: mp_reuse if n is qp else n
 
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         # _get_activation_nbits is already fully checked, just make sure we use it, and use correctly
@@ -310,6 +314,9 @@ class TestComputeActivationTensorsUtilization:
         # reused is not ignored
         res = ru_calc.compute_node_activation_tensor_utilization(mp_reuse, TIC.QConfigurable, BM.QMinBit)
         assert res == Utilization(42, 21.)
+        # quantization preserving uses custom_qc.
+        res = ru_calc.compute_node_activation_tensor_utilization(qp, TIC.AnyQuantized, BM.QCustom, custom_qc)
+        assert res == Utilization(135, 270.)
         # not a target node
         res = ru_calc.compute_node_activation_tensor_utilization(noq, TIC.AnyQuantized, BM.QCustom, custom_qc)
         assert res == Utilization(0, 0)
@@ -391,11 +398,14 @@ class TestActivationMaxCutUtilization:
         """ Test integration with max cut computation. """
         # Test a simple linear dummy graph with the real max cut computation.
         n1 = build_node('n1', qcs=[build_qc()], input_shape=(None, 10, 20, 3), output_shape=(None, 10, 20, 3))
+        n1_qp = build_node('n1_qp', qcs=[build_qc(a_enable=False, q_preserving=True)],
+                           input_shape=(None, 10, 20, 3), output_shape=(None, 10, 20, 3))
         n2 = build_node('n2', qcs=[build_qc()], input_shape=(None, 10, 20, 3), output_shape=(None, 5, 10))
         n3 = build_node('n3', qcs=[build_qc()], input_shape=(None, 5, 10), output_shape=(None, 5, 10))
         n4 = build_node('n4', qcs=[build_qc()], input_shape=(None, 5, 10, 32), output_shape=(None, 5, 10, 32))
-        edges = [Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0), Edge(n3, n4, 0, 0)]
-        graph = Graph('g', input_nodes=[n1], nodes=[n2, n3], output_nodes=[n4], edge_list=edges)
+        edges = [Edge(n1, n1_qp, 0, 0), Edge(n1_qp, n2, 0, 0),
+                 Edge(n2, n3, 0, 0), Edge(n3, n4, 0, 0)]
+        graph = Graph('g', input_nodes=[n1], nodes=[n1_qp, n2, n3], output_nodes=[n4], edge_list=edges)
         ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
         # wrap the real implementation
         maxcut_spy = mocker.patch('model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.'
@@ -405,11 +415,11 @@ class TestActivationMaxCutUtilization:
         cuts_cache = ru_calc.cuts
 
         # verify the cache
-        assert len(cuts_cache) == 5
+        assert len(cuts_cache) == 6
         assert all(isinstance(k, Cut) for k in cuts_cache.keys())
         # for each cut we save a list of its nodes
         cuts_nodes = {tuple(sorted(n.name for n in nodes)) for nodes in cuts_cache.values()}
-        assert cuts_nodes == {('n1',), ('n4',), ('n1', 'n2'), ('n2', 'n3'), ('n3', 'n4')}
+        assert cuts_nodes == {('n1',), ('n4',), ('n1', 'n1_qp'), ('n1_qp', 'n2'), ('n2', 'n3'), ('n3', 'n4')}
 
         # verify cuts computation only happens the first time
         cuts_cache2 = ru_calc.cuts
@@ -420,7 +430,8 @@ class TestActivationMaxCutUtilization:
         nodes_to_cuts = {tuple(sorted(elem.node_name for elem in cut.mem_elements.elements)): cut
                          for cut in cuts_cache.keys()}
         cut1 = nodes_to_cuts[('n1',)]
-        cut12 = nodes_to_cuts[('n1', 'n2')]
+        cut11 = nodes_to_cuts[('n1', 'n1_qp')]
+        cut12 = nodes_to_cuts[('n1_qp', 'n2')]
         cut23 = nodes_to_cuts[('n2', 'n3')]
         cut34 = nodes_to_cuts[('n3', 'n4')]
         cut4 = nodes_to_cuts[('n4',)]
@@ -430,7 +441,8 @@ class TestActivationMaxCutUtilization:
                                                                                          bitwidth_mode=BM.QDefaultSP)
 
         assert per_cut_per_node == {cut1: {'n1': Utilization(10 * 20 * 3, 600)},
-                                    cut12: {'n1': Utilization(10 * 20 * 3, 600),
+                                    cut11: {'n1': Utilization(10 * 20 * 3, 600), 'n1_qp': Utilization(10 * 20 * 3, 600)},
+                                    cut12: {'n1_qp': Utilization(10 * 20 * 3, 600),
                                             'n2': Utilization(5 * 10, 50)},
                                     cut23: {'n2': Utilization(5*10, 50),
                                             'n3': Utilization(5*10, 50)},
@@ -439,7 +451,8 @@ class TestActivationMaxCutUtilization:
                                     cut4: {'n4': Utilization(5 * 10 * 32, 1600)}}
         assert per_cut == {
             nodes_to_cuts[('n1',)]: Utilization(600, 600),
-            nodes_to_cuts[('n1', 'n2')]: Utilization(650, 650),
+            nodes_to_cuts[('n1', 'n1_qp')]: Utilization(1200, 1200),
+            nodes_to_cuts[('n1_qp', 'n2')]: Utilization(650, 650),
             nodes_to_cuts[('n2', 'n3')]: Utilization(100, 100),
             nodes_to_cuts[('n3', 'n4')]: Utilization(1650, 1650),
             nodes_to_cuts[('n4',)]: Utilization(1600, 1600)
@@ -844,7 +857,7 @@ class TestComputeWeightUtilization:
 
     def test_compute_w_utilization_no_targets(self, graph_mock, fw_impl_mock, fw_info_mock):
         graph_mock.nodes = [
-            build_node('n1', qcs=build_qc()),
+            build_node('n1', qcs=[build_qc()]),
             build_node('n2', canonical_weights={'foo': np.ones((5,))}, qcs=[build_qc(w_attr={'foo': (8, True)})])
         ]
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)

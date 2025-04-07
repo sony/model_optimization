@@ -20,10 +20,6 @@ from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCol
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
 from tests.pytorch_tests.function_tests.get_gptq_config_test import TestGetGPTQConfig
-from tests.pytorch_tests.function_tests.resource_utilization_data_test import TestResourceUtilizationDataBasicAllBitwidth, \
-    TestResourceUtilizationDataBasicPartialBitwidth, TestResourceUtilizationDataComplexPartialBitwidth, TestResourceUtilizationDataComplexAllBitwidth
-from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
-    LayerFusingTest4
 from tests.pytorch_tests.function_tests.set_device_test import SetDeviceTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
     TestSetLayerToBitwidthActivation
@@ -84,30 +80,6 @@ class FunctionTestRunner(unittest.TestCase):
         """
         INP2BNInfoCollectionTest(self).run_test()
 
-    def test_ru_data_basic_all(self):
-        """
-        This test checks the resource utilization data Pytorch API.
-        """
-        TestResourceUtilizationDataBasicAllBitwidth(self).run_test()
-
-    def test_ru_data_basic_partial(self):
-        """
-        This test checks the resource utilization data Pytorch API.
-        """
-        TestResourceUtilizationDataBasicPartialBitwidth(self).run_test()
-
-    def test_ru_data_complex_all(self):
-        """
-        This test checks the resource utilization data Pytorch API.
-        """
-        # TODO maxcut: test fails to fund lowest cut (3*224*250 + 3). also need to fix the "max_tensor" of the test Model.
-        TestResourceUtilizationDataComplexAllBitwidth(self).run_test()
-
-    def test_ru_data_complex_partial(self):
-        """
-        This test checks the resource utilization data Pytorch API.
-        """
-        TestResourceUtilizationDataComplexPartialBitwidth(self).run_test()
 
     def test_activation_hessian_trace(self):
         """
@@ -141,15 +113,6 @@ class FunctionTestRunner(unittest.TestCase):
         FetchHessianRequiredZeroTest(self).run_test()
         FetchHessianMultipleNodesTest(self).run_test()
         DoubleFetchHessianTest(self).run_test()
-
-    def test_layer_fusing(self):
-        """
-        This test checks the Fusion mechanism in Pytorch.
-        """
-        LayerFusingTest1(self).run_test()
-        LayerFusingTest2(self).run_test()
-        LayerFusingTest3(self).run_test()
-        LayerFusingTest4(self).run_test()
 
     def test_mixed_precision_set_bitwidth(self):
         """

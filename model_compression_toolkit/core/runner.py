@@ -32,8 +32,6 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
-    requires_mixed_precision
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
@@ -95,16 +93,8 @@ def core_runner(in_model: Any,
                             "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
         if target_resource_utilization.activation_restricted() or target_resource_utilization.total_mem_restricted():
             Logger.warning("Using an experimental feature max-cut for activation memory utilization estimation.")
-        # Determine whether to use mixed precision or single precision based on target_resource_utilization.
-        if requires_mixed_precision(in_model,
-                                    target_resource_utilization,
-                                    representative_data_gen,
-                                    core_config,
-                                    fqc,
-                                    fw_info,
-                                    fw_impl):
-            core_config.mixed_precision_config.set_mixed_precision_enable()
-            Logger.info('Mixed precision enabled.')
+        core_config.mixed_precision_config.set_mixed_precision_enable()
+        Logger.info('Mixed precision enabled.')
 
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen,
@@ -194,15 +184,14 @@ def core_runner(in_model: Any,
 
     scheduler_info = None
     if core_config.debug_config.simulate_scheduler:
-        graph_to_fuse = copy.deepcopy(tg)
-        fused_nodes_mapping = GraphFuser().create_fused_graph(graph_to_fuse)
-        memory_graph = MemoryGraph(graph_to_fuse)
+        fused_graph = GraphFuser().apply_node_fusion(tg)
+        memory_graph = MemoryGraph(fused_graph)
         schedule, max_cut, cuts = compute_graph_max_cut(memory_graph)
         scheduler_info = SchedulerInfo(
             operators_scheduling=schedule,
             max_cut=float(max_cut),
             cuts=cuts,
-            fused_nodes_mapping=fused_nodes_mapping
+            fused_nodes_mapping=tg.fusing_info.get_node_to_fused_node_map()
         )
 
     return tg, bit_widths_config, hessian_info_service, scheduler_info

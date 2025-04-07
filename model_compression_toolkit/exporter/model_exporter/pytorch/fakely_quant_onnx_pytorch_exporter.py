@@ -73,6 +73,11 @@ if FOUND_ONNX:
             """
             for layer in self.model.children():
                 self.is_layer_exportable_fn(layer)
+                # Set reuse for weight quantizers if quantizer is reused
+                if isinstance(layer, PytorchQuantizationWrapper):
+                    for _, quantizer in layer.weights_quantizers.items():
+                        if quantizer.reuse:
+                            quantizer.enable_reuse_quantizer()
 
             # Set forward that is used during onnx export.
             # If _use_onnx_custom_quantizer_ops is set to True, the quantizer forward function will use
@@ -115,6 +120,13 @@ if FOUND_ONNX:
                                   output_names=['output'],
                                   dynamic_axes={'input': {0: 'batch_size'},
                                                 'output': {0: 'batch_size'}})
+
+            for layer in self.model.children():
+                # Set disable for reuse for weight quantizers if quantizer was reused
+                if isinstance(layer, PytorchQuantizationWrapper):
+                    for _, quantizer in layer.weights_quantizers.items():
+                        if quantizer.reuse:
+                            quantizer.disable_reuse_quantizer()
 
         def _enable_onnx_custom_ops_export(self):
             """

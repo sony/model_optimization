@@ -65,7 +65,7 @@ jobs:
           source torch_env/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions sony-custom-layers coverage pytest pytest-mock
+          pip install torch==2.5.* torchvision onnx onnxruntime "onnxruntime-extensions<0.14" sony-custom-layers coverage pytest pytest-mock
 
       - name: Run PyTorch tests (unittest)
         run: |

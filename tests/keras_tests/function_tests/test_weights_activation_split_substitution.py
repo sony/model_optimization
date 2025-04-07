@@ -91,8 +91,15 @@ def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
                                        attach2fw=AttachTpcToKeras(),
                                        qc=QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])}))
 
+    # Validation is skipped because fusing information is not relevant for the virtual graph.
+    # Therefore, validation checks are disabled before the virtual graph substitution and
+    # re-enabled once it completes.
+    graph.skip_validation_check = True
+
     # Split graph substitution
     split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+
+    graph.skip_validation_check = False
 
     return graph, split_graph
 

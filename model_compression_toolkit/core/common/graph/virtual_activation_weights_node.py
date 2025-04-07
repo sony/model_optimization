@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import uuid
 
 from typing import Dict, Any, Tuple
 
@@ -139,23 +140,34 @@ class VirtualActivationWeightsNode(BaseNode):
         """
         # Validate weights node
         kernel_attrs = fw_info.get_kernel_op_attributes(weights_node.type)
-        assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, 'Expected exactly one kernel attr.'
+        assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, f'Expected exactly one kernel attr, {kernel_attrs}'
         kernel_attr = kernel_attrs[0]
         conf_weights = [attr for attr in weights_node.weights if weights_node.is_configurable_weight(attr)]
         if len(conf_weights) > 1 or len(conf_weights) == 1 and not weights_node.is_configurable_weight(kernel_attr):
-            raise NotImplementedError('Only kernel weight can be configurable.')    # pragma: no cover
+            raise NotImplementedError(f'Only kernel weight can be configurable. Got configurable {conf_weights}.')
 
-        weights = weights_node.weights
+        weights = weights_node.weights.copy()
+        act_node_w_rename = {}
         if act_node.weights:
-            assert fw_info.get_kernel_op_attributes(act_node)[0] is None, \
-                f'Node {act_node} with kernel cannot be used as activation for VirtualActivationWeightsNode.'
-            if set(weights_node.weights.keys()).intersection(set(act_node.weights.keys())):
-                raise ValueError('Activation and weight nodes are not expected to have the same weight attribute')    # pragma: no cover
+            if not fw_info.get_kernel_op_attributes(act_node)[0] is None:
+                raise NotImplementedError(f'Node {act_node} with kernel cannot be used as activation for '
+                                          f'VirtualActivationWeightsNode.')
             if act_node.has_any_configurable_weight():
-                raise NotImplementedError('Node with a configurable weight cannot be used as activation for '
-                                          'VirtualActivationWeightsNode.')    # pragma: no cover
+                raise NotImplementedError(f'Node {act_node} with a configurable weight cannot be used as activation for '
+                                          'VirtualActivationWeightsNode.')
             # combine weights from activation and weights
-            weights.update(act_node.weights)
+            for w_id, w in act_node.weights.items():
+                if w_id not in weights and not (isinstance(w_id, str) and kernel_attr in w_id):
+                    weights[w_id] = w
+                    continue
+                # if same identifier is used as in weight nodes (or contains the kernel substring), generate a new
+                # unique id. If positional, generate a new (and clearly made up) index.
+                # This only serves for resource utilization computation so in theory this shouldn't matter, as long as
+                # quantization config dict keys are updated accordingly.
+                uniq_id = uuid.uuid4().hex[:8] if isinstance(w_id, str) else (100 + w_id)
+                assert uniq_id not in weights
+                act_node_w_rename[w_id] = uniq_id
+                weights[uniq_id] = w
 
         name = f"{VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX}_{act_node.name}_{weights_node.name}"
         super().__init__(name,
@@ -181,10 +193,12 @@ class VirtualActivationWeightsNode(BaseNode):
                 if act_node.weights:
                     # add non-kernel weights cfg from activation node to the composed node's weights cfg
                     composed_candidate.weights_quantization_cfg.attributes_config_mapping.update(
-                        c_a.weights_quantization_cfg.attributes_config_mapping
+                        {act_node_w_rename.get(k, k): v
+                         for k, v in c_a.weights_quantization_cfg.attributes_config_mapping.items()}
                     )
                     composed_candidate.weights_quantization_cfg.pos_attributes_config_mapping.update(
-                        c_a.weights_quantization_cfg.pos_attributes_config_mapping
+                        {act_node_w_rename.get(k, k): v
+                         for k, v in c_a.weights_quantization_cfg.pos_attributes_config_mapping.items()}
                     )
                 v_candidates.append(composed_candidate)
 
