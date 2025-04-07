@@ -171,9 +171,15 @@ def set_quantization_configs_to_node(node: BaseNode,
         mixed_precision_enable (bool): Whether mixed precision is enabled. Defaults to False.
         manual_bit_width_override (Optional[int]): Specifies a custom bit-width to override the node's activation bit-width. Defaults to None.
     """
+    a = node.get_node_weights_attributes()
+    print('a', a)
+    b = node.candidates_quantization_cfg
+    print('b', b)
     node_qc_options = node.get_qco(fqc)
     print('8 node_qc_options', node_qc_options)
-    print('8', type(node_qc_options.quantization_configurations))
+    print('8', type(node_qc_options.quantization_configurations), len(node_qc_options.quantization_configurations))
+    for ii, val in enumerate(node_qc_options.quantization_configurations):
+        print('8', ii, type(val), val.attr_weights_configs_mapping)
     #print('8', node_qc_options.quantization_configurations[0].attr_weights_configs_mapping['kernel_attr'].weights_n_bits)
     base_config, node_qc_options_list = filter_node_qco_by_graph(node, fqc, graph, node_qc_options)
     print('9 base_config', base_config)
@@ -444,6 +450,9 @@ def filter_weights_qc_options_with_manual_bit_width(
         override_attr.append(weights_manual_bit_width[1])
         override_bitwidth.append(weights_manual_bit_width[0])
 
+    print('znq', len(node_qc_options_list), node_qc_options_list)
+    for ii, node_qc_options in enumerate(node_qc_options_list):
+        print('znq', ii, node_qc_options.attr_weights_configs_mapping)
     print("zzz", override_attr, override_bitwidth)
     node_qc_options_weights_list = copy.deepcopy(node_qc_options_list)
     print('yyy', node_qc_options_weights_list)
@@ -460,6 +469,7 @@ def filter_weights_qc_options_with_manual_bit_width(
                         if attr == weights_attr and op_cfg.attr_weights_configs_mapping.get(attr).weights_n_bits != bitwidth:
                             node_qc_options_weights_list.remove(op_cfg)
                 else:
+                    print('No weights attr')
                     node_qc_options_weights_list.remove(op_cfg)
     print('node_qc_options_weights_list', node_qc_options_weights_list)
     print('0 base_config.attr_weights_configs_mapping', base_config.attr_weights_configs_mapping)

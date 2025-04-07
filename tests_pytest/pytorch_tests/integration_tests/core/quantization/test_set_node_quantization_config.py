@@ -32,8 +32,8 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 
-import torch
-from torch import nn
+#import torch
+#from torch import nn
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 
@@ -49,7 +49,8 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 #TEST_BIAS = 'bias'
 
 ### dummy layer classes
-class Conv2D:
+
+class Conv:
     pass
 class InputLayer:
     pass
@@ -74,14 +75,16 @@ from tests.common_tests.helpers.generate_test_tpc import generate_tpc_with_activ
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
+
+
 def get_tpc(kernel_n, bias_n):
-    #kernel_weights_n_bits = 8 ### [DEBUG0404] 8 ni suruto Error. 16 dato ugoku.
-    #bias_weights_n_bits = 32
-    #activation_n_bits = 8
+    kernel_weights_n_bits = 8 ### [DEBUG0404] 8 ni suruto Error. 16 dato ugoku.
+    bias_weights_n_bits = 32
+    activation_n_bits = 8
 
     base_cfg, _, default_config = get_op_quantization_configs()
-    """
-    base_config = base_cfg.clone_and_edit(attr_weights_configs_mapping=
+
+    base_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping=
                                             {
                                                 KERNEL_ATTR: base_cfg.attr_weights_configs_mapping[KERNEL_ATTR]
                                             .clone_and_edit(weights_n_bits=kernel_weights_n_bits),
@@ -89,13 +92,36 @@ def get_tpc(kernel_n, bias_n):
                                             .clone_and_edit(weights_n_bits=bias_weights_n_bits, enable_weights_quantization=True),
                                             },
                                             activation_n_bits=activation_n_bits)
-    """
+
     weights_04_bits = base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}})
     weights_02_bits = base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}})
     weights_16_bits = base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 16}})
 
     mx_cfg_list = [base_cfg, weights_04_bits, weights_02_bits, weights_16_bits]
-    tpc = generate_tpc(default_config, base_cfg, mx_cfg_list, 'imx500_tpc_kai')
+
+    # [Error] base_cfg have only one qconfig, so bitwidth cannot change to another number.
+    tpc = generate_tpc(default_config=base_cfg, base_config=base_cfg, mixed_precision_cfg_list=mx_cfg_list, name='imx500_tpc_kai')
+
+    # [Error] default_config don't have qconfig with weights,  so bitwidth cannot manipulate.
+    #tpc = generate_tpc(default_config, base_cfg, mx_cfg_list, 'imx500_tpc_kai')
+    """
+    # [Error] default_configuration_options.quantization_configurations cannot be multiple lists.
+    default_configuration_options = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple(mx_cfg_list), base_config=base_cfg
+    )
+    tpc = schema.TargetPlatformCapabilities(
+        default_qco=default_configuration_options,
+        tpc_minor_version=None,
+        tpc_patch_version=None,
+        tpc_platform_type=None,
+        operator_set=None,
+        fusing_patterns=None,
+        add_metadata=False,
+        name='imx500_tpc_kai')
+    """
+    # [Error] base_cfg have only one qconfig, so bitwidth cannot change to another number.
+    #tpc = generate_tpc_multiqco(base_cfg, base_cfg, mx_cfg_list, 'imx500_tpc_kai')
+    #tpc.default_qco.quantization_configurations = tuple(mx_cfg_list)
 
     return tpc
 
@@ -107,13 +133,13 @@ from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 ### test model
 def get_test_graph(kernel_n, bias_n):
     n1 = build_node('input', layer_class=InputLayer)
-    conv1 = build_node('conv1', layer_class=Conv2D,
+    conv1 = build_node('conv1', layer_class=Conv,
                        canonical_weights={
                            KERNEL_ATTR: AttributeQuantizationConfig(weights_n_bits=8),
                            BIAS_ATTR: AttributeQuantizationConfig(weights_n_bits=32)}
                        )
     add1 = build_node('add1', layer_class=Add)
-    conv2 = build_node('conv2', layer_class=Conv2D,
+    conv2 = build_node('conv2', layer_class=Conv,
                        canonical_weights={
                            KERNEL_ATTR: AttributeQuantizationConfig(weights_n_bits=8),
                            BIAS_ATTR: AttributeQuantizationConfig(weights_n_bits=32)}
@@ -159,7 +185,7 @@ def get_test_graph(kernel_n, bias_n):
 
 class TestManualWeightsBitwidthSelection:
     # test case for set_manual_activation_bit_width
-    test_input_1 = (NodeTypeFilter(Conv2D), 8, KERNEL_ATTR)
+    test_input_1 = (NodeTypeFilter(Conv), 16, KERNEL_ATTR)
     test_input_2 = ([NodeTypeFilter(ReLU), NodeNameFilter("conv1")], [16], [KERNEL_ATTR])
     test_input_3 = ([NodeTypeFilter(ReLU), NodeNameFilter("conv1")], [4, 8], [KERNEL_ATTR, BIAS_ATTR])
 
