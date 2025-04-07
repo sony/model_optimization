@@ -155,6 +155,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         Args:
             n: Node to get PytorchActivationQuantizationHolder to attach in its output.
+            prev_n: Node that activation quantization information is preserved from.
 
         Returns:
             A PytorchActivationQuantizationHolder layer for the node activation quantization.
