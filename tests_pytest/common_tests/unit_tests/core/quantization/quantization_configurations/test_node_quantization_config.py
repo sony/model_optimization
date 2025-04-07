@@ -57,21 +57,9 @@ class TestActivationQParams:
         with pytest.raises(ValueError):
             NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(True, True),
                                              lambda x: 0, lambda x: 0)
-        with pytest.raises(AssertionError):
-            NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, False),
-                                             lambda x: 0, lambda x: 0).enable_activation_quantization = 6
-        with pytest.raises(AssertionError):
-            NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, False),
-                                             lambda x: 0, lambda x: 0).quantization_preserving = 6
-        with pytest.raises(AssertionError):
-            NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, False),
-                                             lambda x: 0, lambda x: 0).fln_quantization = 6
-        naqc = NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, False),
-                                                lambda x: 0, lambda x: 0)
-        assert naqc.quant_mode == ActivationQuantizationMode.NO_QUANT
-        naqc.enable_activation_quantization = True
-        assert naqc.quant_mode == ActivationQuantizationMode.QUANT
-        naqc.quantization_preserving = True
-        assert naqc.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT
-        naqc.fln_quantization = True
-        assert naqc.quant_mode == ActivationQuantizationMode.FLN_QUANT
+        assert NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, False),
+                                                lambda x: 0, lambda x: 0).quant_mode == ActivationQuantizationMode.NO_QUANT
+        assert NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(True, False),
+                                                lambda x: 0, lambda x: 0).quant_mode == ActivationQuantizationMode.QUANT
+        assert NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, True),
+                                                lambda x: 0, lambda x: 0).quant_mode == ActivationQuantizationMode.PRESERVE_QUANT

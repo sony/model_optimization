@@ -31,7 +31,7 @@ from model_compression_toolkit.core.common.graph.virtual_activation_weights_node
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    NodeActivationQuantizationConfig, BaseNodeQuantizationConfig
+    NodeActivationQuantizationConfig, BaseNodeQuantizationConfig, ActivationQuantizationMode
 from model_compression_toolkit.core.common.substitutions.virtual_activation_weights_composition import \
     get_input_activation_if_composable
 
@@ -710,7 +710,7 @@ class ResourceUtilizationCalculator:
         """
         if act_qc:
             assert bitwidth_mode == BitwidthMode.QCustom
-            return act_qc.activation_n_bits if act_qc.enable_activation_quantization else FLOAT_BITWIDTH
+            return act_qc.activation_n_bits if act_qc.quant_mode == ActivationQuantizationMode.QUANT else FLOAT_BITWIDTH
 
         if bitwidth_mode == BitwidthMode.Float or not (n.is_activation_quantization_enabled() or
                                                        n.is_quantization_preserving()):

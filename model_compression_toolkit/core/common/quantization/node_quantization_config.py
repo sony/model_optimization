@@ -129,28 +129,12 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     def enable_activation_quantization(self):
         return self.quant_mode == ActivationQuantizationMode.QUANT
 
-    @enable_activation_quantization.setter
-    def enable_activation_quantization(self, enable: bool):
-        assert type(enable) is bool
-        self.quant_mode = ActivationQuantizationMode.QUANT if enable else ActivationQuantizationMode.NO_QUANT
-
     @property
     def quantization_preserving(self):
         return self.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT
 
-    @quantization_preserving.setter
-    def quantization_preserving(self, enable: bool):
-        assert type(enable) is bool
-        self.quant_mode = ActivationQuantizationMode.PRESERVE_QUANT if enable else ActivationQuantizationMode.NO_QUANT
-
-    @property
     def fln_quantization(self):
         return self.quant_mode == ActivationQuantizationMode.FLN_QUANT
-
-    @fln_quantization.setter
-    def fln_quantization(self, enable: bool):
-        assert type(enable) is bool
-        self.quant_mode = ActivationQuantizationMode.FLN_QUANT if enable else ActivationQuantizationMode.NO_QUANT
 
     def quantize_node_output(self,
                              tensors: Any) -> Any:
@@ -220,7 +204,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
             activation_params: Dictionary that contains weight quantization params.
 
         """
-        assert self.enable_activation_quantization
+        assert self.quant_mode == ActivationQuantizationMode.QUANT
         for param_name, param_value in activation_params.items():
             self.activation_quantization_params[param_name] = param_value
 

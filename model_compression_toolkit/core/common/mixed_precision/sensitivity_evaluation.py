@@ -20,6 +20,7 @@ from typing import Callable, Any, List, Tuple
 from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -207,7 +208,7 @@ class SensitivityEvaluation:
         if self.disable_activation_for_metric:
             for n in evaluation_graph.get_topo_sorted_nodes():
                 for c in n.candidates_quantization_cfg:
-                    c.activation_quantization_cfg.enable_activation_quantization = False
+                    c.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
 
         model_mp, _, conf_node2layers = self.fw_impl.model_builder(evaluation_graph,
                                                                    mode=ModelBuilderMode.MIXEDPRECISION,

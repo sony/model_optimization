@@ -33,6 +33,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
@@ -920,7 +921,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         nodes_to_disable = [node for nodes in self.fusing_info.get_all_fused_operations().values() for node in nodes[:-1]]
         for node in nodes_to_disable:
             for qc in node.candidates_quantization_cfg:
-                qc.activation_quantization_cfg.fln_quantization = True
+                qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
 
     def validate(self):
         """
