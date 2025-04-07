@@ -68,7 +68,7 @@ def load_target_platform_capabilities(tpc_obj_or_path: Union[tpc_or_str_type]) -
             f"but received type '{type(tpc_obj_or_path).__name__}'."
         )
 
-    if tpc.SCHEMA_VERSION == schema.TargetPlatformCapabilities.SCHEMA_VERSION:
+    if isinstance(tpc.SCHEMA_VERSION, schema.TargetPlatformCapabilities):  # if tpc is of current schema version
         return tpc
     return tpc_to_current_schema_version(tpc)
 

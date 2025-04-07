@@ -14,7 +14,7 @@
 # ==============================================================================
 import pprint
 from enum import Enum
-from typing import Dict, Any, Tuple, Optional, ClassVar
+from typing import Dict, Any, Tuple, Optional
 
 from pydantic import BaseModel, root_validator
 
@@ -60,7 +60,7 @@ class TargetPlatformCapabilities(BaseModel):
     name: Optional[str] = "default_tpc"
     is_simd_padding: bool = False
 
-    SCHEMA_VERSION: ClassVar[int] = 2
+    SCHEMA_VERSION: int = 2
 
     class Config:
         frozen = True

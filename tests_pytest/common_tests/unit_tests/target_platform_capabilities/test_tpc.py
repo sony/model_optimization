@@ -17,7 +17,8 @@ import pytest
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
-from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS
+from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS, \
+    all_tpc_types, tpc_to_current_schema_version
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import get_config_options_by_operators_set, is_opset_in_model
 from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities, \
     export_target_platform_capabilities
@@ -107,17 +108,15 @@ class TestTPModelInputOutput:
         result = load_target_platform_capabilities(tpc)
         assert result == tpc
 
-    def test_new_schema(self):
+    def test_new_schema(self, tpc):
         """Tests that current schema is in all schemas list. This test validates new schema was added properly."""
-        current_version = schema.TargetPlatformCapabilities.SCHEMA_VERSION
-        all_supported_versions = [s.TargetPlatformCapabilities.SCHEMA_VERSION for s in ALL_SCHEMA_VERSIONS]
-        assert current_version in all_supported_versions, "Current schema need to be added to ALL_SCHEMA_VERSIONS"
+        assert type(tpc) in all_tpc_types, "Current schema need to be added to ALL_SCHEMA_VERSIONS"
 
     def test_schema_compatibility(self, tpc_by_schema_version):
         """Tests that tpc of any schema version is supported and can be converted into current schema version"""
         tpc_by_schema = tpc_by_schema_version
-        result = load_target_platform_capabilities(tpc_by_schema)
-        assert result.SCHEMA_VERSION == schema.TargetPlatformCapabilities.SCHEMA_VERSION, \
+        result = tpc_to_current_schema_version(tpc_by_schema)
+        assert isinstance(result, schema.TargetPlatformCapabilities), \
             f"Make sure schema version {result.SCHEMA_VERSION} can be converted into current schema version {result.SCHEMA_VERSION}"
 
     def test_invalid_json_parsing(self, tmp_invalid_json):

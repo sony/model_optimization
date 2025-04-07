@@ -46,6 +46,18 @@ def _schema_v1_to_v2(tpc: schema_v1.TargetPlatformCapabilities) -> schema_v2.Tar
                                              tpc_platform_type=tpc.tpc_platform_type,
                                              add_metadata=tpc.add_metadata)
 
+def get_conversion_map() -> dict:
+    """
+    Retrieves the schema conversion map.
+    :return: A dictionary where:
+        - Keys representing supported source schema versions.
+        - Values: Callable functions that take tpc in one schema version and return it in the next (higher) version
+    """
+    conversion_map = {
+        1: _schema_v1_to_v2,
+    }
+    return conversion_map
+
 
 def tpc_to_current_schema_version(tpc: Union[all_tpc_types]) -> schema.TargetPlatformCapabilities:
     """
@@ -58,10 +70,8 @@ def tpc_to_current_schema_version(tpc: Union[all_tpc_types]) -> schema.TargetPla
     :param tpc: TargetPlatformCapabilities of some schema version
     :return: TargetPlatformCapabilities with the current MCT schema version
     """
-    conversion_map = {
-        schema_v1.TargetPlatformCapabilities.SCHEMA_VERSION: _schema_v1_to_v2,
-    }
-    while tpc.SCHEMA_VERSION < schema.TargetPlatformCapabilities.SCHEMA_VERSION:
+    conversion_map = get_conversion_map()
+    while not isinstance(tpc, schema.TargetPlatformCapabilities):
         if tpc.SCHEMA_VERSION not in conversion_map:
             raise KeyError(f"TPC using schema version {tpc.SCHEMA_VERSION} which is not in schemas conversion map. "
                            f"Make sure the schema version is supported, or add it in case it's a new schema version")
