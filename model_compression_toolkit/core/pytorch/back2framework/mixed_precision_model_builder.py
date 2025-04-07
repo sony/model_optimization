@@ -17,7 +17,7 @@ from typing import List, Any, Tuple, Union, Dict
 
 import torch
 from mct_quantizers import PytorchQuantizationWrapper, QuantizationTarget, \
-    PytorchActivationQuantizationHolder
+    PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
@@ -147,7 +147,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                 'max_candidate_idx': max_candidate_idx
                 }
 
-    def mixed_precision_activation_holder(self, n: BaseNode) -> PytorchActivationQuantizationHolder:
+    def mixed_precision_activation_holder(self, n: BaseNode, prev_n: BaseNode) -> PytorchActivationQuantizationHolder:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization for a node.
         The layer should hold either a configurable activation quantizer, if it is quantized with mixed precision,
@@ -168,6 +168,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
             if n.name in activation_conf_nodes_names:
                 assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
                 node_q_cfg_candidates = n.candidates_quantization_cfg
+                prev_node_q_cfg_candidates = prev_n.candidates_quantization_cfg
 
                 # sorting the candidates by kernel attribute weights number of bits first and then by
                 # activation number of bits (in reversed order).
@@ -181,11 +182,16 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                 max_candidate_idx = max_cfg_candidates[0]
 
                 kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+                prev_activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': prev_node_q_cfg_candidates,
+                                                                            'max_candidate_idx': max_candidate_idx,
+                                                                            'kernel_attr': kernel_attr})] \
+                                        * num_of_outputs
                 activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
                                                                             'max_candidate_idx': max_candidate_idx,
                                                                             'kernel_attr': kernel_attr})] \
                                         * num_of_outputs
             else:
+                prev_node_act_qc = prev_n.get_unique_activation_candidates()
                 node_act_qc = n.get_unique_activation_candidates()
                 assert len(node_act_qc) == 1, f"Expected a single activation configuration for node '{n.name}', but found multiple ({len(node_act_qc)}) configurations."
                 quantizer_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
@@ -195,10 +201,19 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
                 activation_quantizers = [quantizer_for_node(**kwargs)] * num_of_outputs
 
+                quantizer_for_prev_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
+                                                                   prev_node_act_qc[0].activation_quantization_cfg.activation_quantization_method,
+                                                                   BasePyTorchInferableQuantizer)
+                prev_n_kwargs = get_activation_inferable_quantizer_kwargs(prev_node_act_qc[0].activation_quantization_cfg)
+                prev_activation_quantizers = [quantizer_for_prev_node(**prev_n_kwargs)] * num_of_outputs
+
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
+            if n.is_quantization_preserving():
+                return PytorchPreservingActivationQuantizationHolder(prev_activation_quantizers[0], quantization_bypass=True)
+
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
 
         Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover
