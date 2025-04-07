@@ -412,17 +412,12 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 # If no specific positional attribute config is found, fall back to the default weight attribute config.
                 if len(attrs_included_in_name) == 0:
                     attr_cfg = op_cfg.default_weight_attr_config
-                    # Register this attribute under the positional attributes config mapping.
-                    self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
-                                                                                             weights_attr_cfg=attr_cfg,
-                                                                                             weights_channels_axis=
-                                                                                             weights_channels_axis)
                 else:
                     # If a specific config was found using POS_ATTR, use it.
                     attr_cfg = list(attrs_included_in_name.values())[0]
 
-                    # Register this attribute under the regular attributes config mapping.
-                    self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
+                # Register this attribute under the positional attributes config mapping.
+                self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
                                                                                          weights_attr_cfg=attr_cfg,
                                                                                          weights_channels_axis=
                                                                                          weights_channels_axis)
@@ -460,18 +455,19 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         if attr_name is None:  # pragma: no cover
             Logger.critical("Got 'None' attribute name for retrieving weights attribute quantization configuration.")
 
-        attrs_with_name = self._extract_config_for_attributes_with_name(attr_name)
-        attr_cfg = None
-        if len(attrs_with_name) == 0 and isinstance(attr_name, int):
+        if isinstance(attr_name, int):
             # this is a positional attribute
             attr_cfg = self.pos_attributes_config_mapping.get(attr_name)
-        if len(attrs_with_name) == 1:
-            attr_cfg = [v for v in attrs_with_name.values()][0]
-        elif len(attrs_with_name) > 1:
-            Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
-                           f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
-            # If no attribute with the exact name then an error would be thrown
-            attr_cfg = self.attributes_config_mapping.get(attr_name)
+        else:
+            attrs_with_name = self._extract_config_for_attributes_with_name(attr_name)
+            attr_cfg = None
+            if len(attrs_with_name) == 1:
+                attr_cfg = [v for v in attrs_with_name.values()][0]
+            elif len(attrs_with_name) > 1:
+                Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
+                               f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
+                # If no attribute with the exact name then an error would be thrown
+                attr_cfg = self.attributes_config_mapping.get(attr_name)
 
         if attr_cfg is None:  # pragma: no cover
             Logger.critical(f"Weight attribute '{attr_name}' config could not be found.")
@@ -532,7 +528,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         Returns: A mapping between attributes that contain the given name to their configuration.
 
         """
-        attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if str(attr_name) in str(k)}
+        attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
         if len(attrs_with_name) > 1:
             Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
                            f"{list(attrs_with_name.keys())}.")
