@@ -412,17 +412,12 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 # If no specific positional attribute config is found, fall back to the default weight attribute config.
                 if len(attrs_included_in_name) == 0:
                     attr_cfg = op_cfg.default_weight_attr_config
-                    # Register this attribute under the positional attributes config mapping.
-                    self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
-                                                                                             weights_attr_cfg=attr_cfg,
-                                                                                             weights_channels_axis=
-                                                                                             weights_channels_axis)
                 else:
                     # If a specific config was found using POS_ATTR, use it.
                     attr_cfg = list(attrs_included_in_name.values())[0]
 
-                    # Register this attribute under the regular attributes config mapping.
-                    self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
+                # Register this attribute under the positional attributes config mapping.
+                self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
                                                                                          weights_attr_cfg=attr_cfg,
                                                                                          weights_channels_axis=
                                                                                          weights_channels_axis)
