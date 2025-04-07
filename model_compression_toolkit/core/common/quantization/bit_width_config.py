@@ -209,10 +209,9 @@ class BitWidthConfig:
                     f"Node Filtering Error: No nodes found in the graph for filter {manual_bit_width_selection.filter.__dict__} "
                     f"to change their bit width to {manual_bit_width_selection.bit_width}.")
 
-            print('ffff', filtered_nodes)
             for n in filtered_nodes:
                 attr_to_change_bit_width = []
-                print('nnnnnnn', n, n.get_node_weights_attributes())
+                
                 attrs_str = n.get_node_weights_attributes()
                 if len(attrs_str) == 0:
                     Logger.critical(f'The requested attribute {manual_bit_width_selection.attr} to change the bit width for {n} does not exist.')
