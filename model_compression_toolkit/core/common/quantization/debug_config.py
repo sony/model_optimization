@@ -29,8 +29,10 @@ class DebugConfig:
          enabled) or not. Can be used to pinpoint problematic layers in the quantization process.
         network_editor (List[EditRule]): A list of rules and actions to edit the network for quantization.
         simulate_scheduler (bool): Simulate scheduler behavior to compute operators' order and cuts.
+        bypass (bool): A flag to enable MCT bypass.
     """
 
     analyze_similarity: bool = False
     network_editor: List[EditRule] = field(default_factory=list)
     simulate_scheduler: bool = False
+    bypass: bool = False

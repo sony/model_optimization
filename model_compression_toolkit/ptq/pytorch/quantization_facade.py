@@ -14,8 +14,9 @@
 # ==============================================================================
 import copy
 
-from typing import Callable, Union
+from typing import Callable, Union, Tuple, Optional
 
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
@@ -49,7 +50,8 @@ if FOUND_TORCH:
                                            representative_data_gen: Callable,
                                            target_resource_utilization: ResourceUtilization = None,
                                            core_config: CoreConfig = CoreConfig(),
-                                           target_platform_capabilities: Union[TargetPlatformCapabilities, str] = DEFAULT_PYTORCH_TPC):
+                                           target_platform_capabilities: Union[TargetPlatformCapabilities, str] = DEFAULT_PYTORCH_TPC
+                                           ) -> Tuple[Module, Optional[UserInformation]]:
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -96,6 +98,9 @@ if FOUND_TORCH:
             >>> quantized_module, quantization_info = mct.ptq.pytorch_post_training_quantization(module, repr_datagen)
 
         """
+
+        if core_config.debug_config.bypass:
+            return in_module, None
 
         fw_info = DEFAULT_PYTORCH_INFO
 
