@@ -45,8 +45,7 @@ def get_previous_node_with_activation_quantization(linear_node: BaseNode,
     activation_quantization_config = prev_node.final_activation_quantization_cfg
 
     # Search for node with activation quantization
-    if (activation_quantization_config.enable_activation_quantization and
-            not activation_quantization_config.quantization_preserving):
+    if activation_quantization_config.enable_activation_quantization:
         return prev_node
     else:
         return get_previous_node_with_activation_quantization(prev_node, graph)
