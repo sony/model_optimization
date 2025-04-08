@@ -1,4 +1,4 @@
-#  Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
+#  Copyright 2025 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -13,10 +13,13 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from typing import Dict, List
+import copy
+from typing import List, Tuple
 
-from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.graph.base_graph import OutTensor
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
+from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
+from itertools import product
 
 
 class FusedLayerType:
@@ -27,35 +30,41 @@ class FusedLayerType:
     def __init__(self):
         self.__name__ = 'FusedLayer'
 
-
 class GraphFuser:
-
-    def create_fused_graph(self, graph: Graph) -> Dict[str, str]:
+    def apply_node_fusion(self, graph: Graph) -> Graph:
         """
-        GraphFuser is responsible for fusing nodes in a networkx graph.
-        The fusion process involves:
-            1. Creating new fused nodes to represent these groups.
-            2. Updating the graph structure to replace the original nodes with fused nodes.
-            3. Maintaining mapping of original node names to their fused node names.
+        Applies node fusion to the graph according the fusing_info it has.
+
+        The fusion process includes:
+            1. Generating new fused nodes to replace groups of original nodes.
+            2. Updating the graph structure to replace those nodes with the fused representations.
 
         Args:
-            graph: Graph to fuse its nodes.
+            graph: The graph and its fusing metadata.
 
         Returns:
-            Mapping of original node names to their fused node names
+            The updated graph with fused nodes replacing the original node groups.
         """
-        fused_nodes_mapping = {}
-        # Iterate through each group of nodes to be fused
-        for fused_nodes_list in graph.fused_nodes:
-            new_fused_node = self._create_fused_node(fused_nodes_list)
-            self._replace_nodes_with_fused_node(graph, fused_nodes_list, new_fused_node)
-            # Update the mapping to keep track of which original nodes are now part of which fused nodes
-            for node in fused_nodes_list:
-                fused_nodes_mapping[node.name] = new_fused_node.name
-        return fused_nodes_mapping
+        graph_copy = copy.deepcopy(graph)
+        expected_fusing_info = FusingInfoGenerator(graph_copy.fusing_info.fusing_patterns).generate_fusing_info(graph_copy)
+
+        if expected_fusing_info != graph_copy.fusing_info:
+            raise ValueError(
+                f"Mismatch between expected and existing fusing information.\n"
+                f"Expected:\n{expected_fusing_info}\nExisting:\n{graph_copy.fusing_info}"
+            )
+
+        fused_operations = list(graph_copy.fusing_info.get_all_fused_operations().items())
+        for fused_node_id, original_nodes in fused_operations:
+            fused_node = self._create_fused_node(fused_node_id, original_nodes)
+            graph_copy.fusing_info.remove_fused_operation(fused_node_id)
+            self._replace_nodes_with_fused_node(graph_copy, original_nodes, fused_node)
+
+        return graph_copy
+
 
     @staticmethod
-    def _create_fused_node(nodes: List[BaseNode]) -> BaseNode:
+    def _create_fused_node(fused_node_id: str, nodes: Tuple[BaseNode]) -> BaseNode:
         """
         Create a new node that represents the fusion of the given nodes.
 
@@ -67,22 +76,28 @@ class GraphFuser:
         """
         # Create a new node with a name that reflects its components
         # Use the input shape of the first node and output shape of the last node
-        fused_node = BaseNode(name='FusedNode_' + '_'.join([node.name for node in nodes]),
+        # TODO: consider replacing the fused node with a sub-model to allow inference on it, etc.
+        fused_node = BaseNode(name=fused_node_id,
                               framework_attr={},
                               input_shape=nodes[0].input_shape,
                               output_shape=nodes[-1].output_shape,
                               weights={},
                               layer_class=FusedLayerType)
 
-        # Preserve the final activation quantization configuration
-        # This is important for maintaining the correct behavior of the fused node
+        activation_cfgs = [c.activation_quantization_cfg for c in nodes[-1].candidates_quantization_cfg]
+        fused_node.candidates_quantization_cfg = [
+            CandidateNodeQuantizationConfig(weights_quantization_cfg=None, activation_quantization_cfg=a) for a in
+            activation_cfgs]
+
+        # Keep the final configurations if they were set already.
+        fused_node.final_weights_quantization_cfg = nodes[0].final_weights_quantization_cfg
         fused_node.final_activation_quantization_cfg = nodes[-1].final_activation_quantization_cfg
 
         return fused_node
 
     @staticmethod
     def _replace_nodes_with_fused_node(graph: Graph,
-                                       nodes_to_fuse: List[BaseNode],
+                                       nodes_to_fuse: Tuple[BaseNode],
                                        fused_node: BaseNode):
         """
         Replace the specified nodes in the graph with a new fused node.
@@ -118,6 +133,11 @@ class GraphFuser:
             for next_node in subsequent_nodes:
                 assert next_node in nodes_to_fuse  # Ensure we're not removing edges outside the fusion
                 graph.remove_edge(current_node, next_node)
+                # next_node can have more incoming edges from other nodes that are not
+                # in the fusion and we should remove them to:
+                in_edges = graph.incoming_edges(next_node)
+                for ie in in_edges:
+                    graph.remove_edge(ie.source_node, next_node)
 
         # Handle the case where fused nodes are part of the graph's outputs
         graph_output_tensors = graph.get_outputs()
@@ -136,3 +156,5 @@ class GraphFuser:
 
         # Finally, add the new fused node to the graph
         graph.add_node(fused_node)
+
+

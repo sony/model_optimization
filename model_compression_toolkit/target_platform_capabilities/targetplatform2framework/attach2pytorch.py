@@ -97,7 +97,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.L2NORM: [LayerFilterParams(torch.nn.functional.normalize,
                                                         Eq('p', 2) | Eq('p', None))],
             OperatorSetNames.SSD_POST_PROCESS: [],  # no such operator in pytorch
-            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: []  # no such operator in pytorch
+            OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [],  # no such operator in pytorch
         }
 
         pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
