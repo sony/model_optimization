@@ -212,8 +212,14 @@ class BaseRUIntegrationTester(abc.ABC):
         assert self._extract_values(detailed_orig[RUTarget.WEIGHTS]) == exp_w_ru
         assert self._extract_values(detailed_orig[RUTarget.BOPS]) == exp_bops
 
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
         virtual_graph = substitute(copy.deepcopy(graph),
                                    self.fw_impl.get_substitutions_virtual_weights_activation_coupling())
+        graph.skip_validation_check = False
+
         assert len(virtual_graph.nodes) == 8
         assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualActivationWeightsNode)]) == 1
         assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualSplitActivationNode)]) == 3

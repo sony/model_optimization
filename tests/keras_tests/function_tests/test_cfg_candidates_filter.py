@@ -20,13 +20,13 @@ from tensorflow.keras.layers import Conv2D, ReLU, Input, InputLayer
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import CustomOpsetLayers
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
@@ -58,7 +58,10 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
-    graph = fusion(graph, fqc)
+
+    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
+    graph.fusing_info = fusing_info
+    graph.disable_fused_nodes_activation_quantization()
 
     return graph
 

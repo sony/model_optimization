@@ -9,5 +9,5 @@ PuLP
 matplotlib<3.10.0
 scipy
 protobuf
-mct-quantizers==1.5.2
+mct-quantizers-nightly
 pydantic

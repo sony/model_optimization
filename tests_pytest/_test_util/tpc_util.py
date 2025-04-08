@@ -50,12 +50,11 @@ def build_mp_config_options_for_kernel_bias_ops(base_w_config: AttributeQuantiza
     return QuantizationConfigOptions(quantization_configurations=mp_configs, base_config=base_op_config)
 
 
-def minimal_tpc():
+def minimal_cfg_options():
     """
-    Minimal TPC. Is intended to be used in integration tests, when real TPC (as opposed to mock) is needed,
-    but we don't care about its content.
-
-    There is also a fixture form by the same name.
+    Minimal op configuration options. Is intended to be used in integration tests,
+    when real TPC (as opposed to mock) is needed, and we care about some of its content (like fusing)
+    but we don't care about the default configuration options.
     """
     op_cfg = OpQuantizationConfig(
         default_weight_attr_config={},
@@ -71,6 +70,19 @@ def minimal_tpc():
         signedness=Signedness.AUTO)
 
     cfg_options = QuantizationConfigOptions(quantization_configurations=[op_cfg])
+
+    return cfg_options
+
+
+def minimal_tpc():
+    """
+    Minimal TPC. Is intended to be used in integration tests, when real TPC (as opposed to mock) is needed,
+    but we don't care about its content.
+
+    There is also a fixture form by the same name.
+    """
+
+    cfg_options = minimal_cfg_options()
 
     return TargetPlatformCapabilities(default_qco=cfg_options,
                                       tpc_platform_type='test',

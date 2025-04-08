@@ -71,11 +71,13 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
 
         if weights_quantization_cfg is not None:
             self.weights_quantization_cfg = weights_quantization_cfg
-        else:
-            if any(v is None for v in (qc, op_cfg, node_attrs_list)):  # pragma: no cover
-                Logger.critical("Missing required arguments to initialize a node weights quantization configuration. "
-                                "Ensure QuantizationConfig, OpQuantizationConfig, weights quantization function, "
-                                "parameters function, and weights attribute quantization config are provided.")
-            self.weights_quantization_cfg = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg,
+        elif all(v is not None for v in (qc, op_cfg, node_attrs_list)):
+            self.weights_quantization_cfg = NodeWeightsQuantizationConfig(qc=qc,
+                                                                          op_cfg=op_cfg,
                                                                           weights_channels_axis=weights_channels_axis,
                                                                           node_attrs_list=node_attrs_list)
+        else:
+            self.weights_quantization_cfg = None
+            Logger.debug("Setting weights quantization config as None during CandidateNodeQuantizationConfig creation."
+                         "Notice, this should happen only for FLN nodes.")
+
