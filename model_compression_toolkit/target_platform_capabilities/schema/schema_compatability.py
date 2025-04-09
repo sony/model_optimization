@@ -16,9 +16,10 @@ from typing import Any, Union
 
 import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v1
 import model_compression_toolkit.target_platform_capabilities.schema.v2 as schema_v2
-import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as current_schema
 
 ALL_SCHEMA_VERSIONS = [schema_v1]  # needs to be updated with all active schema versions
+FUTURE_SCHEMA_VERSIONS = [schema_v2]  # once future schema becomes current schema, move to it ALL_SCHEMA_VERSIONS
 all_tpc_types = tuple([s.TargetPlatformCapabilities for s in ALL_SCHEMA_VERSIONS])
 tpc_or_str_type = all_tpc_types + (str,)
 
@@ -59,7 +60,7 @@ def get_conversion_map() -> dict:
     return conversion_map
 
 
-def tpc_to_current_schema_version(tpc: Union[all_tpc_types]) -> schema.TargetPlatformCapabilities:  # pragma: no cover
+def tpc_to_current_schema_version(tpc: Union[all_tpc_types]) -> current_schema.TargetPlatformCapabilities:  # pragma: no cover
     """
     Given tpc instance of some schema version, convert it to the current MCT schema version.
 
@@ -72,7 +73,7 @@ def tpc_to_current_schema_version(tpc: Union[all_tpc_types]) -> schema.TargetPla
     """
     conversion_map = get_conversion_map()
     prev_tpc_type = type(tpc)
-    while not isinstance(tpc, schema.TargetPlatformCapabilities):
+    while not isinstance(tpc, current_schema.TargetPlatformCapabilities):
         if type(tpc) not in conversion_map:
             raise KeyError(f"TPC using schema version {tpc.SCHEMA_VERSION} which is not in schemas conversion map. "
                            f"Make sure the schema version is supported, or add it in case it's a new schema version")

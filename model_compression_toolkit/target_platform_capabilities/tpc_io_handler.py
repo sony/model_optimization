@@ -20,7 +20,12 @@ from model_compression_toolkit.target_platform_capabilities.schema.schema_compat
     tpc_to_current_schema_version, tpc_or_str_type
 
 
-def _get_tpc_from_json(tpc_path):
+def _get_tpc_from_json(tpc_path: str) -> schema.TargetPlatformCapabilities:
+    """
+    Given a TPC json file path, parse it and returns a TargetPlatformCapabilities instance
+    :param tpc_path: json file path
+    :return: Parsed TargetPlatformCapabilities instance
+    """
     path = Path(tpc_path)
 
     if not path.exists() or not path.is_file():
