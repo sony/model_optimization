@@ -15,12 +15,12 @@
 import operator
 from copy import deepcopy
 from functools import partial
-from typing import List, Any, Tuple, Callable, Type, Dict, Generator
+from typing import List, Any, Tuple, Callable, Generator
 
 import numpy as np
 import torch
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
-from torch import sigmoid, softmax, add, cat, argmax, concat, concatenate
+from torch import sigmoid, softmax, add, cat, argmax, concat, concatenate, stack
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
 
@@ -462,7 +462,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         return any(node.is_match_type(_type) for _type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax,
                                                            softmax, operator.add, add, cat, concat, concatenate,
-                                                           operator.concat])
+                                                           operator.concat, stack])
 
     def get_mp_node_distance_fn(self, n: BaseNode,
                                 compute_distance_fn: Callable = None,
