@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from typing import Callable, Union
+from typing import Callable, Union, Optional, Tuple
 
 from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE, PYTORCH, GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.core import CoreConfig
@@ -22,6 +22,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     ResourceUtilization
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.common.gptq_config import (
@@ -147,7 +148,8 @@ if FOUND_TORCH:
                                                     core_config: CoreConfig = CoreConfig(),
                                                     gptq_config: GradientPTQConfig = None,
                                                     gptq_representative_data_gen: Callable = None,
-                                                    target_platform_capabilities: Union[TargetPlatformCapabilities, str] = DEFAULT_PYTORCH_TPC):
+                                                    target_platform_capabilities: Union[TargetPlatformCapabilities, str] = DEFAULT_PYTORCH_TPC
+                                                    ) -> Tuple[Module, Optional[UserInformation]]:
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -205,6 +207,9 @@ if FOUND_TORCH:
             >>> quantized_module, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization(module, repr_datagen, core_config=config, gptq_config=gptq_conf)
 
         """
+
+        if core_config.debug_config.bypass:
+            return model, None
 
         if core_config.is_mixed_precision_enabled:    # pragma: no cover
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):

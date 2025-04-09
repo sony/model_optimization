@@ -14,11 +14,12 @@
 # ==============================================================================
 import copy
 
-from typing import Callable
+from typing import Callable, Tuple, Optional
 
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
+from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
@@ -52,7 +53,8 @@ if FOUND_TF:
                                          representative_data_gen: Callable,
                                          target_resource_utilization: ResourceUtilization = None,
                                          core_config: CoreConfig = CoreConfig(),
-                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC
+                                         ) -> Tuple[Model, Optional[UserInformation]]:
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -122,6 +124,9 @@ if FOUND_TF:
             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
+
+        if core_config.debug_config.bypass:
+            return in_model, None
 
         fw_info = DEFAULT_KERAS_INFO
 
