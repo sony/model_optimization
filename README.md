@@ -30,7 +30,7 @@ ________________________________________________________________________________
 
 ## <div align="center">Getting Started</div>
 ### Quick Installation
-Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.1 or Tensorflow>=2.12.
+Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.1 or Tensorflow>=2.14.
 ```
 pip install model-compression-toolkit
 ```

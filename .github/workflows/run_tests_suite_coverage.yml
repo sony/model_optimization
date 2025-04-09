@@ -47,7 +47,7 @@ jobs:
           python -m venv tf_env
           source tf_env/bin/activate
           python -m pip install --upgrade pip
-          pip install -r requirements.txt tensorflow==2.13.* sony-custom-layers coverage pytest pytest-mock
+          pip install -r requirements.txt tensorflow==2.15.* sony-custom-layers coverage pytest pytest-mock
 
       - name: Run TensorFlow tests (unittest)
         run: |
