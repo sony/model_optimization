@@ -20,7 +20,8 @@ import numpy as np
 
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
-from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
+    ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
     OpQuantizationConfig
@@ -116,33 +117,28 @@ class BaseNode:
         """
         return any(isinstance(key, int) for key in self.weights.keys())
 
+    def _is_single_quant_mode(self, q_mode: ActivationQuantizationMode) -> bool:
+        """ Check whether all candidates have the same unique quantization mode, and if it is 'q_mode'. """
+
+        if self.final_activation_quantization_cfg:
+            # if we have a final configuration, then we only care to check if it enables activation quantization.
+            return self.final_activation_quantization_cfg.quant_mode == q_mode
+
+        q_modes = {qc.activation_quantization_cfg.quant_mode for qc in self.candidates_quantization_cfg}
+        assert len(q_modes) == 1
+        return q_modes.pop() == q_mode
+
     def is_activation_quantization_enabled(self) -> bool:
         """
-
         Returns: Whether node activation quantization is enabled or not.
-
         """
-        if self.final_activation_quantization_cfg:
-            # if we have a final configuration, then we only care to check if it enables activation quantization
-            return self.final_activation_quantization_cfg.enable_activation_quantization
-
-        for qc in self.candidates_quantization_cfg:
-            assert self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization == \
-                   qc.activation_quantization_cfg.enable_activation_quantization
-        return self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization
+        return self._is_single_quant_mode(ActivationQuantizationMode.QUANT)
 
     def is_quantization_preserving(self) -> bool:
         """
         Returns: Whether node activation quantization information is preserved from its inputs.
         """
-        if self.final_activation_quantization_cfg:
-            # if we have a final configuration, then we only care to check if it enables activation quantization.
-            return self.final_activation_quantization_cfg.quantization_preserving
-
-        for qc in self.candidates_quantization_cfg:
-            assert self.candidates_quantization_cfg[0].activation_quantization_cfg.quantization_preserving == \
-                   qc.activation_quantization_cfg.quantization_preserving
-        return self.candidates_quantization_cfg[0].activation_quantization_cfg.quantization_preserving
+        return self._is_single_quant_mode(ActivationQuantizationMode.PRESERVE_QUANT)
 
     def is_weights_quantization_enabled(self, attr_name: str) -> bool:
         """

@@ -150,7 +150,6 @@ class FusingInfo:
         """
         return self.fusing_data
 
-
     @staticmethod
     def generate_fused_op_id(nodes: List['BaseNode']) -> str:
         """
@@ -166,7 +165,7 @@ class FusingInfo:
         id = FUSED_OP_ID_PREFIX + '_'.join([node.name for node in nodes])
         return id
 
-    def validate(self, graph) -> None:
+    def validate(self, graph: 'Graph') -> None:
         """
         Validate that the fusing information is consistent with the given graph and generation logic.
 
@@ -267,7 +266,7 @@ class FusingInfoGenerator:
     def __init__(self, fusing_patterns):
         self._fusing_patterns = fusing_patterns
 
-    def generate_fusing_info(self, graph) -> FusingInfo:
+    def generate_fusing_info(self, graph: 'Graph') -> FusingInfo:
         """
         Generate fusing information based on the graph and fusing patterns.
 
@@ -289,7 +288,7 @@ class FusingInfoGenerator:
             return FusingInfo(fusing_patterns=self._fusing_patterns)
 
         # Find max fusion
-        max_layers_fusing = 0 if len(self._fusing_patterns) == 0 else max([len(fusing_pattern) for fusing_pattern in self._fusing_patterns])
+        max_layers_fusing = max([len(fusing_pattern) for fusing_pattern in self._fusing_patterns])
 
         # Travel along the graph to find layers for fusing
         nodes = graph.get_topo_sorted_nodes()
@@ -331,7 +330,7 @@ def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
     Returns only the fusing patterns where a specific layer (at index idx) matches the given node — either by type or filter params.
 
     Args:
-        fusing_patterns: supported fusings
+        fusing_patterns: supported fusing patterns
         node: node to decide if it can be a part of fusion
         idx: index of layer in the fusion
 

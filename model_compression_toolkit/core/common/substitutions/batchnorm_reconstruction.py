@@ -22,7 +22,8 @@ import numpy as np
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
+    ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
@@ -127,7 +128,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         bn_node.candidates_quantization_cfg = copy.deepcopy(source_node.candidates_quantization_cfg)
 
         for qc in bn_node.candidates_quantization_cfg:
-            qc.activation_quantization_cfg.enable_activation_quantization = False
+            qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
             for attr in bn_node.get_node_weights_attributes():
                 if qc.weights_quantization_cfg.has_attribute_config(attr):
                     # we only create a BN layer to collect statistics, so we don't need to quantize anything,
