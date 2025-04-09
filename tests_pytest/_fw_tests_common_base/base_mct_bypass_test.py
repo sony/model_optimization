@@ -15,14 +15,11 @@
 import abc
 from unittest.mock import Mock
 from typing import Callable
-import pytest
 
 from model_compression_toolkit.core import DebugConfig, CoreConfig
 
 
 class BaseMCTBypassTest(abc.ABC):
-
-    api_func: Callable
 
     @abc.abstractmethod
     def _build_test_model(self):
@@ -34,12 +31,9 @@ class BaseMCTBypassTest(abc.ABC):
         """ assert that two models are identical (have the exact same sub modules and parameters"""
         raise NotImplementedError()
 
-    def test_mct_bypass(self):
+    def _test_mct_bypass(self, api_func: Callable):
         model = self._build_test_model()
         core_config = CoreConfig(debug_config=DebugConfig(bypass=True))
-        facade = self.__class__.api_func
-
-        out_model, user_info = facade(model, Mock(), Mock(), core_config=core_config)
+        out_model, user_info = api_func(model, Mock(), Mock(), core_config=core_config)
 
         self._assert_models_equal(model, out_model)
-
