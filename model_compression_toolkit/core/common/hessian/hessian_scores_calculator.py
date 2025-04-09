@@ -72,8 +72,7 @@ class HessianScoresCalculator(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement compute method.')  # pragma: no cover
 
-    @staticmethod
-    def unfold_tensors_list(tensors_to_unfold: Any) -> List[Any]:
+    def unfold_tensors_list(self, tensors_to_unfold: Any) -> List[Any]:
         """
         Unfold (flatten) a nested tensors list.
         Given a mixed list of single tensors and nested tensor lists,
@@ -85,6 +84,9 @@ class HessianScoresCalculator(ABC):
         """
         unfold_tensors = []
         for tensor in tensors_to_unfold:
+            if self.fw_impl.is_tuple_of_tensors(tensor):
+                tensor = list(tensor)  # converts named tuple to list
+
             if isinstance(tensor, List):
                 unfold_tensors += tensor
             else:

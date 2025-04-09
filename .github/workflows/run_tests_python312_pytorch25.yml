@@ -1,4 +1,4 @@
-name: Python 3.2, Pytorch 2.5
+name: Python 3.12, Pytorch 2.5
 on:
   workflow_dispatch: # Allow manual triggers
   schedule:

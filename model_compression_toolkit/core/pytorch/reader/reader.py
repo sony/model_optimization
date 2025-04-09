@@ -13,19 +13,40 @@
 # limitations under the License.
 # ==============================================================================
 
-
-import logging
-from typing import Callable, Dict
-
-import numpy as np
 import torch
-from torch.fx import symbolic_trace
+import logging
+from typing import Callable, Dict, Union, Any
 from torch.fx.passes.shape_prop import ShapeProp
+from torch.fx import Tracer, GraphModule, symbolic_trace
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.reader.graph_builders import edges_builder, nodes_builder
 from model_compression_toolkit.core.pytorch.utils import set_model
+from sony_custom_layers.pytorch import CustomLayer
+
+
+def _trace_model(root: Union[torch.nn.Module, Callable[..., Any]]) -> GraphModule:
+    """
+    Given an ``nn.Module`` or function instance ``root``, this function will return a ``GraphModule``
+    constructed by recording operations seen while tracing through ``root``.
+    This function replaces torch.fx.symbolic_trace in order to handle custom layers tracing - treating them as graph
+    leafs.
+    :param root: Module or function to be traced and converted into a Graph representation.
+    :return: GraphModule: a Module created from the recorded operations from ``root``.
+    """
+
+    class MCTTracer(Tracer):
+        def is_leaf_module(self, m: torch.nn.Module, module_qualified_name: str) -> bool:
+            if isinstance(m, CustomLayer):
+                return True
+            return super().is_leaf_module(m, module_qualified_name)
+
+    tracer = MCTTracer()
+    graph = tracer.trace(root)
+    # handling the possibility that the model (root) might be a torch.nn.Module or a function
+    model_name = (root.__class__.__name__ if isinstance(root, torch.nn.Module) else root.__name__)
+    return GraphModule(tracer.root, graph, model_name)
 
 
 def generate_module_dict(model: torch.nn.Module) -> Dict:
@@ -87,7 +108,7 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
     set_model(pytorch_model)
 
     try:
-        symbolic_traced = symbolic_trace(pytorch_model)
+        symbolic_traced = _trace_model(pytorch_model)
     except torch.fx.proxy.TraceError as e:
         Logger.critical(f'Error parsing model with torch.fx\n'
                         f'fx error: {e}')

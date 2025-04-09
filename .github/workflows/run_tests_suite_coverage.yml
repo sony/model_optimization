@@ -42,30 +42,13 @@ jobs:
       - name: Run common tests (pytest)
         run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/common_tests
 
-      - name: Set up TensorFlow environment
-        run: |
-          python -m venv tf_env
-          source tf_env/bin/activate
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt tensorflow==2.13.* sony-custom-layers coverage pytest pytest-mock
-
-      - name: Run TensorFlow tests (unittest)
-        run: |
-          source tf_env/bin/activate 
-          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest discover tests/keras_tests -v
-
-      - name: Run TensorFlow tests (pytest)
-        run: |
-          source tf_env/bin/activate
-          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/keras_tests
-
       - name: Set up PyTorch environment
         run: |
           python -m venv torch_env
           source torch_env/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install torch==2.5.* torchvision onnx onnxruntime "onnxruntime-extensions<0.14" sony-custom-layers coverage pytest pytest-mock
+          pip install torch==2.5.* torchvision onnx onnxruntime "onnxruntime-extensions<0.14" coverage pytest pytest-mock
 
       - name: Run PyTorch tests (unittest)
         run: |
@@ -76,6 +59,23 @@ jobs:
         run: |
           source torch_env/bin/activate
           coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/pytorch_tests
+
+      - name: Set up TensorFlow environment
+        run: |
+          python -m venv tf_env
+          source tf_env/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt tensorflow==2.13.* coverage pytest pytest-mock
+
+      - name: Run TensorFlow tests (unittest)
+        run: |
+          source tf_env/bin/activate 
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest discover tests/keras_tests -v
+
+      - name: Run TensorFlow tests (pytest)
+        run: |
+          source tf_env/bin/activate
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/keras_tests
 
       - name: Combine Multiple Coverage Files
         run: coverage combine
