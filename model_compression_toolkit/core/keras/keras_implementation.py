@@ -454,7 +454,7 @@ class KerasImplementation(FrameworkImplementation):
             return True
 
         return any([node.is_match_type(_type) for _type in [Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense,
-                                                            Concatenate, tf.concat, Add, tf.add]])
+                                                            Concatenate, tf.concat, Add, tf.add, tf.stack]])
 
     def get_mp_node_distance_fn(self, n: BaseNode,
                                 compute_distance_fn: Callable = None,
