@@ -24,6 +24,7 @@ import pytest
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
+from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX, EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
@@ -116,7 +117,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         """
         for node in graph_with_fusion_metadata.nodes:
             for qc in node.candidates_quantization_cfg:
-                qc.activation_quantization_cfg.enable_activation_quantization = True
+                qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.QUANT
 
         graph_with_fusion_metadata.disable_fused_nodes_activation_quantization()
         disabled_nodes = [

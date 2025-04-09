@@ -16,7 +16,7 @@ from unittest.mock import Mock
 
 from pytest import fixture
 
-from model_compression_toolkit.core import FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo, QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from tests_pytest._test_util import tpc_util
@@ -44,3 +44,10 @@ def fw_impl_mock():
 def fw_info_mock():
     """ Basic FrameworkInfo mock. """
     return Mock(spec_set=FrameworkInfo)
+
+
+@fixture
+def quant_config_mock():
+    """ Basic QuantizationConfig mock. """
+    return Mock(spec=QuantizationConfig, weights_error_method=QuantizationErrorMethod.NOCLIPPING,
+                activation_error_method=QuantizationErrorMethod.NOCLIPPING)

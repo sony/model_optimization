@@ -94,6 +94,17 @@ class FrameworkImplementation(ABC):
                              f'framework\'s to_tensor method.')  # pragma: no cover
 
     @abstractmethod
+    def is_tuple_of_tensors(self, obj: Any) -> bool:
+        """
+        Check if a given object if a tuple of tensors
+        :param obj: Object to check its type
+        :return: True if obj is a tuple of tensors, False otherwise
+        """
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
+                             f'framework\'s is_tuple_of_tensors method.')  # pragma: no cover
+
+
+    @abstractmethod
     def model_reader(self,
                      model: Any,
                      representative_data_gen: Callable) -> Graph:

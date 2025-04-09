@@ -15,7 +15,7 @@
 import torch
 from torch import Tensor
 import numpy as np
-from typing import Union, Sequence, Optional, List, Tuple
+from typing import Union, Optional, List, Tuple, Any
 
 from model_compression_toolkit.core.pytorch.constants import MAX_FLOAT16, MIN_FLOAT16
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device

@@ -19,10 +19,8 @@ from packaging import version
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2fw import \
     AttachTpcToFramework
-from model_compression_toolkit.verify_packages import FOUND_SONY_CUSTOM_LAYERS
 
-if FOUND_SONY_CUSTOM_LAYERS:
-    from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
+from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
@@ -102,14 +100,8 @@ class AttachTpcToKeras(AttachTpcToFramework):
             OperatorSetNames.LOG_SOFTMAX: [tf.nn.log_softmax],
             OperatorSetNames.ADD_BIAS: [tf.nn.bias_add],
             OperatorSetNames.L2NORM: [tf.math.l2_normalize],
+            OperatorSetNames.SSD_POST_PROCESS: [SSDPostProcess]
         }
-
-        if FOUND_SONY_CUSTOM_LAYERS:
-            self._opset2layer[OperatorSetNames.SSD_POST_PROCESS] = [SSDPostProcess]
-        else:
-            # If Custom layers is not installed then we don't want the user to fail, but just ignore custom layers
-            # in the initialized framework TPC
-            self._opset2layer[OperatorSetNames.SSD_POST_PROCESS] = []
 
         self._opset2attr_mapping = {
             OperatorSetNames.CONV: {
