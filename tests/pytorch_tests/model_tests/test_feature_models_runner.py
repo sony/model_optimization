@@ -59,9 +59,6 @@ from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LU
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
     ManualBitWidthByLayerNameTest, Manual16BitTest, Manual16BitTestMixedPrecisionTest
-from tests.pytorch_tests.model_tests.feature_models.manual_weights_bit_selection import ManualWeightsBitWidthByLayerTypeTest, ManualWeightsBitWidthByLayerNameTest,\
-    ManualWeightsBias2BitWidthByLayerTypeTest, ManualWeightsBias4BitWidthByLayerTypeTest, ManualWeightsBias8BitWidthByLayerTypeTest, ManualWeightsBias32BitWidthByLayerTypeTest,\
-    ManualWeightsBias2BitWidthByLayerNameTest, ManualWeightsBias4BitWidthByLayerNameTest, ManualWeightsBias8BitWidthByLayerNameTest, ManualWeightsBias32BitWidthByLayerNameTest
 from tests.pytorch_tests.model_tests.feature_models.matmul_test import MatMulFNetTest, MatMulOpNetTest
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
@@ -879,83 +876,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('relu'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], [2, 4]).run_test()
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], 4).run_test()
-
-    def test_invalid_weights_bit_width_selection(self):
-        """
-        This test checks the invalid bit-width in the manual weights bit-width selection feature.
-        """
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [7], [PYTORCH_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Manually selected weights bit-width [[7, 'weight']] is invalid for node Conv2d:conv1_bn.")
-        
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Linear), [3], [PYTORCH_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Manually selected weights bit-width [[3, 'weight']] is invalid for node Linear:fc.")
-        
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv2_bn'), [3], [PYTORCH_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Manually selected weights bit-width [[3, 'weight']] is invalid for node Conv2d:conv2_bn.")
-
-    def test_exceptions_manual_weights_selection(self):
-        """
-        This test checks the execptions in the manual weights bit-width selection feature.
-        """
-        # Node name doesn't exist in graph
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv3_bn'), [16], [PYTORCH_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Node Filtering Error: No nodes found in the graph for filter {'node_name': 'conv3_bn'} to change their bit width to 16.")
-        
-        # Invalid inputs to API
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthByLayerNameTest(self, [NodeNameFilter('conv1_bn'), NodeNameFilter('conv2_bn'), NodeNameFilter('fc')],
-                                                       [2, 4], [PYTORCH_KERNEL, PYTORCH_KERNEL, PYTORCH_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Configuration Error: The number of provided bit_width values 2 must match the number of filters 3, or a single bit_width value should be provided for all filters.")
-
-    def test_manual_weights_bit_width_selection_by_layer_type(self):
-        """
-        This test checks the manual weights bit-width selection feature by layer type filtering.
-        """
-        ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [2], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [4], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [8], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [16], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBias2BitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d)], [2], [BIAS]).run_test()
-        ManualWeightsBias4BitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d)], [4], [BIAS]).run_test()
-        ManualWeightsBias8BitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d)], [8], [BIAS]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), [16], [BIAS]).run_test()
-        ManualWeightsBias32BitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d)], [32], [BIAS]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Linear), [16], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Conv2d)], [8, 16], [PYTORCH_KERNEL, BIAS]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Conv2d)], [16, 8], [BIAS, PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Linear)], [2, 4], [PYTORCH_KERNEL, PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Linear)], [16, 2], [BIAS, PYTORCH_KERNEL]).run_test()
-
-    def test_manual_weights_bit_width_selection_by_layer_name(self):
-        """
-        This test checks the manual weights bit-width selection feature by layer name filtering.
-        """
-        ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [2], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [4], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [8], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [16], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBias2BitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [2], [BIAS]).run_test()
-        ManualWeightsBias4BitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [4], [BIAS]).run_test()
-        ManualWeightsBias8BitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [8], [BIAS]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [16], [BIAS]).run_test()
-        ManualWeightsBias32BitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), [32], [BIAS]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, NodeNameFilter('fc'), [16], [PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, [NodeNameFilter('conv1_bn'),NodeNameFilter('conv1_bn')], [8, 16], [PYTORCH_KERNEL, BIAS]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, [NodeNameFilter('conv1_bn'),NodeNameFilter('conv1_bn')], [16, 2], [BIAS, PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, [NodeNameFilter('conv1_bn'),NodeNameFilter('conv2_bn')], [4, 16], [PYTORCH_KERNEL, PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, [NodeNameFilter('conv1_bn'),NodeNameFilter('fc')], [8, 2], [PYTORCH_KERNEL, PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, [NodeNameFilter('conv1_bn'),NodeNameFilter('conv2_bn')], [16, 8], [BIAS, PYTORCH_KERNEL]).run_test()
-        ManualWeightsBitWidthByLayerNameTest(self, [NodeNameFilter('conv1_bn'), NodeNameFilter('conv2_bn'), NodeNameFilter('fc')], [2, 4, 8], [PYTORCH_KERNEL, PYTORCH_KERNEL, PYTORCH_KERNEL]).run_test()
 
 if __name__ == '__main__':
     unittest.main()

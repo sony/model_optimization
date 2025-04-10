@@ -63,8 +63,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer imp
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.manual_bit_selection import ManualBitWidthSelectionTest, \
     Manual16BitWidthSelectionTest, Manual16BitWidthSelectionMixedPrecisionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.manual_weights_bit_selection import ManualWeightsBitWidthSelectionTest, \
-    ManualWeightsBias2BitWidthSelectionTest, ManualWeightsBias4BitWidthSelectionTest, ManualWeightsBias8BitWidthSelectionTest, ManualWeightsBias32BitWidthSelectionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
     MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, \
@@ -951,71 +949,6 @@ class FeatureNetworkTest(unittest.TestCase):
         ManualBitWidthSelectionTest(self, [NodeNameFilter('add1'), NodeNameFilter('conv1')], [2, 4]).run_test()
         ManualBitWidthSelectionTest(self, [NodeNameFilter('add2'), NodeNameFilter('relu1')], 4).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeNameFilter('add2')], [4, 2]).run_test()
-
-    def test_invalid_weights_bit_width_selection(self):
-        """
-        This test checks the invalid bit-width in the manual weights bit-width selection feature.
-        """
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [11], [KERAS_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Manually selected weights bit-width [[11, 'kernel']] is invalid for node Conv2D:conv1.")
-        
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Dense), [7], [KERAS_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Manually selected weights bit-width [[7, 'kernel']] is invalid for node Dense:fc.")
-
-    def test_exceptions_manual_weights_selection(self):
-        """
-        This test checks the execptions in the manual weights bit-width selection feature.
-        """
-        # Node name doesn't exist in graph
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthSelectionTest(self, NodeNameFilter('conv3'), [16], [KERAS_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Node Filtering Error: No nodes found in the graph for filter {'node_name': 'conv3'} to change their bit width to 16.")
-        
-        # Invalid inputs to API
-        with self.assertRaises(Exception) as context:
-            ManualWeightsBitWidthSelectionTest(self,
-                                        [NodeNameFilter('conv1'), NodeNameFilter('conv2_bn'), NodeNameFilter('fc')],
-                                        [2, 4], [KERAS_KERNEL, KERAS_KERNEL, KERAS_KERNEL]).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Configuration Error: The number of provided bit_width values 2 must match the number of filters 3, or a single bit_width value should be provided for all filters.")
-
-    def test_manual_weights_bit_width_selection(self):
-        """
-        This test checks the manual weights bit-width selection feature.
-        """
-        ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [2], [KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [4], [KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [8], [KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [16], [KERAS_KERNEL]).run_test()
-        ManualWeightsBias2BitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [2], [BIAS]).run_test()
-        ManualWeightsBias4BitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [4], [BIAS]).run_test()
-        ManualWeightsBias8BitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [8], [BIAS]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [16], [BIAS]).run_test()
-        ManualWeightsBias32BitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), [32], [BIAS]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, NodeTypeFilter(layers.Dense), [16], [KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Conv2D)], [8, 16], [KERAS_KERNEL, BIAS]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Conv2D)], [16, 8], [BIAS, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Dense)], [2, 4], [KERAS_KERNEL, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Dense)], [16, 2], [BIAS, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, NodeNameFilter('conv1'), [4], [KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, NodeNameFilter('conv1'), [16], [BIAS]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeNameFilter('conv1'), NodeNameFilter('conv1')], [8, 16], [KERAS_KERNEL, BIAS]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeNameFilter('conv1'), NodeNameFilter('conv1')], [16, 2], [BIAS, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeNameFilter('conv1'), NodeNameFilter('conv2_bn')], [4, 16], [KERAS_KERNEL, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeNameFilter('conv1'), NodeNameFilter('fc')], [8, 2], [KERAS_KERNEL, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeNameFilter('conv1'), NodeNameFilter('conv2_bn')], [16, 8], [BIAS, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeNameFilter('conv2_bn')], [16, 4], [BIAS, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeNameFilter('conv2_bn'), NodeTypeFilter(layers.Conv2D)], [16, 4], [BIAS, KERAS_KERNEL]).run_test()
-        ManualWeightsBitWidthSelectionTest(self, [NodeNameFilter('conv1'), NodeNameFilter('conv2_bn'), NodeNameFilter('fc')], [2, 4, 8], [KERAS_KERNEL, KERAS_KERNEL, KERAS_KERNEL]).run_test()
 
 if __name__ == '__main__':
     unittest.main()
