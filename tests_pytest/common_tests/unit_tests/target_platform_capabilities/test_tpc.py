@@ -14,6 +14,7 @@
 # ==============================================================================
 import os
 import pytest
+from pydantic import ValidationError
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as current_schema
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
@@ -165,7 +166,7 @@ class TestTPModelInputOutput:
         assert os.path.exists(str(valid_export_path))
         with open(str(valid_export_path), "r", encoding="utf-8") as file:
             content = file.read()
-        assert content == tpc.json(indent=4)
+        assert content == tpc.model_dump_json(indent=4)
 
     def test_export_with_invalid_model(self, valid_export_path):
         """Tests that exporting an invalid model raises a ValueError."""
@@ -178,13 +179,13 @@ class TestTPModelInputOutput:
             export_target_platform_capabilities(tpc, str(invalid_export_path))
 
     def test_export_creates_parent_directories(self, tpc, tmp_path):
-        """Tests that exporting to an invalid path raises an OSError."""
+        """Tests that exporting creates parent directories as needed."""
         nested_path = tmp_path / "nested" / "directory" / "exported_model.json"
         export_target_platform_capabilities(tpc, str(nested_path))
         assert os.path.exists(str(nested_path))
         with open(str(nested_path), "r", encoding="utf-8") as file:
             content = file.read()
-        assert content == tpc.json(indent=4)
+        assert content == tpc.model_dump_json(indent=4)
         # Cleanup created directories
         os.remove(str(nested_path))
         os.rmdir(str(tmp_path / "nested" / "directory"))
@@ -200,16 +201,18 @@ class TestTPModelInputOutput:
 class TestTargetPlatformModeling:
     def test_immutable_tp(self):
         """Tests that modifying an immutable TargetPlatformCapabilities instance raises an exception."""
-        with pytest.raises(Exception, match='"TargetPlatformCapabilities" is immutable and does not support item assignment'):
-            model = current_schema.TargetPlatformCapabilities(
-                default_qco=TEST_QCO,
+        model = current_schema.TargetPlatformCapabilities(
+            default_qco=TEST_QCO,
                 operator_set=(current_schema.OperatorsSet(name="opset"),),
-                tpc_minor_version=None,
-                tpc_patch_version=None,
-                tpc_platform_type=None,
-                add_metadata=False
-            )
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False
+        )
+        # Expecting a TypeError or AttributeError due to immutability
+        with pytest.raises(ValidationError , match="Instance is frozen"):
             model.operator_set = tuple()
+
 
     def test_default_options_more_than_single_qc(self):
         """Tests that creating a TargetPlatformCapabilities with default_qco containing more than one configuration raises an exception."""
@@ -304,7 +307,7 @@ class TestQCOptions:
 
     def test_list_of_no_qc(self):
         """Tests that providing an invalid configuration list (non-dict values) to QuantizationConfigOptions raises an exception."""
-        with pytest.raises(Exception, match="value is not a valid dict"):
+        with pytest.raises(ValidationError, match="Input should be a valid dictionary"):
             current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC, 3), base_config=TEST_QC)
 
     def test_clone_and_edit_options(self):

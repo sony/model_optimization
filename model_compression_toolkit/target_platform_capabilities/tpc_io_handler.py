@@ -100,6 +100,6 @@ def export_target_platform_capabilities(model: schema.TargetPlatformCapabilities
 
         # Export the model to JSON and write to the file
         with path.open('w', encoding='utf-8') as file:
-            file.write(model.json(indent=4))
+            file.write(model.model_dump_json(indent=4))
     except OSError as e:
         raise OSError(f"Failed to write to file '{export_path}': {e.strerror}") from e
