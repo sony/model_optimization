@@ -16,7 +16,7 @@ from collections import namedtuple
 
 from copy import copy, deepcopy
 from functools import wraps
-from typing import List, Tuple, Any, Callable
+from typing import List, Tuple, Any, Callable, Dict
 
 import networkx as nx
 import numpy as np
@@ -684,7 +684,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                 sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes
 
-    def get_min_candidates_config(self, fw_info: FrameworkInfo) -> List[int]:
+    def get_min_candidates_config(self, fw_info: FrameworkInfo) -> Dict[BaseNode, int]:
         """
         Builds a minimal configuration.
         Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
@@ -694,18 +694,13 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Args:
             fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
 
-        Returns: A list of candidate for each node (list on indices)
+        Returns:
+            A dict from layer to an index of its minimal candidate.
         """
-
         conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
-        min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
+        return {n: n.find_min_candidate_index() for n in conf_sorted_nodes}
 
-        assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
-            f"A minimal config candidate must be defined, but some node have multiple potential minimal candidates"
-
-        return [lst[0] for lst in min_cfg_candidates]
-
-    def get_max_candidates_config(self, fw_info: FrameworkInfo) -> List[int]:
+    def get_max_candidates_config(self, fw_info: FrameworkInfo) -> Dict[BaseNode, int]:
         """
         Builds a maximal configuration.
         Note: we assume that a maximal configuration exists, i.e., each configurable node has exactly one candidate
@@ -715,16 +710,11 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Args:
             fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
 
-        Returns: A list of candidate for each node (list on indices)
+        Returns:
+            A dict from layer to an index of its maximal candidate.
         """
-
         conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
-        max_cfg_candidates = [n.find_max_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
-
-        assert all([len(lst) == 1 for lst in max_cfg_candidates]), \
-            f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
-
-        return [lst[0] for lst in max_cfg_candidates]
+        return {n: n.find_max_candidate_index() for n in conf_sorted_nodes}
 
     def get_final_weights_config(self, fw_info: FrameworkInfo) -> List[Tuple[BaseNode, int]]:
         """

@@ -14,10 +14,9 @@
 # ==============================================================================
 import abc
 import copy
-from typing import Callable, Generator
+from typing import  Generator
 
-from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitActivationNode, VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
@@ -25,12 +24,11 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig, \
-    OpQuantizationConfig, QuantizationConfigOptions, Signedness, OperatorsSet, OperatorSetNames, \
-    TargetPlatformCapabilities
+    OpQuantizationConfig, QuantizationConfigOptions, Signedness, OperatorSetNames, TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
-from tests_pytest._test_util.tpc_util import build_mp_config_options_for_kernel_bias_ops
+from tests_pytest._test_util.fw_test_base import BaseFWIntegrationTest
+from tests_pytest._test_util.tpc_util import configure_mp_opsets_for_kernel_bias_ops, configure_mp_activation_opsets
 
 
 def build_tpc():
@@ -61,25 +59,21 @@ def build_tpc():
 
     linear_w_min_nbit = 2
     linear_a_min_nbit = 4
-    mp_cfg_options = build_mp_config_options_for_kernel_bias_ops(base_w_config=default_w_cfg,
-                                                                 base_op_config=default_w_op_cfg,
-                                                                 w_nbits=[linear_w_min_nbit*i for i in (1, 2, 4)],
-                                                                 a_nbits=[linear_a_min_nbit*i for i in (1, 2)])
-
-    linear_ops = [OperatorsSet(name=opset, qc_options=mp_cfg_options) for opset in (OperatorSetNames.CONV,
-                                                                                    OperatorSetNames.CONV_TRANSPOSE,
-                                                                                    OperatorSetNames.DEPTHWISE_CONV,
-                                                                                    OperatorSetNames.FULLY_CONNECTED)]
+    linear_ops, _ = configure_mp_opsets_for_kernel_bias_ops(
+        opset_names=[OperatorSetNames.CONV, OperatorSetNames.CONV_TRANSPOSE,
+                     OperatorSetNames.DEPTHWISE_CONV, OperatorSetNames.FULLY_CONNECTED],
+        base_w_config=default_w_cfg,
+        base_op_config=default_w_op_cfg,
+        w_nbits=[linear_w_min_nbit*i for i in (1, 2, 4)],
+        a_nbits=[linear_a_min_nbit*i for i in (1, 2)]
+    )
 
     default_cfg = QuantizationConfigOptions(quantization_configurations=[default_op_cfg])
 
     binary_out_a_bit = 16
-    binary_cfg = QuantizationConfigOptions(
-        quantization_configurations=[default_op_cfg.clone_and_edit(activation_n_bits=binary_out_a_bit)]
-    )
-    binary_ops = [
-        OperatorsSet(name=opset, qc_options=binary_cfg) for opset in (OperatorSetNames.ADD, OperatorSetNames.SUB)
-    ]
+    binary_ops, _ = configure_mp_activation_opsets(opset_names=[OperatorSetNames.ADD, OperatorSetNames.SUB],
+                                                   base_op_config=default_op_cfg.clone_and_edit(activation_n_bits=binary_out_a_bit),
+                                                   a_nbits=[binary_out_a_bit])
 
     tpc = TargetPlatformCapabilities(default_qco=default_cfg,
                                      tpc_platform_type='test',
@@ -91,12 +85,8 @@ def build_tpc():
     return tpc, linear_w_min_nbit, linear_a_min_nbit, default_w_nbit, default_a_nbit, binary_out_a_bit
 
 
-class BaseRUIntegrationTester(abc.ABC):
+class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
     """ Test resource utilization calculator on a real framework model with graph preparation """
-    fw_info: FrameworkInfo
-    fw_impl: FrameworkImplementation
-    attach_to_fw_func: Callable
-
     bhwc_input_shape = (1, 18, 18, 3)
 
     @abc.abstractmethod
@@ -240,14 +230,7 @@ class BaseRUIntegrationTester(abc.ABC):
         # If disable_linear_collapse is False we use the default quantization config
         tpc, *nbits = build_tpc()
         qcfg = QuantizationConfig(linear_collapsing=False) if disable_linear_collapse else QuantizationConfig()
-        graph = graph_preparation_runner(model,
-                                         self._data_gen,
-                                         quantization_config=qcfg,
-                                         fw_info=self.fw_info,
-                                         fw_impl=self.fw_impl,
-                                         fqc=self.attach_to_fw_func(tpc),
-                                         mixed_precision_enable=True,
-                                         running_gptq=False)
+        graph = self.run_graph_preparation(model, self._data_gen, tpc, qcfg, mp=True)
         return graph, nbits
 
     @staticmethod

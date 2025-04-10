@@ -15,6 +15,8 @@
 from typing import Dict, List
 
 from model_compression_toolkit.core import ResourceUtilization
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
+    MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.mixed_precision.solution_refinement_procedure import greedy_solution_refinement_procedure
 
 import pytest
@@ -27,11 +29,8 @@ def search_manager():
     manager = Mock()
     manager.mp_topo_configurable_nodes = MagicMock()
     manager.fw_info.get_kernel_op_attributes = MagicMock()
-    manager.replace_config_in_index = MagicMock(
-        side_effect=lambda config, idx, candidate: (
-            lambda new_config: (new_config.__setitem__(idx, candidate), new_config)[1]
-        )(copy.deepcopy(config))
-    )
+    manager.copy_config_with_replacement = MixedPrecisionSearchManager.copy_config_with_replacement
+    manager.using_virtual_graph = False    # asserted in refinement
     return manager
 
 
@@ -99,18 +98,18 @@ def test_greedy_solution_refinement_procedure(
     weight_bits_dict_1 = {'kernel': 4}
     act_bits_1 = 8
 
-    initial_solution = [1]
-    expected_solution = [1]
-
     node_mock = Mock()
     node_mock.candidates_quantization_cfg = candidate_configs(weight_bits_dict_0, act_bits_0, weight_bits_dict_1, act_bits_1)
+
+    initial_solution = {node_mock: 1}
+    expected_solution = {node_mock: 1}
 
     search_manager.mp_topo_configurable_nodes = [node_mock]
 
     search_manager.compute_resource_utilization_for_config = MagicMock(side_effect=lambda config: {
         0: ResourceUtilization(**alternative_candidate_resources_usage),
         1: ResourceUtilization(weights_memory=50, activation_memory=50),
-    }[config[-1]])
+    }[config[node_mock]])
 
     target_resource_utilization = ResourceUtilization(**resource_limit)
 

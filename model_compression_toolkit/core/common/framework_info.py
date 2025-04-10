@@ -22,6 +22,12 @@ from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.defaultdict import DefaultDict
 
 
+# Default value to use for ops without kernel.
+# This is a weird default, but it's used all over the place, so for now only extract it to const so that it can be
+# referenced by variable instead of hard-coded.
+DEFAULT_KERNEL_ATTRIBUTES = [None]
+
+
 class ChannelAxis(Enum):
     """
 

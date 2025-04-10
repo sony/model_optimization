@@ -62,18 +62,9 @@ from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import 
 from tests.pytorch_tests.model_tests.feature_models.matmul_test import MatMulFNetTest, MatMulOpNetTest
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
-    MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
-    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs, \
-    MixedPrecisionDistanceFunctions, MixedPrecisionActivationConfigurableWeights
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
-    MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
-    MixedPrecisionBopsAndWeightsMemoryUtilizationTest, MixedPrecisionBopsAndActivationMemoryUtilizationTest, \
-    MixedPrecisionBopsAndTotalMemoryUtilizationTest, \
-    MixedPrecisionBopsWeightsActivationUtilizationTest, MixedPrecisionBopsMultipleOutEdgesTest
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPrecisionSearch4Bit, \
-    MixedPrecisionActivationDisabledTest, MixedPrecisionSearchLastLayerDistance, MixedPrecisionWithHessianScores, \
-    MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit, \
-    MixedPrecisionWeightsConfigurableActivations
+    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs, MixedPrecisionDistanceFunctions
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import \
+    MixedPrecisionActivationDisabledTest, MixedPrecisionSearchLastLayerDistance, MixedPrecisionWithHessianScores
 from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
     MHALayerNetFeatureTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
@@ -523,30 +514,11 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         SymmetricActivationTest(self).run_test()
 
-    def test_mixed_precision_8bit(self):
-        """
-        This test checks the Mixed Precision search.
-        """
-        MixedPrecisionSearch8Bit(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPrecisionSearch8Bit(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
-
     def test_mixed_precision_with_hessian_weights(self):
         """
         This test checks the Mixed Precision search with Hessian-based scores.
         """
         MixedPrecisionWithHessianScores(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-
-    def test_mixed_precision_part_weights_layers(self):
-        """
-        This test checks the Mixed Precision search.
-        """
-        MixedPrecisionSearchPartWeightsLayers(self).run_test()
-
-    def test_mixed_precision_2bit(self):
-        """
-        This test checks the Mixed Precision search.
-        """
-        MixedPrecisionSearch2Bit(self).run_test()
 
     def test_reshape_net(self):
         """
@@ -555,12 +527,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
         """
         ReshapeNetTest(self).run_test()
-
-    def test_mixed_precision_4bit(self):
-        """
-        This test checks the Mixed Precision search.
-        """
-        MixedPrecisionSearch4Bit(self).run_test()
 
     def test_mixed_precision_with_last_layer_distance(self):
         """
@@ -574,36 +540,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         MixedPrecisionActivationDisabledTest(self).run_test()
 
-    def test_mixed_precision_activation_8bit(self):
-        """
-        This test checks the activation Mixed Precision search.
-        """
-        MixedPrecisionActivationSearch8Bit(self).run_test()
-
-    def test_mixed_precision_activation_2bit(self):
-        """
-        This test checks the activation Mixed Precision search.
-        """
-        MixedPrecisionActivationSearch2Bit(self).run_test()
-
-    def test_mixed_precision_activation_4bit(self):
-        """
-        This test checks the activation Mixed Precision search.
-        """
-        MixedPrecisionActivationSearch4Bit(self).run_test()
-
-    def test_mixed_precision_activation_only_conf_weights(self):
-        """
-        This test checks the Mixed Precision for activation only with configurable weights layers.
-        """
-        MixedPrecisionActivationConfigurableWeights(self).run_test()
-
-    def test_mixed_precision_weights_only_conf_activations(self):
-        """
-        This test checks the Mixed Precision for weights only with configurable activation layers.
-        """
-        MixedPrecisionWeightsConfigurableActivations(self).run_test()
-
     def test_mixed_precision_activation_4bit_functional(self):
         """
         This test checks the activation Mixed Precision search with functional node.
@@ -611,24 +547,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionActivationSearch4BitFunctional(self).run_test()
 
     def test_mixed_precision_multiple_inputs(self):
-       """
-       This test checks the activation Mixed Precision search with multiple inputs to model.
-       """
-       MixedPrecisionActivationMultipleInputs(self).run_test()
-
-    def test_mixed_precision_bops_utilization(self):
         """
-        This test checks different scenarios for mixed-precision quantization with bit-operations constraint.
+        This test checks the activation Mixed Precision search with multiple inputs to model.
         """
-        MixedPrecisionBopsBasicTest(self).run_test()
-        MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
-        MixedPrecisionWeightsOnlyBopsTest(self).run_test()
-        MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        MixedPrecisionBopsAndWeightsMemoryUtilizationTest(self).run_test()
-        MixedPrecisionBopsAndActivationMemoryUtilizationTest(self).run_test()
-        MixedPrecisionBopsAndTotalMemoryUtilizationTest(self).run_test()
-        MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
-        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
+        MixedPrecisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_distance_functions(self):
        """

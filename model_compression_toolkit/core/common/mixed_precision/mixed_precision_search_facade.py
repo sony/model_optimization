@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from enum import Enum
-from typing import List, Callable
+from typing import List, Callable, Dict
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
@@ -107,4 +107,4 @@ def search_bit_width(graph: Graph,
     if mp_config.refine_mp_solution:
         result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_resource_utilization)
 
-    return result_bit_cfg
+    return list(result_bit_cfg.values())

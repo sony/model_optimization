@@ -94,7 +94,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
                                          ConfigurableWeightsQuantizer(
                                              node_q_cfg=node.candidates_quantization_cfg,
                                              float_weights=node.get_weights_by_keys(KERNEL),
-                                             max_candidate_idx=node.find_max_candidates_indices()[0],
+                                             max_candidate_idx=node.find_max_candidate_index(),
                                              kernel_attr=KERNEL)
                                      })
 
@@ -126,7 +126,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
         holder_layer = \
             KerasActivationQuantizationHolder(ConfigurableActivationQuantizer(
                 node_q_cfg=node.candidates_quantization_cfg,
-                max_candidate_idx=node.find_max_candidates_indices()[0]))
+                max_candidate_idx=node.find_max_candidate_index()))
 
         q = holder_layer.activation_holder_quantizer
 
