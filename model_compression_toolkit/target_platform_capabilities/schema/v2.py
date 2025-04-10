@@ -15,12 +15,20 @@
 import pprint
 from typing import Dict, Any, Tuple, Optional
 
-from pydantic import BaseModel, model_validator, ConfigDict
+from pydantic import BaseModel, root_validator, model_validator, ConfigDict
 
+from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import (
+    Signedness,
+    AttributeQuantizationConfig,
+    OpQuantizationConfig,
     QuantizationConfigOptions,
+    TargetPlatformModelComponent,
+    OperatorsSetBase,
     OperatorsSet,
+    OperatorSetGroup,
     Fusing,
     OperatorSetNames)
 
