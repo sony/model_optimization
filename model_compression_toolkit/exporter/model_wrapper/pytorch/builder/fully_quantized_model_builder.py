@@ -103,8 +103,8 @@ if FOUND_TORCH:
                                                           wrapper=lambda n, m:
                                                           fully_quantized_wrapper(n, m,
                                                                                   fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation()),
-                                                          get_activation_quantizer_holder_fn=lambda n, pn:
-                                                          get_activation_quantizer_holder(n, pn,
+                                                          get_activation_quantizer_holder_fn=lambda n:
+                                                          get_activation_quantizer_holder(n,
                                                                                           fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
 
         Logger.info("\nPlease run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
