@@ -15,17 +15,19 @@
 import os
 import pytest
 from pydantic import ValidationError
-
-import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as current_schema
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
+from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS, \
+    all_tpc_types, FUTURE_SCHEMA_VERSIONS
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import get_config_options_by_operators_set, is_opset_in_model
-from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities, export_target_platform_capabilities
+from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities, \
+    export_target_platform_capabilities
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 
 # Setup TEST_QC and TEST_QCO for testing.
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
-TEST_QCO = schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,))
+TEST_QCO = current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,))
 
 
 # Fixtures for reusable resources
@@ -36,25 +38,49 @@ to each test function. It is represented as a pathlib.Path object and is automat
 and cleaned up by pytest. You can use it to create temporary files and directories during tests 
 without worrying about manual cleanup. For more details, please see the pytest tmp_path documentation.
 '''
-@pytest.fixture
-def tpc():
-    """Fixture that returns a TargetPlatformCapabilities instance for testing."""
-    op1 = schema.OperatorsSet(name="opset1")
-    op2 = schema.OperatorsSet(name="opset2")
-    op3 = schema.OperatorsSet(name="opset3")
-    op12 = schema.OperatorSetGroup(operators_set=[op1, op2])
-    return schema.TargetPlatformCapabilities(
+
+
+def get_tpc(selected_schema):
+    """
+    :param selected_schema: A schema to create tpc from
+    :return: TargetPlatformCapabilities instance using the given selected_schema
+    """
+    op1 = selected_schema.OperatorsSet(name="opset1")
+    op2 = selected_schema.OperatorsSet(name="opset2")
+    op3 = selected_schema.OperatorsSet(name="opset3")
+    op12 = selected_schema.OperatorSetGroup(operators_set=[op1, op2])
+    return selected_schema.TargetPlatformCapabilities(
         default_qco=TEST_QCO,
         operator_set=(op1, op2, op3),
         fusing_patterns=(
-            schema.Fusing(operator_groups=(op12, op3)),
-            schema.Fusing(operator_groups=(op1, op2))
+            selected_schema.Fusing(operator_groups=(op12, op3)),
+            selected_schema.Fusing(operator_groups=(op1, op2))
         ),
         tpc_minor_version=1,
         tpc_patch_version=0,
         tpc_platform_type="dump_to_json",
         add_metadata=False
     )
+
+
+@pytest.fixture
+def tpc():
+    """Fixture that returns a TargetPlatformCapabilities instance of current schema."""
+    return get_tpc(current_schema)
+
+
+@pytest.fixture(params=ALL_SCHEMA_VERSIONS)
+def tpc_by_schema_version(request):
+    """Fixture that yields a TargetPlatformCapabilities instance for each schema version."""
+    selected_schema = request.param
+    yield get_tpc(selected_schema)
+
+
+@pytest.fixture(params=ALL_SCHEMA_VERSIONS + FUTURE_SCHEMA_VERSIONS)
+def tpc_by_future_schema_version(request):
+    """Fixture that yields a TargetPlatformCapabilities instance for each schema version, including future schemas."""
+    selected_schema = request.param
+    yield get_tpc(selected_schema)
 
 
 @pytest.fixture
@@ -84,11 +110,32 @@ def nonexistent_file(tmp_path):
     return tmp_path / "nonexistent.json"
 
 
+class TestTPModelInitialization:
+
+    def test_tpc_initialization(self, tpc_by_future_schema_version):
+        """
+        Test tpc initialization for all supported schemas & future schemas (i.e. schema with newer version
+        than current schema). Test goal is to validate new (not in use yet) schemas are covered by Coverage test
+        """
+        tpc_by_schema = tpc_by_schema_version
+
+
 class TestTPModelInputOutput:
     def test_valid_model_object(self, tpc):
         # Tests that a valid TPC object is returned unchanged.
         result = load_target_platform_capabilities(tpc)
         assert result == tpc
+
+    def test_new_schema(self, tpc):
+        """Tests that current schema is in all schemas list. This test validates new schema was added properly."""
+        assert type(tpc) in all_tpc_types, "Current schema need to be added to ALL_SCHEMA_VERSIONS"
+
+    def test_schema_compatibility(self, tpc_by_schema_version):
+        """Tests that tpc of any schema version is supported and can be converted into current schema version"""
+        tpc_by_schema = tpc_by_schema_version
+        result = load_target_platform_capabilities(tpc_by_schema)
+        assert isinstance(result, current_schema.TargetPlatformCapabilities), \
+            f"Make sure all schema versions can be converted into current schema version"
 
     def test_invalid_json_parsing(self, tmp_invalid_json):
         """Tests that invalid JSON content raises a ValueError."""
@@ -154,9 +201,9 @@ class TestTPModelInputOutput:
 class TestTargetPlatformModeling:
     def test_immutable_tp(self):
         """Tests that modifying an immutable TargetPlatformCapabilities instance raises an exception."""
-        model = schema.TargetPlatformCapabilities(
+        model = current_schema.TargetPlatformCapabilities(
             default_qco=TEST_QCO,
-            operator_set=(schema.OperatorsSet(name="opset"),),
+                operator_set=(current_schema.OperatorsSet(name="opset"),),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
@@ -169,12 +216,12 @@ class TestTargetPlatformModeling:
 
     def test_default_options_more_than_single_qc(self):
         """Tests that creating a TargetPlatformCapabilities with default_qco containing more than one configuration raises an exception."""
-        test_qco = schema.QuantizationConfigOptions(
+        test_qco = current_schema.QuantizationConfigOptions(
             quantization_configurations=(TEST_QC, TEST_QC),
             base_config=TEST_QC
         )
         with pytest.raises(Exception, match='Default QuantizationConfigOptions must contain exactly one option.'):
-            schema.TargetPlatformCapabilities(
+            current_schema.TargetPlatformCapabilities(
                 default_qco=test_qco,
                 tpc_minor_version=None,
                 tpc_patch_version=None,
@@ -184,13 +231,13 @@ class TestTargetPlatformModeling:
 
     def test_tpc_show(self, capsys):
         """Tests that the show() method of TargetPlatformCapabilities produces output."""
-        tpm = schema.TargetPlatformCapabilities(
+        tpm = current_schema.TargetPlatformCapabilities(
             default_qco=TEST_QCO,
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
-            operator_set=(schema.OperatorsSet(name="opA"), schema.OperatorsSet(name="opB")),
-            fusing_patterns=(schema.Fusing(operator_groups=(schema.OperatorsSet(name="opA"), schema.OperatorsSet(name="opB"))),),
+            operator_set=(current_schema.OperatorsSet(name="opA"), current_schema.OperatorsSet(name="opB")),
+            fusing_patterns=(current_schema.Fusing(operator_groups=(current_schema.OperatorsSet(name="opA"), current_schema.OperatorsSet(name="opB"))),),
             add_metadata=False
         )
         tpm.show()
@@ -203,8 +250,8 @@ class TestOpset:
         """Tests that the quantization configuration options for an opset are correctly set and retrievable."""
         opset_name = "ops_3bit"
         qco_3bit = TEST_QCO.clone_and_edit(activation_n_bits=3)
-        operator_set = [schema.OperatorsSet(name=opset_name, qc_options=qco_3bit)]
-        hm = schema.TargetPlatformCapabilities(
+        operator_set = [current_schema.OperatorsSet(name=opset_name, qc_options=qco_3bit)]
+        hm = current_schema.TargetPlatformCapabilities(
             default_qco=TEST_QCO,
             operator_set=tuple(operator_set),
             tpc_minor_version=None,
@@ -223,11 +270,11 @@ class TestOpset:
     def test_opset_concat(self):
         """Tests that concatenation of operator sets is handled correctly and non-existent concatenated opsets are not found."""
         operator_set = []
-        a = schema.OperatorsSet(name='opset_A')
-        b = schema.OperatorsSet(name='opset_B', qc_options=TEST_QCO.clone_and_edit(activation_n_bits=2))
-        c = schema.OperatorsSet(name='opset_C')
+        a = current_schema.OperatorsSet(name='opset_A')
+        b = current_schema.OperatorsSet(name='opset_B', qc_options=TEST_QCO.clone_and_edit(activation_n_bits=2))
+        c = current_schema.OperatorsSet(name='opset_C')
         operator_set.extend([a, b, c])
-        hm = schema.TargetPlatformCapabilities(
+        hm = current_schema.TargetPlatformCapabilities(
             default_qco=TEST_QCO,
             operator_set=tuple(operator_set),
             tpc_minor_version=None,
@@ -242,9 +289,9 @@ class TestOpset:
     def test_non_unique_opset(self):
         """Tests that creating a TargetPlatformCapabilities with duplicate operator set names raises an exception."""
         with pytest.raises(Exception, match='Operator Sets must have unique names.'):
-            schema.TargetPlatformCapabilities(
-                default_qco=schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
-                operator_set=(schema.OperatorsSet(name="conv"), schema.OperatorsSet(name="conv")),
+            current_schema.TargetPlatformCapabilities(
+                default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+                operator_set=(current_schema.OperatorsSet(name="conv"), current_schema.OperatorsSet(name="conv")),
                 tpc_minor_version=None,
                 tpc_patch_version=None,
                 tpc_platform_type=None,
@@ -256,12 +303,12 @@ class TestQCOptions:
     def test_empty_qc_options(self):
         """Tests that initializing QuantizationConfigOptions with an empty configuration raises an exception."""
         with pytest.raises(Exception, match="'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided configurations are empty."):
-            schema.QuantizationConfigOptions(quantization_configurations=())
+            current_schema.QuantizationConfigOptions(quantization_configurations=())
 
     def test_list_of_no_qc(self):
         """Tests that providing an invalid configuration list (non-dict values) to QuantizationConfigOptions raises an exception."""
         with pytest.raises(ValidationError, match="Input should be a valid dictionary"):
-            schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC, 3), base_config=TEST_QC)
+            current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC, 3), base_config=TEST_QC)
 
     def test_clone_and_edit_options(self):
         """Tests that the clone_and_edit methods correctly modify the quantization configuration options."""
@@ -275,9 +322,9 @@ class TestQCOptions:
     def test_qco_without_base_config(self):
         """Tests that providing multiple configurations without a base_config raises an exception."""
         # Single config should work
-        schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,))
+        current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,))
         with pytest.raises(Exception, match="For multiple configurations, a 'base_config' is required for non-mixed-precision optimization."):
-            schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC, TEST_QC))
+            current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC, TEST_QC))
 
     def test_get_qco_for_none_tpc(self):
         """Tests that calling get_qco with None as FQC on a BaseNode raises an exception."""
@@ -289,12 +336,12 @@ class TestQCOptions:
 class TestFusing:
     def test_fusing_single_opset(self):
         """Tests that creating a Fusing pattern with a single operator raises an exception."""
-        add = schema.OperatorsSet(name="add")
+        add = current_schema.OperatorsSet(name="add")
         with pytest.raises(Exception, match="Fusing cannot be created for a single operator."):
-            schema.TargetPlatformCapabilities(
-                default_qco=schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+            current_schema.TargetPlatformCapabilities(
+                default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
                 operator_set=(add,),
-                fusing_patterns=(schema.Fusing(operator_groups=(add,)),),
+                fusing_patterns=(current_schema.Fusing(operator_groups=(add,)),),
                 tpc_minor_version=None,
                 tpc_patch_version=None,
                 tpc_platform_type=None,
@@ -304,16 +351,16 @@ class TestFusing:
     def test_fusing_contains(self):
         """Tests that the contains method for fusing patterns correctly identifies containment relationships."""
         operator_set = []
-        conv = schema.OperatorsSet(name="conv")
-        add = schema.OperatorsSet(name="add")
-        tanh = schema.OperatorsSet(name="tanh")
+        conv = current_schema.OperatorsSet(name="conv")
+        add = current_schema.OperatorsSet(name="add")
+        tanh = current_schema.OperatorsSet(name="tanh")
         operator_set.extend([conv, add, tanh])
         fusing_patterns = (
-            schema.Fusing(operator_groups=(conv, add)),
-            schema.Fusing(operator_groups=(conv, add, tanh))
+            current_schema.Fusing(operator_groups=(conv, add)),
+            current_schema.Fusing(operator_groups=(conv, add, tanh))
         )
-        hm = schema.TargetPlatformCapabilities(
-            default_qco=schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+        hm = current_schema.TargetPlatformCapabilities(
+            default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
             operator_set=tuple(operator_set),
             fusing_patterns=fusing_patterns,
             tpc_minor_version=None,
@@ -331,18 +378,18 @@ class TestFusing:
     def test_fusing_contains_with_opset_concat(self):
         """Tests that fusing patterns correctly evaluate containment when operator sets are concatenated."""
         operator_set = []
-        conv = schema.OperatorsSet(name="conv")
-        add = schema.OperatorsSet(name="add")
-        tanh = schema.OperatorsSet(name="tanh")
+        conv = current_schema.OperatorsSet(name="conv")
+        add = current_schema.OperatorsSet(name="add")
+        tanh = current_schema.OperatorsSet(name="tanh")
         operator_set.extend([conv, add, tanh])
-        add_tanh = schema.OperatorSetGroup(operators_set=[add, tanh])
+        add_tanh = current_schema.OperatorSetGroup(operators_set=[add, tanh])
         fusing_patterns = (
-            schema.Fusing(operator_groups=(conv, add)),
-            schema.Fusing(operator_groups=(conv, add_tanh)),
-            schema.Fusing(operator_groups=(conv, add, tanh))
+            current_schema.Fusing(operator_groups=(conv, add)),
+            current_schema.Fusing(operator_groups=(conv, add_tanh)),
+            current_schema.Fusing(operator_groups=(conv, add, tanh))
         )
-        hm = schema.TargetPlatformCapabilities(
-            default_qco=schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+        hm = current_schema.TargetPlatformCapabilities(
+            default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
             operator_set=tuple(operator_set),
             fusing_patterns=fusing_patterns,
             tpc_minor_version=None,

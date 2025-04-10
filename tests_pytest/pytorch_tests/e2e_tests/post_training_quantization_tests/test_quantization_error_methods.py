@@ -98,7 +98,7 @@ def get_tpc():
                                   activation_n_bits=2,
                                   supported_input_activation_n_bits=2,
                                   enable_activation_quantization=True,
-                                  quantization_preserving=True,
+                                  quantization_preserving=False,
                                   fixed_scale=None,
                                   fixed_zero_point=None,
                                   simd_size=32,
