@@ -310,14 +310,23 @@ class PytorchModel(torch.nn.Module):
             else:
                 self.add_module(node.name, node_op)
 
-            # Add activation quantization modules if an activation holder is configured for this node
-            if node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:
-                prev_node = self.graph.retrieve_preserved_quantization_node(node)
-                activation_quantizer_holder = self.get_activation_quantizer_holder(node, prev_node)
-                if activation_quantizer_holder is not None:
-                    self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
-                    self.node_to_activation_quantization_holder.update(
-                        {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
+            if node.is_quantization_preserving():
+                if node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:
+                    prev_node = self.graph.retrieve_preserved_quantization_node(node)
+                    activation_quantizer_holder = self.get_activation_quantizer_holder(prev_node)
+                    if activation_quantizer_holder is not None:
+                        self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
+                        self.node_to_activation_quantization_holder.update(
+                            {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
+
+            else:
+                # Add activation quantization modules if an activation holder is configured for this node
+                if node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:
+                    activation_quantizer_holder = self.get_activation_quantizer_holder(node)
+                    if activation_quantizer_holder is not None:
+                        self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
+                        self.node_to_activation_quantization_holder.update(
+                            {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
 
     def forward(self,
                 *args: Any) -> Any:
