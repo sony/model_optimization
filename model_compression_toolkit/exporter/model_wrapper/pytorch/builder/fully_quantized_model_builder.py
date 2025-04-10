@@ -23,7 +23,7 @@ import model_compression_toolkit.core as C
 
 if FOUND_TORCH:
     import torch
-    from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
+    from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
     from mct_quantizers.common.constants import OP_CALL_ARGS, OP_CALL_KWARGS
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
     from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
@@ -80,6 +80,9 @@ if FOUND_TORCH:
         # thus we make sure this is the only possible case (unless it's a node we no activation
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
+            if node.is_quantization_preserving():
+                return PytorchPreservingActivationQuantizationHolder(activation_quantizers[0], quantization_bypass=True)
+
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
         Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
