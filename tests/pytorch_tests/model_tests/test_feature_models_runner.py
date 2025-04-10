@@ -116,6 +116,7 @@ from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test i
 from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
+from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL, BIAS
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -875,9 +876,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('relu'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], [2, 4]).run_test()
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], 4).run_test()
-
-
-
 
 if __name__ == '__main__':
     unittest.main()
