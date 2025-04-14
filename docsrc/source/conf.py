@@ -10,6 +10,20 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import logging
+import re
+
+# Define a filter that suppresses log records matching our unwanted warning message.
+class IgnoreGuardedTypeImportFilter(logging.Filter):
+    def filter(self, record):
+        # Return False (i.e. ignore) if the message contains our specific text.
+        if re.search(r"Failed guarded type import with ImportError.*AbstractSetIntStr", record.getMessage()):
+            return False
+        return True
+
+# Attach the filter to the "sphinx" logger.
+logger = logging.getLogger("sphinx")
+logger.addFilter(IgnoreGuardedTypeImportFilter())
 
 import os
 import sys

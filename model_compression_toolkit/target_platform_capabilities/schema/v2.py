@@ -13,10 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import pprint
-from enum import Enum
 from typing import Dict, Any, Tuple, Optional
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, root_validator, model_validator, ConfigDict
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
@@ -62,27 +61,26 @@ class TargetPlatformCapabilities(BaseModel):
 
     SCHEMA_VERSION: int = 2
 
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
-    @root_validator(allow_reuse=True)
-    def validate_after_initialization(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="after")
+    def validate_after_initialization(cls, model: 'TargetPlatformCapabilities') -> Any:
         """
         Perform validation after the model has been instantiated.
 
         Args:
-            values (Dict[str, Any]): The instantiated target platform model.
+            model (TargetPlatformCapabilities): The instantiated target platform model.
 
         Returns:
-            Dict[str, Any]: The validated values.
+            TargetPlatformCapabilities: The validated model.
         """
         # Validate `default_qco`
-        default_qco = values.get('default_qco')
+        default_qco = model.default_qco
         if len(default_qco.quantization_configurations) != 1:
             Logger.critical("Default QuantizationConfigOptions must contain exactly one option.")  # pragma: no cover
 
         # Validate `operator_set` uniqueness
-        operator_set = values.get('operator_set')
+        operator_set = model.operator_set
         if operator_set is not None:
             opsets_names = [
                 op.name.value if isinstance(op.name, OperatorSetNames) else op.name
@@ -91,7 +89,7 @@ class TargetPlatformCapabilities(BaseModel):
             if len(set(opsets_names)) != len(opsets_names):
                 Logger.critical("Operator Sets must have unique names.")  # pragma: no cover
 
-        return values
+        return model
 
     def get_info(self) -> Dict[str, Any]:
         """
