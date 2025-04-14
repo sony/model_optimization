@@ -84,7 +84,7 @@ class QFractionLinearAnnealingConfig:
             raise ValueError(f'Expected start_step >= 0. received {self.start_step}.')
         if self.end_step is not None and self.end_step <= self.start_step:
             raise ValueError('Expected start_step < end_step, '
-                             'received end_step {self.end_step} and start_step {self.start_stap}.')
+                             f'received end_step {self.end_step} and start_step {self.start_step}.')
 
 
 @dataclass
