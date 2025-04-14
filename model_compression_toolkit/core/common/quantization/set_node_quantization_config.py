@@ -25,7 +25,8 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig, \
+    ActivationQuantizationMode
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
     QuantizationErrorMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
@@ -191,8 +192,9 @@ def set_quantization_configs_to_node(node: BaseNode,
     node.sort_node_candidates(fw_info)
 
     for candidate_qc in node.candidates_quantization_cfg:
-        candidate_qc.activation_quantization_cfg.enable_activation_quantization = \
-            candidate_qc.activation_quantization_cfg.enable_activation_quantization and node.get_has_activation()
+        if candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.QUANT and \
+                not node.get_has_activation():
+            candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
 
 
 def create_node_activation_qc(qc: QuantizationConfig,

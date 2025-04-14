@@ -15,12 +15,12 @@
 import operator
 from copy import deepcopy
 from functools import partial
-from typing import List, Any, Tuple, Callable, Type, Dict, Generator
+from typing import List, Any, Tuple, Callable, Generator
 
 import numpy as np
 import torch
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
-from torch import sigmoid, softmax, add, cat, argmax, concat, concatenate
+from torch import sigmoid, softmax, add, cat, argmax, concat, concatenate, stack
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
 
@@ -143,6 +143,19 @@ class PytorchImplementation(FrameworkImplementation):
             Framework's tensor converted from the input Numpy array.
         """
         return to_torch_tensor(tensor)
+
+    def is_tuple_of_tensors(self, obj: Any) -> bool:
+        """
+        Check if a given object if a tuple of tensors
+        :param obj: Object to check its type
+        :return: True if obj is a tuple of tensors, False otherwise
+        """
+        if not isinstance(obj, tuple):
+            return False
+        for item in obj:
+            if not isinstance(item, torch.Tensor):
+                return False
+        return True
 
     def model_reader(self,
                      module: Module,
@@ -449,7 +462,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         return any(node.is_match_type(_type) for _type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax,
                                                            softmax, operator.add, add, cat, concat, concatenate,
-                                                           operator.concat])
+                                                           operator.concat, stack])
 
     def get_mp_node_distance_fn(self, n: BaseNode,
                                 compute_distance_fn: Callable = None,

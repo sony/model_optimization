@@ -17,7 +17,8 @@ import numpy as np
 from typing import List, Tuple, Any, Callable
 
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
+    ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
@@ -363,7 +364,7 @@ def shift_negative_function(graph: Graph,
                                          mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
         for candidate_qc in pad_node.candidates_quantization_cfg:
-            candidate_qc.activation_quantization_cfg.enable_activation_quantization = False
+            candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
             for attr in pad_node.get_node_weights_attributes():
                 candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 

@@ -159,6 +159,19 @@ class KerasImplementation(FrameworkImplementation):
         """
         return to_tf_tensor(tensor)
 
+    def is_tuple_of_tensors(self, obj: Any) -> bool:
+        """
+        Check if a given object if a tuple of tensors
+        :param obj: Object to check its type
+        :return: True if obj is a tuple of tensors, False otherwise
+        """
+        if not isinstance(obj, tuple):
+            return False
+        for item in obj:
+            if not isinstance(item, tf.Tensor):
+                return False
+        return True
+
     def model_builder(self,
                       graph: Graph,
                       mode: ModelBuilderMode,
@@ -454,7 +467,7 @@ class KerasImplementation(FrameworkImplementation):
             return True
 
         return any([node.is_match_type(_type) for _type in [Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense,
-                                                            Concatenate, tf.concat, Add, tf.add]])
+                                                            Concatenate, tf.concat, Add, tf.add, tf.stack]])
 
     def get_mp_node_distance_fn(self, n: BaseNode,
                                 compute_distance_fn: Callable = None,

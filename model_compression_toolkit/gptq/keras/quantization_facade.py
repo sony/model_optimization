@@ -14,7 +14,7 @@
 # ==============================================================================
 import copy
 
-from typing import Callable, Tuple, Union
+from typing import Callable, Tuple, Union, Optional
 from packaging import version
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
@@ -158,7 +158,7 @@ if FOUND_TF:
                                                   target_resource_utilization: ResourceUtilization = None,
                                                   core_config: CoreConfig = CoreConfig(),
                                                   target_platform_capabilities: Union[TargetPlatformCapabilities, str]
-                                                  = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
+                                                  = DEFAULT_KERAS_TPC) -> Tuple[Model, Optional[UserInformation]]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -230,6 +230,10 @@ if FOUND_TF:
             >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, target_resource_utilization=ru, core_config=config)
 
         """
+
+        if core_config.debug_config.bypass:
+            return in_model, None
+
         KerasModelValidation(model=in_model,
                              fw_info=DEFAULT_KERAS_INFO).validate()
 
