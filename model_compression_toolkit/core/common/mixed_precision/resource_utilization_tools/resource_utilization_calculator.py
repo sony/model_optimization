@@ -146,8 +146,15 @@ class ResourceUtilizationCalculator:
                 raise RuntimeError("Failed to calculate activation memory cuts for graph.")
             cuts = [cut for cut in cuts if cut.mem_elements.elements]
             # cache cuts nodes for future use, so do not filter by target
-            self._cuts = {cut: [self.graph.find_node_by_name(m.node_name)[0] for m in cut.mem_elements.elements]
-                          for cut in cuts}
+            self._cuts = {
+                cut: [
+                    node
+                    for m in cut.mem_elements.elements
+                    for node in (self.graph.fusing_info.get_fused_nodes(m.node_name) or (
+                    self.graph.find_node_by_name(m.node_name)[0],))
+                ]
+                for cut in cuts
+            }
         return self._cuts
 
     def compute_resource_utilization(self,
@@ -581,7 +588,10 @@ class ResourceUtilizationCalculator:
 
     def _compute_cuts(self):
         """ Compute activation cuts of the graph. """
-        memory_graph = MemoryGraph(deepcopy(self.graph))
+        from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
+        gf = GraphFuser()
+        graph = gf.apply_node_fusion(self.graph)
+        memory_graph = MemoryGraph(deepcopy(graph))
         _, _, cuts = compute_graph_max_cut(memory_graph)
         return cuts
 
