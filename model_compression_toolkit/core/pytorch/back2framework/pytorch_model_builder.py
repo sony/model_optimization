@@ -234,7 +234,7 @@ class PytorchModel(torch.nn.Module):
         self.wrapper = wrapper
         self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
         self.reuse_groups = {}
-        self.reused_nodes = []
+        self._reused_nodes = []
 
         self._add_all_modules()
 
@@ -242,7 +242,7 @@ class PytorchModel(torch.nn.Module):
     @property
     def use_activation_holder_during_model_building(self) -> bool:
         """
-        Returns: Whether or not the model builder uses a PytorchActivationQuantizationHolder during
+        Returns: Whether the model builder uses a PytorchActivationQuantizationHolder during
         model building (by adding it as a module when converting the graph to a Pytorch model).
         If so - the model builder expects the activation quantizers not to be wrapped
         in a PytorchQuantizeWrapper.
@@ -300,17 +300,17 @@ class PytorchModel(torch.nn.Module):
         Build and add the modules and functional nodes from node_sort list as attributes to PytorchModel
         :param reuse_nodes_only: whether to go over the reuse nodes list or not.
                In case reuse_nodes_only is False - will go over all nodes, and add reused nodes to self.reuse_nodes
-               In case reuse_nodes_only is True - will go over self.reused_nodes only.
+               In case reuse_nodes_only is True - will go over self._reused_nodes only.
 
         """
-        nodes = self.reused_nodes if reused_nodes_only else self.node_sort
+        nodes = self._reused_nodes if reused_nodes_only else self.node_sort
         for node in nodes:
             if node.reuse:  # If the node is reused, retrieve the original module
                 if node.reuse_group not in self.reuse_groups:  # original module wasn't created yet
                     if reused_nodes_only:
                         Logger.critical(f"Reuse group {node.reuse_group} not found for node {node.name}")
                     else:  # add node to reused list, and go over the list after all other nodes were created
-                        self.reused_nodes.append(node)
+                        self._reused_nodes.append(node)
                         continue
                 node_op = self.reuse_groups[node.reuse_group]
             else:
