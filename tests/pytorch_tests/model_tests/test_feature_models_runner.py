@@ -876,5 +876,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], [2, 4]).run_test()
         ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], 4).run_test()
 
+
+
+
 if __name__ == '__main__':
     unittest.main()

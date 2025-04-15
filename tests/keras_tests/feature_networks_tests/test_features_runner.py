@@ -949,5 +949,6 @@ class FeatureNetworkTest(unittest.TestCase):
         ManualBitWidthSelectionTest(self, [NodeNameFilter('add2'), NodeNameFilter('relu1')], 4).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeNameFilter('add2')], [4, 2]).run_test()
 
+
 if __name__ == '__main__':
     unittest.main()
