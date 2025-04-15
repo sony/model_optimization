@@ -23,7 +23,7 @@ from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_conf
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
 
 
-class TestFusing:
+class TestSchemaV2Fusing:
     def test_fusing_single_opset(self):
         """Tests that creating a Fusing pattern with a single operator raises an exception."""
         add = current_schema.OperatorsSet(name="add")
@@ -100,7 +100,7 @@ class TestFusing:
         assert not f1.contains(f2)
 
     def test_fusing_set_qconfig(self):
-        """Tests that the contains method for fusing patterns correctly identifies containment relationships."""
+        """Tests that the fuse_op_quantization_config in the Fusing class is correctly set."""
 
         operator_set = []
         conv = current_schema.OperatorsSet(name="conv")
