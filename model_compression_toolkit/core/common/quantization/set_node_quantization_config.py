@@ -424,7 +424,7 @@ def filter_weights_qc_options_with_manual_bit_width(
         return base_config, node_qc_options_list
 
     # Filter node_qc_options_list to retain only the options with weights bits equal to weights_manual_bit_width_override.
-    node_qc_options_weights_list = filter_options(node_qc_options_list, weights_manual_bit_width_override)
+    node_qc_options_weights_list = _filter_options(node_qc_options_list, weights_manual_bit_width_override)
 
     if len(node_qc_options_weights_list) == 0:
         Logger.critical(f"Manually selected weights bit-width {weights_manual_bit_width_override} is invalid for node {node}.")
@@ -454,8 +454,21 @@ def filter_weights_qc_options_with_manual_bit_width(
     return base_config, node_qc_options_weights_list
 
 
-def is_valid_option(op_cfg, attr, bit_width):
-    # Check if the given option is valid based on the specified attribute and bit width.
+def _is_valid_option(
+        op_cfg: OpQuantizationConfig,
+        attr: WeightAttrT,
+        bit_width: int) -> bool:
+    """
+    Judge whether the specified option is valid based on the specified attribute and bit width.
+
+    Args:
+        op_cfg (OpQuantizationConfig): The quantization configuration to be judged.
+        attr (WeightAttrT): The filtered node's attributes to apply bit-width manipulation to.
+        bit_width (int): The bit width to be applied to the selected nodes.
+
+    Returns:
+        Result to judge whether the specified option is valid based on the specified attribute and bit width
+    """
     weights_attrs = op_cfg.attr_weights_configs_mapping.keys()
 
     if attr not in weights_attrs:
@@ -465,13 +478,24 @@ def is_valid_option(op_cfg, attr, bit_width):
     return weights_n_bits == bit_width
 
 
-def filter_options(node_qc_options_list, weights_manual_bit_width_override):
-    # Filter the options based on the specified bit width and attribute.
+def _filter_options(
+        node_qc_options_list: List[OpQuantizationConfig],
+        weights_manual_bit_width_override: Tuple[int, WeightAttrT]) -> List[OpQuantizationConfig]:
+    """
+    Filter the options based on the specified bit width and attribute.
+
+    Args:
+        node_qc_options_list (List[OpQuantizationConfig]): List of quantization configs for the node.
+        weights_manual_bit_width_override (Tuple[int, WeightAttrT])): Specifies a custom bit-width to override the node's weights bit-width.
+
+    Returns:
+        List[OpQuantizationConfig]: Filtered the options based on the specified bit width and attribute.
+    """
     filtered_options = []
 
     for bit_width, attr in weights_manual_bit_width_override:
         for op_cfg in node_qc_options_list:
-            if is_valid_option(op_cfg, attr, bit_width):
+            if _is_valid_option(op_cfg, attr, bit_width):
                 filtered_options.append(op_cfg)
 
     return filtered_options
