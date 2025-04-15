@@ -159,7 +159,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.sigmoid_mul_subst
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_func_substitutions_test import \
     ConvFuncSubstitutionsTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
-from model_compression_toolkit.target_platform_capabilities.constants import BIAS, KERAS_KERNEL
 
 layers = tf.keras.layers
 

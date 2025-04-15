@@ -116,7 +116,6 @@ from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test i
 from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
-from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL, BIAS
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
