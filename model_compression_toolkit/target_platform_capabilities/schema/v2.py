@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import pprint
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Union, Tuple, Optional, Annotated
 
-from pydantic import BaseModel, root_validator, model_validator, ConfigDict
+from pydantic import BaseModel, Field, root_validator, model_validator, ConfigDict
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
@@ -31,6 +31,114 @@ from model_compression_toolkit.target_platform_capabilities.schema.v1 import (
     OperatorSetGroup,
     Fusing,
     OperatorSetNames)
+
+
+class Fusing(TargetPlatformModelComponent):
+    """
+    Fusing defines a tuple of operators that should be combined and treated as a single operator,
+    hence no quantization is applied between them.
+
+    Attributes:
+        operator_groups (Tuple[Union[OperatorsSet, OperatorSetGroup], ...]): A tuple of operator groups,
+                                                                              each being either an OperatorSetGroup or an OperatorsSet.
+        fuse_op_quantization_config (Optional[OpQuantizationConfig]): The quantization configuration for the fused operator.
+        name (Optional[str]): The name for the Fusing instance. If not provided, it is generated from the operator groups' names.
+    """
+    operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetGroup], Field(discriminator='type')], ...]
+    fuse_op_quantization_config: Optional[OpQuantizationConfig] = None
+    name: Optional[str] = None  # Will be set in the validator if not given.
+
+    model_config = ConfigDict(frozen=True)
+
+    @model_validator(mode="before")
+    def validate_and_set_name(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate the operator_groups and set the name by concatenating operator group names.
+
+        Args:
+            values (Dict[str, Any]): Input data.
+
+        Returns:
+            Dict[str, Any]: Modified input data with 'name' set.
+        """
+        operator_groups = values.get('operator_groups')
+
+        # When loading from JSON, lists are returned. If the value is a list, convert it to a tuple.
+        if isinstance(operator_groups, list):
+            values['operator_groups'] = tuple(operator_groups)
+
+        if values.get('name') is None:
+            # Generate the concatenated name from the operator groups
+            concatenated_name = "_".join([
+                op.name.value if isinstance(op.name, OperatorSetNames) else op.name
+                for op in values['operator_groups']
+            ])
+            values['name'] = concatenated_name
+
+        return values
+
+    @model_validator(mode="after")
+    def validate_after_initialization(cls, model: 'Fusing') -> Any:
+        """
+        Perform validation after the model has been instantiated.
+        Ensures that there are at least two operator groups.
+        """
+        if len(model.operator_groups) < 2:
+            Logger.critical("Fusing cannot be created for a single operator.")  # pragma: no cover
+
+        # Check instance of fuse_op_quantization_config.
+        if model.fuse_op_quantization_config is not None:
+            if not isinstance(model.fuse_op_quantization_config, OpQuantizationConfig):
+                Logger.critical("fuse_op_quantization_config must be an instance of OpQuantizationConfig.")  # pragma: no cover
+        
+        return model
+
+    def contains(self, other: Any) -> bool:
+        """
+        Determines if the current Fusing instance contains another Fusing instance.
+
+        Args:
+            other (Any): The other Fusing instance to check against.
+
+        Returns:
+            bool: True if the other Fusing instance is contained within this one, False otherwise.
+        """
+        if not isinstance(other, Fusing):
+            return False
+
+        # Check for containment by comparing operator groups
+        for i in range(len(self.operator_groups) - len(other.operator_groups) + 1):
+            for j in range(len(other.operator_groups)):
+                if self.operator_groups[i + j] != other.operator_groups[j] and not (
+                        isinstance(self.operator_groups[i + j], OperatorSetGroup) and (
+                        other.operator_groups[j] in self.operator_groups[i + j].operators_set)):
+                    break
+            else:
+                # If all checks pass, the other Fusing instance is contained
+                return True
+        # Other Fusing instance is not contained
+        return False
+
+    def get_info(self) -> Union[Dict[str, str], str]:
+        """
+        Retrieves information about the Fusing instance, including its name and the sequence of operator groups.
+
+        Returns:
+            Union[Dict[str, str], str]: A dictionary with the Fusing instance's name as the key
+                                        and the sequence of operator groups as the value,
+                                        or just the sequence of operator groups if no name is set.
+        """
+        if self.name is not None:
+            return {
+                self.name: ' -> '.join([
+                    x.name.value if isinstance(x.name, OperatorSetNames) else x.name
+                    for x in self.operator_groups
+                ])
+            }
+        return ' -> '.join([
+            x.name.value if isinstance(x.name, OperatorSetNames) else x.name
+            for x in self.operator_groups
+        ])
 
 
 class TargetPlatformCapabilities(BaseModel):
