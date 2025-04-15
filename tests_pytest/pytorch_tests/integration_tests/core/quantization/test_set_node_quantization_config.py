@@ -14,7 +14,6 @@
 # ==============================================================================
 import pytest
 
-#import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.core import CoreConfig
 
@@ -26,6 +25,12 @@ from torch import nn
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness, \
+    AttributeQuantizationConfig
+from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
+
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
@@ -35,18 +40,72 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL, BIAS
 
 class TestManualWeightsBitwidthSelection:
-    def get_tpc(self):
-        base_cfg, _, default_config = get_op_quantization_configs()
+    def get_op_qco(self):
+        # define a default quantization config for all non-specified weights attributes.
+        default_weight_attr_config = AttributeQuantizationConfig(
+            weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            weights_n_bits=8,
+            weights_per_channel_threshold=False,
+            enable_weights_quantization=False,
+            # TODO: this will changed to True once implementing multi-attributes quantization
+            lut_values_bitwidth=None)
+
+        # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
+        kernel_base_config = AttributeQuantizationConfig(
+            weights_quantization_method=QuantizationMethod.SYMMETRIC,
+            weights_n_bits=8,
+            weights_per_channel_threshold=True,
+            enable_weights_quantization=True,
+            lut_values_bitwidth=None)
+
+        # define a quantization config to quantize the bias (for layers where there is a bias attribute).
+        bias_config = AttributeQuantizationConfig(
+            weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            weights_n_bits=FLOAT_BITWIDTH,
+            weights_per_channel_threshold=False,
+            enable_weights_quantization=False,
+            lut_values_bitwidth=None)
+
+        base_cfg = schema.OpQuantizationConfig(
+            default_weight_attr_config=default_weight_attr_config,
+            attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
+            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            activation_n_bits=8,
+            supported_input_activation_n_bits=8,
+            enable_activation_quantization=True,
+            quantization_preserving=False,
+            fixed_scale=None,
+            fixed_zero_point=None,
+            simd_size=32,
+            signedness=Signedness.AUTO)
+
+        default_config = schema.OpQuantizationConfig(
+            default_weight_attr_config=default_weight_attr_config,
+            attr_weights_configs_mapping={},
+            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            activation_n_bits=8,
+            supported_input_activation_n_bits=8,
+            enable_activation_quantization=True,
+            quantization_preserving=False,
+            fixed_scale=None,
+            fixed_zero_point=None,
+            simd_size=32,
+            signedness=Signedness.AUTO)
 
         mx_cfg_list = [base_cfg]
         for n in [2, 4, 16]:
             mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: n}}))
-            mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={BIAS_ATTR: {WEIGHTS_N_BITS: n}}))
         mx_cfg_list.append(
-            base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}, BIAS_ATTR: {WEIGHTS_N_BITS: 16}})
+            base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}})
         )
+
+        return base_cfg, mx_cfg_list, default_config
+
+    def get_tpc(self):
+        base_cfg, mx_cfg_list, default_config = self.get_op_qco()
+
         tpc = generate_tpc(default_config=default_config, base_config=base_cfg, mixed_precision_cfg_list=mx_cfg_list,
-                           name='imx500_tpc_kai')
+                           name='test_set_node_quantization_config')
 
         return tpc
 
@@ -65,6 +124,7 @@ class TestManualWeightsBitwidthSelection:
             def forward(self, x):
                 x = self.conv1(x)
                 x = self.conv2(x)
+                x = torch.add(x, 2)
                 x = self.relu(x)
                 return x
         return BaseModel()
@@ -90,16 +150,16 @@ class TestManualWeightsBitwidthSelection:
     """
     Test Items Policy:
         - How to specify the target layer: Options(type/name)
-        - Target attribute information: Options(kernel/bias) 
+        - Target attribute information: Options(kernel) 
         - Bit width variations: Options(2, 4, 16)
     """
     test_input_1 = (NodeNameFilter("conv1"), 2, PYTORCH_KERNEL)
     test_input_2 = (NodeTypeFilter(nn.Conv2d), 16, PYTORCH_KERNEL)
-    test_input_3 = ([NodeNameFilter("conv1"), NodeNameFilter("conv1")], [4, 16], [PYTORCH_KERNEL, BIAS])
+    test_input_3 = ([NodeNameFilter("conv1"), NodeNameFilter("conv2")], [4, 8], [PYTORCH_KERNEL, PYTORCH_KERNEL])
 
-    test_expected_1 = ({"conv1": {PYTORCH_KERNEL: 2, BIAS: 32}, "conv2": {PYTORCH_KERNEL: 8, BIAS: 32}})
-    test_expected_2 = ({"conv1": {PYTORCH_KERNEL: 16, BIAS: 32}, "conv2": {PYTORCH_KERNEL: 16, BIAS: 32}})
-    test_expected_3 = ({"conv1": {PYTORCH_KERNEL: 4, BIAS: 16}, "conv2": {PYTORCH_KERNEL: 8, BIAS: 32}})
+    test_expected_1 = ({"conv1": {PYTORCH_KERNEL: 2}, "conv2": {PYTORCH_KERNEL: 8}})
+    test_expected_2 = ({"conv1": {PYTORCH_KERNEL: 16}, "conv2": {PYTORCH_KERNEL: 16}})
+    test_expected_3 = ({"conv1": {PYTORCH_KERNEL: 4}, "conv2": {PYTORCH_KERNEL: 8}})
 
     @pytest.mark.parametrize(
         ("inputs", "expected"), [
@@ -123,6 +183,27 @@ class TestManualWeightsBitwidthSelection:
             if exp_vals is None: continue
             assert len(node.candidates_quantization_cfg) == 1
 
-            for vkey in node.candidates_quantization_cfg[0].weights_quantization_cfg.attributes_config_mapping:
-                cfg = node.candidates_quantization_cfg[0].weights_quantization_cfg.attributes_config_mapping[vkey]
-                assert cfg.weights_n_bits == exp_vals[vkey]
+            cfg_list = node.candidates_quantization_cfg[0].weights_quantization_cfg.attributes_config_mapping
+            for vkey in cfg_list:
+                cfg = cfg_list.get(vkey)
+                if exp_vals.get(vkey) is not None:
+                    assert cfg.weights_n_bits == exp_vals.get(vkey)
+
+    test_input_4 = (NodeNameFilter("add"), 2, PYTORCH_KERNEL)
+    test_expected_4 = ('The requested attribute weight to change the bit width for add:add does not exist.')
+    @pytest.mark.parametrize(
+        ("inputs", "expected"), [
+            (test_input_4, test_expected_4),
+    ])
+    def test_manual_weights_bitwidth_selection_error_add(self, inputs, expected):
+        core_config = CoreConfig()
+        graph = self.get_test_graph(core_config)
+
+        core_config.bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
+        try:
+            updated_graph = set_quantization_configuration_to_graph(
+                graph, core_config.quantization_config, core_config.bit_width_config,
+                False, False
+            )
+        except Exception as e:
+            assert expected == str(e)
