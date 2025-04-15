@@ -226,6 +226,16 @@ class TestActivationUtilizationMethods:
         assert ru_calc._get_activation_nbits(node, BM.QMaxBit, None) == 7
         assert ru_calc._get_activation_nbits(node, BM.Q8Bit, None) == 8
 
+    def test_get_a_nbits_configurable_quantization_preserving(self, graph_mock, fw_impl_mock, fw_info_mock):
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        node = build_node(qcs=[build_qc(7, a_enable=False, q_preserving=True),
+                               build_qc(4, a_enable=False, q_preserving=True),
+                               build_qc(2, a_enable=False, q_preserving=True)])
+        assert ru_calc._get_activation_nbits(node, BM.Float, None) == FLOAT_BITWIDTH
+        assert ru_calc._get_activation_nbits(node, BM.QMinBit, None) == 2
+        assert ru_calc._get_activation_nbits(node, BM.QMaxBit, None) == 7
+        assert ru_calc._get_activation_nbits(node, BM.Q8Bit, None) == 8
+
     @pytest.mark.parametrize('node', [
         build_node(qcs=[build_qc(42)]),
         build_node(qcs=[build_qc(42, w_attr={'foo': (4, True)}), build_qc(42, w_attr={'foo': (2, False)})])
@@ -245,6 +255,16 @@ class TestActivationUtilizationMethods:
     def test_get_a_nbits_custom(self, graph_mock, fw_impl_mock, fw_info_mock, node, qc, exp_nbit):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         assert ru_calc._get_activation_nbits(node, BM.QCustom, qc.activation_quantization_cfg) == exp_nbit
+
+    @pytest.mark.parametrize('anode, node, qc, exp_nbit', [
+        (None, build_node(qcs=[build_qc(4)]), build_qc(17, False, q_preserving=True), 32),
+        (build_node(qcs=[build_qc(3)]), build_node(qcs=[build_qc(4, False, q_preserving=True)]), None, 3)
+    ])
+    def test_get_a_nbits_custom_quantization_preserving(self, graph_mock, fw_impl_mock, fw_info_mock, anode, node, qc, exp_nbit):
+        graph_mock.retrieve_preserved_quantization_node = lambda x: anode
+        ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
+        acs = None if qc is None else qc.activation_quantization_cfg
+        assert ru_calc._get_activation_nbits(node, BM.QCustom, acs) == exp_nbit
 
     @pytest.mark.parametrize('bm', list(BM))
     def test_get_a_nbits_non_q(self, graph_mock, fw_impl_mock, fw_info_mock, bm):
@@ -270,8 +290,9 @@ class TestActivationUtilizationMethods:
         mp = build_node('n4', qcs=[build_qc(4), build_qc(2)], reuse=True)
         noq = build_node('noq', qcs=[build_qc(4, False, w_attr={'foo': (8, True)}),
                                      build_qc(4, False, w_attr={'foo': (4, True)})])
+        qp = build_node('qp', qcs=[build_qc(4, False, q_preserving=True)])
 
-        graph_mock.nodes = [sp1, sp2, sp3, mp, noq]
+        graph_mock.nodes = [sp1, sp2, sp3, mp, noq, qp]
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
 
         assert len(TIC) == 4, 'enum changed, update tests'
@@ -281,11 +302,11 @@ class TestActivationUtilizationMethods:
         assert ru_calc._get_target_activation_nodes(TIC.QNonConfigurable, include_reused=True) == [sp2, sp3]
         assert ru_calc._get_target_activation_nodes(TIC.QNonConfigurable, include_reused=False) == [sp2]
 
-        assert ru_calc._get_target_activation_nodes(TIC.AnyQuantized, include_reused=True) == [sp1, sp2, sp3, mp]
-        assert ru_calc._get_target_activation_nodes(TIC.AnyQuantized, include_reused=False) == [sp1, sp2]
+        assert ru_calc._get_target_activation_nodes(TIC.AnyQuantized, include_reused=True) == [sp1, sp2, sp3, mp, qp]
+        assert ru_calc._get_target_activation_nodes(TIC.AnyQuantized, include_reused=False) == [sp1, sp2, qp]
 
-        assert ru_calc._get_target_activation_nodes(TIC.Any, include_reused=True) == [sp1, sp2, sp3, mp, noq]
-        assert ru_calc._get_target_activation_nodes(TIC.Any, include_reused=False) == [sp1, sp2, noq]
+        assert ru_calc._get_target_activation_nodes(TIC.Any, include_reused=True) == [sp1, sp2, sp3, mp, noq, qp]
+        assert ru_calc._get_target_activation_nodes(TIC.Any, include_reused=False) == [sp1, sp2, noq, qp]
         # explicit nodes list
         assert ru_calc._get_target_activation_nodes(TIC.QNonConfigurable,
                                                     include_reused=True, nodes=[sp1, sp2, sp3]) == [sp2, sp3]
@@ -467,11 +488,14 @@ class TestActivationMaxCutUtilization:
         noq = build_node('noq', qcs=[build_qc(6, False)], output_shape=(None, 300))
         sp = build_node('sp', qcs=[build_qc(3)], output_shape=(None, 20, 10))
         mp2 = build_node('mp2', qcs=[build_qc(2), build_qc(4)], output_shape=(None, 150))
+        qp = build_node('qp', qcs=[build_qc(2, a_enable=False, q_preserving=True),
+                                   build_qc(4, a_enable=False, q_preserving=True)], output_shape=(None, 150))
 
-        nodes = [mp_reuse, mp, noq, sp, mp2]
+        nodes = [mp_reuse, mp, noq, sp, mp2, qp]
         graph_mock.nodes = nodes
         # use the Graph original method (need to bind it to graph_mock instance)
         graph_mock.find_node_by_name = MethodType(Graph.find_node_by_name, graph_mock)
+        graph_mock.retrieve_preserved_quantization_node = lambda x: mp2 if x.name == 'qp' else x
 
         # we should not use total size, setting it to bad number
         cut_elems1 = MemoryElements(elements={ActivationMemoryTensor(mp_reuse.output_shape, 'mp_reuse', 0)}, total_size=-1)
@@ -481,7 +505,8 @@ class TestActivationMaxCutUtilization:
                                               ActivationMemoryTensor(sp.output_shape, 'sp', 0)}, total_size=-1)
         cut_elems3 = MemoryElements(elements={ActivationMemoryTensor(sp.output_shape, 'sp', 0),
                                               ActivationMemoryTensor(noq.output_shape, 'noq', 0)}, total_size=-1)
-        cut_elems4 = MemoryElements(elements={ActivationMemoryTensor(mp2.output_shape, 'mp2', 0)}, total_size=-1)
+        cut_elems4 = MemoryElements(elements={ActivationMemoryTensor(mp2.output_shape, 'mp2', 0),
+                                              ActivationMemoryTensor(mp2.output_shape, 'qp', 0)}, total_size=-1)
 
         cuts = [Cut([], set(), mem_elements=cut_elems)
                 for cut_elems in [cut_elems1, cut_elems2, cut_elems3, cut_elems4]]
@@ -490,7 +515,7 @@ class TestActivationMaxCutUtilization:
         return ru_calc, cuts, nodes
 
     def test_get_cut_target_nodes(self, prepare_compute_cuts):
-        ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2) = prepare_compute_cuts
+        ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2, qp) = prepare_compute_cuts
         assert len(TIC) == 4
         sorted_res = lambda res: sorted(res, key=lambda n: n.name)
         assert sorted_res(ru_calc._get_cut_target_nodes(cut2, TIC.Any)) == [mp, mp_reuse, noq, sp]
@@ -499,7 +524,7 @@ class TestActivationMaxCutUtilization:
         assert sorted_res(ru_calc._get_cut_target_nodes(cut2, TIC.QNonConfigurable)) == [sp]
 
     def test_compute_act_utilization_by_cut(self, prepare_compute_cuts):
-        ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2) = prepare_compute_cuts
+        ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2, qp) = prepare_compute_cuts
 
         ru_calc.compute_node_activation_tensor_utilization = Mock(wraps=ru_calc.compute_node_activation_tensor_utilization)
         ru_calc._get_cut_target_nodes = Mock(wraps=ru_calc._get_cut_target_nodes)
@@ -509,13 +534,13 @@ class TestActivationMaxCutUtilization:
         total, per_cut, per_cut_node = ru_calc.compute_activation_utilization_by_cut(TIC.AnyQuantized, BM.QCustom, qcs)
 
         cut_nodes_calls = ru_calc._get_cut_target_nodes.call_args_list
-        assert len(cut_nodes_calls ) == 4
+        assert len(cut_nodes_calls) == 4
         assert {call.args[0] for call in cut_nodes_calls} == {cut1, cut2, cut3, cut4}
         assert {call.args[1] for call in cut_nodes_calls } == {TIC.AnyQuantized}
 
         compute_tensor_calls = sorted(ru_calc.compute_node_activation_tensor_utilization.call_args_list,
                                       key=lambda call: call.args[0].name)
-        assert len(compute_tensor_calls) == 6
+        assert len(compute_tensor_calls) == 7
         assert compute_tensor_calls[0].args == (mp, TIC.AnyQuantized, BM.QCustom, qcs['mp'])
         assert compute_tensor_calls[-1].args == (sp, TIC.AnyQuantized, BM.QCustom, None)
 
@@ -525,17 +550,17 @@ class TestActivationMaxCutUtilization:
                                       'mp': Utilization(50, 62.5),
                                       'sp': Utilization(200, 75.)}
         assert per_cut_node[cut3] == {'sp': Utilization(200, 75.)}
-        assert per_cut_node[cut4] == {'mp2': Utilization(150, 600.)}
+        assert per_cut_node[cut4] == {'mp2': Utilization(150, 600.), 'qp': Utilization(150, 600.)}
 
         assert per_cut == {cut1: Utilization(24, 21.),
                            cut2: Utilization(274, 158.5),
                            cut3: Utilization(200, 75.),
-                           cut4: Utilization(150, 600.),
+                           cut4: Utilization(300, 1200.),
                            }
-        assert total == 600.
+        assert total == 1200.
 
     def test_compute_act_utilization_by_cut_no_cut_nodes(self, prepare_compute_cuts):
-        ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2) = prepare_compute_cuts
+        ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2, qp) = prepare_compute_cuts
 
         total, per_cut, per_cut_node = ru_calc.compute_activation_utilization_by_cut(TIC.QNonConfigurable, BM.QDefaultSP)
         assert len(per_cut_node) == 2
