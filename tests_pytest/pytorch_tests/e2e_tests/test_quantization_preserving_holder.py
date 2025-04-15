@@ -60,7 +60,7 @@ def generate_tpc(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
 
-    preserving_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=True, quantization_preserving=True)
+    preserving_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False, quantization_preserving=True)
                               .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.DROPOUT, qc_options=preserving_quantization_config))

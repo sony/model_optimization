@@ -57,13 +57,13 @@ def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizati
         node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
     return node
 
-def build_qc(a_nbits=8, q_preserving=False, aq_params={}):
+def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
     
     qc = QuantizationConfig()
     op_cfg = OpQuantizationConfig(
         attr_weights_configs_mapping={},
         activation_n_bits=a_nbits,
-        enable_activation_quantization=True,
+        enable_activation_quantization=a_enable,
         default_weight_attr_config=AttributeQuantizationConfig(weights_n_bits=32,
                                                                enable_weights_quantization=False),
         activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
@@ -78,7 +78,8 @@ def build_qc(a_nbits=8, q_preserving=False, aq_params={}):
     a_qcfg = NodeActivationQuantizationConfig(qc=qc, op_cfg=op_cfg,
                                               activation_quantization_fn=None,
                                               activation_quantization_params_fn=None)
-    a_qcfg.set_activation_quantization_param(aq_params)
+    if len(aq_params) != 0:
+        a_qcfg.set_activation_quantization_param(aq_params)
     w_qcfg = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg,
                                         weights_channels_axis=None,
                                         node_attrs_list=[])
@@ -116,8 +117,8 @@ def get_test_graph():
 
     conv1 = build_node('conv1', framework_attr={'in_channels':3, 'out_channels':3, 'kernel_size':3}, layer_class=torch.nn.Conv2d, qcs=[build_qc(a_nbits=8, aq_params={'threshold': 8.0, 'is_signed': False})])
     conv2 = build_node('conv2', framework_attr={'in_channels':3, 'out_channels':3, 'kernel_size':3}, layer_class=torch.nn.Conv2d, qcs=[build_qc(a_nbits=16, aq_params={'threshold': 4.0, 'is_signed': False})])
-    dropout = build_node('dropout', layer_class=torch.nn.Dropout, qcs=[build_qc(a_nbits=2, q_preserving=True, aq_params={'threshold': 4.0, 'is_signed': False})])
-    flatten = build_node('flatten', layer_class=torch.nn.Flatten, qcs=[build_qc(a_nbits=8, q_preserving=True, aq_params={'threshold': 4.0, 'is_signed': False})])
+    dropout = build_node('dropout', layer_class=torch.nn.Dropout, qcs=[build_qc(a_enable=False, q_preserving=True)])
+    flatten = build_node('flatten', layer_class=torch.nn.Flatten, qcs=[build_qc(a_enable=False, q_preserving=True)])
     fc = build_node('fc', framework_attr={'in_features':48, 'out_features':128}, layer_class=torch.nn.Linear, qcs=[build_qc(a_nbits=4, aq_params={'threshold': 8.0, 'is_signed': True})])
 
     graph = Graph('g', input_nodes=[conv1],

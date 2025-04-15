@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2025 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ if FOUND_TORCH:
     from mct_quantizers.common.constants import OP_CALL_ARGS, OP_CALL_KWARGS
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
     from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
+    from mct_quantizers.pytorch.quantizers.base_pytorch_inferable_quantizer import BasePyTorchInferableQuantizer
 
 
     def fully_quantized_wrapper(node: common.BaseNode,
@@ -75,18 +76,22 @@ if FOUND_TORCH:
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
-        _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node we no activation
         # quantization, which in this case has an empty list).
-        if len(activation_quantizers) == 1:
-            if node.is_quantization_preserving():
-                return PytorchPreservingActivationQuantizationHolder(activation_quantizers[0], quantization_bypass=True)
 
-            return PytorchActivationQuantizationHolder(activation_quantizers[0])
-        Logger.critical(
-            f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
-            f'were found for node {node}')
+        if node.is_quantization_preserving():
+            activation_quantizer = BasePyTorchInferableQuantizer()
+            return PytorchPreservingActivationQuantizationHolder(activation_quantizer, quantization_bypass=True)
+        
+        if node.is_activation_quantization_enabled():
+            _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
+            if len(activation_quantizers) == 1:
+                return PytorchActivationQuantizationHolder(activation_quantizers[0])
+
+            Logger.critical(
+                f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
+                f'were found for node {node}')
 
 
     def get_exportable_pytorch_model(graph: Graph):

@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2025 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -310,25 +310,23 @@ class PytorchModel(torch.nn.Module):
             else:
                 self.add_module(node.name, node_op)
             
-            if node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:
-                # Add activation quantization modules if an activation holder is configured for this node
-                if node.is_quantization_preserving():
-                    prev_node = self.graph.retrieve_preserved_quantization_node(node)
-                    prev_activation_quantizer_holder = self.get_activation_quantizer_holder(prev_node)
-                    activation_quantizer_holder = self.get_activation_quantizer_holder(node)
-                    
-                    if activation_quantizer_holder is not None and prev_activation_quantizer_holder is not None:
-                        activation_quantizer_holder.activation_holder_quantizer = prev_activation_quantizer_holder.activation_holder_quantizer
-                        self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
-                        self.node_to_activation_quantization_holder.update(
-                            {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
+            if node.is_quantization_preserving() and self.get_activation_quantizer_holder is not None:
+                prev_node = self.graph.retrieve_preserved_quantization_node(node)
+                prev_activation_quantizer_holder = self.get_activation_quantizer_holder(prev_node)
+                activation_quantizer_holder = self.get_activation_quantizer_holder(node)
 
-                else:
-                    activation_quantizer_holder = self.get_activation_quantizer_holder(node)
-                    if activation_quantizer_holder is not None:
-                        self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
-                        self.node_to_activation_quantization_holder.update(
-                            {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
+                if activation_quantizer_holder is not None and prev_activation_quantizer_holder is not None:
+                    activation_quantizer_holder.activation_holder_quantizer = prev_activation_quantizer_holder.activation_holder_quantizer
+                    self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
+                    self.node_to_activation_quantization_holder.update(
+                        {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
+
+            elif node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:
+                activation_quantizer_holder = self.get_activation_quantizer_holder(node)
+                if activation_quantizer_holder is not None:
+                    self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
+                    self.node_to_activation_quantization_holder.update(
+                        {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
 
     def forward(self,
                 *args: Any) -> Any:
