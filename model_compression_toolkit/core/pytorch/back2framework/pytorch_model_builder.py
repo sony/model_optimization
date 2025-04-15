@@ -242,7 +242,7 @@ class PytorchModel(torch.nn.Module):
     @property
     def use_activation_holder_during_model_building(self) -> bool:
         """
-        Returns: Whether the model builder uses a PytorchActivationQuantizationHolder during
+        Returns: Whether or not the model builder uses a PytorchActivationQuantizationHolder during
         model building (by adding it as a module when converting the graph to a Pytorch model).
         If so - the model builder expects the activation quantizers not to be wrapped
         in a PytorchQuantizeWrapper.
