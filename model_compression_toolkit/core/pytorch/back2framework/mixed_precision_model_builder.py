@@ -17,7 +17,7 @@ from typing import List, Any, Tuple, Union, Dict
 
 import torch
 from mct_quantizers import PytorchQuantizationWrapper, QuantizationTarget, \
-    PytorchActivationQuantizationHolder
+    PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
@@ -163,6 +163,12 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         activation_conf_nodes_names = [n.name for n in self.graph.get_activation_configurable_nodes()]
 
         activation_quantizers = []
+
+        if n.is_quantization_preserving():
+            if n.name in activation_conf_nodes_names:
+                activation_quantizer = BasePyTorchInferableQuantizer()
+                return PytorchPreservingActivationQuantizationHolder(activation_quantizer, quantization_bypass=True)
+        
         if n.is_activation_quantization_enabled():
             num_of_outputs = len(n.output_shape) if isinstance(n.output_shape, list) else 1
             if n.name in activation_conf_nodes_names:
@@ -195,14 +201,14 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
                 activation_quantizers = [quantizer_for_node(**kwargs)] * num_of_outputs
 
-        # Holder by definition uses a single quantizer for the activation quantization
-        # thus we make sure this is the only possible case (unless it's a node with no activation
-        # quantization, which in this case has an empty list).
-        if len(activation_quantizers) == 1:
+            # Holder by definition uses a single quantizer for the activation quantization
+            # thus we make sure this is the only possible case (unless it's a node with no activation
+            # quantization, which in this case has an empty list).
+            if len(activation_quantizers) == 1:
 
-            return PytorchActivationQuantizationHolder(activation_quantizers[0])
+                return PytorchActivationQuantizationHolder(activation_quantizers[0])
 
-        Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover
+            Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover
 
     def build_model(self) -> Tuple[torch.nn.Module, UserInformation,
                                    Dict[str, Union[PytorchQuantizationWrapper, PytorchActivationQuantizationHolder]]]:
