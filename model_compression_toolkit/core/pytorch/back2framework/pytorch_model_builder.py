@@ -320,7 +320,6 @@ class PytorchModel(torch.nn.Module):
                     # Store the module for future reuse
                     self.reuse_groups[node.reuse_group] = node_op
 
-
             if isinstance(node, FunctionalNode):
                 # for functional layers
                 setattr(self, node.name, node_op)
