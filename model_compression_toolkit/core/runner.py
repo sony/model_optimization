@@ -124,15 +124,13 @@ def core_runner(in_model: Any,
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             filter_candidates_for_mixed_precision(graph, target_resource_utilization, fw_info, fqc)
-            nodes_bit_widths_config = search_bit_width(tg,
-                                                       fw_info,
-                                                       fw_impl,
-                                                       target_resource_utilization,
-                                                       core_config.mixed_precision_config,
-                                                       representative_data_gen,
-                                                       hessian_info_service=hessian_info_service)
-            bit_widths_config = [nodes_bit_widths_config[n] for n in tg.get_configurable_sorted_nodes(fw_info)]
-            assert len(bit_widths_config) == len(nodes_bit_widths_config)
+            bit_widths_config = search_bit_width(tg,
+                                                 fw_info,
+                                                 fw_impl,
+                                                 target_resource_utilization,
+                                                 core_config.mixed_precision_config,
+                                                 representative_data_gen,
+                                                 hessian_info_service=hessian_info_service)
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
