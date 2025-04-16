@@ -34,10 +34,8 @@ from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tpc
-
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
-from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL, BIAS
+from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL
 
 class TestManualWeightsBitwidthSelection:
     def get_op_qco(self):
@@ -101,12 +99,35 @@ class TestManualWeightsBitwidthSelection:
 
         return base_cfg, mx_cfg_list, default_config
 
+    def generate_tpc_local(self, default_config, base_config, mixed_precision_cfg_list):
+        default_configuration_options = schema.QuantizationConfigOptions(
+            quantization_configurations=tuple([default_config]))
+        mixed_precision_configuration_options = schema.QuantizationConfigOptions(
+            quantization_configurations=tuple(mixed_precision_cfg_list),
+            base_config=base_config)
+
+        operator_set = []
+
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV, qc_options=mixed_precision_configuration_options)
+        relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+        add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD)
+        operator_set.extend([conv, relu, add])
+
+        generated_tpc = schema.TargetPlatformCapabilities(
+            default_qco=default_configuration_options,
+            tpc_minor_version=1,
+            tpc_patch_version=0,
+            tpc_platform_type=None,
+            operator_set=tuple(operator_set),
+            name='test_manual_weights_bitwidth_selection',
+            add_metadata=False,
+            is_simd_padding=True)
+
+        return generated_tpc
+
     def get_tpc(self):
         base_cfg, mx_cfg_list, default_config = self.get_op_qco()
-
-        tpc = generate_tpc(default_config=default_config, base_config=base_cfg, mixed_precision_cfg_list=mx_cfg_list,
-                           name='test_set_node_quantization_config')
-
+        tpc = self.generate_tpc_local(default_config, base_cfg, mx_cfg_list)
         return tpc
 
     def representative_data_gen(self, shape=(3, 8, 8), num_inputs=1, batch_size=2, num_iter=1):
