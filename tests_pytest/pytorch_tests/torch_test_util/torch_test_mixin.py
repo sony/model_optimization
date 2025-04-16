@@ -12,24 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import abc
 from typing import List, Tuple
 
 import torch
+from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from tests_pytest._test_util.fw_test_base import BaseFWIntegrationTest
 
 
 class TorchFwMixin:
-    """ Mixin helper class containing torch-specific definitions. """
+    """ Mixin helper class containing torch-specific definitions.
+        This is handy when the test has a fw-agnostic base class, for example:
+
+        BaseFooTester(BaseFWIntegrationTest):
+          ...
+        TorchFooTester(BaseFooTester, TorchFwMixin):
+          ...
+    """
     fw_info = DEFAULT_PYTORCH_INFO
     fw_impl = PytorchImplementation()
     attach_to_fw_func = AttachTpcToPytorch().attach
 
-    def get_basic_data_gen(self, shapes: List[Tuple]):
+    @staticmethod
+    def get_basic_data_gen(shapes: List[Tuple]):
         """ Generate a basic data generator. """
         def f():
             yield [torch.randn(shape, dtype=torch.float32) for shape in shapes]
         return f
+
+    @staticmethod
+    def fetch_activation_holder_quantizer(model, layer_name):
+        layer = getattr(model, model.node_to_activation_quantization_holder[layer_name])
+        assert isinstance(layer, PytorchActivationQuantizationHolder)
+        return layer.activation_holder_quantizer
+
+    @staticmethod
+    def fetch_weight_quantizer(layer, weight_name):
+        assert isinstance(layer, PytorchQuantizationWrapper)
+        return layer.weights_quantizers[weight_name]
+
+
+class BaseTorchIntegrationTest(BaseFWIntegrationTest, TorchFwMixin, abc.ABC):
+    """ Base class for Torch integration tests. """
+    pass

@@ -12,13 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Iterable
+from typing import Iterable, Tuple, List
 
 from mct_quantizers import QuantizationMethod
 
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, \
-    QuantizationConfigOptions, OpQuantizationConfig, Signedness, TargetPlatformCapabilities
+    QuantizationConfigOptions, OpQuantizationConfig, Signedness, TargetPlatformCapabilities, OperatorSetNames, \
+    OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+
+
+def configure_mp_opsets_for_kernel_bias_ops(opset_names: Iterable[OperatorSetNames],
+                                            base_w_config: AttributeQuantizationConfig,
+                                            base_op_config: OpQuantizationConfig,
+                                            w_nbits: Iterable[int],
+                                            a_nbits: Iterable[int]) -> Tuple[List[OperatorsSet], QuantizationConfigOptions]:
+    """
+
+    Args:
+        opset_names: opset names for which OperatorsSet objects with the mp configuration are built.
+        base_w_config: base attribute config for kernel.
+        base_op_config: base config for operator.
+        w_nbits: bit configurations for kernel.
+        a_nbits: bit configurations for activation.
+
+    Returns:
+        A list of operators sets and a list of mp options.
+    """
+    mp_options = build_mp_config_options_for_kernel_bias_ops(base_w_config, base_op_config, w_nbits, a_nbits)
+    return [OperatorsSet(name=opset, qc_options=mp_options) for opset in opset_names], mp_options
 
 
 def build_mp_config_options_for_kernel_bias_ops(base_w_config: AttributeQuantizationConfig,
@@ -47,6 +69,28 @@ def build_mp_config_options_for_kernel_bias_ops(base_w_config: AttributeQuantiza
                 attr_weights_configs_mapping={KERNEL_ATTR: attr_cfg, BIAS_ATTR: bias_cfg},
                 activation_n_bits=a_nbit
             ))
+    return QuantizationConfigOptions(quantization_configurations=mp_configs, base_config=base_op_config)
+
+
+def configure_mp_activation_opsets(opset_names: Iterable[OperatorSetNames],
+                                   base_op_config: OpQuantizationConfig,
+                                   a_nbits: Iterable[int]) -> Tuple[List[OperatorsSet], QuantizationConfigOptions]:
+    """
+    Args:
+        opset_names: opset names for which OperatorsSet objects with the mp configuration are built.
+        base_op_config: base config for operator.
+        a_nbits: bit configurations for activation.
+
+    Returns:
+        A list of operators sets objects and a list of mp options.
+    """
+    mp_options = build_activation_mp_config_options(base_op_config, a_nbits)
+    return [OperatorsSet(name=opset, qc_options=mp_options) for opset in opset_names], mp_options
+
+
+def build_activation_mp_config_options(base_op_config: OpQuantizationConfig,
+                                       a_nbits: Iterable[int]) -> QuantizationConfigOptions:
+    mp_configs = [base_op_config.clone_and_edit(activation_n_bits=abit) for abit in a_nbits]
     return QuantizationConfigOptions(quantization_configurations=mp_configs, base_config=base_op_config)
 
 
