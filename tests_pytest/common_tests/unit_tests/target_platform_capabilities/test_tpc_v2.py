@@ -109,8 +109,8 @@ class TestSchemaV2Fusing:
         operator_set.extend([conv, add, tanh])
 
         fusing_patterns = (
-            schema_v2.Fusing(operator_groups=(conv, add), fuse_op_quantization_config=TEST_QC),
-            schema_v2.Fusing(operator_groups=(conv, tanh))    ### Do not set fuse_op_quantization_config.
+            schema_v2.Fusing(operator_groups=[conv, add], fuse_op_quantization_config=TEST_QC, name=None),
+            schema_v2.Fusing(operator_groups=[conv, tanh], name='conv_tanh')    ### Do not set fuse_op_quantization_config.
         )
 
         ### check initialization of fused operator quantization config
