@@ -17,7 +17,7 @@ from enum import Enum
 from typing import List, Callable, Dict
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.hessian import HessianInfoService
@@ -40,7 +40,7 @@ def search_bit_width(graph: Graph,
                      mp_config: MixedPrecisionQuantizationConfig,
                      representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,
-                     hessian_info_service: HessianInfoService = None) -> List[int]:
+                     hessian_info_service: HessianInfoService = None) -> Dict[BaseNode, int]:
     """
     Search for an MP configuration for a given graph. Given a search_method method (by default, it's linear
     programming), we use the sensitivity_evaluator object that provides a function to compute an
@@ -107,4 +107,4 @@ def search_bit_width(graph: Graph,
     if mp_config.refine_mp_solution:
         result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_resource_utilization)
 
-    return list(result_bit_cfg.values())
+    return result_bit_cfg

@@ -23,7 +23,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from model_compression_toolkit.constants import EPS
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -155,10 +154,17 @@ class MixedPrecisionSearchManager:
 
         Logger.info('Starting to evaluate metrics')
 
+        orig_sorted_nodes = self.original_graph.get_configurable_sorted_nodes(self.fw_info)
+
+        def topo_cfg(cfg: dict) -> list:
+            topo_cfg = [cfg[n] for n in orig_sorted_nodes]
+            assert len(topo_cfg) == len(cfg)
+            return topo_cfg
+
         def compute_metric(cfg, node_idx=None, baseline_cfg=None):
-            return self.sensitivity_evaluator.compute_metric(list(cfg.values()),
+            return self.sensitivity_evaluator.compute_metric(topo_cfg(cfg),
                                                              node_idx,
-                                                             list(baseline_cfg.values()) if baseline_cfg else None)
+                                                             topo_cfg(baseline_cfg) if baseline_cfg else None)
         if self.using_virtual_graph:
             origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
                 self.max_ru_config)

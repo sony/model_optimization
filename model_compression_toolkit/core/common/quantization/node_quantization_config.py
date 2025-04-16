@@ -493,7 +493,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         """
         return list(self.pos_attributes_config_mapping.keys()) + list(self.attributes_config_mapping.keys())
 
-    def get_all_weights_configs(self) -> Dict['WeightAttrT', AttributeQuantizationConfig]:
+    def get_all_weight_attrs_configs(self) -> Dict['WeightAttrT', AttributeQuantizationConfig]:
         """ Get quantization configs for all weights.
 
             Returns:

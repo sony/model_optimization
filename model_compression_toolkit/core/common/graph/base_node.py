@@ -494,7 +494,7 @@ class BaseNode:
             The index of the minimal bit-width candidate.
         """
         aw_nbits = [(c.activation_quantization_cfg.activation_n_bits,
-                     *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weights_configs().values()])
+                     *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weight_attrs_configs().values()])
                     for c in self.candidates_quantization_cfg]
         min_nbits = min(aw_nbits)
         min_ind = [i for i, nb in enumerate(aw_nbits) if min_nbits == nb]
@@ -509,7 +509,7 @@ class BaseNode:
             The index of the maximal bit-width candidate.
         """
         aw_nbits = [(c.activation_quantization_cfg.activation_n_bits,
-                     *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weights_configs().values()])
+                     *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weight_attrs_configs().values()])
                     for c in self.candidates_quantization_cfg]
         max_nbits = max(aw_nbits)
         max_ind = [i for i, nb in enumerate(aw_nbits) if max_nbits == nb]
