@@ -12,20 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
 import numpy as np
+import torch
 from torch.nn import Conv2d
 
-import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core import ResourceUtilization, CoreConfig, QuantizationConfig
+from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.pytorch.constants import BIAS
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OperatorsSet, \
-    QuantizationConfigOptions
-from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tpc, \
     get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tpc import generate_mixed_precision_test_tpc
@@ -79,28 +72,6 @@ class MixedPrecisionBaseTest(BasePytorchTest):
             self.unit_test.assertFalse((q_weights == float_weights).all())
 
 
-class MixedPrecisionSearch8Bit(MixedPrecisionBaseTest):
-    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
-        super().__init__(unit_test)
-
-        self.distance_metric = distance_metric
-
-    def get_resource_utilization(self):
-        return ResourceUtilization(380)
-
-    def get_core_configs(self):
-        qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
-                                         relu_bound_to_power_of_2=False, weights_bias_correction=True,
-                                         input_scaling=False, activation_channel_equalization=False)
-        mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
-                                                        distance_weighting_method=self.distance_metric)
-
-        return {"mixed_precision_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
-
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        self.compare_results(quantization_info, quantized_models, float_model, 0)
-
-
 class MixedPrecisionWithHessianScores(MixedPrecisionBaseTest):
     def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
         super().__init__(unit_test, num_calibration_iter=10)
@@ -125,104 +96,6 @@ class MixedPrecisionWithHessianScores(MixedPrecisionBaseTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 0)
-
-
-class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
-
-    def get_core_configs(self):
-        return {"mixed_precision_model": CoreConfig(quantization_config=QuantizationConfig(
-            custom_tpc_opset_to_layer={"Weights_mp": CustomOpsetLayers([torch.nn.Conv2d],
-                                                      {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
-                                                       BIAS_ATTR: DefaultDict(default_value=BIAS)}),
-                                       "Weights_fixed": CustomOpsetLayers([torch.nn.Linear],
-                                                         {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
-                                                          BIAS_ATTR: DefaultDict(default_value=BIAS)})}
-        ))}
-
-    def get_tpc(self):
-        # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
-        # Both layers that have weights to quantized, so we want to verify that finalizing the model is successful.
-        # Note that this is important that the quantization config options would include also activation quantization.
-        cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
-
-        two_bit_cfg = mixed_precision_cfg_list[2]
-
-        weight_mixed_cfg = schema.QuantizationConfigOptions(quantization_configurations=tuple(
-            mixed_precision_cfg_list),
-            base_config=cfg,
-        )
-
-        weight_fixed_cfg = schema.QuantizationConfigOptions(quantization_configurations=tuple(
-            [two_bit_cfg]),
-            base_config=two_bit_cfg,
-        )
-
-        tpc = schema.TargetPlatformCapabilities(
-            default_qco=weight_fixed_cfg,
-            tpc_minor_version=None,
-            tpc_patch_version=None,
-            tpc_platform_type=None,
-            operator_set=tuple([schema.OperatorsSet(name="Weights_mp", qc_options=weight_mixed_cfg),
-                          schema.OperatorsSet(name="Weights_fixed", qc_options=weight_fixed_cfg)]),
-            name="mp_part_weights_layers_test")
-
-        return {'mixed_precision_model': tpc}
-
-    def create_feature_network(self, input_shape):
-        class ConvLinearModel(torch.nn.Module):
-            def __init__(self, _input_shape):
-                super(ConvLinearModel, self).__init__()
-                _, in_channels, _, _ = _input_shape[0]
-                self.conv = torch.nn.Conv2d(in_channels, 3, kernel_size=3)
-                self.linear = torch.nn.Linear(30, 64)
-
-            def forward(self, inp):
-                x = self.conv(inp)
-                output = self.linear(x)
-                return output
-
-        return ConvLinearModel(input_shape)
-
-    def get_resource_utilization(self):
-        return ResourceUtilization(560)
-
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        # We just needed to verify that the graph finalization is working without failing.
-        # The actual quantization is not interesting for the sake of this test, so we just verify some
-        # degenerated things to see that everything worked.
-        self.unit_test.assertTrue(
-            quantization_info.mixed_precision_cfg == [1])  # resource utilization should give mixed precision
-
-        quantized_model = quantized_models['mixed_precision_model']
-        linear_layer = quantized_model.linear
-        q_weights = linear_layer.get_quantized_weights()['weight'].detach().cpu().numpy()
-        for i in range(q_weights.shape[0]):
-            self.unit_test.assertTrue(
-                np.unique(q_weights[i, :]).flatten().shape[0] <= 4)
-
-
-class MixedPrecisionSearch2Bit(MixedPrecisionBaseTest):
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
-
-    def get_resource_utilization(self):
-        return ResourceUtilization(96)
-
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        self.compare_results(quantization_info, quantized_models, float_model, 2)
-
-
-class MixedPrecisionSearch4Bit(MixedPrecisionBaseTest):
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
-
-    def get_resource_utilization(self):
-        return ResourceUtilization(192)
-
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
-        self.compare_results(quantization_info, quantized_models, float_model, 1)
 
 
 class MixedPrecisionActivationDisabledTest(MixedPrecisionBaseTest):

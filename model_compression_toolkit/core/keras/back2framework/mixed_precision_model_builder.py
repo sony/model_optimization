@@ -137,11 +137,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         float_weights = n.get_weights_by_keys(attr)
 
-        max_cfg_candidates = n.find_max_candidates_indices()
-        if not len(max_cfg_candidates) == 1:
-            Logger.critical(f"A maximal configuration candidate must be defined; found multiple potential maximal candidates.")# pragma: no cover
-
-        max_candidate_idx = max_cfg_candidates[0]
+        max_candidate_idx = n.find_max_candidate_index()
 
         return {'node_q_cfg': node_q_cfg_candidates,
                 'float_weights': float_weights,
@@ -178,11 +174,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
                 n.sort_node_candidates(self.fw_info)
 
-                max_cfg_candidates = n.find_max_candidates_indices()
-                assert len(max_cfg_candidates) == 1, \
-                    f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
-                max_candidate_idx = max_cfg_candidates[0]
-
+                max_candidate_idx = n.find_max_candidate_index()
                 kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
                 activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
                                                                             'max_candidate_idx': max_candidate_idx,
