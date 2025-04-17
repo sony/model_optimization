@@ -33,7 +33,7 @@ bias_weights_n_bits = 32
 activation_n_bits = 8
 
 
-def get_op_qco():
+def get_op_qco(kernel_n_bits, bias_n_bits):
     # define a default quantization config for all non-specified weights attributes.
     default_weight_attr_config = AttributeQuantizationConfig()
 
@@ -65,11 +65,10 @@ def get_op_qco():
     )
 
     mx_cfg_list = [base_cfg]
-    for n in [2, 4, 16]:
-        mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: n}}))
-    mx_cfg_list.append(
-        base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}})
-    )
+    if kernel_weights_n_bits is not None:
+        mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: kernel_n_bits}}))
+    if bias_weights_n_bits is not None:
+        mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: bias_n_bits}}))
 
     return base_cfg, mx_cfg_list, default_config
 
@@ -95,8 +94,8 @@ def generate_tpc_local(default_config, base_config, mixed_precision_cfg_list):
     return generated_tpc
 
 
-def get_tpc():
-    base_cfg, mx_cfg_list, default_config = get_op_qco()
+def get_tpc(kernel_n_bits, bias_n_bits):
+    base_cfg, mx_cfg_list, default_config = get_op_qco(kernel_n_bits, bias_n_bits)
     tpc = generate_tpc_local(default_config, base_cfg, mx_cfg_list)
     return tpc
 
@@ -121,9 +120,9 @@ def get_float_model():
 
 
 class TestManualWeightsBitwidthSelectionByLayerType:
-
-    test_input_1 = (NodeTypeFilter(Conv2d), 16, PYTORCH_KERNEL)
-    test_input_2 = (NodeTypeFilter(Conv2d), [2], [PYTORCH_KERNEL])
+    # (LayerType, bit width, attribute, kernel_n_bits, bias_n_bits)
+    test_input_1 = (NodeTypeFilter(Conv2d), 16, PYTORCH_KERNEL, 16, None)
+    test_input_2 = (NodeTypeFilter(Conv2d), [2], [PYTORCH_KERNEL], 2, None)
     
     test_expected_1 = ([Conv2d], [16])
     test_expected_2 = ([Conv2d], [2])
@@ -134,10 +133,9 @@ class TestManualWeightsBitwidthSelectionByLayerType:
     ])
 
     def test_manual_weights_bitwidth_selection(self, inputs, expected):
-
         float_model = get_float_model()
 
-        target_platform_cap = get_tpc()
+        target_platform_cap = get_tpc(kernel_n_bits=inputs[3], bias_n_bits=inputs[4])
         
         core_config = CoreConfig()
         core_config.bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
@@ -165,10 +163,10 @@ class TestManualWeightsBitwidthSelectionByLayerType:
 
 
 class TestManualWeightsBitwidthSelectionByLayerName:
-
-    test_input_1 = (NodeNameFilter("conv1"), 16, PYTORCH_KERNEL)
-    test_input_2 = (NodeNameFilter("conv1"), [2], [PYTORCH_KERNEL])
-    test_input_3 = ([NodeNameFilter("conv1"), NodeNameFilter("conv1")], [4, 16], [PYTORCH_KERNEL, BIAS])
+    # (LayerName, bit width, attribute, kernel_n_bits, bias_n_bits)
+    test_input_1 = (NodeNameFilter("conv1"), 16, PYTORCH_KERNEL, 16, None)
+    test_input_2 = (NodeNameFilter("conv1"), [2], [PYTORCH_KERNEL], 2, None)
+    test_input_3 = ([NodeNameFilter("conv1"), NodeNameFilter("conv1")], [4, 16], [PYTORCH_KERNEL, BIAS], 4, 16)
 
     test_expected_1 = (["conv1"], [16])
     test_expected_2 = (["conv1"], [2])
@@ -184,7 +182,7 @@ class TestManualWeightsBitwidthSelectionByLayerName:
 
         float_model = get_float_model()
 
-        target_platform_cap = get_tpc()
+        target_platform_cap = get_tpc(kernel_n_bits=inputs[3], bias_n_bits=inputs[4])
         
         core_config = CoreConfig()
         core_config.bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
