@@ -15,7 +15,7 @@
 import pytest
 from typing import List
 import torch
-from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_activation_quantizer_holder, fully_quantized_wrapper
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_activation_quantizer_holder, fully_quantized_wrapper, get_preserving_activation_quantizer_holder
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 
@@ -166,6 +166,9 @@ class TestPyTorchModelBuilder():
                                                                         fw_impl=fw_impl),
                                                 get_activation_quantizer_holder_fn=lambda n:
                                                 get_activation_quantizer_holder(n,
+                                                                                fw_impl=fw_impl),
+                                                get_preserving_activation_quantizer_holder_fn=lambda n:
+                                                get_preserving_activation_quantizer_holder(n,
                                                                                 fw_impl=fw_impl)).build_model()
         
         preserving_activation_holder_quantizer_name = ["dropout_activation_holder_quantizer", "flatten_activation_holder_quantizer"]
