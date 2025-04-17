@@ -234,7 +234,9 @@ class PytorchModel(torch.nn.Module):
         self.wrapper = wrapper
         self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
         self.reuse_groups = {}
-        self._add_modules()
+        self._reused_nodes = []
+
+        self._add_all_modules()
 
     # todo: Move to parent class BaseModelBuilder
     @property
@@ -286,17 +288,37 @@ class PytorchModel(torch.nn.Module):
                 node_op = self.wrapper(node, node_builder(node))
         return node_op
 
-    def _add_modules(self):
+    def _add_all_modules(self):
+        """
+        Build and add the modules and functional nodes from node_sort list as attributes to PytorchModel.
+        To assure all required nodes for the reused nodes are already initialized, adds none-reused nodes first,
+        then adds the reused nodes.
+        """
+        self._add_modules(reused_nodes_only=False)  # add none-reused nodes
+        self._add_modules(reused_nodes_only=True)  # add reused nodes
+
+    def _add_modules(self, reused_nodes_only=False):
         """
         Build and add the modules and functional nodes from node_sort list as attributes to PytorchModel
-        """
-        for node in self.node_sort:
-            if node.reuse:
-                # If the node is reused, retrieve the original module
-                if node.reuse_group not in self.reuse_groups:
-                    Logger.critical(f"Reuse group {node.reuse_group} not found for node {node.name}")
+        Args:
+            reused_nodes_only: whether to go over the reuse nodes list or not.
+                   In case reuse_nodes_only is False - will go over all nodes, and add reused nodes to self._reused_nodes
+                   In case reuse_nodes_only is True - will go over self._reused_nodes only.
 
-                node_op = self.reuse_groups[node.reuse_group]
+        """
+        nodes = self._reused_nodes if reused_nodes_only else self.node_sort
+        for node in nodes:
+            if node.reuse and reused_nodes_only:
+                if node.reuse_group not in self.reuse_groups:
+                    raise Exception(f"Reuse group {node.reuse_group} not found for node {node.name}. "
+                                    f"Make sure you first call the method with reused_nodes_only=False")
+                else:
+                    node_op = self.reuse_groups[node.reuse_group]  # retrieve the original module
+
+            elif node.reuse:  # add node to reused list, and go over the list after all other nodes were created
+                self._reused_nodes.append(node)
+                continue
+
             else:
                 # If it's not reused, create a new module
                 node_op = self.wrap(node)
