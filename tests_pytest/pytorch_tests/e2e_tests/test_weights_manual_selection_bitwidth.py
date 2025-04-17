@@ -17,42 +17,92 @@ import pytest
 import model_compression_toolkit as mct
 import torch
 from torch.nn import Conv2d
-from tests.common_tests.helpers.tpcs_for_tests.v2.tpc import get_tpc
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS, PYTORCH_KERNEL
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.core import CoreConfig
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tpc
 from mct_quantizers import PytorchQuantizationWrapper
+
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness, \
+    AttributeQuantizationConfig
+from mct_quantizers import QuantizationMethod
 
 kernel_weights_n_bits = 8
 bias_weights_n_bits = 32
 activation_n_bits = 8
 
-def representative_data_gen(shape=(3, 8, 8), num_inputs=1, batch_size=2, num_iter=1):
-    for _ in range(num_iter):
-        yield [torch.randn(batch_size, *shape)] * num_inputs
 
-def get_tpc():
-    base_cfg, _, default_config = get_op_quantization_configs()
-    base_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping=
-                                        {
-                                            KERNEL_ATTR: base_cfg.attr_weights_configs_mapping[KERNEL_ATTR]
-                                        .clone_and_edit(weights_n_bits=kernel_weights_n_bits),
-                                            BIAS_ATTR: base_cfg.attr_weights_configs_mapping[BIAS_ATTR]
-                                        .clone_and_edit(weights_n_bits=bias_weights_n_bits, enable_weights_quantization=True),
-                                        },
-                                        activation_n_bits=activation_n_bits)
+def get_op_qco():
+    # define a default quantization config for all non-specified weights attributes.
+    default_weight_attr_config = AttributeQuantizationConfig()
+
+    # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
+    kernel_base_config = AttributeQuantizationConfig(
+        weights_n_bits=8,
+        weights_per_channel_threshold=True,
+        enable_weights_quantization=True)
+
+    base_cfg = schema.OpQuantizationConfig(
+        default_weight_attr_config=default_weight_attr_config,
+        attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        signedness=Signedness.AUTO)
+
+    default_config = schema.OpQuantizationConfig(
+        default_weight_attr_config=default_weight_attr_config,
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        signedness=Signedness.AUTO
+    )
 
     mx_cfg_list = [base_cfg]
     for n in [2, 4, 16]:
         mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: n}}))
-        mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={BIAS_ATTR: {WEIGHTS_N_BITS: n}}))
     mx_cfg_list.append(
-        base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}, BIAS_ATTR: {WEIGHTS_N_BITS: 16}})
+        base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}})
     )
-    tpc = generate_tpc(default_config=default_config, base_config=base_cfg, mixed_precision_cfg_list=mx_cfg_list, name='imx500_tpc_test')
+
+    return base_cfg, mx_cfg_list, default_config
+
+
+def generate_tpc_local(default_config, base_config, mixed_precision_cfg_list):
+    default_configuration_options = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple([default_config]))
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple(mixed_precision_cfg_list),
+        base_config=base_config)
+
+    operator_set = []
+
+    conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV, qc_options=mixed_precision_configuration_options)
+    relu = schema.OperatorsSet(name=schema.OperatorSetNames.RELU)
+    add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD)
+    operator_set.extend([conv, relu, add])
+
+    generated_tpc = schema.TargetPlatformCapabilities(
+        default_qco=default_configuration_options,
+        operator_set=tuple(operator_set))
+
+    return generated_tpc
+
+
+def get_tpc():
+    base_cfg, mx_cfg_list, default_config = get_op_qco()
+    tpc = generate_tpc_local(default_config, base_cfg, mx_cfg_list)
     return tpc
+
+def representative_data_gen(shape=(3, 8, 8), num_inputs=1, batch_size=2, num_iter=1):
+    for _ in range(num_iter):
+        yield [torch.randn(batch_size, *shape)] * num_inputs
 
 def get_float_model():
         class BaseModel(torch.nn.Module):

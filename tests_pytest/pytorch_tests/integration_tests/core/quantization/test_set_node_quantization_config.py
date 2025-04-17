@@ -15,7 +15,8 @@
 import pytest
 
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
-from model_compression_toolkit.core import CoreConfig
+from model_compression_toolkit.core import BitWidthConfig, QuantizationConfig
+
 
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
@@ -29,52 +30,32 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness, \
     AttributeQuantizationConfig
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.constants import FLOAT_BITWIDTH
 
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL
 
 class TestManualWeightsBitwidthSelection:
     def get_op_qco(self):
         # define a default quantization config for all non-specified weights attributes.
-        default_weight_attr_config = AttributeQuantizationConfig(
-            weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
-            weights_n_bits=8,
-            weights_per_channel_threshold=False,
-            enable_weights_quantization=False,
-            # TODO: this will changed to True once implementing multi-attributes quantization
-            lut_values_bitwidth=None)
+        default_weight_attr_config = AttributeQuantizationConfig()
 
         # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
         kernel_base_config = AttributeQuantizationConfig(
-            weights_quantization_method=QuantizationMethod.SYMMETRIC,
             weights_n_bits=8,
             weights_per_channel_threshold=True,
-            enable_weights_quantization=True,
-            lut_values_bitwidth=None)
-
-        # define a quantization config to quantize the bias (for layers where there is a bias attribute).
-        bias_config = AttributeQuantizationConfig(
-            weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
-            weights_n_bits=FLOAT_BITWIDTH,
-            weights_per_channel_threshold=False,
-            enable_weights_quantization=False,
-            lut_values_bitwidth=None)
+            enable_weights_quantization=True)
 
         base_cfg = schema.OpQuantizationConfig(
             default_weight_attr_config=default_weight_attr_config,
-            attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
+            attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config},
             activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
             activation_n_bits=8,
             supported_input_activation_n_bits=8,
             enable_activation_quantization=True,
             quantization_preserving=False,
-            fixed_scale=None,
-            fixed_zero_point=None,
-            simd_size=32,
             signedness=Signedness.AUTO)
 
         default_config = schema.OpQuantizationConfig(
@@ -85,17 +66,12 @@ class TestManualWeightsBitwidthSelection:
             supported_input_activation_n_bits=8,
             enable_activation_quantization=True,
             quantization_preserving=False,
-            fixed_scale=None,
-            fixed_zero_point=None,
-            simd_size=32,
-            signedness=Signedness.AUTO)
+            signedness=Signedness.AUTO
+        )
 
         mx_cfg_list = [base_cfg]
         for n in [2, 4, 16]:
             mx_cfg_list.append(base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: n}}))
-        mx_cfg_list.append(
-            base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}})
-        )
 
         return base_cfg, mx_cfg_list, default_config
 
@@ -115,13 +91,7 @@ class TestManualWeightsBitwidthSelection:
 
         generated_tpc = schema.TargetPlatformCapabilities(
             default_qco=default_configuration_options,
-            tpc_minor_version=1,
-            tpc_patch_version=0,
-            tpc_platform_type=None,
-            operator_set=tuple(operator_set),
-            name='test_manual_weights_bitwidth_selection',
-            add_metadata=False,
-            is_simd_padding=True)
+            operator_set=tuple(operator_set))
 
         return generated_tpc
 
@@ -150,7 +120,7 @@ class TestManualWeightsBitwidthSelection:
                 return x
         return BaseModel()
 
-    def get_test_graph(self, core_config):
+    def get_test_graph(self, qc):
         float_model = self.get_float_model()
         fw_info = DEFAULT_PYTORCH_INFO
 
@@ -162,7 +132,7 @@ class TestManualWeightsBitwidthSelection:
         tpc = self.get_tpc()
         attach2pytorch = AttachTpcToPytorch()
         fqc = attach2pytorch.attach(
-            tpc, core_config.quantization_config.custom_tpc_opset_to_layer)
+            tpc, qc.custom_tpc_opset_to_layer)
         graph.set_fqc(fqc)
 
         return graph
@@ -177,10 +147,14 @@ class TestManualWeightsBitwidthSelection:
     test_input_1 = (NodeNameFilter("conv1"), 2, PYTORCH_KERNEL)
     test_input_2 = (NodeTypeFilter(nn.Conv2d), 16, PYTORCH_KERNEL)
     test_input_3 = ([NodeNameFilter("conv1"), NodeNameFilter("conv2")], [4, 8], [PYTORCH_KERNEL, PYTORCH_KERNEL])
+    test_input_4 = (NodeNameFilter("add"), 2, PYTORCH_KERNEL, False)
+    test_input_5 = (NodeNameFilter("add"), 2, PYTORCH_KERNEL, True)
 
-    test_expected_1 = ({"conv1": {PYTORCH_KERNEL: 2}, "conv2": {PYTORCH_KERNEL: 8}})
+    test_expected_1 = ({"conv1": {PYTORCH_KERNEL: 2}})
     test_expected_2 = ({"conv1": {PYTORCH_KERNEL: 16}, "conv2": {PYTORCH_KERNEL: 16}})
     test_expected_3 = ({"conv1": {PYTORCH_KERNEL: 4}, "conv2": {PYTORCH_KERNEL: 8}})
+    test_expected_4 = ('The requested attribute weight to change the bit width for add:add does not exist.')
+    test_expected_5 = ('The requested attribute weight to change the bit width for add:add does not exist.')
 
     @pytest.mark.parametrize(
         ("inputs", "expected"), [
@@ -189,42 +163,52 @@ class TestManualWeightsBitwidthSelection:
         (test_input_3, test_expected_3),
     ])
     def test_manual_weights_bitwidth_selection(self, inputs, expected):
-        core_config = CoreConfig()
-        graph = self.get_test_graph(core_config)
+        for mx_enable in [False, True]:
+            bit_width_config = BitWidthConfig()
+            quantization_config = QuantizationConfig()
+            graph = self.get_test_graph(quantization_config)
+            bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
 
-        core_config.bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
+            updated_graph = set_quantization_configuration_to_graph(
+                graph, quantization_config, bit_width_config,
+                mixed_precision_enable=mx_enable
+            )
 
-        updated_graph = set_quantization_configuration_to_graph(
-            graph, core_config.quantization_config, core_config.bit_width_config,
-            False, False
-        )
+            for node in updated_graph.nodes:
+                exp_vals = expected.get(node.name)
+                if mx_enable == False:
+                    assert len(node.candidates_quantization_cfg) == 1
+                else:
+                    if node.name in expected.keys():
+                        assert len(node.candidates_quantization_cfg) == 1
+                    else:
+                        node_qc_options = node.get_qco(graph.fqc)
+                        assert len(node.candidates_quantization_cfg) == len(node_qc_options.quantization_configurations)
 
-        for node in updated_graph.nodes:
-            exp_vals = expected.get(node.name)
-            if exp_vals is None: continue
-            assert len(node.candidates_quantization_cfg) == 1
+                if exp_vals is None: continue
 
-            cfg_list = node.candidates_quantization_cfg[0].weights_quantization_cfg.attributes_config_mapping
-            for vkey in cfg_list:
-                cfg = cfg_list.get(vkey)
-                if exp_vals.get(vkey) is not None:
-                    assert cfg.weights_n_bits == exp_vals.get(vkey)
+                cfg_list = node.candidates_quantization_cfg[0].weights_quantization_cfg.attributes_config_mapping
+                for vkey in cfg_list:
+                    cfg = cfg_list.get(vkey)
+                    if exp_vals.get(vkey) is not None:
+                        assert cfg.weights_n_bits == exp_vals.get(vkey)
 
-    test_input_4 = (NodeNameFilter("add"), 2, PYTORCH_KERNEL)
-    test_expected_4 = ('The requested attribute weight to change the bit width for add:add does not exist.')
     @pytest.mark.parametrize(
         ("inputs", "expected"), [
             (test_input_4, test_expected_4),
+            (test_input_5, test_expected_5),
     ])
     def test_manual_weights_bitwidth_selection_error_add(self, inputs, expected):
-        core_config = CoreConfig()
-        graph = self.get_test_graph(core_config)
+        for mx_enable in [False, True]:
+            bit_width_config = BitWidthConfig()
+            quantization_config = QuantizationConfig()
+            graph = self.get_test_graph(quantization_config)
 
-        core_config.bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
-        try:
-            updated_graph = set_quantization_configuration_to_graph(
-                graph, core_config.quantization_config, core_config.bit_width_config,
-                False, False
-            )
-        except Exception as e:
-            assert expected == str(e)
+            bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
+            try:
+                set_quantization_configuration_to_graph(
+                    graph, quantization_config, bit_width_config,
+                    mixed_precision_enable=mx_enable
+                )
+            except Exception as e:
+                assert expected == str(e)
