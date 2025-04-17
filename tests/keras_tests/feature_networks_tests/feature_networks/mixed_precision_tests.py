@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import math
 import typing
 
 import abc
@@ -53,7 +54,8 @@ def get_base_mp_nbits_candidates():
 class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_layers_idx, num_calibration_iter=1):
         super().__init__(unit_test, num_calibration_iter=num_calibration_iter)
-
+        # for the model that is used here, the two last tensors compose the max cut
+        self.max_cut = 10 * 10 * 32 + 13 * 13 * 32
         self.activation_layers_idx = activation_layers_idx
 
     def get_core_config(self):
@@ -135,14 +137,15 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
 
     def get_resource_utilization(self):
-        return ResourceUtilization(weights_memory=17919, activation_memory=5407)
+        return ResourceUtilization(weights_memory=17919, activation_memory=self.max_cut-1)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 4, 8]))
+        # Since the max cut is the last two tensors, one of them have to get 4 bits
+        self.unit_test.assertIn(activation_bits, ([8, 4, 8], [8, 8, 4]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 3],
@@ -157,7 +160,7 @@ class MixedPrecisionActivationSearch4BitsAvgTest(MixedPrecisionActivationBaseTes
 
     def get_resource_utilization(self):
         # resource utilization is for 4 bits on average
-        return ResourceUtilization(weights_memory=17920 * 4 / 8, activation_memory=4300)
+        return ResourceUtilization(weights_memory=17920 * 4 / 8, activation_memory=math.ceil(self.max_cut*4/8))
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
@@ -180,7 +183,7 @@ class MixedPrecisionActivationSearch4BitsAvgTest(MixedPrecisionActivationBaseTes
         # then there is no guarantee that the activation bitwidth for each layer would be 4-bit,
         # this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the input layer's bitwidth)
-        self.unit_test.assertTrue((activation_bits == [4, 8]))
+        self.unit_test.assertTrue((activation_bits == [4, 4]))
 
 
 class MixedPrecisionActivationSearch2BitsAvgTest(MixedPrecisionActivationBaseTest):
@@ -189,7 +192,7 @@ class MixedPrecisionActivationSearch2BitsAvgTest(MixedPrecisionActivationBaseTes
 
     def get_resource_utilization(self):
         # resource utilization is for 2 bits on average
-        return ResourceUtilization(weights_memory=17920.0 * 2 / 8, activation_memory=1544)
+        return ResourceUtilization(weights_memory=17920.0 * 2 / 8, activation_memory=math.ceil(self.max_cut * 2 / 8))
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
@@ -213,7 +216,8 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[1, 3])
 
     def get_resource_utilization(self):
-        return ResourceUtilization(47, 767)
+        # 638 = round_up((16*16*3+13*13*3)/2) -> so it must choose (4,4)
+        return ResourceUtilization(47, 638)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -225,10 +229,9 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [4, 8]))
+        self.unit_test.assertTrue((activation_bits == [4, 4]))
 
 
 class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest):
@@ -236,7 +239,7 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
         super().__init__(unit_test, activation_layers_idx=[1])
 
     def get_resource_utilization(self):
-        return ResourceUtilization(48.0 * 4 / 8, 768.0 * 4 / 8)
+        return ResourceUtilization(48.0 * 4 / 8, math.ceil((16*16*3+13*13*3) * 4 / 8))
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
