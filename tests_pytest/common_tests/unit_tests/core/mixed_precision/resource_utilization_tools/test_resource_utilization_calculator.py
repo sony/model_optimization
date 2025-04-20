@@ -37,7 +37,12 @@ from tests_pytest._test_util.graph_builder_utils import build_node, full_attr_na
 BM = BitwidthMode
 TIC = TargetInclusionCriterion
 
-_identity_func = lambda x: x
+
+@pytest.fixture
+def graph_mock():
+    """ Basic Graph mock with basic retrieve_preserved_quantization_node operation for handling non
+    quantization preserving nodes. """
+    return Mock(spec_set=Graph, nodes=[], retrieve_preserved_quantization_node=lambda x: x)
 
 
 class TestUtilization:
