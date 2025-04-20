@@ -330,7 +330,8 @@ class PytorchModel(torch.nn.Module):
                 
                 elif node.is_quantization_preserving() and self.use_preserving_activation_holder_during_model_building:
                     prev_node = self.graph.retrieve_preserved_quantization_node(node)
-                    activation_quantizer_holder = self.get_preserving_activation_quantizer_holder(prev_node)
+                    if prev_node.is_activation_quantization_enabled():
+                        activation_quantizer_holder = self.get_preserving_activation_quantizer_holder(prev_node)
 
             if activation_quantizer_holder is not None:
                 self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
