@@ -1,7 +1,7 @@
 <div align="center" markdown="1">
 <p>
       <a href="https://sony.github.io/model_optimization/" target="_blank">
-        <img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/mctHeader1-cropped.svg" width="1000"></a>
+        <img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/mctHeader1-cropped.svg" width="1000"></a>
 </p>
   
 ______________________________________________________________________
@@ -67,7 +67,7 @@ For further details, please see [Supported features and algorithms](#high-level-
 <div align="center">
 <p align="center">
 
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/mctDiagram_clean.svg" width="800">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/mctDiagram_clean.svg" width="800">
 </p>    
 </div>
 
@@ -148,16 +148,16 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 ## <div align="center">Results</div>
 
 <p align="center">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/Classification.png" width="200">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/SemSeg.png" width="200">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/PoseEst.png" width="200">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/ObjDet.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/Classification.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/SemSeg.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/PoseEst.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/ObjDet.png" width="200">
 
 MCT can quantize an existing 32-bit floating-point model to an 8-bit fixed-point (or less) model without compromising accuracy. 
 Below is a graph of [MobileNetV2](https://pytorch.org/vision/main/models/generated/torchvision.models.mobilenet_v2.html) accuracy on ImageNet vs average bit-width of weights (X-axis), using **single-precision** quantization, **mixed-precision** quantization, and mixed-precision quantization with GPTQ. 
 
 <p align="center">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/torch_mobilenetv2.png" width="800">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/torch_mobilenetv2.png" width="800">
 
 For more results, please see [1]
 
