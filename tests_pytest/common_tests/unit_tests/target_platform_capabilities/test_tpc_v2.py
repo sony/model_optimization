@@ -21,6 +21,7 @@ from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_conf
 
 # Setup TEST_QC and TEST_QCO for testing.
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
+TEST_QCO = current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,))
 
 
 class TestSchemaV2Fusing:
@@ -29,7 +30,7 @@ class TestSchemaV2Fusing:
         add = current_schema.OperatorsSet(name="add")
         with pytest.raises(Exception, match="Fusing cannot be created for a single operator."):
             schema_v2.TargetPlatformCapabilities(
-                default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+                default_qco=TEST_QCO,
                 operator_set=(add,),
                 fusing_patterns=(schema_v2.Fusing(operator_groups=(add,)),),
                 tpc_minor_version=None,
@@ -50,7 +51,7 @@ class TestSchemaV2Fusing:
             schema_v2.Fusing(operator_groups=(conv, add, tanh))
         )
         hm = schema_v2.TargetPlatformCapabilities(
-            default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+            default_qco=TEST_QCO,
             operator_set=tuple(operator_set),
             fusing_patterns=fusing_patterns,
             tpc_minor_version=None,
@@ -79,7 +80,7 @@ class TestSchemaV2Fusing:
             schema_v2.Fusing(operator_groups=(conv, add, tanh))
         )
         hm = schema_v2.TargetPlatformCapabilities(
-            default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+            default_qco=TEST_QCO,
             operator_set=tuple(operator_set),
             fusing_patterns=fusing_patterns,
             tpc_minor_version=None,
@@ -119,7 +120,7 @@ class TestSchemaV2Fusing:
         assert fusing_patterns[0].fuse_op_quantization_config == TEST_QC
 
         hm = schema_v2.TargetPlatformCapabilities(
-            default_qco=current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,)),
+            default_qco=TEST_QCO,
             operator_set=tuple(operator_set),
             fusing_patterns=fusing_patterns,
             tpc_minor_version=None,

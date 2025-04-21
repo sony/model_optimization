@@ -149,11 +149,6 @@ class Fusing(TargetPlatformModelComponent):
         """
         if len(model.operator_groups) < 2:
             Logger.critical("Fusing cannot be created for a single operator.")  # pragma: no cover
-
-        # Check instance of fuse_op_quantization_config.
-        if model.fuse_op_quantization_config is not None:
-            if not isinstance(model.fuse_op_quantization_config, OpQuantizationConfig):
-                Logger.critical("fuse_op_quantization_config must be an instance of OpQuantizationConfig.")  # pragma: no cover
         
         return model
 
