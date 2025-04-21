@@ -26,7 +26,7 @@ from tests_pytest._test_util.graph_builder_utils import DummyLayer
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
-    NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig
+    NodeActivationQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
     Signedness
 from model_compression_toolkit.core import QuantizationConfig
@@ -34,8 +34,7 @@ from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tpc
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 
 fw_impl = PytorchImplementation()
 
@@ -53,63 +52,65 @@ def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizati
     if qcs:
         assert isinstance(qcs, list)
         node.candidates_quantization_cfg = qcs
-        node.final_weights_quantization_cfg = node.candidates_quantization_cfg[0].weights_quantization_cfg
         node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
     return node
 
 def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
-    
-    qc = QuantizationConfig()
     op_cfg = OpQuantizationConfig(
+        default_weight_attr_config=AttributeQuantizationConfig(),
         attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=a_nbits,
         enable_activation_quantization=a_enable,
-        default_weight_attr_config=AttributeQuantizationConfig(weights_n_bits=32,
-                                                               enable_weights_quantization=False),
-        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
         quantization_preserving=q_preserving,
-        supported_input_activation_n_bits=[2, 4, 8],
-        fixed_scale=None,
-        fixed_zero_point=None,
-        simd_size=None,
+        supported_input_activation_n_bits=8,
         signedness=Signedness.AUTO
     )
-
-    a_qcfg = NodeActivationQuantizationConfig(qc=qc, op_cfg=op_cfg,
+    a_qcfg = NodeActivationQuantizationConfig(qc=QuantizationConfig(), op_cfg=op_cfg,
                                               activation_quantization_fn=None,
                                               activation_quantization_params_fn=None)
     if len(aq_params) != 0:
         a_qcfg.set_activation_quantization_param(aq_params)
-    w_qcfg = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg,
-                                        weights_channels_axis=None,
-                                        node_attrs_list=[])
-    qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg,
-                                         weights_quantization_cfg=w_qcfg)
+    qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg)
     return qc
 
 def get_tpc():
-    base_cfg, mx_cfg_list, default_config = get_op_quantization_configs()
-    base_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping=
-                                {
-                                    KERNEL_ATTR: base_cfg.attr_weights_configs_mapping[KERNEL_ATTR]
-                                .clone_and_edit(enable_weights_quantization=False),
-                                    BIAS_ATTR: base_cfg.attr_weights_configs_mapping[BIAS_ATTR]
-                                .clone_and_edit(enable_weights_quantization=False),
-                                },
-                            )
+    base_config = schema.OpQuantizationConfig(
+            default_weight_attr_config=AttributeQuantizationConfig(),
+            attr_weights_configs_mapping={},
+            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            activation_n_bits=8,
+            supported_input_activation_n_bits=8,
+            enable_activation_quantization=True,
+            quantization_preserving=False,
+            signedness=Signedness.AUTO)
+    
+    default_config = schema.OpQuantizationConfig(
+            default_weight_attr_config=AttributeQuantizationConfig(),
+            attr_weights_configs_mapping={},
+            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            activation_n_bits=8,
+            supported_input_activation_n_bits=8,
+            enable_activation_quantization=True,
+            quantization_preserving=False,
+            signedness=Signedness.AUTO)
 
-    for i, mx_cfg in enumerate(mx_cfg_list):
-        mx_cfg_list[i] = mx_cfg.clone_and_edit(attr_weights_configs_mapping=
-                                    {
-                                        KERNEL_ATTR: mx_cfg.attr_weights_configs_mapping[KERNEL_ATTR]
-                                    .clone_and_edit(enable_weights_quantization=False),
-                                        BIAS_ATTR: mx_cfg.attr_weights_configs_mapping[BIAS_ATTR]
-                                    .clone_and_edit(enable_weights_quantization=False),
-                                    },
-                                )
+    mixed_precision_cfg_list = [base_config]
 
-    tpc = generate_tpc(default_config=default_config, base_config=base_cfg, mixed_precision_cfg_list=mx_cfg_list,
-                        name='imx500_tpc')
+    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list), 
+                                                                             base_config=base_config)
+    operator_set = []
+    preserving_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False, quantization_preserving=True))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.DROPOUT, qc_options=preserving_quantization_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.FLATTEN, qc_options=preserving_quantization_config))
+    conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV, qc_options=mixed_precision_configuration_options)
+    fc = schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED, qc_options=mixed_precision_configuration_options)
+
+    operator_set.extend([conv, fc])
+    tpc = schema.TargetPlatformCapabilities(
+        default_qco=default_configuration_options,
+        operator_set=tuple(operator_set))
     return tpc
 
 # test graph
@@ -131,7 +132,7 @@ def get_test_graph():
                              ]
                   )
     tpc = get_tpc()
-    fqc = FrameworkQuantizationCapabilities(tpc=tpc, name="test_pytorch_model")
+    fqc = FrameworkQuantizationCapabilities(tpc=tpc, name="test")
     graph.set_fqc(fqc)
 
     return graph

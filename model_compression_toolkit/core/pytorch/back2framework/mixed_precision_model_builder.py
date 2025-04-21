@@ -199,7 +199,6 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
-
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
 
         Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover

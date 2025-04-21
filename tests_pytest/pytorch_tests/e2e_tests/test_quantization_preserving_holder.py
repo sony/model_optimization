@@ -13,17 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
-from typing import List
 
 import model_compression_toolkit as mct
 import torch
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from model_compression_toolkit.core import CoreConfig
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, IMX500_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, Signedness
+from mct_quantizers import QuantizationMethod
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities, OpQuantizationConfig
 
 def representative_data_gen(shape=(3, 8, 8), num_inputs=1, batch_size=2, num_iter=1):
     for _ in range(num_iter):
@@ -48,65 +46,45 @@ def get_float_model():
                 return x
         return BaseModel()
 
-def generate_tpc(default_config: OpQuantizationConfig,
-                 base_config: OpQuantizationConfig,
-                 mixed_precision_cfg_list: List[OpQuantizationConfig],
-                 name: str) -> TargetPlatformCapabilities:
+def get_tpc():
+    base_config = schema.OpQuantizationConfig(
+            default_weight_attr_config=AttributeQuantizationConfig(),
+            attr_weights_configs_mapping={},
+            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            activation_n_bits=8,
+            supported_input_activation_n_bits=8,
+            enable_activation_quantization=True,
+            quantization_preserving=False,
+            signedness=Signedness.AUTO)
     
+    default_config = schema.OpQuantizationConfig(
+            default_weight_attr_config=AttributeQuantizationConfig(),
+            attr_weights_configs_mapping={},
+            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            activation_n_bits=8,
+            supported_input_activation_n_bits=8,
+            enable_activation_quantization=True,
+            quantization_preserving=False,
+            signedness=Signedness.AUTO)
+
+    mixed_precision_cfg_list = [base_config]
     default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
     mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                              base_config=base_config)
 
     operator_set = []
-    fusing_patterns = []
-
     preserving_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False, quantization_preserving=True)
                               .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.DROPOUT, qc_options=preserving_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.FLATTEN, qc_options=preserving_quantization_config))
 
     conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV, qc_options=mixed_precision_configuration_options)
-    conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.CONV_TRANSPOSE, qc_options=mixed_precision_configuration_options)
-    depthwise_conv = schema.OperatorsSet(name=schema.OperatorSetNames.DEPTHWISE_CONV, qc_options=mixed_precision_configuration_options)
     fc = schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED, qc_options=mixed_precision_configuration_options)
+    operator_set.extend([conv, fc])
 
-    operator_set.extend([conv, conv_transpose, depthwise_conv, fc])
-
-    generated_tpc = schema.TargetPlatformCapabilities(
+    tpc = schema.TargetPlatformCapabilities(
         default_qco=default_configuration_options,
-        tpc_minor_version=1,
-        tpc_patch_version=0,
-        tpc_platform_type=IMX500_TP_MODEL,
-        operator_set=tuple(operator_set),
-        fusing_patterns=tuple(fusing_patterns),
-        name=name,
-        add_metadata=False,
-        is_simd_padding=True)
-    return generated_tpc
-
-def get_tpc():
-    base_cfg, mx_cfg_list, default_config = get_op_quantization_configs()
-
-    base_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping=
-                                {
-                                    KERNEL_ATTR: base_cfg.attr_weights_configs_mapping[KERNEL_ATTR]
-                                .clone_and_edit(enable_weights_quantization=False),
-                                    BIAS_ATTR: base_cfg.attr_weights_configs_mapping[BIAS_ATTR]
-                                .clone_and_edit(enable_weights_quantization=False),
-                                },
-                            )
-
-    for i, mx_cfg in enumerate(mx_cfg_list):
-        mx_cfg_list[i] = mx_cfg.clone_and_edit(attr_weights_configs_mapping=
-                                    {
-                                        KERNEL_ATTR: mx_cfg.attr_weights_configs_mapping[KERNEL_ATTR]
-                                    .clone_and_edit(enable_weights_quantization=False),
-                                        BIAS_ATTR: mx_cfg.attr_weights_configs_mapping[BIAS_ATTR]
-                                    .clone_and_edit(enable_weights_quantization=False),
-                                    },
-                                )
-    tpc = generate_tpc(default_config=default_config, base_config=base_cfg, mixed_precision_cfg_list=mx_cfg_list, name='imx500_tpc_test')
+        operator_set=tuple(operator_set))
     return tpc
 
 test_input_0 = ("conv1_activation_holder_quantizer",)
