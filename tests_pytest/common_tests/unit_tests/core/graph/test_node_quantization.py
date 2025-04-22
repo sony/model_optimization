@@ -17,16 +17,12 @@ from model_compression_toolkit.core.common.graph.edge import Edge
 
 from unittest.mock import Mock
 from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc, DummyLayer
+from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configs_to_node
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
     OpQuantizationConfig, AttributeQuantizationConfig, Signedness
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-
-
-
-from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities
 
 
 class TestSetNodeQuantizationConfig:
@@ -43,7 +39,7 @@ class TestSetNodeQuantizationConfig:
                                     quantization_preserving=True,
                                     signedness=Signedness.AUTO)
 
-    def test_activation_preserving_with_2_inputs(self, fw_impl_mock):
+    def test_activation_preserving_with_2_inputs(self, fw_info_mock):
         """ Tests that . """
         n1 = build_node('in1_node')
         n2 = build_node('in2_node')
@@ -55,7 +51,11 @@ class TestSetNodeQuantizationConfig:
 
         fqc = Mock(filterlayer2qco={DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config()])},
                    layer2qco={DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config()])})
-        set_quantization_configs_to_node(n3, graph, QuantizationConfig(), DEFAULT_PYTORCH_INFO, fqc)
-        set_quantization_configs_to_node(n4, graph, QuantizationConfig(), DEFAULT_PYTORCH_INFO, fqc)
+        fw_info_mock = Mock(spec=FrameworkInfo, kernel_channels_mapping={DummyLayer: 0},
+                            activation_quantizer_mapping={QuantizationMethod.POWER_OF_TWO: lambda x: 0},
+                            get_kernel_op_attributes=lambda x: [None])
+        set_quantization_configs_to_node(n3, graph, QuantizationConfig(), fw_info_mock, fqc)
+        set_quantization_configs_to_node(n4, graph, QuantizationConfig(), fw_info_mock, fqc)
         assert not n3.is_quantization_preserving() and not n3.is_activation_quantization_enabled()
         assert not n4.is_quantization_preserving() and not n4.is_activation_quantization_enabled()
+
