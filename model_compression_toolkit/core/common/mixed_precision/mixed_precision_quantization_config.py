@@ -39,6 +39,7 @@ class MixedPrecisionQuantizationConfig:
 
     compute_distance_fn: Optional[Callable] = None
     distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG
+    custom_metric_fn: Optional[Callable] = None
     num_of_images: int = MP_DEFAULT_NUM_SAMPLES
     configuration_overwrite: Optional[List[int]] = None
     num_interest_points_factor: float = field(default=1.0, metadata={"description": "Should be between 0.0 and 1.0"})

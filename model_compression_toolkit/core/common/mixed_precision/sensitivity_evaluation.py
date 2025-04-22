@@ -89,6 +89,9 @@ class SensitivityEvaluation:
         self.interest_points = get_mp_interest_points(graph,
                                                       fw_impl.count_node_for_mixed_precision_interest_points,
                                                       quant_config.num_interest_points_factor)
+        # If using a custom metric - return only model outputs
+        if self.quant_config.custom_metric_fn is not None:
+            self.interest_points = []
 
         # We use normalized MSE when not running hessian-based. For Hessian-based normalized MSE is not needed
         # because hessian weights already do normalization.
@@ -96,6 +99,9 @@ class SensitivityEvaluation:
         self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points, use_normalized_mse)
 
         self.output_points = get_output_nodes_for_metric(graph)
+        # If using a custom metric - return all model outputs
+        if self.quant_config.custom_metric_fn is not None:
+            self.output_points = [n.node for n in graph.get_outputs()]
         self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(self.output_points,
                                                                                     use_normalized_mse)
 
@@ -186,6 +192,38 @@ class SensitivityEvaluation:
 
         return self._compute_mp_distance_measure(ipts_distances, out_pts_distances,
                                                  self.quant_config.distance_weighting_method)
+
+    def compute_custom_metric(self,
+                              mp_model_configuration: List[int],
+                              node_idx: List[int] = None,
+                              baseline_mp_configuration: List[int] = None) -> float:
+        """
+        Compute the sensitivity metric of the MP model for a given configuration (the sensitivity
+        is computed on a custom function).
+
+        Args:
+            mp_model_configuration: Bitwidth configuration to use to configure the MP model.
+            node_idx: A list of nodes' indices to configure (instead of using the entire mp_model_configuration).
+            baseline_mp_configuration: A mixed-precision configuration to set the model back to after modifying it to
+                compute the metric for the given configuration.
+
+        Returns:
+            The sensitivity metric of the MP model for a given configuration.
+        """
+
+        # Configure MP model with the given configuration.
+        self._configure_bitwidths_model(mp_model_configuration,
+                                        node_idx)
+
+        # Compute the distance metric
+        sensitivity_metric = self.quant_config.custom_metric_fn(self.model_mp)
+
+        # Configure MP model back to the same configuration as the baseline model if baseline provided
+        if baseline_mp_configuration is not None:
+            self._configure_bitwidths_model(baseline_mp_configuration,
+                                            node_idx)
+
+        return sensitivity_metric
 
     def _init_baseline_tensors_list(self):
         """
