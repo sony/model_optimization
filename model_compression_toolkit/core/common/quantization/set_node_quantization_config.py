@@ -119,11 +119,16 @@ def filter_node_qco_by_graph(node: BaseNode,
             _next_nodes.extend(graph.get_next_nodes(n))
         next_nodes.append(n)
 
-    if len(next_nodes):
-        next_nodes_qc_options = [_node.get_qco(fqc) for _node in next_nodes]
-        next_nodes_supported_input_bitwidth = min([max_input_activation_n_bits(op_cfg)
+    if len(next_nodes) == 0:
+        return _base_config, _node_qc_options
+    next_nodes_qc_options = [_node.get_qco(fqc) for _node in next_nodes]
+    all_next_nodes_supported_input_bitwidth = [max_input_activation_n_bits(op_cfg)
                                                    for qc_opts in next_nodes_qc_options
-                                                   for op_cfg in qc_opts.quantization_configurations])
+                                                   for op_cfg in qc_opts.quantization_configurations
+                                               if op_cfg.enable_activation_quantization or op_cfg.quantization_preserving
+                                               ]
+    if len(all_next_nodes_supported_input_bitwidth):
+        next_nodes_supported_input_bitwidth = min(all_next_nodes_supported_input_bitwidth)
 
         # Filter node's QC options that match next nodes input bit-width.
         _node_qc_options = [_option for _option in _node_qc_options
