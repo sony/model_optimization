@@ -26,6 +26,7 @@ import numpy as np
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitWeightsNode, VirtualSplitActivationNode
@@ -75,14 +76,24 @@ class MixedPrecisionSearchManager:
         self.sensitivity_evaluator = sensitivity_evaluator
         self.target_resource_utilization = target_resource_utilization
 
-        self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
+        self.mp_topo_configurable_nodes_r = self.original_graph.get_configurable_sorted_nodes(fw_info)
+        self.mp_topo_configurable_nodes_v = self.mp_graph.get_configurable_sorted_nodes(fw_info)
 
         self.ru_targets = target_resource_utilization.get_restricted_targets()
-        self.ru_helper = MixedPrecisionRUHelper(self.mp_graph, fw_info, fw_impl)
+        self.ru_helper_for_real = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
+        self.ru_helper_for_virtual = MixedPrecisionRUHelper(self.mp_graph, fw_info, fw_impl)
 
-        self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
-        self.max_ru_config: Dict[BaseNode, int] = self.mp_graph.get_max_candidates_config(fw_info)
-        self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, self.min_ru_config)
+        self.min_ru_config_real: Dict[BaseNode, int] = self.original_graph.get_min_candidates_config(fw_info)
+        self.max_ru_config_real: Dict[BaseNode, int] = self.original_graph.get_max_candidates_config(fw_info)
+
+        self.min_ru_config_v: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
+        self.max_ru_config_v: Dict[BaseNode, int] = self.mp_graph.get_max_candidates_config(fw_info)
+
+        self.ru_targets_virtual = {t for t in self.ru_targets if t == RUTarget.BOPS}
+        self.ru_targets_real = {t for t in self.ru_targets if t != RUTarget.BOPS}
+
+        self.min_ru_v = self.ru_helper_for_virtual.compute_utilization(self.ru_targets_virtual, self.min_ru_config_v)
+        self.min_ru_real = self.ru_helper_for_real.compute_utilization(self.ru_targets_real, self.min_ru_config_real)
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.mp_graph,
                                                                        original_graph=self.original_graph)
@@ -110,8 +121,13 @@ class MixedPrecisionSearchManager:
         """
         layers_candidates_sensitivity: Dict[BaseNode, List[float]] = self._build_sensitivity_mapping()
         candidates_ru = self._compute_relative_ru_matrices()
+        candidates_ru2 = self._compute_relative_ru_matrices(is_virtual=False)
+        # raise Exception
         rel_target_ru = self._get_relative_ru_constraint_per_mem_element()
-        solver = MixedPrecisionIntegerLPSolver(layers_candidates_sensitivity, candidates_ru, rel_target_ru)
+        candidates_ru3 = {}
+        candidates_ru3.update(candidates_ru)
+        candidates_ru3.update(candidates_ru2)
+        solver = MixedPrecisionIntegerLPSolver(layers_candidates_sensitivity, candidates_ru3, rel_target_ru)
         mp_config = solver.run()
         return mp_config
 
@@ -129,15 +145,35 @@ class MixedPrecisionSearchManager:
               configuration exceeds the requested target utilization for any target).
         """
         target_ru = self.target_resource_utilization.get_resource_utilization_dict(restricted_only=True)
-        rel_target_ru = {
-            ru_target: (ru - self.min_ru[ru_target]) for ru_target, ru in target_ru.items()
+
+        target_ru_v = {t: target_ru[t] for t in target_ru if t == RUTarget.BOPS}
+        target_ru_r = {t: target_ru[t] for t in target_ru if t != RUTarget.BOPS}
+
+        rel_target_ru_v = {
+            ru_target: (ru - self.min_ru_v[ru_target]) for ru_target, ru in target_ru_v.items()
         }
         unsatisfiable_targets = {
-            ru_target.value: target_ru[ru_target] for ru_target, ru in rel_target_ru.items() if any(ru < 0)
+            ru_target.value: target_ru_v[ru_target] for ru_target, ru in rel_target_ru_v.items() if any(ru < 0)
         }
         if unsatisfiable_targets:
             raise ValueError(f"The model cannot be quantized to meet the specified resource utilization for the "
                              f"following targets: {unsatisfiable_targets}")
+
+
+
+        rel_target_ru_r = {
+            ru_target: (ru - self.min_ru_real[ru_target]) for ru_target, ru in target_ru_r.items()
+        }
+        unsatisfiable_targets = {
+            ru_target.value: target_ru_v[ru_target] for ru_target, ru in rel_target_ru_r.items() if any(ru < 0)
+        }
+        if unsatisfiable_targets:
+            raise ValueError(f"The model cannot be quantized to meet the specified resource utilization for the "
+                             f"following targets: {unsatisfiable_targets}")
+
+        rel_target_ru={}
+        rel_target_ru.update(rel_target_ru_r)
+        rel_target_ru.update(rel_target_ru_v)
         return rel_target_ru
 
     def _build_sensitivity_mapping(self, eps: float = 1e-6) -> Dict[BaseNode, List[float]]:
@@ -167,21 +203,21 @@ class MixedPrecisionSearchManager:
                                                              topo_cfg(baseline_cfg) if baseline_cfg else None)
         if self.using_virtual_graph:
             origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
-                self.max_ru_config)
+                self.max_ru_config_v)
             max_config_value = compute_metric(origin_max_config)
         else:
-            max_config_value = compute_metric(self.max_ru_config)
+            max_config_value = compute_metric(self.max_ru_config_real)
 
         layer_to_metrics_mapping = defaultdict(list)
-        for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes)):
+        for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes_v)):
             for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
-                if self.max_ru_config[node] == bitwidth_idx:
+                if self.max_ru_config_v[node] == bitwidth_idx:
                     # This is a computation of the metric for the max configuration, assign pre-calculated value
                     layer_to_metrics_mapping[node].append(max_config_value)
                     continue
 
                 # Create a configuration that differs at one layer only from the baseline model
-                mp_model_configuration = self.max_ru_config.copy()
+                mp_model_configuration = self.max_ru_config_v.copy()
                 mp_model_configuration[node] = bitwidth_idx
 
                 # Build a distance matrix using the function we got from the framework implementation.
@@ -202,7 +238,7 @@ class MixedPrecisionSearchManager:
                     metric_value = compute_metric(
                         mp_model_configuration,
                         [node_idx],
-                        self.max_ru_config)
+                        self.max_ru_config_v)
                 metric_value = max(metric_value, max_config_value + eps)
                 layer_to_metrics_mapping[node].append(metric_value)
 
@@ -233,7 +269,7 @@ class MixedPrecisionSearchManager:
 
         return graph, False
 
-    def _compute_relative_ru_matrices(self) -> Dict[RUTarget, np.ndarray]:
+    def _compute_relative_ru_matrices(self, is_virtual=True) -> Dict[RUTarget, np.ndarray]:
         """
         Computes and builds a resource utilization matrix for all restricted targets, to be used for the
         mixed-precision search problem formalization.
@@ -243,21 +279,38 @@ class MixedPrecisionSearchManager:
             A dictionary containing resource utilization matrix of shape (num configurations, num memory elements)
             per ru target. Num memory elements depends on the target, e.g. num cuts or 1 for cumulative metrics.
         """
-        rus_per_candidate = defaultdict(list)
-        for node in self.mp_topo_configurable_nodes:
-            for candidate_idx, _ in enumerate(node.candidates_quantization_cfg):
-                if candidate_idx == self.min_ru_config[node]:
-                    candidate_rus = self.min_ru
-                else:
-                    cfg = self.min_ru_config.copy()
-                    cfg[node] = candidate_idx
-                    candidate_rus = self.ru_helper.compute_utilization(self.ru_targets, cfg)
+        if is_virtual:
+            rus_per_candidate = defaultdict(list)
+            for node in self.mp_topo_configurable_nodes_v:
+                for candidate_idx, _ in enumerate(node.candidates_quantization_cfg):
+                    if candidate_idx == self.min_ru_config_v[node]:
+                        candidate_rus = self.min_ru_v
+                    else:
+                        cfg = self.min_ru_config_v.copy()
+                        cfg[node] = candidate_idx
+                        candidate_rus = self.ru_helper_for_virtual.compute_utilization(self.ru_targets_virtual, cfg)
 
-                for target, ru in candidate_rus.items():
-                    rus_per_candidate[target].append(ru)
+                    for target, ru in candidate_rus.items():
+                        rus_per_candidate[target].append(ru)
 
-        # Each target contains a matrix of num configurations X num elements
-        relative_rus = {target: (np.array(ru) - self.min_ru[target]) for target, ru in rus_per_candidate.items()}
+            # Each target contains a matrix of num configurations X num elements
+            relative_rus = {target: (np.array(ru) - self.min_ru_v[target]) for target, ru in rus_per_candidate.items()}
+        else:
+            rus_per_candidate = defaultdict(list)
+            for node in self.mp_topo_configurable_nodes_r:
+                for candidate_idx, _ in enumerate(node.candidates_quantization_cfg):
+                    if candidate_idx == self.min_ru_config_real[node]:
+                        candidate_rus = self.min_ru_real
+                    else:
+                        cfg = self.min_ru_config_real.copy()
+                        cfg[node] = candidate_idx
+                        candidate_rus = self.ru_helper_for_real.compute_utilization(self.ru_targets_real, cfg)
+
+                    for target, ru in candidate_rus.items():
+                        rus_per_candidate[target].append(ru)
+
+            # Each target contains a matrix of num configurations X num elements
+            relative_rus = {target: (np.array(ru) - self.min_ru_real[target]) for target, ru in rus_per_candidate.items()}
         return relative_rus
 
     @staticmethod
