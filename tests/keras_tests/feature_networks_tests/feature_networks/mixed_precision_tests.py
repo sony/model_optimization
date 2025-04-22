@@ -467,7 +467,7 @@ class MixedPrecisionTotalMemoryUtilizationSearchTest(MixedPrecisionActivationBas
 
     def get_resource_utilization(self):
         # 17920: 8-bit weights, 6176: max cut of input+conv_bn
-        return ResourceUtilization(np.inf, np.inf, total_memory=(17920 + 6176) * 4 / 8)
+        return ResourceUtilization(np.inf, np.inf, total_memory=(17920 + self.max_cut) * 4 / 8)
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
@@ -488,7 +488,7 @@ class MixedPrecisionMultipleResourcesTightUtilizationSearchTest(MixedPrecisionAc
 
     def get_resource_utilization(self):
         weights = 17920 * 4 / 8
-        activation = 6176 * 4 / 8
+        activation = math.ceil(self.max_cut * 4 / 8)
         return ResourceUtilization(weights, activation, total_memory=weights + activation)
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
@@ -517,7 +517,7 @@ class MixedPrecisionReducedTotalMemorySearchTest(MixedPrecisionActivationBaseTes
 
     def get_resource_utilization(self):
         weights = 17920 * 4 / 8
-        activation = 6176 * 4 / 8    # max cut of input + conv_bn
+        activation = math.ceil(self.max_cut * 4 / 8)
         return ResourceUtilization(weights, activation, total_memory=(weights + activation) / 2)
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):

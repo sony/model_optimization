@@ -831,8 +831,8 @@ class FeatureNetworkTest(unittest.TestCase):
         QuantizationAwareTrainingQuantizersTest(self).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self).run_test()
-        QATWrappersMixedPrecisionCfgTest(self, ru_weights=17920 * 4 / 8, ru_activation=5408 * 4 / 8,
-                                         expected_mp_cfg=[0, 5, 1, 1]).run_test()
+        QATWrappersMixedPrecisionCfgTest(self, ru_weights=17920 * 4 / 8, ru_activation=8608 * 4 / 8,
+                                         expected_mp_cfg=[0, 4, 1, 1]).run_test()
 
     def test_bn_attributes_quantization(self):
         BNAttributesQuantization(self, quantize_linear=False).run_test()
