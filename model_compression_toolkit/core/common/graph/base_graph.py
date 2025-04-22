@@ -754,7 +754,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         while node.is_quantization_preserving():
             prev_nodes = self.get_prev_nodes(node)
-            assert len(prev_nodes) == 1, "Activation preserving node should have only 1 input."
+            assert len(prev_nodes) == 1, f"Activation preserving node should have only 1 input, but node {node.name} has {len(prev_nodes)} inputs."
             node = prev_nodes[0]
         return node
 
