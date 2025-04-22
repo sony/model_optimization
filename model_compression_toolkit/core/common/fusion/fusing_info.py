@@ -14,6 +14,7 @@
 #  ==============================================================================
 
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig
 from dataclasses import dataclass, field
 
 from typing import Optional, List, Dict, Any, Tuple
@@ -41,6 +42,7 @@ class FusingInfo:
     fusing_patterns: any = None
     fusing_data: Dict[str, Tuple['BaseNode']] = field(default_factory=dict)
     node_to_fused_node_map: Dict[str, str] = field(init=False, default_factory=dict)
+    fusing_data_to_quantization_config_map: Dict[str, OpQuantizationConfig] = field(default_factory=dict)
 
     def __post_init__(self):
         """Validates and initializes mappings after dataclass instantiation."""
@@ -128,6 +130,18 @@ class FusingInfo:
             Optional[List[BaseNode]]: The list of nodes for the operation, or None if not found.
         """
         return self.fusing_data.get(op_id)
+
+    def get_fused_op_quantization_config(self, op_id: str) -> OpQuantizationConfig:
+        """
+        Retrieve the quantization configuration for a given fused operation ID.
+
+        Args:
+            op_id (str): The identifier for the fused operation.
+
+        Returns:
+            OpQuantizationConfig: The quantization configuration for the operation, or None if not found.
+        """
+        return self.fusing_data_to_quantization_config_map.get(op_id)
 
     def is_node_in_fused_op(self, node: 'BaseNode') -> bool:
         """
@@ -284,11 +298,13 @@ class FusingInfoGenerator:
             - Fusions are linear sequences (each node has exactly one successor).
             - Each node belongs to at most one fused operation.
         """
-        if not self._fusing_patterns:
+        layers_fusing = [f.get_layer_pattern() for f in self._fusing_patterns]
+
+        if not layers_fusing:
             return FusingInfo(fusing_patterns=self._fusing_patterns)
 
         # Find max fusion
-        max_layers_fusing = max([len(fusing_pattern) for fusing_pattern in self._fusing_patterns])
+        max_layers_fusing = max([len(fusing_pattern.get_layer_pattern()) for fusing_pattern in self._fusing_patterns])
 
         # Travel along the graph to find layers for fusing
         nodes = graph.get_topo_sorted_nodes()
@@ -302,7 +318,7 @@ class FusingInfoGenerator:
                 continue
             # Start fusing search
             fusing_nodes = []  # nodes that are candidates for participating in fusing
-            patterns = copy.deepcopy(self._fusing_patterns)
+            patterns = copy.deepcopy(layers_fusing)
             next_nodes = [node]
             for i in range(max_layers_fusing):
                 patterns = get_valid_fusing_patterns_for_node(patterns, next_nodes[0], i)
@@ -361,10 +377,11 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode']) -
     if fusion_depth <= 1:
         return False
     for fusing_pattern in fusing_patterns:
-        if fusion_depth != len(fusing_pattern):
+        layers_fusing = fusing_pattern.get_layer_pattern()
+        if fusion_depth != len(layers_fusing):
             continue
         counter = 0
-        for i, layer in enumerate(fusing_pattern):
+        for i, layer in enumerate(layers_fusing):
             if (type(layer) == LayerFilterParams and nodes[i].is_match_filter_params(layer)) or \
                     nodes[i].is_match_type(layer):
                 counter += 1
