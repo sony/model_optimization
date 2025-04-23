@@ -166,7 +166,7 @@ class SensitivityEvaluation:
         """
         Compute the sensitivity metric of the MP model for a given configuration (the sensitivity
         is computed based on the similarity of the interest points' outputs between the MP model
-        and the float model).
+        and the float model or a custom metric if given).
 
         Args:
             mp_model_configuration: Bitwidth configuration to use to configure the MP model.
@@ -183,40 +183,12 @@ class SensitivityEvaluation:
                                         node_idx)
 
         # Compute the distance metric
-        ipts_distances, out_pts_distances = self._compute_distance()
-
-        # Configure MP model back to the same configuration as the baseline model if baseline provided
-        if baseline_mp_configuration is not None:
-            self._configure_bitwidths_model(baseline_mp_configuration,
-                                            node_idx)
-
-        return self._compute_mp_distance_measure(ipts_distances, out_pts_distances,
-                                                 self.quant_config.distance_weighting_method)
-
-    def compute_custom_metric(self,
-                              mp_model_configuration: List[int],
-                              node_idx: List[int] = None,
-                              baseline_mp_configuration: List[int] = None) -> float:
-        """
-        Compute the sensitivity metric of the MP model for a given configuration (the sensitivity
-        is computed on a custom function).
-
-        Args:
-            mp_model_configuration: Bitwidth configuration to use to configure the MP model.
-            node_idx: A list of nodes' indices to configure (instead of using the entire mp_model_configuration).
-            baseline_mp_configuration: A mixed-precision configuration to set the model back to after modifying it to
-                compute the metric for the given configuration.
-
-        Returns:
-            The sensitivity metric of the MP model for a given configuration.
-        """
-
-        # Configure MP model with the given configuration.
-        self._configure_bitwidths_model(mp_model_configuration,
-                                        node_idx)
-
-        # Compute the distance metric
-        sensitivity_metric = self.quant_config.custom_metric_fn(self.model_mp)
+        if self.quant_config.custom_metric_fn is None:
+            ipts_distances, out_pts_distances = self._compute_distance()
+            sensitivity_metric = self._compute_mp_distance_measure(ipts_distances, out_pts_distances,
+                                              self.quant_config.distance_weighting_method)
+        else:
+            sensitivity_metric = self.quant_config.custom_metric_fn(self.model_mp)
 
         # Configure MP model back to the same configuration as the baseline model if baseline provided
         if baseline_mp_configuration is not None:

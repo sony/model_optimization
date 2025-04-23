@@ -162,14 +162,9 @@ class MixedPrecisionSearchManager:
             return topo_cfg
 
         def compute_metric(cfg, node_idx=None, baseline_cfg=None):
-            if self.sensitivity_evaluator.quant_config.custom_metric_fn is None:
-                return self.sensitivity_evaluator.compute_metric(topo_cfg(cfg),
-                                                                 node_idx,
-                                                                 topo_cfg(baseline_cfg) if baseline_cfg else None)
-            else:
-                return self.sensitivity_evaluator.compute_custom_metric(topo_cfg(cfg),
-                                                                        node_idx,
-                                                                        topo_cfg(baseline_cfg) if baseline_cfg else None)
+            return self.sensitivity_evaluator.compute_metric(topo_cfg(cfg),
+                                                             node_idx,
+                                                             topo_cfg(baseline_cfg) if baseline_cfg else None)
 
         if self.using_virtual_graph:
             origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
