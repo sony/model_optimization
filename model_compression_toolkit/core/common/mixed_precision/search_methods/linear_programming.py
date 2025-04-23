@@ -16,7 +16,7 @@ from collections import defaultdict
 
 import numpy as np
 from pulp import *
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, List
 
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget
 
