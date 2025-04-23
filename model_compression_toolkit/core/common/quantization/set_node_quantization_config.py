@@ -67,7 +67,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
     nodes_to_manipulate_activation_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_activation_bit_widths(graph)
     nodes_to_manipulate_weights_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_weights_bit_widths(graph)
 
-    for n in graph.nodes:
+    for n in graph.get_topo_sorted_nodes():
         manual_bit_width_override = {ACTIVATION: nodes_to_manipulate_activation_bit_widths.get(n),
                                      WEIGHTS: nodes_to_manipulate_weights_bit_widths.get(n)}
         set_quantization_configs_to_node(node=n,
@@ -199,6 +199,16 @@ def set_quantization_configs_to_node(node: BaseNode,
         if candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.QUANT and \
                 not node.get_has_activation():
             candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
+        elif candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT:
+            prev_nodes = graph.get_prev_nodes(node)
+            if len(prev_nodes) != 1:
+                # Preserving the quantization of more than 1 previous node is ambiguous, so disable it.
+                Logger.info(f"Disabling Quantization-Preserving for node {node.name} because it has more than 1 input activations.")
+                candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
+            elif not prev_nodes[0].is_quantization_preserving() or not prev_nodes[0].is_activation_quantization_enabled():
+                # Preserving the quantization of an unquantized node isn't possible, so disable it.
+                Logger.info(f"Disabling Quantization-Preserving for node {node.name} because previous node activation quantization is disabled.")
+                candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
 
 
 def create_node_activation_qc(qc: QuantizationConfig,
