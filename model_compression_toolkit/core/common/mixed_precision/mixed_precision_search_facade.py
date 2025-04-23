@@ -14,10 +14,10 @@
 # ==============================================================================
 
 from enum import Enum
-from typing import List, Callable
+from typing import List, Callable, Dict
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.hessian import HessianInfoService
@@ -100,11 +100,13 @@ def search_bit_width(graph: Graph,
                                                  fw_impl,
                                                  se,
                                                  target_resource_utilization)
-    result_bit_cfg = search_manager.search()
+    nodes_bit_cfg = search_manager.search()
 
     graph.skip_validation_check = False
 
     if mp_config.refine_mp_solution:
-        result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_resource_utilization)
+        nodes_bit_cfg = greedy_solution_refinement_procedure(nodes_bit_cfg, search_manager, target_resource_utilization)
 
-    return result_bit_cfg
+    topo_bit_cfg = [nodes_bit_cfg[n] for n in graph.get_configurable_sorted_nodes(fw_info)]
+    assert len(topo_bit_cfg) == len(nodes_bit_cfg)
+    return topo_bit_cfg

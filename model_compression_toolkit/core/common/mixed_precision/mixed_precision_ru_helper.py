@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Set, Dict, Tuple
+from typing import Set, Dict, Tuple
 
 import numpy as np
 
 from model_compression_toolkit.core import FrameworkInfo
-from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
@@ -36,7 +36,7 @@ class MixedPrecisionRUHelper:
         self.fw_impl = fw_impl
         self.ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
 
-    def compute_utilization(self, ru_targets: Set[RUTarget], mp_cfg: List[int]) -> Dict[RUTarget, np.ndarray]:
+    def compute_utilization(self, ru_targets: Set[RUTarget], mp_cfg: Dict[BaseNode, int]) -> Dict[RUTarget, np.ndarray]:
         """
         Compute utilization of requested targets for a specific configuration:
           for weights and bops - total utilization,
@@ -74,7 +74,7 @@ class MixedPrecisionRUHelper:
                                                  f'Requested {ru_targets}')
         return ru_dict
 
-    def get_quantization_candidates(self, mp_cfg) \
+    def get_quantization_candidates(self, mp_cfg: Dict[BaseNode, int]) \
             -> Tuple[Dict[str, NodeActivationQuantizationConfig], Dict[str, NodeWeightsQuantizationConfig]]:
         """
         Retrieve quantization candidates objects for weights and activations from the configuration list.
@@ -86,8 +86,7 @@ class MixedPrecisionRUHelper:
             A mapping between nodes to weights quantization config, and a mapping between nodes and activation
             quantization config.
         """
-        mp_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
-        node_qcs = {n: n.candidates_quantization_cfg[mp_cfg[i]] for i, n in enumerate(mp_nodes)}
+        node_qcs = {n: n.candidates_quantization_cfg[candidate_idx] for n, candidate_idx in mp_cfg.items()}
         act_qcs = {n.name: cfg.activation_quantization_cfg for n, cfg in node_qcs.items()}
         w_qcs = {n.name: cfg.weights_quantization_cfg for n, cfg in node_qcs.items()}
         return act_qcs, w_qcs

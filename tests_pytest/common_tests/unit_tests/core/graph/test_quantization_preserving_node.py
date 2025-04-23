@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import pytest
+
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
 
@@ -35,3 +37,16 @@ class TestQuantizationPreservingNode:
         assert graph.retrieve_preserved_quantization_node(n3) is n1
         assert graph.retrieve_preserved_quantization_node(n4) is n4
         assert graph.retrieve_preserved_quantization_node(n5) is n4
+
+    def test_activation_preserving_disable_for_multi_input_node(self):
+        """ Tests that the retrieve_preserved_quantization_node raises an assertion error if node has more than 1 input. """
+        n1 = build_node('qact_node', qcs=[build_nbits_qc()])
+        n2 = build_node('qp1a_node', qcs=[build_nbits_qc(a_enable=False, q_preserving=True)])
+        n3 = build_node('qact1b_node', qcs=[build_nbits_qc()])
+        n4 = build_node('qp2_node', qcs=[build_nbits_qc(a_enable=False, q_preserving=True)])
+        graph = Graph('g', input_nodes=[n1], nodes=[n2, n3], output_nodes=[n4],
+                      edge_list=[Edge(n1, n2, 0, 0), Edge(n1, n3, 0, 0),
+                                 Edge(n2, n4, 0, 0), Edge(n2, n4, 0, 0)])
+
+        with pytest.raises(AssertionError, match="Activation preserving node should have only 1 input"):
+            graph.retrieve_preserved_quantization_node(n4)

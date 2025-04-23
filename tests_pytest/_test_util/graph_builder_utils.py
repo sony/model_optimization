@@ -83,6 +83,7 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
           Final name can be passed along with convert_canonical_attr=False.
         pos_attr: quantization configuration for positional weights in format (nbits, q enabled, indices).
         convert_canonical_attr: whether to convert w_attr keys to full names.
+        q_preserving: Whether node is quantization preserving.
 
     Returns:
 

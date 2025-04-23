@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from collections import defaultdict
+
 import numpy as np
 from pulp import *
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, Any, List
 
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget
 
@@ -30,23 +32,23 @@ class MixedPrecisionIntegerLPSolver:
             candidates_ru: resource utilization per candidate.
             ru_constraints: resource utilization constraints corresponding to 'candidates_ru'.
     """
-    def __init__(self, layer_to_sensitivity_mapping: Dict[int, Dict[int, float]],
+    def __init__(self,
+                 layer_to_sensitivity_mapping: Dict[Any, List[float]],
                  candidates_ru: Dict[RUTarget, np.ndarray],
                  ru_constraints: Dict[RUTarget, np.ndarray]):
+
         self.layer_to_sensitivity_mapping = layer_to_sensitivity_mapping
         self.candidates_ru = candidates_ru
         self.ru_constraints = ru_constraints
 
-        self.layer_to_indicator_vars_mapping, self.layer_to_objective_vars_mapping = (
-            self._init_problem_vars(layer_to_sensitivity_mapping))
+        self.layer_to_indicator_vars, self.objective_vars = self._init_problem_vars(layer_to_sensitivity_mapping)
 
-    def run(self) -> List[int]:
+    def run(self) -> Dict[Any, int]:
         """
         Build and solve an ILP optimization problem.
 
         Returns:
-            The mixed-precision configuration (A list of indices. Each indicates the bitwidth index of a node).
-
+            A dictionary from layer to the index of the selected bitwidth candidate.
         """
         # Add all equations and inequalities that define the problem.
         lp_problem = self._formalize_problem()
@@ -59,17 +61,14 @@ class MixedPrecisionIntegerLPSolver:
             raise RuntimeError(f'No solution was found for the LP problem, with status {lp_problem.status}')
 
         # Take the bitwidth index only if its corresponding indicator is one.
-        config = np.asarray(
-            [[nbits for nbits, indicator in nbits_to_indicator.items() if indicator.varValue == 1.0] for
-             nbits_to_indicator
-             in self.layer_to_indicator_vars_mapping.values()]
-        ).flatten()
-
-        return config.tolist()
+        mp_config = {
+            layer: [v.varValue for v in vars].index(1.) for layer, vars in self.layer_to_indicator_vars.items()
+        }
+        return mp_config
 
     @staticmethod
-    def _init_problem_vars(layer_to_metrics_mapping: Dict[int, Dict[int, float]]) -> Tuple[
-        Dict[int, Dict[int, LpVariable]], Dict[int, LpVariable]]:
+    def _init_problem_vars(layer_to_metrics_mapping: Dict[Any, List[float]]) -> Tuple[Dict[Any, List[LpVariable]],
+                                                                                      List[LpVariable]]:
         """
         Initialize the LP problem variables: Variable for each layer as to the index of the bitwidth it should use,
         and a variable for each indicator for whether we use the former variable or not.
@@ -83,21 +82,18 @@ class MixedPrecisionIntegerLPSolver:
             and the second for indicators for each variable.
         """
 
-        layer_to_indicator_vars_mapping = dict()
-        layer_to_objective_vars_mapping = dict()
+        layer_to_indicator_vars = defaultdict(list)
+        objective_vars = []
 
-        for layer, nbits_to_metric in layer_to_metrics_mapping.items():
-            layer_to_indicator_vars_mapping[layer] = dict()
+        for layer_idx, (layer, bitwidth_metrics) in enumerate(layer_to_metrics_mapping.items()):
+            layer_to_indicator_vars[layer] = [
+                LpVariable(f"layer_{layer_idx}_{qc_idx}", lowBound=0, upBound=1, cat=LpInteger)
+                for qc_idx, _ in enumerate(bitwidth_metrics)
+            ]
 
-            for nbits in nbits_to_metric.keys():
-                layer_to_indicator_vars_mapping[layer][nbits] = LpVariable(f"layer_{layer}_{nbits}",
-                                                                           lowBound=0,
-                                                                           upBound=1,
-                                                                           cat=LpInteger)
+            objective_vars.append(LpVariable(f"s_{layer_idx}", 0))
 
-            layer_to_objective_vars_mapping[layer] = LpVariable(f"s_{layer}", 0)
-
-        return layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping
+        return layer_to_indicator_vars, objective_vars
 
     def _formalize_problem(self) -> LpProblem:
         """
@@ -108,18 +104,16 @@ class MixedPrecisionIntegerLPSolver:
         """
 
         lp_problem = LpProblem()  # minimization problem by default
-        lp_problem += lpSum([self.layer_to_objective_vars_mapping[layer] for layer in
-                             self.layer_to_sensitivity_mapping.keys()])  # Objective (minimize acc loss)
+        lp_problem += lpSum(self.objective_vars)
 
-        for layer in self.layer_to_sensitivity_mapping.keys():
+        for layer_sensitivity, layer_indicator_vars, obj_var in zip(self.layer_to_sensitivity_mapping.values(),
+                                                                    self.layer_to_indicator_vars.values(),
+                                                                    self.objective_vars):
             # Use every bitwidth for every layer with its indicator.
-            lp_problem += lpSum([indicator * self.layer_to_sensitivity_mapping[layer][nbits]
-                                 for nbits, indicator in self.layer_to_indicator_vars_mapping[layer].items()]) == \
-                          self.layer_to_objective_vars_mapping[layer]
+            lp_problem += lpSum(list(np.multiply(layer_indicator_vars, layer_sensitivity))) == obj_var
 
             # Constraint of only one indicator==1
-            lp_problem += lpSum(
-                [v for v in self.layer_to_indicator_vars_mapping[layer].values()]) == 1
+            lp_problem += lpSum(layer_indicator_vars) == 1
 
         # Bound the feasible solution space with the desired resource utilization values.
         self._add_ru_constraints(lp_problem=lp_problem)
@@ -134,10 +128,7 @@ class MixedPrecisionIntegerLPSolver:
         Args:
             lp_problem: An Lp problem object to add constraint to.
         """
-        indicators = []
-        for layer in self.layer_to_sensitivity_mapping:
-            indicators.extend(list(self.layer_to_indicator_vars_mapping[layer].values()))
-        indicators_vec = np.array(indicators)
+        indicator_vars = list(itertools.chain(*self.layer_to_indicator_vars.values()))
 
         for target, ru_matrix in self.candidates_ru.items():
             # We expect 2d matrix of shape (num candidates, m). For cumulative metrics (weights, bops) m=1 - overall
@@ -146,7 +137,7 @@ class MixedPrecisionIntegerLPSolver:
             if target in [RUTarget.WEIGHTS, RUTarget.BOPS]:
                 assert ru_matrix.shape[1] == 1
 
-            indicated_ru_matrix = ru_matrix.T * indicators_vec
+            indicated_ru_matrix = ru_matrix.T * np.array(indicator_vars)
             # build lp sum term over all candidates
             ru_vec = indicated_ru_matrix.sum(axis=1)
 
