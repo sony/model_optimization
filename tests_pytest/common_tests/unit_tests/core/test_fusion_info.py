@@ -42,7 +42,10 @@ def fusing_patterns():
     """
     - Returns predefined fusing patterns: Conv2D + ReLU and Linear + Softmax.
     """
-    return [["Conv2d", "ReLU"], ["Linear", "Softmax"]]
+    # return [["Conv2d", "ReLU"], ["Linear", "Softmax"]]
+    # return [FusingPattern(["Conv2d", "ReLU"], None), FusingPattern(["Linear", "Softmax"], None)]
+    return [{'layer_pattern': ["Conv2d", "ReLU"], 'fused_op_quantization_config': None}, 
+            {'layer_pattern': ["Linear", "Softmax"], 'fused_op_quantization_config': None }]
 
 
 @pytest.fixture

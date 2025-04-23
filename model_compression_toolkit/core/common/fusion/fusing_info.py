@@ -23,7 +23,8 @@ import copy
 # The prefix of each fused operator (the suffix is a combination of the
 # nodes names that combine the fused operator).
 FUSED_OP_ID_PREFIX = "FusedNode_"
-
+FUSED_LAYER_PATTERN = "layer_pattern"
+FUSED_OP_QUANT_CONFIG = "fused_op_quantization_config"
 
 @dataclass
 class FusingInfo:
@@ -79,6 +80,13 @@ class FusingInfo:
         # Update the mapping for these nodes
         for node in nodes:
             self.node_to_fused_node_map[node.name] = op_id
+
+        ### test check
+        if self.fusing_patterns is not None:
+            for fusing_pattern in self.fusing_patterns:
+                if is_valid_fusion([fusing_pattern], nodes):
+                    self.fusing_data_to_quantization_config_map[op_id] = fusing_pattern.get(FUSED_OP_QUANT_CONFIG)
+
 
     def remove_fused_operation(self, op_id: str) -> None:
         """
@@ -298,13 +306,13 @@ class FusingInfoGenerator:
             - Fusions are linear sequences (each node has exactly one successor).
             - Each node belongs to at most one fused operation.
         """
-        layers_fusing = [f.get_layer_pattern() for f in self._fusing_patterns]
+        layers_fusing = [f.get(FUSED_LAYER_PATTERN) for f in self._fusing_patterns]
 
         if not layers_fusing:
             return FusingInfo(fusing_patterns=self._fusing_patterns)
 
         # Find max fusion
-        max_layers_fusing = max([len(fusing_pattern.get_layer_pattern()) for fusing_pattern in self._fusing_patterns])
+        max_layers_fusing = max([len(fusing_pattern.get(FUSED_LAYER_PATTERN)) for fusing_pattern in self._fusing_patterns])
 
         # Travel along the graph to find layers for fusing
         nodes = graph.get_topo_sorted_nodes()
@@ -377,7 +385,7 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode']) -
     if fusion_depth <= 1:
         return False
     for fusing_pattern in fusing_patterns:
-        layers_fusing = fusing_pattern.get_layer_pattern()
+        layers_fusing = fusing_pattern.get(FUSED_LAYER_PATTERN)
         if fusion_depth != len(layers_fusing):
             continue
         counter = 0

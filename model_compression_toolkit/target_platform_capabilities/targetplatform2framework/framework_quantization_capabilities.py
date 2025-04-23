@@ -32,24 +32,6 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.current_tpc import  _current_tpc
 
 
-from dataclasses import dataclass
-
-@dataclass
-class FusingPattern:
-    layer_pattern: List = None
-    fused_op_quantization_config: OpQuantizationConfig = None
-    name: str = None
-
-    def get_layer_pattern(self):
-        return self.layer_pattern
-
-    def get_fused_op_quantization_config(self):
-        return self.fused_op_quantization_config
-
-    def get_name(self):
-        return self.name
-
-
 class FrameworkQuantizationCapabilities(ImmutableClass):
     """
     Attach framework information to a modeled hardware.
@@ -113,20 +95,6 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
         """
         return self.op_sets_to_layers.get_layers_by_op(op)
 
-    # def get_fusing_patterns(self) -> List[List[Any]]:
-    #     """
-
-    #     Returns: List of patterns of layers/LayerFilterParams to fuse.
-
-    #     """
-    #     res = []
-    #     if self.tpc.fusing_patterns is None:
-    #         return res
-    #     for p in self.tpc.fusing_patterns:
-    #         ops = [self.get_layers_by_opset(x) for x in p.operator_groups]
-    #         res.extend(itertools.product(*ops))
-    #     return [list(x) for x in res]
-
     def get_fusing_patterns(self) -> List[List[Any]]:
         """
 
@@ -146,8 +114,9 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
             fused_op_quantization_config = p.fused_op_quantization_config if self.tpc.SCHEMA_VERSION >= 2 else None
 
             for x in res:
-                patterns.append(FusingPattern(layer_pattern=(list(x)),
-                                              fused_op_quantization_config=fused_op_quantization_config))
+                pattern = {'layer_pattern': list(x),
+                           'fused_op_quantization_config': fused_op_quantization_config}
+                patterns.append(pattern)
 
         return patterns
 
