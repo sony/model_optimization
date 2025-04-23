@@ -150,8 +150,7 @@ class ResourceUtilizationCalculator:
                 cut: [
                     node
                     for m in cut.mem_elements.elements
-                    for node in (self.graph.fusing_info.get_fused_nodes(m.node_name) or (
-                    self.graph.find_node_by_name(m.node_name)[0],))
+                    for node in (self.graph.fusing_info.get_fused_nodes(m.node_name) or (self.graph.find_node_by_name(m.node_name)[0],))
                 ]
                 for cut in cuts
             }

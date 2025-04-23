@@ -21,6 +21,7 @@ import pytest
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -472,6 +473,8 @@ class TestActivationMaxCutUtilization:
         graph_mock.nodes = nodes
         # use the Graph original method (need to bind it to graph_mock instance)
         graph_mock.find_node_by_name = MethodType(Graph.find_node_by_name, graph_mock)
+
+        graph_mock.fusing_info = FusingInfo()
 
         # we should not use total size, setting it to bad number
         cut_elems1 = MemoryElements(elements={ActivationMemoryTensor(mp_reuse.output_shape, 'mp_reuse', 0)}, total_size=-1)

@@ -78,7 +78,6 @@ class MixedPrecisionSearchManager:
         self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
 
         self.ru_targets = target_resource_utilization.get_restricted_targets()
-        # self.ru_helper = MixedPrecisionRUHelper(self.mp_graph, fw_info, fw_impl)
         self.ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
 
         self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
@@ -86,11 +85,11 @@ class MixedPrecisionSearchManager:
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.mp_graph,
                                                                        original_graph=self.original_graph)
-
-        self.real_min_ru_config: Dict[BaseNode, int] = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(self.min_ru_config)
-        self.real_max_ru_config: Dict[BaseNode, int] = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(self.max_ru_config)
-
-        self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, self.real_min_ru_config)
+        if self.using_virtual_graph:
+            real_min_ru_config: Dict[BaseNode, int] = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(self.min_ru_config)
+            self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, real_min_ru_config)
+        else:
+            self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, self.min_ru_config)
 
     def search(self) -> Dict[BaseNode, int]:
         """
