@@ -115,7 +115,7 @@ class TestPositionalWeightsAttrQuantizationConfig:
         # Test using the positional attribute as the key rather than POS_ATTR; this mismatch should cause
         # NodeWeightsQuantizationConfig to fall back to the default weights attribute configuration instead of
         # applying the specific one.
-        op_cfg = self._create_node_weights_op_cfg(pos_weight_attr=[positional_weight_attr],
+        op_cfg = self._create_node_weights_op_cfg(pos_weight_attr=[str(positional_weight_attr)],
                                                   pos_weight_attr_config=[pos_weight_attr_config],
                                                   def_weight_attr_config=def_weight_attr_config)
 

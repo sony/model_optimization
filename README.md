@@ -1,7 +1,7 @@
 <div align="center" markdown="1">
 <p>
       <a href="https://sony.github.io/model_optimization/" target="_blank">
-        <img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/mctHeader1-cropped.svg" width="1000"></a>
+        <img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/mctHeader1-cropped.svg" width="1000"></a>
 </p>
   
 ______________________________________________________________________
@@ -30,7 +30,7 @@ ________________________________________________________________________________
 
 ## <div align="center">Getting Started</div>
 ### Quick Installation
-Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.1 or Tensorflow>=2.12.
+Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.1 or Tensorflow>=2.14.
 ```
 pip install model-compression-toolkit
 ```
@@ -67,7 +67,7 @@ For further details, please see [Supported features and algorithms](#high-level-
 <div align="center">
 <p align="center">
 
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/mctDiagram_clean.svg" width="800">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/mctDiagram_clean.svg" width="800">
 </p>    
 </div>
 
@@ -137,27 +137,27 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 | Python 3.11 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch22.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch22.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch23.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch23.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch24.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch24.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch25.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch25.yml) |
 | Python 3.12 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch22.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch22.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch23.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch23.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch24.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch24.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch25.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python312_pytorch25.yml) |
 
-|             | TensorFlow 2.12                                                                                                                                                                                                        | TensorFlow 2.13                                                                                                                                                                                                        | TensorFlow 2.14                                                                                                                                                                                                        | TensorFlow 2.15                                                                                                                                                                                                        |
+|             | TensorFlow 2.14                                                                                                                                                                                                        | TensorFlow 2.15                                                                                                                                                                                                        |
 |-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Python 3.9  | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras212.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras213.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras215.yml)   |
-| Python 3.10 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml) |
-| Python 3.11 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml) |
+| Python 3.9  | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras215.yml)   |
+| Python 3.10 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml) |
+| Python 3.11 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml) |
 
 </details>
 
 ## <div align="center">Results</div>
 
 <p align="center">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/Classification.png" width="200">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/SemSeg.png" width="200">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/PoseEst.png" width="200">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/ObjDet.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/Classification.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/SemSeg.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/PoseEst.png" width="200">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/ObjDet.png" width="200">
 
 MCT can quantize an existing 32-bit floating-point model to an 8-bit fixed-point (or less) model without compromising accuracy. 
 Below is a graph of [MobileNetV2](https://pytorch.org/vision/main/models/generated/torchvision.models.mobilenet_v2.html) accuracy on ImageNet vs average bit-width of weights (X-axis), using **single-precision** quantization, **mixed-precision** quantization, and mixed-precision quantization with GPTQ. 
 
 <p align="center">
-<img src="https://github.com/sony/model_optimization/blob/main/docsrc/images/torch_mobilenetv2.png" width="800">
+<img src="https://raw.githubusercontent.com/sony/model_optimization/refs/heads/main/docsrc/images/torch_mobilenetv2.png" width="800">
 
 For more results, please see [1]
 
