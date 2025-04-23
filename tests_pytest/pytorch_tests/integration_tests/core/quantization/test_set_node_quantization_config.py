@@ -17,12 +17,13 @@ import pytest
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.core import BitWidthConfig, QuantizationConfig
 
-
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 
 import torch
 from torch import nn
+
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 
@@ -34,8 +35,9 @@ from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS, POS_ATTR
 from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL
+
 
 class TestManualWeightsBitwidthSelection:
     def get_op_qco(self):
@@ -118,6 +120,7 @@ class TestManualWeightsBitwidthSelection:
                 x = torch.add(x, 2)
                 x = self.relu(x)
                 return x
+
         return BaseModel()
 
     def get_test_graph(self, qc):
@@ -158,10 +161,10 @@ class TestManualWeightsBitwidthSelection:
 
     @pytest.mark.parametrize(
         ("inputs", "expected"), [
-        (test_input_1, test_expected_1),
-        (test_input_2, test_expected_2),
-        (test_input_3, test_expected_3),
-    ])
+            (test_input_1, test_expected_1),
+            (test_input_2, test_expected_2),
+            (test_input_3, test_expected_3),
+        ])
     def test_manual_weights_bitwidth_selection(self, inputs, expected):
         for mx_enable in [False, True]:
             bit_width_config = BitWidthConfig()
@@ -197,7 +200,7 @@ class TestManualWeightsBitwidthSelection:
         ("inputs", "expected"), [
             (test_input_4, test_expected_4),
             (test_input_5, test_expected_5),
-    ])
+        ])
     def test_manual_weights_bitwidth_selection_error_add(self, inputs, expected):
         for mx_enable in [False, True]:
             bit_width_config = BitWidthConfig()
@@ -212,3 +215,123 @@ class TestManualWeightsBitwidthSelection:
                 )
             except Exception as e:
                 assert expected == str(e)
+
+
+class TestManualPositionalAttrWeightsBitwidthSelection(TestManualWeightsBitwidthSelection):
+    def generate_tpc_local(self, default_config, base_config, mixed_precision_cfg_list):
+        default_configuration_options = schema.QuantizationConfigOptions(
+            quantization_configurations=tuple([default_config]))
+
+        const_config_input16 = default_config.clone_and_edit(
+            supported_input_activation_n_bits=(8, 16))
+        const_config_input16_output16 = const_config_input16.clone_and_edit(
+            activation_n_bits=16, signedness=schema.Signedness.SIGNED)
+
+        # define a quantization config to quantize the positional weights into 16 bit (for layers where there is a
+        # positional weight attribute).
+        positional_weight_16_attr_config = schema.AttributeQuantizationConfig(
+            weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            weights_n_bits=16,
+            weights_per_channel_threshold=False,
+            enable_weights_quantization=True,
+            lut_values_bitwidth=None)
+
+        # define a quantization config to quantize the positional weights into 8 bit (for layers where there is a
+        # positional weight attribute).
+        positional_weight_8_attr_config = schema.AttributeQuantizationConfig(
+            weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+            weights_n_bits=8,
+            weights_per_channel_threshold=False,
+            enable_weights_quantization=True,
+            lut_values_bitwidth=None)
+
+        const_config_input16_positional_weight16 = const_config_input16.clone_and_edit(
+            attr_weights_configs_mapping={POS_ATTR: positional_weight_16_attr_config})
+
+        const_config_input16_output16_positional_weight8 = const_config_input16_output16.clone_and_edit(
+            attr_weights_configs_mapping={POS_ATTR: positional_weight_8_attr_config})
+        const_configuration_options_inout16 = (
+            schema.QuantizationConfigOptions(quantization_configurations=tuple([
+                const_config_input16_output16,
+                const_config_input16,
+                const_config_input16_output16_positional_weight8,
+                const_config_input16_positional_weight16]),
+                base_config=const_config_input16))
+
+        operator_set = []
+
+        add = schema.OperatorsSet(name=schema.OperatorSetNames.ADD, qc_options=const_configuration_options_inout16)
+        operator_set.extend([add])
+
+        generated_tpc = schema.TargetPlatformCapabilities(
+            default_qco=default_configuration_options,
+            operator_set=tuple(operator_set))
+
+        return generated_tpc
+
+    def get_float_model(self):
+        class BaseModel(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                const = torch.rand(8)
+                self.a = to_torch_tensor(const)
+
+            def forward(self, x):
+                x = torch.add(x, self.a)
+                return x
+
+        return BaseModel()
+
+    # test case for set_manual_activation_bit_width
+    """
+    Test Items Policy:
+        - How to specify the target layer: Options(type/name)
+        - Target attribute information: Options(kernel) 
+        - Bit width variations: Options(2, 4, 16)
+    """
+    test_input_1 = (NodeNameFilter("add"), 16, POS_ATTR)
+    test_input_2 = (NodeTypeFilter(torch.add), 8, POS_ATTR)
+    test_input_3 = (NodeNameFilter("add"), 4, POS_ATTR)
+    test_input_4 = (NodeNameFilter("add"), 2, POS_ATTR)
+
+    test_expected_1 = ({"add": {1: 16}})
+    test_expected_2 = ({"add": {1: 8}})
+    test_expected_3 = ("Manually selected weights bit-width [[4, 'pos_attr']] is invalid for node "
+                       'add:add.')
+    test_expected_4 = ("Manually selected weights bit-width [[2, 'pos_attr']] is invalid for node "
+                       'add:add.')
+
+    @pytest.mark.parametrize(
+        ("inputs", "expected"), [
+            (test_input_1, test_expected_1),
+            (test_input_2, test_expected_2),
+        ])
+    def test_manual_weights_bitwidth_selection(self, inputs, expected):
+        bit_width_config = BitWidthConfig()
+        quantization_config = QuantizationConfig()
+        graph = self.get_test_graph(quantization_config)
+        bit_width_config.set_manual_weights_bit_width(inputs[0], inputs[1], inputs[2])
+
+        updated_graph = set_quantization_configuration_to_graph(
+            graph, quantization_config, bit_width_config
+        )
+
+        for node in updated_graph.nodes:
+            exp_vals = expected.get(node.name)
+            assert len(node.candidates_quantization_cfg) == 1
+            if exp_vals is None:
+                continue
+
+            cfg_list = node.candidates_quantization_cfg[0].weights_quantization_cfg.pos_attributes_config_mapping
+            for vkey in cfg_list:
+                cfg = cfg_list.get(vkey)
+                if exp_vals.get(vkey) is not None:
+                    assert cfg.weights_n_bits == exp_vals.get(vkey)
+
+    @pytest.mark.parametrize(
+        ("inputs", "expected"), [
+            (test_input_3, test_expected_3),
+            (test_input_4, test_expected_4),
+        ])
+    def test_manual_weights_bitwidth_selection_error_add(self, inputs, expected):
+        super().test_manual_weights_bitwidth_selection_error_add(inputs, expected)
