@@ -52,6 +52,7 @@ class FusingInfo:
             assert isinstance(op_nodes, tuple) and len(op_nodes) > 1, f"Found invalid fused op nodes: {op_nodes}"
 
         self._init_node_mapping()
+        self._init_quantization_config_map()
 
     def _init_node_mapping(self) -> None:
         """
@@ -61,6 +62,17 @@ class FusingInfo:
         for op_id, nodes in self.fusing_data.items():
             for node in nodes:
                 self.node_to_fused_node_map[node.name] = op_id
+
+    def _init_quantization_config_map(self) -> None:
+        """
+        Init the mapping between fused operation IDs and their quantization configurations.
+        """
+        self.fusing_data_to_quantization_config_map.clear()
+        if self.fusing_patterns is not None:
+            for op_id, nodes in self.fusing_data.items():
+                for fusing_pattern in self.fusing_patterns:
+                    if is_valid_fusion([fusing_pattern], nodes):
+                        self.fusing_data_to_quantization_config_map[op_id] = fusing_pattern.get(FUSED_OP_QUANT_CONFIG)
 
     def add_fused_operation(self, op_id: str, nodes: Tuple['BaseNode']) -> None:
         """
@@ -81,12 +93,11 @@ class FusingInfo:
         for node in nodes:
             self.node_to_fused_node_map[node.name] = op_id
 
-        ### test check
+        # Update the quantization config mapping for this operation
         if self.fusing_patterns is not None:
             for fusing_pattern in self.fusing_patterns:
                 if is_valid_fusion([fusing_pattern], nodes):
                     self.fusing_data_to_quantization_config_map[op_id] = fusing_pattern.get(FUSED_OP_QUANT_CONFIG)
-
 
     def remove_fused_operation(self, op_id: str) -> None:
         """
@@ -126,6 +137,15 @@ class FusingInfo:
             A dictionary mapping each original node name to its fused node name.
         """
         return self.node_to_fused_node_map.copy()
+
+    def get_fusing_data_to_quantization_config_map(self) -> Dict[str, OpQuantizationConfig]:
+        """
+        Retrieve a copy of the mapping from fused operation IDs to their quantization configurations.
+
+        Returns:
+            A dictionary mapping each fused operation ID to its quantization configuration.
+        """
+        return self.fusing_data_to_quantization_config_map.copy()
 
     def get_fused_nodes(self, op_id: str) -> Optional[List['BaseNode']]:
         """
