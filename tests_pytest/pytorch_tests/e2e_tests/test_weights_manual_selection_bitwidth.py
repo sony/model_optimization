@@ -127,13 +127,12 @@ def generate_tpc_pos_attr_local(default_config):
     const_config_input16_positional_weight16 = const_config_input16.clone_and_edit(
         attr_weights_configs_mapping={POS_ATTR: positional_weight_16_attr_config})
 
-    const_config_input16_output16_positional_weight8 = const_config_input16_output16.clone_and_edit(
+    const_config_input16_positional_weight8 = const_config_input16.clone_and_edit(
         attr_weights_configs_mapping={POS_ATTR: positional_weight_8_attr_config})
     const_configuration_options_inout16 = (
         schema.QuantizationConfigOptions(quantization_configurations=tuple([
-            const_config_input16_output16,
             const_config_input16,
-            const_config_input16_output16_positional_weight8,
+            const_config_input16_positional_weight8,
             const_config_input16_positional_weight16]),
             base_config=const_config_input16))
 
@@ -146,13 +145,13 @@ def generate_tpc_pos_attr_local(default_config):
         enable_weights_quantization=True,
         lut_values_bitwidth=None)
 
-    const_config_input16_output16_positional_weight2 = const_config_input16_output16.clone_and_edit(
+    const_config_input16_positional_weight2 = const_config_input16.clone_and_edit(
         attr_weights_configs_mapping={POS_ATTR: positional_weight_2_attr_config})
     const_configuration_options_inout_2 = (
         schema.QuantizationConfigOptions(quantization_configurations=tuple([
-            const_config_input16_output16,
-            const_config_input16_output16_positional_weight2]),
-            base_config=const_config_input16_output16))
+            const_config_input16,
+            const_config_input16_positional_weight2]),
+            base_config=const_config_input16))
 
     operator_set = []
 

@@ -224,8 +224,6 @@ class TestManualPositionalAttrWeightsBitwidthSelection(TestManualWeightsBitwidth
 
         const_config_input16 = default_config.clone_and_edit(
             supported_input_activation_n_bits=(8, 16))
-        const_config_input16_output16 = const_config_input16.clone_and_edit(
-            activation_n_bits=16, signedness=schema.Signedness.SIGNED)
 
         # define a quantization config to quantize the positional weights into 16 bit (for layers where there is a
         # positional weight attribute).
@@ -248,13 +246,12 @@ class TestManualPositionalAttrWeightsBitwidthSelection(TestManualWeightsBitwidth
         const_config_input16_positional_weight16 = const_config_input16.clone_and_edit(
             attr_weights_configs_mapping={POS_ATTR: positional_weight_16_attr_config})
 
-        const_config_input16_output16_positional_weight8 = const_config_input16_output16.clone_and_edit(
+        const_config_input16_positional_weight8 = const_config_input16.clone_and_edit(
             attr_weights_configs_mapping={POS_ATTR: positional_weight_8_attr_config})
         const_configuration_options_inout16 = (
             schema.QuantizationConfigOptions(quantization_configurations=tuple([
-                const_config_input16_output16,
                 const_config_input16,
-                const_config_input16_output16_positional_weight8,
+                const_config_input16_positional_weight8,
                 const_config_input16_positional_weight16]),
                 base_config=const_config_input16))
 
