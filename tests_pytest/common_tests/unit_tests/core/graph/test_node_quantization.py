@@ -76,6 +76,9 @@ class TestSetNodeQuantizationConfig:
         assert not n4.is_quantization_preserving() and not n4.is_activation_quantization_enabled()
 
     def test_node_quantization_by_next_nodes(self, fw_info_mock):
+        """
+        Test that node quantization n_bits is unaffected by preserving next node and not-enabled quantization next node.
+        """
         first_node = build_node('first_node')
         preserving_node = build_node('preserving_node', layer_class=PreservingNode)
         no_quant_node = build_node('no_enabled_quant_node', layer_class=NoActivationQuantNode)
@@ -113,12 +116,14 @@ class TestSetNodeQuantizationConfig:
         fw_info_mock = Mock(spec=FrameworkInfo, kernel_channels_mapping={DummyLayer: 0},
                             activation_quantizer_mapping={QuantizationMethod.POWER_OF_TWO: lambda x: 0},
                             get_kernel_op_attributes=lambda x: [None])
-
-        set_quantization_configs_to_node(first_node, graph, QuantizationConfig(), fw_info_mock, fqc)
-        set_quantization_configs_to_node(preserving_node, graph, QuantizationConfig(), fw_info_mock, fqc)
-        set_quantization_configs_to_node(no_quant_node, graph, QuantizationConfig(), fw_info_mock, fqc)
+        quantization_config = QuantizationConfig()
+        set_quantization_configs_to_node(first_node, graph, quantization_config, fw_info_mock, fqc)
+        set_quantization_configs_to_node(preserving_node, graph, quantization_config, fw_info_mock, fqc)
+        set_quantization_configs_to_node(no_quant_node, graph, quantization_config, fw_info_mock, fqc)
 
         assert not first_node.is_quantization_preserving() and first_node.is_activation_quantization_enabled()
         assert preserving_node.is_quantization_preserving() and not preserving_node.is_activation_quantization_enabled()
         assert not no_quant_node.is_quantization_preserving() and not no_quant_node.is_activation_quantization_enabled()
 
+        # assert that first_node n_bits is 16, and isn't affected by its next nodes which supports 8 n_bits only
+        assert first_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits == 16
