@@ -41,8 +41,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         """
 
         # Compute memory graph on fused graph with fused nodes
-        fused_graph = GraphFuser().apply_node_fusion(model_graph)
-        self.model_graph = fused_graph
+        model_graph = GraphFuser().apply_node_fusion(model_graph)
 
         nodes = list(model_graph.nodes)
         memory_tensors = []
