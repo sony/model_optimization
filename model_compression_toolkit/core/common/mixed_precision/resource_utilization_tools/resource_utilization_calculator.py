@@ -586,10 +586,7 @@ class ResourceUtilizationCalculator:
 
     def _compute_cuts(self):
         """ Compute activation cuts of the graph. """
-        from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
-        gf = GraphFuser()
-        graph = gf.apply_node_fusion(self.graph)
-        memory_graph = MemoryGraph(deepcopy(graph))
+        memory_graph = MemoryGraph(deepcopy(self.graph))
         _, _, cuts = compute_graph_max_cut(memory_graph)
         return cuts
 
