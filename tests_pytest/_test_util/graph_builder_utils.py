@@ -89,6 +89,7 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
 
     """
     assert not(a_enable and q_preserving)
+
     w_attr = w_attr or {}
     attr_weights_configs_mapping = {
         k: AttributeQuantizationConfig(weights_n_bits=v[0], enable_weights_quantization=v[1])

@@ -334,9 +334,10 @@ class PytorchModel(torch.nn.Module):
                         activation_quantizer_holder = self.get_preserving_activation_quantizer_holder(prev_node)
 
             if activation_quantizer_holder is not None:
-                self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
+                activation_quantizer_holder_name = node.name + '_' + ACTIVATION_HOLDER_QUANTIZER
+                self.add_module(activation_quantizer_holder_name, activation_quantizer_holder)
                 self.node_to_activation_quantization_holder.update(
-                    {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
+                    {node.name: activation_quantizer_holder_name})
 
     def forward(self,
                 *args: Any) -> Any:

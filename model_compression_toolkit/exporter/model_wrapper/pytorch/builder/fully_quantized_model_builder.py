@@ -65,12 +65,13 @@ if FOUND_TORCH:
                                               **func_node_kwargs)
         return module
 
-    def get_preserving_activation_quantizer_holder(prev_node: BaseNode, fw_impl) -> Callable:
+
+    def get_preserving_activation_quantizer_holder(node: BaseNode, fw_impl) -> Callable:
         """
         Retrieve a PytorchPreservingActivationQuantizationHolder layer to use for activation quantization of a node.
         If the layer is not supposed to be wrapped with an activation quantizer - return None.
         Args:
-            prev_node: Node to attach a PytorchPreservingActivationQuantizationHolder to its output.
+            node: Node to attach a PytorchPreservingActivationQuantizationHolder to its output.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         Returns:
             A PytorchPreservingActivationQuantizationHolder module for the node's activation quantization.
@@ -78,12 +79,13 @@ if FOUND_TORCH:
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node we no activation
         # quantization, which in this case has an empty list).
-        _, activation_quantizers = fw_impl.get_inferable_quantizers(prev_node)
+        _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
         if len(activation_quantizers) == 1:
             return PytorchPreservingActivationQuantizationHolder(activation_quantizers[0], quantization_bypass=True)
         Logger.critical(
             f'PytorchPreservingActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
-            f'were found for node {prev_node}')
+            f'were found for node {node}')
+
 
     def get_activation_quantizer_holder(node: BaseNode, fw_impl) -> Callable:
         """
@@ -116,16 +118,17 @@ if FOUND_TORCH:
         Returns:
             Fully quantized PyTorch model.
         """
+        fw_impl = C.pytorch.pytorch_implementation.PytorchImplementation()
         exportable_model, user_info = PyTorchModelBuilder(graph=graph,
                                                           wrapper=lambda n, m:
                                                           fully_quantized_wrapper(n, m,
-                                                                                  fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation()),
+                                                                                  fw_impl=fw_impl),
                                                           get_activation_quantizer_holder_fn=lambda n:
                                                           get_activation_quantizer_holder(n,
-                                                                                          fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation()),
+                                                                                          fw_impl=fw_impl),
                                                           get_preserving_activation_quantizer_holder_fn=lambda n:
                                                           get_preserving_activation_quantizer_holder(n,
-                                                                                          fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
+                                                                                          fw_impl=fw_impl)).build_model()
 
         Logger.info("\nPlease run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
                     "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"

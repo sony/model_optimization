@@ -40,7 +40,7 @@ def test_get_preserving_activation_quantizer_holder(fw_impl_mock):
     activation_quantizers.signed = True
     activation_quantizers.threshold_np = 8.0
     fw_impl_mock.get_inferable_quantizers.return_value = (None, [activation_quantizers])
-    activation_quantization_holder = get_preserving_activation_quantizer_holder(prev_node=Mock(), fw_impl=fw_impl_mock)
+    activation_quantization_holder = get_preserving_activation_quantizer_holder(node=Mock(), fw_impl=fw_impl_mock)
 
     assert isinstance(activation_quantization_holder, PytorchPreservingActivationQuantizationHolder)
     assert activation_quantization_holder.quantization_bypass == True

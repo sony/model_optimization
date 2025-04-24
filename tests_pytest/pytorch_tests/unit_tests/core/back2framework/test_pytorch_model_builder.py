@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
+from unittest.mock import Mock
 from typing import List
 import torch
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_activation_quantizer_holder, fully_quantized_wrapper, get_preserving_activation_quantizer_holder
@@ -35,8 +36,6 @@ from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-
-fw_impl = PytorchImplementation()
 
 def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizationConfig] = None,
                input_shape=(4, 5, 6), output_shape=(4, 5, 6), weights = {},
@@ -76,24 +75,24 @@ def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
 
 def get_tpc():
     base_config = schema.OpQuantizationConfig(
-            default_weight_attr_config=AttributeQuantizationConfig(),
-            attr_weights_configs_mapping={},
-            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-            activation_n_bits=8,
-            supported_input_activation_n_bits=8,
-            enable_activation_quantization=True,
-            quantization_preserving=False,
-            signedness=Signedness.AUTO)
+        default_weight_attr_config=AttributeQuantizationConfig(),
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        signedness=Signedness.AUTO)
     
     default_config = schema.OpQuantizationConfig(
-            default_weight_attr_config=AttributeQuantizationConfig(),
-            attr_weights_configs_mapping={},
-            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-            activation_n_bits=8,
-            supported_input_activation_n_bits=8,
-            enable_activation_quantization=True,
-            quantization_preserving=False,
-            signedness=Signedness.AUTO)
+        default_weight_attr_config=AttributeQuantizationConfig(),
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        signedness=Signedness.AUTO)
 
     mixed_precision_cfg_list = [base_config]
 
@@ -116,19 +115,21 @@ def get_tpc():
 # test graph
 def get_test_graph():
 
-    conv1 = build_node('conv1', framework_attr={'in_channels':3, 'out_channels':3, 'kernel_size':3}, layer_class=torch.nn.Conv2d, qcs=[build_qc(a_nbits=8, aq_params={'threshold': 8.0, 'is_signed': False})])
-    conv2 = build_node('conv2', framework_attr={'in_channels':3, 'out_channels':3, 'kernel_size':3}, layer_class=torch.nn.Conv2d, qcs=[build_qc(a_nbits=16, aq_params={'threshold': 4.0, 'is_signed': False})])
+    conv = build_node('conv', framework_attr={'in_channels':3, 'out_channels':3, 'kernel_size':3}, layer_class=torch.nn.Conv2d, qcs=[build_qc()])
     dropout = build_node('dropout', layer_class=torch.nn.Dropout, qcs=[build_qc(a_enable=False, q_preserving=True)])
-    flatten = build_node('flatten', layer_class=torch.nn.Flatten, qcs=[build_qc(a_enable=False, q_preserving=True)])
-    fc = build_node('fc', framework_attr={'in_features':48, 'out_features':128}, layer_class=torch.nn.Linear, qcs=[build_qc(a_nbits=4, aq_params={'threshold': 8.0, 'is_signed': True})])
+    flatten1 = build_node('flatten1', layer_class=torch.nn.Flatten, qcs=[build_qc(a_enable=False, q_preserving=True)])
+    flatten2 = build_node('flatten2', layer_class=torch.nn.Flatten, qcs=[build_qc(a_enable=False, q_preserving=True)])
+    fc1 = build_node('fc1', framework_attr={'in_features':48, 'out_features':128}, layer_class=torch.nn.Linear, qcs=[build_qc()])
+    fc2 = build_node('fc2', framework_attr={'in_features':48, 'out_features':128}, layer_class=torch.nn.Linear, qcs=[build_qc()])
 
-    graph = Graph('g', input_nodes=[conv1],
-                  nodes=[conv2, dropout, flatten],
-                  output_nodes=[fc],
-                  edge_list=[Edge(conv1, conv2, 0, 0),
-                             Edge(conv2, dropout, 0, 0),
-                             Edge(dropout, flatten, 0, 0),
-                             Edge(flatten, fc, 0, 0),
+    graph = Graph('g', input_nodes=[conv],
+                  nodes=[flatten1, fc1, flatten2, dropout],
+                  output_nodes=[fc2],
+                  edge_list=[Edge(conv, flatten1, 0, 0),
+                             Edge(flatten1, fc1, 0, 0),
+                             Edge(fc1, flatten2, 0, 0),
+                             Edge(flatten2, dropout, 0, 0),
+                             Edge(dropout, fc2, 0, 0),
                              ]
                   )
     tpc = get_tpc()
@@ -137,54 +138,87 @@ def get_test_graph():
 
     return graph
 
+def get_inferable_quantizers_mock(node):
+    if node.name == 'conv':
+        activation_quantizers = Mock()
+        activation_quantizers.num_bits = 8
+        activation_quantizers.signed = False
+        activation_quantizers.threshold_np = 8.0
+    
+    elif node.name == 'fc1':
+        activation_quantizers = Mock()
+        activation_quantizers.num_bits = 16
+        activation_quantizers.signed = True
+        activation_quantizers.threshold_np = 16.0
+        
+    elif node.name == 'fc2':
+        activation_quantizers = Mock()
+        activation_quantizers.num_bits = 4
+        activation_quantizers.signed = False
+        activation_quantizers.threshold_np = 4.0
+    else:
+        return {}, []
+    
+    return {}, [activation_quantizers]
+
 class TestPyTorchModelBuilder():
 
     # test case for PyTorchModelBuilder
-    test_input_0 = ("conv1_activation_holder_quantizer",)
-    test_input_1 = ("conv2_activation_holder_quantizer",)
-    test_input_2 = ("dropout_activation_holder_quantizer",)
-    test_input_3 = ("flatten_activation_holder_quantizer",)
-    test_input_4 = ("fc_activation_holder_quantizer",)
-
-    test_expected_0 = (PytorchActivationQuantizationHolder, 8, 8.0, False)
-    test_expected_1 = (PytorchActivationQuantizationHolder, 16, 4.0, False)
-    test_expected_2 = (PytorchPreservingActivationQuantizationHolder, 16, 4.0, False)
-    test_expected_3 = (PytorchPreservingActivationQuantizationHolder, 16, 4.0, False)
-    test_expected_4 = (PytorchActivationQuantizationHolder, 4, 8.0, True)
-
-    @pytest.mark.parametrize(("inputs", "expected"), [
-        (test_input_0, test_expected_0),
-        (test_input_1, test_expected_1),
-        (test_input_2, test_expected_2),
-        (test_input_3, test_expected_3),
-        (test_input_4, test_expected_4),
-    ])
-    def test_pytorch_model(self, inputs, expected):
+    def test_pytorch_model(self, fw_impl_mock):
         graph = get_test_graph()
+        fw_impl_mock.get_inferable_quantizers.side_effect = lambda node: get_inferable_quantizers_mock(node)
         exportable_model, _ = PyTorchModelBuilder(graph=graph,
                                                 wrapper=lambda n, m:
                                                 fully_quantized_wrapper(n, m,
-                                                                        fw_impl=fw_impl),
+                                                                        fw_impl=fw_impl_mock),
                                                 get_activation_quantizer_holder_fn=lambda n:
                                                 get_activation_quantizer_holder(n,
-                                                                                fw_impl=fw_impl),
+                                                                                fw_impl=fw_impl_mock),
                                                 get_preserving_activation_quantizer_holder_fn=lambda n:
                                                 get_preserving_activation_quantizer_holder(n,
-                                                                                fw_impl=fw_impl)).build_model()
+                                                                                fw_impl=fw_impl_mock)).build_model()
         
-        preserving_activation_holder_quantizer_name = ["dropout_activation_holder_quantizer", "flatten_activation_holder_quantizer"]
-        activation_holder_quantizer_name = ["conv1_activation_holder_quantizer", "conv2_activation_holder_quantizer", "fc_activation_holder_quantizer"]
-        for name, layer in exportable_model.named_modules():
-            if name == inputs[0]:
-                if name in preserving_activation_holder_quantizer_name:
-                    assert isinstance(layer, expected[0]) # check holder
-                    assert layer.quantization_bypass == True
-                    assert layer.activation_holder_quantizer.num_bits == expected[1]
-                    assert layer.activation_holder_quantizer.threshold_np == expected[2]
-                    assert layer.activation_holder_quantizer.signed == expected[3]
+        # check conv
+        conv_activation_holder_quantizer = exportable_model.conv_activation_holder_quantizer
+        assert isinstance(conv_activation_holder_quantizer, PytorchActivationQuantizationHolder)
+        assert conv_activation_holder_quantizer.activation_holder_quantizer.num_bits == 8
+        assert conv_activation_holder_quantizer.activation_holder_quantizer.signed == False
+        assert conv_activation_holder_quantizer.activation_holder_quantizer.threshold_np == 8.0
 
-                elif name in activation_holder_quantizer_name:
-                    assert isinstance(layer, expected[0]) # check holder
-                    assert layer.activation_holder_quantizer.num_bits == expected[1]
-                    assert layer.activation_holder_quantizer.threshold_np == expected[2]
-                    assert layer.activation_holder_quantizer.signed == expected[3]
+        # check flatten1 (same conv)
+        flatten1_activation_holder_quantizer = exportable_model.flatten1_activation_holder_quantizer
+        assert isinstance(flatten1_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
+        assert flatten1_activation_holder_quantizer.quantization_bypass == True
+        assert flatten1_activation_holder_quantizer.activation_holder_quantizer.num_bits == 8
+        assert flatten1_activation_holder_quantizer.activation_holder_quantizer.signed == False
+        assert flatten1_activation_holder_quantizer.activation_holder_quantizer.threshold_np == 8.0
+
+        # check fc1
+        fc1_activation_holder_quantizer = exportable_model.fc1_activation_holder_quantizer
+        assert isinstance(fc1_activation_holder_quantizer, PytorchActivationQuantizationHolder)
+        assert fc1_activation_holder_quantizer.activation_holder_quantizer.num_bits == 16
+        assert fc1_activation_holder_quantizer.activation_holder_quantizer.signed == True
+        assert fc1_activation_holder_quantizer.activation_holder_quantizer.threshold_np == 16.0
+
+        # check flatten2 (same fc1)
+        flatten2_activation_holder_quantizer = exportable_model.flatten2_activation_holder_quantizer
+        assert isinstance(flatten2_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
+        assert flatten2_activation_holder_quantizer.quantization_bypass == True
+        assert flatten2_activation_holder_quantizer.activation_holder_quantizer.num_bits == 16
+        assert flatten2_activation_holder_quantizer.activation_holder_quantizer.signed == True
+        assert flatten2_activation_holder_quantizer.activation_holder_quantizer.threshold_np == 16.0
+        
+        # check dropout (same fc1)
+        dropout_activation_holder_quantizer = exportable_model.dropout_activation_holder_quantizer
+        assert isinstance(dropout_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
+        assert dropout_activation_holder_quantizer.quantization_bypass == True
+        assert dropout_activation_holder_quantizer.activation_holder_quantizer.num_bits == 16
+        assert dropout_activation_holder_quantizer.activation_holder_quantizer.signed == True
+        assert dropout_activation_holder_quantizer.activation_holder_quantizer.threshold_np == 16.0
+
+        # check fc2
+        fc2_activation_holder_quantizer = exportable_model.fc2_activation_holder_quantizer
+        assert isinstance(fc2_activation_holder_quantizer, PytorchActivationQuantizationHolder)
+        assert fc2_activation_holder_quantizer.activation_holder_quantizer.num_bits == 4
+        assert fc2_activation_holder_quantizer.activation_holder_quantizer.signed == False
+        assert fc2_activation_holder_quantizer.activation_holder_quantizer.threshold_np == 4.0

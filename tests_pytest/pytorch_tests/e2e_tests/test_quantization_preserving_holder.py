@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
+from unittest.mock import Mock, patch
 
 import model_compression_toolkit as mct
 import torch
@@ -28,44 +29,46 @@ def representative_data_gen(shape=(3, 8, 8), num_inputs=1, batch_size=2, num_ite
         yield [torch.randn(batch_size, *shape)] * num_inputs
 
 def get_float_model():
-        class BaseModel(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3)
-                self.conv2 = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3)
-                self.dropout = torch.nn.Dropout()
-                self.flatten = torch.nn.Flatten()
-                self.fc = torch.nn.Linear(48, 128)
+    class BaseModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.conv = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3)
+            self.dropout = torch.nn.Dropout()
+            self.flatten1 = torch.nn.Flatten()
+            self.flatten2 = torch.nn.Flatten()
+            self.fc1 = torch.nn.Linear(108, 216)
+            self.fc2 = torch.nn.Linear(216, 432)
 
-            def forward(self, x):
-                x = self.conv1(x)
-                x = self.conv2(x)
-                x = self.dropout(x)
-                x = self.flatten(x)
-                x = self.fc(x)
-                return x
-        return BaseModel()
+        def forward(self, x):
+            x = self.conv(x)
+            x = self.flatten1(x)
+            x = self.fc1(x)
+            x = self.flatten2(x)
+            x = self.dropout(x)
+            x = self.fc2(x)
+            return x
+    return BaseModel()
 
 def get_tpc():
     base_config = schema.OpQuantizationConfig(
-            default_weight_attr_config=AttributeQuantizationConfig(),
-            attr_weights_configs_mapping={},
-            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-            activation_n_bits=8,
-            supported_input_activation_n_bits=8,
-            enable_activation_quantization=True,
-            quantization_preserving=False,
-            signedness=Signedness.AUTO)
+        default_weight_attr_config=AttributeQuantizationConfig(),
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        signedness=Signedness.AUTO)
     
     default_config = schema.OpQuantizationConfig(
-            default_weight_attr_config=AttributeQuantizationConfig(),
-            attr_weights_configs_mapping={},
-            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-            activation_n_bits=8,
-            supported_input_activation_n_bits=8,
-            enable_activation_quantization=True,
-            quantization_preserving=False,
-            signedness=Signedness.AUTO)
+        default_weight_attr_config=AttributeQuantizationConfig(),
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        signedness=Signedness.AUTO)
 
     mixed_precision_cfg_list = [base_config]
     default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
@@ -73,11 +76,9 @@ def get_tpc():
                                                                              base_config=base_config)
 
     operator_set = []
-    preserving_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False, quantization_preserving=True)
-                              .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+    preserving_quantization_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False, quantization_preserving=True))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.DROPOUT, qc_options=preserving_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.FLATTEN, qc_options=preserving_quantization_config))
-
     conv = schema.OperatorsSet(name=schema.OperatorSetNames.CONV, qc_options=mixed_precision_configuration_options)
     fc = schema.OperatorsSet(name=schema.OperatorSetNames.FULLY_CONNECTED, qc_options=mixed_precision_configuration_options)
     operator_set.extend([conv, fc])
@@ -87,26 +88,7 @@ def get_tpc():
         operator_set=tuple(operator_set))
     return tpc
 
-test_input_0 = ("conv1_activation_holder_quantizer",)
-test_input_1 = ("conv2_activation_holder_quantizer",)
-test_input_2 = ("dropout_activation_holder_quantizer",)
-test_input_3 = ("flatten_activation_holder_quantizer",)
-test_input_4 = ("fc_activation_holder_quantizer",)
-
-test_expected_0 = (PytorchActivationQuantizationHolder,)
-test_expected_1 = (PytorchActivationQuantizationHolder,)
-test_expected_2 = (PytorchPreservingActivationQuantizationHolder,)
-test_expected_3 = (PytorchPreservingActivationQuantizationHolder,)
-test_expected_4 = (PytorchActivationQuantizationHolder,)
-
-@pytest.mark.parametrize(("inputs", "expected"), [
-    (test_input_0, test_expected_0),
-    (test_input_1, test_expected_1),
-    (test_input_2, test_expected_2),
-    (test_input_3, test_expected_3),
-    (test_input_4, test_expected_4),
-])
-def test_quantization_preserving_holder(inputs, expected):
+def test_quantization_preserving_holder():
 
     float_model = get_float_model()
     target_platform_cap = get_tpc()
@@ -119,15 +101,39 @@ def test_quantization_preserving_holder(inputs, expected):
         target_platform_capabilities=target_platform_cap
     )
 
-    preserving_activation_holder_quantizer_name = ["dropout_activation_holder_quantizer", "flatten_activation_holder_quantizer"]
-    activation_holder_quantizer_name = ["conv1_activation_holder_quantizer", "conv2_activation_holder_quantizer", "fc_activation_holder_quantizer"]
+    # check conv
+    conv_activation_holder_quantizer = quantized_model.conv_activation_holder_quantizer
+    assert isinstance(conv_activation_holder_quantizer, PytorchActivationQuantizationHolder)
+    
+    # check flatten1 (same conv)
+    flatten1_activation_holder_quantizer = quantized_model.flatten1_activation_holder_quantizer
+    assert isinstance(flatten1_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
+    assert flatten1_activation_holder_quantizer.quantization_bypass == True
+    assert flatten1_activation_holder_quantizer.activation_holder_quantizer.num_bits == conv_activation_holder_quantizer.activation_holder_quantizer.num_bits
+    assert flatten1_activation_holder_quantizer.activation_holder_quantizer.signed == conv_activation_holder_quantizer.activation_holder_quantizer.signed
+    assert flatten1_activation_holder_quantizer.activation_holder_quantizer.threshold_np == conv_activation_holder_quantizer.activation_holder_quantizer.threshold_np
 
-    for name, layer in quantized_model.named_modules():
-        if name == inputs[0]:
-            if name in preserving_activation_holder_quantizer_name:
-                assert isinstance(layer, expected[0]) # check holder
-                assert layer.quantization_bypass == True
+    # check fc1
+    fc1_activation_holder_quantizer = quantized_model.fc1_activation_holder_quantizer
+    assert isinstance(fc1_activation_holder_quantizer, PytorchActivationQuantizationHolder)
 
-            elif name in activation_holder_quantizer_name:
-                assert isinstance(layer, expected[0]) # check holder
+    # check flatten2 (same fc1)
+    flatten2_activation_holder_quantizer = quantized_model.flatten2_activation_holder_quantizer
+    assert isinstance(flatten2_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
+    assert flatten2_activation_holder_quantizer.quantization_bypass == True
+    assert flatten2_activation_holder_quantizer.activation_holder_quantizer.num_bits == fc1_activation_holder_quantizer.activation_holder_quantizer.num_bits
+    assert flatten2_activation_holder_quantizer.activation_holder_quantizer.signed == fc1_activation_holder_quantizer.activation_holder_quantizer.signed
+    assert flatten2_activation_holder_quantizer.activation_holder_quantizer.threshold_np == fc1_activation_holder_quantizer.activation_holder_quantizer.threshold_np
+    
+    # check dropout (same fc1)
+    dropout_activation_holder_quantizer = quantized_model.dropout_activation_holder_quantizer
+    assert isinstance(dropout_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
+    assert dropout_activation_holder_quantizer.quantization_bypass == True
+    assert dropout_activation_holder_quantizer.activation_holder_quantizer.num_bits == fc1_activation_holder_quantizer.activation_holder_quantizer.num_bits
+    assert dropout_activation_holder_quantizer.activation_holder_quantizer.signed == fc1_activation_holder_quantizer.activation_holder_quantizer.signed
+    assert dropout_activation_holder_quantizer.activation_holder_quantizer.threshold_np == fc1_activation_holder_quantizer.activation_holder_quantizer.threshold_np
+
+    # check fc2
+    fc2_activation_holder_quantizer = quantized_model.fc2_activation_holder_quantizer
+    assert isinstance(fc2_activation_holder_quantizer, PytorchActivationQuantizationHolder)
              
