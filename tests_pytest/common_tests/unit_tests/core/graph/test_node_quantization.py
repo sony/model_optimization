@@ -26,12 +26,10 @@ from mct_quantizers import QuantizationMethod
 
 
 class PreservingNode:
-    """ Only needed for repr(node) to work. """
     pass
 
 
 class NoActivationQuantNode:
-    """ Only needed for repr(node) to work. """
     pass
 
 
@@ -56,24 +54,32 @@ class TestSetNodeQuantizationConfig:
         """ Tests that . """
         n1 = build_node('in1_node')
         n2 = build_node('in2_node')
-        n3 = build_node('qp_node')
-        n4 = build_node('qp2_node')
-        graph = Graph('g', input_nodes=[n1, n2], nodes=[n3], output_nodes=[n4],
+        n3 = build_node('qp_node', layer_class=PreservingNode)
+        n4 = build_node('qp2_node', layer_class=PreservingNode)
+        qp3 = build_node('qp3_node', layer_class=PreservingNode)
+        qp4 = build_node('qp4_node', layer_class=PreservingNode)
+        graph = Graph('g', input_nodes=[n1, n2], nodes=[n3, qp3], output_nodes=[n4, qp4],
                       edge_list=[Edge(n1, n3, 0, 0), Edge(n2, n3, 0, 0),
-                                 Edge(n3, n4, 0, 0)])
-        op_config_kwargs = {"activation_n_bits": 7,
-                            "supported_input_activation_n_bits": 7,
-                            "enable_activation_quantization": False,
-                            "quantization_preserving": True}
-        fqc = Mock(filterlayer2qco={DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**op_config_kwargs)])},
-                   layer2qco={DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**op_config_kwargs)])})
+                                 Edge(n3, n4, 0, 0),
+                                 Edge(n1, qp3, 0, 0), Edge(qp3, qp4, 0, 0)])
+        q_op_config_kwargs = {"activation_n_bits": 7, "supported_input_activation_n_bits": 7,
+                            "enable_activation_quantization": True, "quantization_preserving": False}
+        qp_op_config_kwargs = {"activation_n_bits": 7, "supported_input_activation_n_bits": 7,
+                            "enable_activation_quantization": False, "quantization_preserving": True}
+        _filters = {DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**q_op_config_kwargs)]),
+                    PreservingNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**qp_op_config_kwargs)])}
+        fqc = Mock(filterlayer2qco=_filters, layer2qco=_filters)
+
         fw_info_mock = Mock(spec=FrameworkInfo, kernel_channels_mapping={DummyLayer: 0},
                             activation_quantizer_mapping={QuantizationMethod.POWER_OF_TWO: lambda x: 0},
                             get_kernel_op_attributes=lambda x: [None])
-        set_quantization_configs_to_node(n3, graph, QuantizationConfig(), fw_info_mock, fqc)
-        set_quantization_configs_to_node(n4, graph, QuantizationConfig(), fw_info_mock, fqc)
+        qc = QuantizationConfig()
+        for n in graph.get_topo_sorted_nodes():
+            set_quantization_configs_to_node(n, graph, qc, fw_info_mock, fqc)
         assert not n3.is_quantization_preserving() and not n3.is_activation_quantization_enabled()
         assert not n4.is_quantization_preserving() and not n4.is_activation_quantization_enabled()
+        assert qp3.is_quantization_preserving()
+        assert qp4.is_quantization_preserving()
 
     def test_node_quantization_by_next_nodes(self, fw_info_mock):
         """
@@ -100,19 +106,13 @@ class TestSetNodeQuantizationConfig:
                                         "supported_input_activation_n_bits": [8],
                                         "enable_activation_quantization": False,
                                         "quantization_preserving": False}
+        _filters = {
+            DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**first_node_config_kwargs)]),
+            PreservingNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**preserving_node_config_kwargs)]),
+            NoActivationQuantNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**no_quant_node_config_kwargs)]),
+        }
 
-        fqc = Mock(
-            filterlayer2qco={
-                DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**first_node_config_kwargs)]),
-                PreservingNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**preserving_node_config_kwargs)]),
-                NoActivationQuantNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**no_quant_node_config_kwargs)]),
-            },
-            layer2qco={
-                DummyLayer: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**first_node_config_kwargs)]),
-                PreservingNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**preserving_node_config_kwargs)]),
-                NoActivationQuantNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**no_quant_node_config_kwargs)]),
-            }
-        )
+        fqc = Mock(filterlayer2qco=_filters, layer2qco=_filters)
         fw_info_mock = Mock(spec=FrameworkInfo, kernel_channels_mapping={DummyLayer: 0},
                             activation_quantizer_mapping={QuantizationMethod.POWER_OF_TWO: lambda x: 0},
                             get_kernel_op_attributes=lambda x: [None])
