@@ -138,3 +138,8 @@ SHAPE = 'shape'
 NODE_NAME = 'node_name'
 TOTAL_SIZE = 'total_size'
 NODE_OUTPUT_INDEX = 'node_output_index'
+
+
+# Fusing Patterns constants
+FUSED_LAYER_PATTERN = 'fused_layer_pattern'
+FUSED_OP_QUANT_CONFIG = 'fused_op_quantization_config'

@@ -31,6 +31,8 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.current_tpc import  _current_tpc
 
+from model_compression_toolkit.constants import FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
+
 
 class FrameworkQuantizationCapabilities(ImmutableClass):
     """
@@ -114,8 +116,8 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
             fused_op_quantization_config = p.fused_op_quantization_config if self.tpc.SCHEMA_VERSION >= 2 else None
 
             for x in res:
-                pattern = {'layer_pattern': list(x),
-                           'fused_op_quantization_config': fused_op_quantization_config}
+                pattern = {FUSED_LAYER_PATTERN: list(x),
+                           FUSED_OP_QUANT_CONFIG: fused_op_quantization_config}
                 patterns.append(pattern)
 
         return patterns
