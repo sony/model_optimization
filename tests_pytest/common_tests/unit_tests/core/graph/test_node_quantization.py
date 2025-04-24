@@ -24,13 +24,16 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     OpQuantizationConfig, AttributeQuantizationConfig, Signedness
 from mct_quantizers import QuantizationMethod
 
+
 class PreservingNode:
     """ Only needed for repr(node) to work. """
     pass
 
+
 class NoActivationQuantNode:
     """ Only needed for repr(node) to work. """
     pass
+
 
 class TestSetNodeQuantizationConfig:
 
@@ -80,13 +83,13 @@ class TestSetNodeQuantizationConfig:
                       edge_list=[Edge(first_node, preserving_node, 0, 0),
                                  Edge(preserving_node, no_quant_node, 0, 0)])
 
-        first_node_config_kwargs = {"activation_n_bits": 8,
+        first_node_config_kwargs = {"activation_n_bits": 16,
                                     "supported_input_activation_n_bits": [8, 16],
                                     "enable_activation_quantization": True,
                                     "quantization_preserving": False}
 
         preserving_node_config_kwargs = {"activation_n_bits": 8,
-                                        "supported_input_activation_n_bits": [8],
+                                        "supported_input_activation_n_bits": [8, 16],
                                         "enable_activation_quantization": False,
                                         "quantization_preserving": True}
 
@@ -115,8 +118,7 @@ class TestSetNodeQuantizationConfig:
         set_quantization_configs_to_node(preserving_node, graph, QuantizationConfig(), fw_info_mock, fqc)
         set_quantization_configs_to_node(no_quant_node, graph, QuantizationConfig(), fw_info_mock, fqc)
 
-        # assert not first_node.is_quantization_preserving() and first_node.is_activation_quantization_enabled()
-        assert preserving_node.is_quantization_preserving() and preserving_node.is_activation_quantization_enabled()
+        assert not first_node.is_quantization_preserving() and first_node.is_activation_quantization_enabled()
+        assert preserving_node.is_quantization_preserving() and not preserving_node.is_activation_quantization_enabled()
         assert not no_quant_node.is_quantization_preserving() and not no_quant_node.is_activation_quantization_enabled()
 
-        print("a")
