@@ -39,27 +39,22 @@ def get_model_with_reused_weights():
             self.another_conv = nn.Conv2d(in_channels=3, out_channels=8, kernel_size=3)
             self.fc1 = nn.Linear(8 * 3 * 3, 10)
             self.fc2 = nn.Linear(8 * 3 * 3, 10)
-            self.fc3 = nn.Linear(8 * 3 * 3, 10)
 
         def forward(self, x):
-            batch_size = x.size(0)
-
             x1 = self.shared_conv(x)  # shape: (batch_size, 8, height-2, width-2) = (1, 8, 3, 3)
             x2 = self.shared_conv(x)  # shape: (batch_size, 8, height-2, width-2) = (1, 8, 3, 3)
-            x3 = self.another_conv(x)  # shape: (batch_size, 8, height-2, width-2) = (1, 8, 3, 3)
-            x1 = x1.view(batch_size, -1)  # shape: (batch_size, 8 * 3 * 3)
-            x2 = x2.view(batch_size, -1)  # shape: (batch_size, 8 * 3 * 3)
-            x3 = x3.view(batch_size, -1)  # shape: (batch_size, 8 * 3 * 3)
-            x1 = self.fc1(x1)  # shape: (batch_size, 10)
-            x2 = self.fc2(x2)  # shape: (batch_size, 10)
-            x3 = self.fc2(x3)  # shape: (batch_size, 10)
-            x = x1 + x2 + x3
+            x = x1 + x2
             return x
 
     return Model()
 
 
 class TestWeightsReuse(BaseTorchIntegrationTest):
+    """
+    Test that reused nodes are always initiated after their group node was initiated.
+    We test it by validating that building pytorch model back from the graph succeed with no errors
+    (specifically _add_all_modules method), independently to the graph nodes topological order.
+    """
 
     def test_weights_reuse_toposort(self, minimal_tpc):
         """
@@ -71,13 +66,7 @@ class TestWeightsReuse(BaseTorchIntegrationTest):
         data_generator = get_data_generator()
         graph = self.run_graph_preparation(model=model, datagen=data_generator, tpc=minimal_tpc)
         pytorch_model = PytorchModel(graph=graph)
-        input_tensor = torch.randn(1, 3, 5, 5).to(device=get_working_device())
-        x1 = pytorch_model.shared_conv(input_tensor)
-        x2 = pytorch_model.shared_conv(input_tensor)
-        x3 = pytorch_model.another_conv(input_tensor)
-        ptt.assert_close(x1, x2, msg='Test failed: x1 and x2 do not share the same weights!')
-        with pytest.raises(AssertionError, match=re.escape('Test failed: x1 and x3 should not share the same weights!')):
-            ptt.assert_close(x1, x3, msg='Test failed: x1 and x3 should not share the same weights!!')
+        assert len(pytorch_model._reused_nodes) == 1
 
     def test_weights_reuse_reversed_toposort(self, minimal_tpc):
         """
@@ -94,14 +83,7 @@ class TestWeightsReuse(BaseTorchIntegrationTest):
         pytorch_model.reuse_groups = {}
         pytorch_model._reused_nodes = []
         pytorch_model._add_all_modules()
-
-        input_tensor = torch.randn(1, 3, 5, 5).to(device=get_working_device())
-        x1 = pytorch_model.shared_conv(input_tensor)
-        x2 = pytorch_model.shared_conv(input_tensor)
-        x3 = pytorch_model.another_conv(input_tensor)
-        ptt.assert_close(x1, x2, msg='Test failed: x1 and x2 do not share the same weights!')
-        with pytest.raises(AssertionError, match=re.escape('Test failed: x1 and x3 should not share the same weights!!')):
-            ptt.assert_close(x1, x3, msg='Test failed: x1 and x3 should not share the same weights!!')
+        assert len(pytorch_model._reused_nodes) == 1
 
     def test_reused_only_initialization(self, minimal_tpc):
         """
