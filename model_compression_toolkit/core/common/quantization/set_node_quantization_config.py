@@ -210,7 +210,7 @@ def set_quantization_configs_to_node(node: BaseNode,
                 # Preserving the quantization of more than 1 previous node is ambiguous, so disable it.
                 Logger.info(f"Disabling Quantization-Preserving for node {node.name} because it has more than 1 input activations.")
                 candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
-            elif not prev_nodes[0].is_quantization_preserving() or not prev_nodes[0].is_activation_quantization_enabled():
+            elif not prev_nodes[0].is_quantization_preserving() and not prev_nodes[0].is_activation_quantization_enabled():
                 # Preserving the quantization of an unquantized node isn't possible, so disable it.
                 Logger.info(f"Disabling Quantization-Preserving for node {node.name} because previous node activation quantization is disabled.")
                 candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
