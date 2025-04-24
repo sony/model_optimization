@@ -189,6 +189,8 @@ class SensitivityEvaluation:
                                               self.quant_config.distance_weighting_method)
         else:
             sensitivity_metric = self.quant_config.custom_metric_fn(self.model_mp)
+            if not isinstance(sensitivity_metric, (float, np.floating)):
+                raise TypeError(f'The custom_metric_fn is expected to return float or numpy float, got {type(sensitivity_metric).__name__}')
 
         # Configure MP model back to the same configuration as the baseline model if baseline provided
         if baseline_mp_configuration is not None:
