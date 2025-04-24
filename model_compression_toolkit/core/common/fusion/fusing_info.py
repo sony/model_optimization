@@ -138,7 +138,7 @@ class FusingInfo:
         """
         return self.node_to_fused_node_map.copy()
 
-    def get_fusing_data_to_quantization_config_map(self) -> Dict[str, OpQuantizationConfig]:
+    def get_fusing_quantization_config_map(self) -> Dict[str, OpQuantizationConfig]:
         """
         Retrieve a copy of the mapping from fused operation IDs to their quantization configurations.
 

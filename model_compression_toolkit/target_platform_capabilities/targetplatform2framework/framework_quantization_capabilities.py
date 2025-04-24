@@ -100,7 +100,7 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
     def get_fusing_patterns(self) -> List[List[Any]]:
         """
 
-        Returns: List of patterns of layers/LayerFilterParams to fuse.
+        Returns: List of patterns of layers/LayerFilterParams to fuse and their mapping quantization config.
 
         """
 
@@ -113,7 +113,10 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
             ops = [self.get_layers_by_opset(x) for x in p.operator_groups]
             res.extend(itertools.product(*ops))
 
-            fused_op_quantization_config = p.fused_op_quantization_config if self.tpc.SCHEMA_VERSION >= 2 else None
+            if hasattr(p, 'fused_op_quantization_config'):
+                fused_op_quantization_config = p.fused_op_quantization_config
+            else:
+                fused_op_quantization_config = None
 
             for x in res:
                 pattern = {FUSED_LAYER_PATTERN: list(x),
