@@ -520,8 +520,9 @@ class TestActivationMaxCutUtilization:
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         return ru_calc, cuts, nodes
 
-    @pytest.mark.parametrize('seed', [42,43,44,45,46,47,48])
-    def test_compute_cuts_random_fusion_valid_utilization(self, seed, fw_impl_mock, fw_info_mock, mocker):
+    @pytest.mark.parametrize('seed', list(range(42, 52)))
+    @pytest.mark.parametrize("disable_quantization", [True, False])
+    def test_compute_cuts_random_fusion_valid_utilization(self, seed, disable_quantization, fw_impl_mock, fw_info_mock, mocker):
         random.seed(seed)
 
         num_nodes = random.randint(5, 8)
@@ -566,6 +567,10 @@ class TestActivationMaxCutUtilization:
         graph = Graph("g", input_nodes=[nodes[0]], nodes=nodes,
                       output_nodes=[OutTensor(node=nodes[-1], node_out_index=0)], edge_list=edges)
         graph.fusing_info = fusing_info
+
+        if disable_quantization:
+            graph.disable_fused_nodes_activation_quantization()
+
         graph.find_node_by_name = MethodType(Graph.find_node_by_name, graph)
 
         ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
