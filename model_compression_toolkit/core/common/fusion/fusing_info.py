@@ -116,6 +116,7 @@ class FusingInfo:
         for node in nodes:
             self.node_to_fused_node_map.pop(node.name, None)
         del self.fusing_data[op_id]
+        del self.fusing_data_to_quantization_config_map[op_id]
 
     def get_fused_node_name(self, node_name: str) -> Optional[str]:
         """
