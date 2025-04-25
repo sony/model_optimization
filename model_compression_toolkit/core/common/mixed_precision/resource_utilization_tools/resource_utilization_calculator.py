@@ -18,6 +18,8 @@ from copy import deepcopy
 from enum import Enum, auto
 from typing import Dict, NamedTuple, Optional, Tuple, List, Iterable, Union, Literal, Sequence
 
+from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
+
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -586,7 +588,9 @@ class ResourceUtilizationCalculator:
 
     def _compute_cuts(self):
         """ Compute activation cuts of the graph. """
-        memory_graph = MemoryGraph(deepcopy(self.graph))
+        # Compute memory graph on fused graph with fused nodes
+        graph = GraphFuser().apply_node_fusion(self.graph)
+        memory_graph = MemoryGraph(deepcopy(graph))
         _, _, cuts = compute_graph_max_cut(memory_graph)
         return cuts
 

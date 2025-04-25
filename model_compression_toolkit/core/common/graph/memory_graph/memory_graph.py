@@ -20,7 +20,6 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.edge import EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.memory_graph.bipartite_graph import DirectedBipartiteGraph
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import ActivationMemoryTensor
-from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
 
 
 class MemoryGraph(DirectedBipartiteGraph):
@@ -39,10 +38,6 @@ class MemoryGraph(DirectedBipartiteGraph):
         Args:
             model_graph: A graph representation of a model.
         """
-
-        # Compute memory graph on fused graph with fused nodes
-        model_graph = GraphFuser().apply_node_fusion(model_graph)
-
         nodes = list(model_graph.nodes)
         memory_tensors = []
         node_to_tensor = []

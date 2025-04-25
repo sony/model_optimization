@@ -184,7 +184,8 @@ def core_runner(in_model: Any,
 
     scheduler_info = None
     if core_config.debug_config.simulate_scheduler:
-        memory_graph = MemoryGraph(tg)
+        fused_graph = GraphFuser().apply_node_fusion(tg)
+        memory_graph = MemoryGraph(fused_graph)
         schedule, max_cut, cuts = compute_graph_max_cut(memory_graph)
         scheduler_info = SchedulerInfo(
             operators_scheduling=schedule,
