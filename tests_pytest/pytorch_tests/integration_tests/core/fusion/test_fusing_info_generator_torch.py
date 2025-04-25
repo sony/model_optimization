@@ -26,7 +26,7 @@ from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwM
 
 import torch.nn as nn
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-
+from model_compression_toolkit.constants import FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
 
 
 class BaseTestFusingInfoGeneratorPytorch(BaseFusingInfoGeneratorTest, TorchFwMixin):
@@ -42,7 +42,6 @@ class BaseTestFusingInfoGeneratorPytorch(BaseFusingInfoGeneratorTest, TorchFwMix
 
 
 
-
 class TestFusingConvRelu(BaseTestFusingInfoGeneratorPytorch):
 
     last_node_activation_nbits, qcs = random_activation_configs()
@@ -53,8 +52,12 @@ class TestFusingConvRelu(BaseTestFusingInfoGeneratorPytorch):
             schema.OperatorsSet(name=schema.OperatorSetNames.RELU)))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_relu": (
                 build_node(name="conv1_conv2_collapsed"),
@@ -100,8 +103,12 @@ class TestFusingAnyAct(BaseTestFusingInfoGeneratorPytorch):
             schema.OperatorsSet(name="AnyAct")))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_tanh":
                 (build_node(name="conv1_conv2_collapsed"),
@@ -167,8 +174,12 @@ class TestFusingConvReLUOnly(BaseTestFusingInfoGeneratorPytorch):
             schema.OperatorsSet(name="AnyAct")))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_tanh":
                 (build_node(name="conv1_conv2_collapsed"), build_node(name="tanh", qcs=qcs)),
@@ -242,8 +253,17 @@ class TestFusingComplexPatterns(BaseTestFusingInfoGeneratorPytorch):
                                        schema.OperatorsSet(name=schema.OperatorSetNames.ADD)))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[1]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[2]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[3]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[4]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[5]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_swish_add": (
                 build_node(name="conv1"),
@@ -341,8 +361,12 @@ class TestFusingConvSwishWithMultiSuccessors(BaseTestFusingInfoGeneratorPytorch)
             schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_swish": (
                 build_node(name="conv1"),
@@ -390,8 +414,12 @@ class TestFusingConvReluWithMultiPredecessors(BaseTestFusingInfoGeneratorPytorch
             schema.OperatorsSet(name=schema.OperatorSetNames.RELU)))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv3_relu": (
                 build_node(name="conv3"),
