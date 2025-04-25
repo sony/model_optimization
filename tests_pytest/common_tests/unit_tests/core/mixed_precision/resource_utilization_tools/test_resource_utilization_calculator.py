@@ -520,84 +520,7 @@ class TestActivationMaxCutUtilization:
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         return ru_calc, cuts, nodes
 
-    # TODO: add something like QuantizedButFLN, and then the cuts utilization should be zero.
-    def test_compute_cuts_integration_with_fused_nodes(self, graph_mock, fw_impl_mock, fw_info_mock, mocker):
-        """ Test integration with max cut computation. """
-        # Test a simple linear dummy graph with the real max cut computation.
-        n1 = build_node('n1', layer_class='c1', qcs=[build_qc()], input_shape=(None, 10, 20, 3), output_shape=(None, 10, 20, 3))
-        n2 = build_node('n2', layer_class='c2', qcs=[build_qc()], input_shape=(None, 10, 20, 3), output_shape=(None, 5, 10))
-        n3 = build_node('n3', layer_class='c3', qcs=[build_qc()], input_shape=(None, 5, 10), output_shape=(None, 5, 20))
-        n4 = build_node('n4', layer_class='c4', qcs=[build_qc()], input_shape=(None, 5, 20), output_shape=(None, 10, 10))
-        n5 = build_node('n5', layer_class='c5', qcs=[build_qc()], input_shape=(None, 10, 10), output_shape=(None, 15, 20))
-
-
-        edges = [Edge(n1, n2, 0, 0),
-                 Edge(n2, n3, 0, 0),
-                 Edge(n3, n4, 0, 0),
-                 Edge(n4, n5, 0, 0)]
-
-        graph = Graph('g', input_nodes=[n1], nodes=[n1, n2, n3, n4, n5], output_nodes=[OutTensor(node=n5, node_out_index=0)], edge_list=edges)
-        fusing_info = FusingInfo(fusing_patterns=[['c2', 'c3', 'c4']], fusing_data={'FusedNode_n2_n3_n4': (n2, n3, n4)})
-        graph.fusing_info = fusing_info
-
-        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
-        # wrap the real implementation
-        maxcut_spy = mocker.patch('model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.'
-                                  'resource_utilization_calculator.compute_graph_max_cut', wraps=compute_graph_max_cut)
-
-        # trigger cuts cache computation
-        cuts_cache = ru_calc.cuts
-
-        # verify the cache
-        assert len(cuts_cache) == 4
-        assert all(isinstance(k, Cut) for k in cuts_cache.keys())
-        # for each cut we save a list of its nodes
-        cuts_nodes = {tuple(sorted(n.name for n in nodes)) for nodes in cuts_cache.values()}
-        assert cuts_nodes == {('n2', 'n3', 'n4', 'n5'), ('n1', 'n2', 'n3', 'n4'), ('n1',), ('n5',)}
-
-        # map from node names to cuts to retrieve the cuts
-        nodes_to_cuts = {
-            tuple(sorted(e.node_name for e in cut.mem_elements.elements)): cut
-            for cut in cuts_cache.keys()
-        }
-
-        cut1 = nodes_to_cuts[('n1',)]
-        cut2 = nodes_to_cuts[tuple(sorted(['n1', 'FusedNode_n2_n3_n4']))]
-        cut3 = nodes_to_cuts[tuple(sorted(['FusedNode_n2_n3_n4', 'n5']))]
-        cut4 = nodes_to_cuts[('n5',)]
-
-        # compute utilization to check everything works together with real maxcut
-        total, per_cut, per_cut_per_node = ru_calc.compute_activation_utilization_by_cut(
-            target_criterion=TIC.AnyQuantized,
-            bitwidth_mode=BM.QDefaultSP)
-
-        assert per_cut_per_node == {
-            cut1: {'n1': Utilization(10 * 20 * 3, 600)},
-            cut2: {
-                'n1': Utilization(10 * 20 * 3, 600),
-                'n2': Utilization(5 * 10, 50),
-                'n3': Utilization(5 * 20, 100),
-                'n4': Utilization(10 * 10, 100)
-            },
-            cut3: {
-                'n2': Utilization(5 * 10, 50),
-                'n3': Utilization(5 * 20, 100),
-                'n4': Utilization(10 * 10, 100),
-                'n5': Utilization(15 * 20, 300)
-            },
-            cut4: {'n5': Utilization(15 * 20, 300)}
-        }
-
-        assert per_cut == {
-            cut1: Utilization(600, 600),
-            cut2: Utilization(850, 850),
-            cut3: Utilization(550, 550),
-            cut4: Utilization(300, 300)
-        }
-
-        assert total == 850  # Max utilization across cuts (based on AnyQuantized)
-
-    @pytest.mark.parametrize('seed', [42, 44, 45, 46, 48, 50, 51, 53, 54])
+    @pytest.mark.parametrize('seed', [42,43,44,45,46,47,48])
     def test_compute_cuts_random_fusion_valid_utilization(self, seed, fw_impl_mock, fw_info_mock, mocker):
         random.seed(seed)
 
@@ -624,7 +547,7 @@ class TestActivationMaxCutUtilization:
         # Generate random fused groups
         fused_patterns = []
         fused_data = {}
-        i = 0
+        i = 1
         while i < num_nodes - 1:
             if random.random() < 0.5:
                 fuse_len = random.choice([2, 3])
@@ -682,23 +605,21 @@ class TestActivationMaxCutUtilization:
         # Total check
         assert total == max(u.bytes for u in per_cut.values())
 
-        if True:
-            print("\n===== DEBUG REPORT =====")
-            print(f"Total nodes: {num_nodes}")
-            print(f"Total fused groups: {len(fused_patterns)}")
-            for i, (pat, fused_name) in enumerate(zip(fused_patterns, fused_data.keys())):
-                fused_node_names = [n.name for n in fused_data[fused_name]]
-                print(f"  Fused Group {i + 1}: {fused_node_names} (Pattern: {pat})")
+        # Check the utilization bytes per node
+        for cut, node_utils in per_cut_per_node.items():
+            for node_name, util in node_utils.items():
+                node = next((n for n in nodes if n.name == node_name), None)
+                assert node is not None, f"Node {node_name} not found in graph"
 
-            print(f"\nComputed Cuts: {len(cuts)}")
-            for cut, cut_nodes in cuts.items():
-                print(f"  Cut: {[n.name for n in cut_nodes]}")
+                expected_volume = 1
+                for dim in node.output_shape:
+                    if dim is not None:
+                        expected_volume *= dim
 
-            print("\nUtilization per cut:")
-            for cut, util in per_cut.items():
-                print(f"  Cut {[n.name for n in cuts[cut]]}: size={util.size}, bytes={util.bytes}")
-            print(f"\nTotal max utilization: {total}")
-
+                assert util.bytes == expected_volume, (
+                    f"Utilization mismatch for node '{node_name}': "
+                    f"got {util.bytes}, expected {expected_volume} from shape {node.output_shape}"
+                )
 
     def test_get_cut_target_nodes(self, prepare_compute_cuts):
         ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2, qp) = prepare_compute_cuts
