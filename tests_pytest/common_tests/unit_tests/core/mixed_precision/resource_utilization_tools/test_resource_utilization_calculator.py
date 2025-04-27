@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import random
 from types import MethodType
 from unittest.mock import Mock
 
 import numpy as np
 import pytest
+from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
@@ -498,6 +501,8 @@ class TestActivationMaxCutUtilization:
         graph_mock.find_node_by_name = MethodType(Graph.find_node_by_name, graph_mock)
         graph_mock.retrieve_preserved_quantization_node = lambda x: mp2 if x.name == 'qp' else x
 
+        graph_mock.fusing_info = FusingInfo()
+
         # we should not use total size, setting it to bad number
         cut_elems1 = MemoryElements(elements={ActivationMemoryTensor(mp_reuse.output_shape, 'mp_reuse', 0)}, total_size=-1)
         cut_elems2 = MemoryElements(elements={ActivationMemoryTensor(mp_reuse.output_shape, 'mp_reuse', 0),
@@ -514,6 +519,112 @@ class TestActivationMaxCutUtilization:
         mocker.patch.object(ResourceUtilizationCalculator, '_compute_cuts', Mock(return_value=cuts))
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
         return ru_calc, cuts, nodes
+
+    @pytest.mark.parametrize('seed', list(range(42, 52)))
+    @pytest.mark.parametrize("disable_quantization", [True, False])
+    def test_compute_cuts_random_fusion_valid_utilization(self, seed, disable_quantization, fw_impl_mock, fw_info_mock, mocker):
+        random.seed(seed)
+
+        num_nodes = random.randint(5, 8)
+        node_names = [f"n{i}" for i in range(num_nodes)]
+        nodes = []
+        edges = []
+        classes = []
+
+        # Build nodes with matching input/output shapes
+        input_shape = (None, random.randint(5, 10), random.randint(5, 10))
+        for i, name in enumerate(node_names):
+            output_shape = (None, random.randint(5, 10), random.randint(5, 10)) if i < num_nodes - 1 else input_shape
+            layer_class = f"class_{i}"
+            node = build_node(name, layer_class=layer_class, qcs=[build_qc()],
+                              input_shape=input_shape, output_shape=output_shape)
+            nodes.append(node)
+            classes.append(layer_class)
+            input_shape = output_shape
+
+        for i in range(num_nodes - 1):
+            edges.append(Edge(nodes[i], nodes[i + 1], 0, 0))
+
+        # Generate random fused groups
+        fused_patterns = []
+        fused_data = {}
+        i = 1
+        while i < num_nodes - 1:
+            if random.random() < 0.5:
+                fuse_len = random.choice([2, 3])
+                if i + fuse_len <= num_nodes:
+                    fused = tuple(nodes[j] for j in range(i, i + fuse_len))
+                    fused_name = f"FusedNode_{'_'.join(n.name for n in fused)}"
+                    fused_patterns.append([n.layer_class for n in fused])
+                    fused_data[fused_name] = fused
+                    i += fuse_len
+                else:
+                    break
+            else:
+                i += 1
+
+        fusing_info = FusingInfo(fusing_patterns=fused_patterns, fusing_data=fused_data)
+        graph = Graph("g", input_nodes=[nodes[0]], nodes=nodes,
+                      output_nodes=[OutTensor(node=nodes[-1], node_out_index=0)], edge_list=edges)
+        graph.fusing_info = fusing_info
+
+        if disable_quantization:
+            graph.disable_fused_nodes_activation_quantization()
+
+        graph.find_node_by_name = MethodType(Graph.find_node_by_name, graph)
+
+        ru_calc = ResourceUtilizationCalculator(graph, fw_impl_mock, fw_info_mock)
+
+        # Patch max cut computation
+        mocker.patch(
+            'model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.'
+            'resource_utilization_calculator.compute_graph_max_cut',
+            wraps=compute_graph_max_cut
+        )
+
+        cuts = ru_calc.cuts
+
+        # --- Assert cut structure ---
+        assert all(isinstance(c, Cut) for c in cuts)
+        for cut_nodes in cuts.values():
+            assert all(isinstance(n.name, str) for n in cut_nodes)
+
+        # --- Utilization ---
+        total, per_cut, per_cut_per_node = ru_calc.compute_activation_utilization_by_cut(
+            target_criterion=TIC.AnyQuantized, bitwidth_mode=BM.QDefaultSP
+        )
+
+        # Structure checks
+        assert isinstance(per_cut, dict)
+        assert isinstance(per_cut_per_node, dict)
+        assert all(isinstance(k, Cut) for k in per_cut)
+        assert all(isinstance(k, Cut) for k in per_cut_per_node)
+        assert all(isinstance(v, Utilization) for v in per_cut.values())
+        assert all(isinstance(vv, Utilization) for v in per_cut_per_node.values() for vv in v.values())
+
+        # Value checks: per_cut == sum(per_cut_per_node)
+        for cut, node_utils in per_cut_per_node.items():
+            summed = sum((u for u in node_utils.values()), Utilization(0, 0))
+            assert per_cut[cut] == summed
+
+        # Total check
+        assert total == max(u.bytes for u in per_cut.values())
+
+        # Check the utilization bytes per node
+        for cut, node_utils in per_cut_per_node.items():
+            for node_name, util in node_utils.items():
+                node = next((n for n in nodes if n.name == node_name), None)
+                assert node is not None, f"Node {node_name} not found in graph"
+
+                expected_volume = 1
+                for dim in node.output_shape:
+                    if dim is not None:
+                        expected_volume *= dim
+
+                assert util.bytes == expected_volume, (
+                    f"Utilization mismatch for node '{node_name}': "
+                    f"got {util.bytes}, expected {expected_volume} from shape {node.output_shape}"
+                )
 
     def test_get_cut_target_nodes(self, prepare_compute_cuts):
         ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2, qp) = prepare_compute_cuts
