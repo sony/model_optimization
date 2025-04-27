@@ -67,7 +67,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
     nodes_to_manipulate_activation_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_activation_bit_widths(graph)
     nodes_to_manipulate_weights_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_weights_bit_widths(graph)
 
-    for n in graph.nodes:
+    for n in graph.get_topo_sorted_nodes():
         manual_bit_width_override = {ACTIVATION: nodes_to_manipulate_activation_bit_widths.get(n),
                                      WEIGHTS: nodes_to_manipulate_weights_bit_widths.get(n)}
         set_quantization_configs_to_node(node=n,
@@ -119,11 +119,16 @@ def filter_node_qco_by_graph(node: BaseNode,
             _next_nodes.extend(graph.get_next_nodes(n))
         next_nodes.append(n)
 
-    if len(next_nodes):
-        next_nodes_qc_options = [_node.get_qco(fqc) for _node in next_nodes]
-        next_nodes_supported_input_bitwidth = min([max_input_activation_n_bits(op_cfg)
+    if len(next_nodes) == 0:
+        return _base_config, _node_qc_options
+    next_nodes_qc_options = [_node.get_qco(fqc) for _node in next_nodes]
+    all_next_nodes_supported_input_bitwidth = [max_input_activation_n_bits(op_cfg)
                                                    for qc_opts in next_nodes_qc_options
-                                                   for op_cfg in qc_opts.quantization_configurations])
+                                                   for op_cfg in qc_opts.quantization_configurations
+                                               if op_cfg.enable_activation_quantization or op_cfg.quantization_preserving
+                                               ]
+    if len(all_next_nodes_supported_input_bitwidth):
+        next_nodes_supported_input_bitwidth = min(all_next_nodes_supported_input_bitwidth)
 
         # Filter node's QC options that match next nodes input bit-width.
         _node_qc_options = [_option for _option in _node_qc_options
@@ -199,6 +204,16 @@ def set_quantization_configs_to_node(node: BaseNode,
         if candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.QUANT and \
                 not node.get_has_activation():
             candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
+        elif candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT:
+            prev_nodes = graph.get_prev_nodes(node)
+            if len(prev_nodes) != 1:
+                # Preserving the quantization of more than 1 previous node is ambiguous, so disable it.
+                Logger.info(f"Disabling Quantization-Preserving for node {node.name} because it has more than 1 input activations.")
+                candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
+            elif not prev_nodes[0].is_quantization_preserving() and not prev_nodes[0].is_activation_quantization_enabled():
+                # Preserving the quantization of an unquantized node isn't possible, so disable it.
+                Logger.info(f"Disabling Quantization-Preserving for node {node.name} because previous node activation quantization is disabled.")
+                candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
 
 
 def create_node_activation_qc(qc: QuantizationConfig,

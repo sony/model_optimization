@@ -831,8 +831,8 @@ class FeatureNetworkTest(unittest.TestCase):
         QuantizationAwareTrainingQuantizersTest(self).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self).run_test()
-        QATWrappersMixedPrecisionCfgTest(self, ru_weights=17920 * 4 / 8, ru_activation=5408 * 4 / 8,
-                                         expected_mp_cfg=[0, 5, 1, 1]).run_test()
+        QATWrappersMixedPrecisionCfgTest(self, ru_weights=17920 * 4 / 8, ru_activation=8608 * 4 / 8,
+                                         expected_mp_cfg=[0, 4, 1, 1]).run_test()
 
     def test_bn_attributes_quantization(self):
         BNAttributesQuantization(self, quantize_linear=False).run_test()
@@ -870,7 +870,7 @@ class FeatureNetworkTest(unittest.TestCase):
             ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Add), 3).run_test()
         # Check that the correct exception message was raised
         self.assertEqual(str(context.exception),
-                         "Manually selected activation bit-width 3 is invalid for node Add:add2.")
+                         "Manually selected activation bit-width 3 is invalid for node Add:add1.")
 
         with self.assertRaises(Exception) as context:
             ManualBitWidthSelectionTest(self, NodeNameFilter('relu1'), 3).run_test()
@@ -880,7 +880,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mul_16_bit_manual_selection(self):
         """
-        This test checks the execptions in the manual bit-width selection feature.
+        This test checks the exceptions in the manual bit-width selection feature.
         """
         # This "mul" can be configured to 16 bit
         Manual16BitWidthSelectionTest(self, NodeNameFilter('mul1'), 16).run_test()
