@@ -169,6 +169,7 @@ class MixedPrecisionSearchManager:
             return self.sensitivity_evaluator.compute_metric(topo_cfg(cfg),
                                                              node_idx,
                                                              topo_cfg(baseline_cfg) if baseline_cfg else None)
+
         if self.using_virtual_graph:
             origin_max_config = self.config_reconstruction_helper.reconstruct_config_from_virtual_graph(
                 self.max_ru_config)
