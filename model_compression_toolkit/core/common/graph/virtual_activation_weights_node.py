@@ -12,29 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import abc
 import uuid
-
-from typing import Dict, Any, Tuple
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
     VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTES
-
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-import numpy as np
-
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 
 
-class VirtualNode(BaseNode):
+class VirtualNode(BaseNode, abc.ABC):
     """ Base class for all virtual nodes. """
     pass
 
 
-class VirtualSplitNode(VirtualNode):
+class VirtualSplitNode(VirtualNode, abc.ABC):
     """
     A class that represents a node that was split from a kernel node (node with weights).
     """
