@@ -549,6 +549,13 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         """
         return {attr: self.get_attr_config(attr) for attr in self.all_weight_attrs}
 
+    def disable_all_weights_quantization(self):
+        """ Disable quantization for all weights. """
+        for w_cfg in self.pos_attributes_config_mapping.values():
+            w_cfg.enable_weights_quantization = False
+        for w_cfg in self.attributes_config_mapping.values():
+            w_cfg.enable_weights_quantization = False
+
     def _extract_config_for_attributes_with_name(self, attr_name) -> Dict[str, WeightsAttrQuantizationConfig]:
         """
         Extract the saved attributes that contain the given attribute name.
