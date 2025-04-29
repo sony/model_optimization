@@ -18,6 +18,8 @@ from io import BytesIO
 import torch.nn
 
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
+
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.verify_packages import FOUND_ONNX
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
@@ -118,6 +120,9 @@ if FOUND_ONNX:
                 dynamic_axes = {'input': {0: 'batch_size'}}
                 dynamic_axes.update({name: {0: 'batch_size'} for name in output_names})
 
+            input_names = [n.name for n in self.model.node_sort if n.type == DummyPlaceHolder]
+            dynamic_axes.update({name: {0: 'batch_size'} for name in input_names})
+
             if hasattr(self.model, 'metadata'):
                 onnx_bytes = BytesIO()
                 torch.onnx.export(self.model,
@@ -125,7 +130,7 @@ if FOUND_ONNX:
                                   onnx_bytes,
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
-                                  input_names=['input'],
+                                  input_names=input_names,
                                   output_names=output_names,
                                   dynamic_axes=dynamic_axes)
                 onnx_model = onnx.load_from_string(onnx_bytes.getvalue())
@@ -137,7 +142,7 @@ if FOUND_ONNX:
                                   self.save_model_path,
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
-                                  input_names=['input'],
+                                  input_names=input_names,
                                   output_names=output_names,
                                   dynamic_axes=dynamic_axes)
 
