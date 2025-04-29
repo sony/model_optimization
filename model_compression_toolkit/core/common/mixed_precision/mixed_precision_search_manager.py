@@ -16,6 +16,7 @@ import itertools
 
 import copy
 from collections import defaultdict
+from enum import Enum
 
 from tqdm import tqdm
 
@@ -40,6 +41,17 @@ from model_compression_toolkit.core.common.mixed_precision.search_methods.linear
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.logger import Logger
+
+
+class MPSensitivityNormalization(Enum):
+    """
+    MAXBIT: normalize sensitivity metrics of layer candidates by max-bit candidate (of that layer).
+    MINBIT: normalize sensitivity metrics of layer candidates by min-bit candidate (of that layer).
+    NONE: no normalization.
+    """
+    MAXBIT = 'max'
+    MINBIT = 'min'
+    NONE = 'none'
 
 
 class MixedPrecisionSearchManager:
@@ -143,7 +155,9 @@ class MixedPrecisionSearchManager:
                              f"following targets: {unsatisfiable_targets}")
         return rel_target_ru
 
-    def _build_sensitivity_mapping(self, eps: float = 1e-6) -> Dict[BaseNode, List[float]]:
+    def _build_sensitivity_mapping(self,
+                                   normalization: MPSensitivityNormalization=MPSensitivityNormalization.NONE,
+                                   eps: float = 1e-6) -> Dict[BaseNode, List[float]]:
         """
         This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
 
@@ -156,49 +170,33 @@ class MixedPrecisionSearchManager:
         """
 
         Logger.info('Starting to evaluate metrics')
-
-        orig_sorted_nodes = self.original_graph.get_configurable_sorted_nodes(self.fw_info)
-
-        def topo_cfg(cfg: dict) -> list:
-            topo_cfg = [cfg[n] for n in orig_sorted_nodes]
-            assert len(topo_cfg) == len(cfg)
-            return topo_cfg
-
-        def compute_metric(cfg, node_idx=None, baseline_cfg=None):
-            return self.sensitivity_evaluator.compute_metric(topo_cfg(cfg),
-                                                             node_idx,
-                                                             topo_cfg(baseline_cfg) if baseline_cfg else None)
-
-        if self.using_virtual_graph:
-            origin_max_config = self.config_reconstruction_helper.reconstruct_full_configuration(self.max_ru_config)
-            max_config_value = compute_metric(origin_max_config)
-        else:
-            max_config_value = compute_metric(self.max_ru_config)
-
         layer_to_metrics_mapping = defaultdict(list)
         for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes)):
+            candidates_sensitivity = np.empty(len(node.candidates_quantization_cfg))
             for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
-                if self.max_ru_config[node] == bitwidth_idx:
-                    # This is a computation of the metric for the max configuration, assign pre-calculated value
-                    layer_to_metrics_mapping[node].append(max_config_value)
-                    continue
-
-                # Create a configuration that differs at one layer only from the baseline model
-                mp_model_configuration = self.max_ru_config.copy()
-                mp_model_configuration[node] = bitwidth_idx
-
-                # Build a distance matrix using the function we got from the framework implementation.
                 if self.using_virtual_graph:
-                    # Reconstructing original graph's configuration from virtual graph's configuration
-                    orig_mp_config = self.config_reconstruction_helper.reconstruct_full_configuration(mp_model_configuration)
-                    changed_nodes = [orig_sorted_nodes.index(n) for n, ind in orig_mp_config.items()
-                                     if origin_max_config[n] != ind]
-                    metric_value = compute_metric(orig_mp_config, changed_nodes, origin_max_config)
+                    a_cfg, w_cfg = self.config_reconstruction_helper.reconstruct_separate_aw_configs({node: bitwidth_idx})
                 else:
-                    metric_value = compute_metric(mp_model_configuration, [node_idx], self.max_ru_config)
-                metric_value = max(metric_value, max_config_value + eps)
-                layer_to_metrics_mapping[node].append(metric_value)
+                    a_cfg = {node: bitwidth_idx} if node.has_configurable_activation() else {}
+                    w_cfg = {node: bitwidth_idx} if node.has_any_configurable_weight() else {}
+                candidates_sensitivity[bitwidth_idx] = self.sensitivity_evaluator.compute_metric(
+                    {n.name: ind for n, ind in a_cfg.items()},
+                    {n.name: ind for n, ind in w_cfg.items()}
+                )
+            if normalization != MPSensitivityNormalization.NONE:
+                if normalization == MPSensitivityNormalization.MAXBIT:
+                    ref_ind = node.find_max_candidate_index()
+                else:
+                    assert normalization == MPSensitivityNormalization.MINBIT
+                    ref_ind = node.find_min_candidate_index()
+                candidates_sensitivity /= candidates_sensitivity[ref_ind]
+            if eps:
+                max_ind = node.find_max_candidate_index()
+                max_val = candidates_sensitivity[max_ind]
+                candidates_sensitivity = np.maximum(candidates_sensitivity, max_val)
+                candidates_sensitivity[max_ind] = max_val
 
+            layer_to_metrics_mapping[node] = candidates_sensitivity
         # Finalize distance metric mapping
         self._finalize_distance_metric(layer_to_metrics_mapping)
 
@@ -387,7 +385,9 @@ class ConfigReconstructionHelper:
 
         return orig_cfg
 
-    def reconstruct_separate_aw_configs(self, virtual_cfg: Dict[BaseNode, int], include_non_configurable: bool) \
+    def reconstruct_separate_aw_configs(self,
+                                        virtual_cfg: Dict[BaseNode, int],
+                                        include_non_configurable: bool = False) \
             -> Tuple[Dict[BaseNode, int], Dict[BaseNode, int]]:
         """
         Retrieves original activation and weights nodes and corresponding candidates for a given configuration of the

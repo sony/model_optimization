@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, Optional, TYPE_CHECKING
+import typing
+from typing import Any, Optional
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 
 
@@ -31,8 +32,7 @@ def set_activation_quant_layer_to_bitwidth(quantization_layer: Any,
         fw_impl: framework implementation object.
     """
     assert isinstance(quantization_layer, fw_impl.activation_quant_layer_cls)
-    # TODO irena enable after float mp
-    # assert isinstance(quantization_layer.activation_holder_quantizer, fw_impl.configurable_activation_quantizer_cls)
+    assert isinstance(quantization_layer.activation_holder_quantizer, fw_impl.configurable_activation_quantizer_cls)
     quantization_layer.activation_holder_quantizer.set_active_activation_quantizer(bitwidth_idx)
 
 
@@ -51,7 +51,6 @@ def set_weights_quant_layer_to_bitwidth(quantization_layer: Any,
     assert isinstance(quantization_layer, fw_impl.weights_quant_layer_cls)
     configurable_quantizers = [q for q in quantization_layer.weights_quantizers.values()
                                if isinstance(q, fw_impl.configurable_weights_quantizer_cls)]
-    # TODO irena enable after float mp
-    # assert configurable_quantizers
+    assert configurable_quantizers
     for quantizer in configurable_quantizers:
         quantizer.set_weights_bit_width_index(bitwidth_idx)
