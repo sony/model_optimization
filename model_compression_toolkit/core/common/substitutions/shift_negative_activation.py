@@ -201,7 +201,8 @@ def shift_negative_function(graph: Graph,
                             bias_flag_str: str,
                             zero_padding_node: BaseNode = None,
                             bypass_nodes: List = None,
-                            params_search_quantization_fn: Callable = None
+                            params_search_quantization_fn: Callable = None,
+                            use_dummy_stats: bool = False
                             ) -> Graph:
     """
     Shift the output of a non-linear activation by its minimal output value (quantized) such
@@ -232,8 +233,10 @@ def shift_negative_function(graph: Graph,
     Returns:
         Graph after applying the shifting and correction.
     """
-
-    min_to_correct, max_value2compare = graph.get_out_stats_collector(non_linear_node).get_min_max_values()
+    if use_dummy_stats:
+        min_to_correct, max_value2compare = -1, 1
+    else:
+        min_to_correct, max_value2compare = graph.get_out_stats_collector(non_linear_node).get_min_max_values()
 
     if not non_linear_node.is_all_activation_candidates_equal():
         Logger.critical("Shift negative correction is not supported for more than one activation quantization "
@@ -242,8 +245,12 @@ def shift_negative_function(graph: Graph,
     # all candidates have same activation config, so taking the first candidate for calculations
     non_linear_node_cfg_candidate = non_linear_node.candidates_quantization_cfg[0].activation_quantization_cfg
 
+
     # get the non-linear activation threshold
     activation_threshold = non_linear_node_cfg_candidate.activation_quantization_params.get(THRESHOLD)
+
+    if use_dummy_stats:
+        activation_threshold = 2
 
     negative_rate = np.abs(min_to_correct) / activation_threshold
 
@@ -505,7 +512,8 @@ def apply_shift_negative_correction(graph: Graph,
                                     padding_str: str,
                                     bias_str: str,
                                     bias_flag_str: str,
-                                    params_search_quantization_fn: Callable=None) -> Graph:
+                                    params_search_quantization_fn: Callable=None,
+                                    use_dummy_stats: bool = False) -> Graph:
     """
     Apply the substitution even if the linear node is not immediately after
     the non-linear node, but there are intermediate nodes
@@ -561,5 +569,6 @@ def apply_shift_negative_correction(graph: Graph,
                                                 bias_flag_str,
                                                 zero_padding_node=pad_node,
                                                 bypass_nodes=bypass_nodes,
-                                                params_search_quantization_fn=params_search_quantization_fn)
+                                                params_search_quantization_fn=params_search_quantization_fn,
+                                                use_dummy_stats=use_dummy_stats)
     return graph

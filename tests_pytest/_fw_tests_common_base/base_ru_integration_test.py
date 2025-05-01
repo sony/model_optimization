@@ -14,6 +14,7 @@
 # ==============================================================================
 import abc
 import copy
+import math
 from typing import  Generator
 
 from model_compression_toolkit.core import QuantizationConfig
@@ -226,11 +227,35 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         assert self._extract_values(detailed_virtual[RUTarget.WEIGHTS]) == exp_w_ru
         assert self._extract_values(detailed_virtual[RUTarget.BOPS]) == exp_bops
 
-    def _prepare_graph(self, model, disable_linear_collapse: bool=False):
+    def test_snc_fusing(self):
+        model = self._build_snc_model()
+
+        graph, nbits = self._prepare_graph(model, apply_snc=True)
+        linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits
+
+        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
+        ru_orig, detailed_orig = ru_calc.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
+                                                                      BitwidthMode.QMinBit,
+                                                                      return_detailed=True)
+
+        exp_cuts_ru = [18*18*3 * default_a_nbit/8,
+                       (18*18*3 * default_a_nbit + 16*16*15 * linear_a_min_nbit) / 8,
+                       (18*18*3 * default_a_nbit + 2 * (16*16*15 * linear_a_min_nbit)) / 8,
+                       16*16*15 * (2*linear_a_min_nbit + binary_out_a_bit) / 8,
+                       (16*16*15 * (binary_out_a_bit + default_a_nbit)) / 8,
+                       (16*16*15 * default_a_nbit + 10 * linear_a_min_nbit) / 8,
+                       10 * linear_a_min_nbit / 8]
+
+        assert self._extract_values(detailed_orig[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)
+
+
+
+    def _prepare_graph(self, model, disable_linear_collapse: bool=False, apply_snc: bool = False):
         # If disable_linear_collapse is False we use the default quantization config
         tpc, *nbits = build_tpc()
-        qcfg = QuantizationConfig(linear_collapsing=False) if disable_linear_collapse else QuantizationConfig()
-        graph = self.run_graph_preparation(model, self._data_gen, tpc, qcfg, mp=True)
+        shift_negative_ratio=1 if apply_snc else 0
+        qcfg = QuantizationConfig(linear_collapsing=False, shift_negative_ratio=shift_negative_ratio) if disable_linear_collapse else QuantizationConfig(shift_negative_ratio=shift_negative_ratio)
+        graph = self.run_graph_preparation(model, self._data_gen, tpc, qcfg, mp=True, apply_snc=apply_snc)
         return graph, nbits
 
     @staticmethod

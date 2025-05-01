@@ -229,7 +229,8 @@ class KerasImplementation(FrameworkImplementation):
     def shift_negative_correction(self,
                                   graph: Graph,
                                   core_config: CoreConfig,
-                                  fw_info: FrameworkInfo) -> Graph:
+                                  fw_info: FrameworkInfo,
+                                  use_dummy_stats: bool = False) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
 
@@ -243,7 +244,8 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_apply_shift_negative_correction(graph,
                                                      core_config,
-                                                     fw_info)
+                                                     fw_info,
+                                                     use_dummy_stats=use_dummy_stats)
 
     def compute_activation_bias_correction(self,
                                            graph: Graph,
