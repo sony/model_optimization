@@ -22,13 +22,8 @@ import requests
 import re
 
 
-def _check_local_file_exists(_url, branch_name):
-    index = _url.find(f"/{branch_name}/")
-    if index != -1:
-        link_path = _url[index + len(f"/{branch_name}/"):]
-    else:
-        print(f"The substring '/{branch_name}/' was not found.")
-        raise Exception()
+def _check_local_file_exists(link_path):
+
 
     # repo_root = f'model_optimization/blob/{branch_name}/'
     # abs_path = os.path.join(repo_root, link_path)
@@ -48,11 +43,18 @@ class TestDocsLinks(unittest.TestCase):
         if 'sony/model_optimization' in _url:
             _url = _url.replace('/main/', f'/{branch_name}/')
 
+            index = _url.find(f"/{branch_name}/")
+            if index != -1:
+                link_path = _url[index + len(f"/{branch_name}/"):]
+            else:
+                print(f"The substring '/{branch_name}/' was not found.")
+                raise Exception()
+
             if '#L' in _url:
-                parts = _url.split('#L')
+                parts = link_path.split('#L')
                 link_path = parts[0]
                 line_num = int(parts[1]) if len(parts) > 1 else None
-                _check_local_file_exists(link_path, branch_name)
+                _check_local_file_exists(link_path)
 
                 with open(link_path, 'r', encoding='utf-8') as f:
                     lines = f.readlines()
@@ -61,7 +63,7 @@ class TestDocsLinks(unittest.TestCase):
                     else:
                         return False, f"Line {line_num} does NOT exist in {link_path} (file has {len(lines)} lines)"
 
-            _check_local_file_exists(_url, branch_name)
+            _check_local_file_exists(_url)
             return True
         else:
             try:
