@@ -46,7 +46,7 @@ class TestDocsLinks(unittest.TestCase):
             return True
         else:
             try:
-                response = requests.head(_url)
+                response = requests.get(_url)
                 print(f"[{response.status_code}] {_url}")
                 if response.status_code == 200:
                     return True
