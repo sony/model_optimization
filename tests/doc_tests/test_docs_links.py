@@ -24,14 +24,6 @@ import requests
 import re
 
 
-# def _check_local_file_exists(link_path):
-#
-#
-#     # repo_root = f'model_optimization/blob/{branch_name}/'
-#     # abs_path = os.path.join(repo_root, link_path)
-#
-#     assert os.path.isfile(link_path) or os.path.isdir(link_path), f"Missing file or directory: {link_path}"
-
 def parse_github_blob_url(url):
 
     parsed = urlparse(url)
@@ -52,52 +44,6 @@ class TestDocsLinks(unittest.TestCase):
     A test for checking links in 'readme' (.md files), notebooks (.ipynb files) and '.rst' files.
     Searches for external links (https:) and local folder or files links.
     """
-
-    # @staticmethod
-    # def check_link(_url, branch_name):
-    #     if 'sony/model_optimization' in _url:
-    #         _url = _url.replace('/main/', f'/{branch_name}/')
-    #
-    #         index = _url.find(f"/{branch_name}/")
-    #         if index != -1:
-    #             link_path = _url[index + len(f"/{branch_name}/"):]
-    #         else:
-    #             print(f"The substring '/{branch_name}/' was not found.")
-    #             raise Exception()
-    #
-    #         if '#L' in _url:
-    #             parts = link_path.split('#L')
-    #             link_path = parts[0]
-    #             line_num = int(parts[1]) if len(parts) > 1 else None
-    #             _check_local_file_exists(link_path)
-    #
-    #             with open(link_path, 'r', encoding='utf-8') as f:
-    #                 lines = f.readlines()
-    #                 if line_num <= len(lines):
-    #                     return True, f"Line {line_num} exists in {link_path}"
-    #                 else:
-    #                     return False, f"Line {line_num} does NOT exist in {link_path} (file has {len(lines)} lines)"
-    #
-    #         _check_local_file_exists(_url)
-    #         return True
-    #     else:
-    #         try:
-    #             response = requests.get(_url)
-    #             print(f"[{response.status_code}] {_url}")
-    #             if response.status_code == 200:
-    #                 return True
-    #         except Exception as e:
-    #             print(f"Error checking link '{_url}': {e}")
-    #
-    #     # try:
-    #     #     _url = _url.replace('/main/', f'/{branch_name}/')
-    #     #     response = requests.get(_url)
-    #     #     if response.status_code == 200:
-    #     #         return True
-    #     # except Exception as e:
-    #     #     print(f"Error checking link '{_url}': {e}")
-    #
-    #     return False
 
     @staticmethod
     def check_link(_url, branch_name):
@@ -122,7 +68,6 @@ class TestDocsLinks(unittest.TestCase):
                 _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}"
                 print(_url)
                 response = requests.head(_url, allow_redirects=True)
-                print(f'   ===> Response: {response}')
                 if response.status_code == 200:
                     return True
         except Exception as e:
