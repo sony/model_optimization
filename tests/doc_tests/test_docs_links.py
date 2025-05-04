@@ -33,11 +33,8 @@ class TestDocsLinks(unittest.TestCase):
         if 'sony/model_optimization' in _url:
             _url = _url.replace('/main/', f'/{branch_name}/')
             index = _url.find(f"/{branch_name}/")
-            print(_url)
-            print(branch_name)
             if index != -1:
                 link_path = _url[index + len(f"/{branch_name}/"):]
-                print(link_path)
             else:
                 print(f"The substring '/{branch_name}/' was not found.")
                 raise Exception()
@@ -45,7 +42,7 @@ class TestDocsLinks(unittest.TestCase):
             # repo_root = f'model_optimization/blob/{branch_name}/'
             # abs_path = os.path.join(repo_root, link_path)
 
-            assert os.path.isfile(link_path), f"Missing file: {link_path}"
+            assert os.path.isfile(link_path) or os.path.isdir(link_path), f"Missing file or directory: {link_path}"
             return True
         else:
             try:
