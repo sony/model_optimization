@@ -119,7 +119,7 @@ class TestDocsLinks(unittest.TestCase):
             # GitHub action have limited requests-rate for 'blob' pages
             if 'blob' in _url:
                 owner, repo, branch, filepath = parse_github_blob_url(_url)
-                _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}?ref={branch}"
+                _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}"
                 print(_url)
                 response = requests.head(_url, allow_redirects=True)
                 print(f'   ===> Response: {response}')
