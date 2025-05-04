@@ -30,7 +30,7 @@ class TestDocsLinks(unittest.TestCase):
 
     @staticmethod
     def check_link(_url, branch_name):
-        sleep(0.2)
+        sleep(1)
         try:
             response = requests.head(_url, allow_redirects=True, timeout=5)
             print(f'   ===> Response: {response}')
