@@ -46,6 +46,7 @@ class TestDocsLinks(unittest.TestCase):
             # abs_path = os.path.join(repo_root, link_path)
 
             assert os.path.isfile(link_path), f"Missing file: {link_path}"
+            return True
         else:
             try:
                 response = requests.head(_url)
