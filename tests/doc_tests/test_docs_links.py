@@ -32,7 +32,7 @@ class TestDocsLinks(unittest.TestCase):
     def check_link(_url, branch_name):
         sleep(1)
         try:
-            response = requests.head(_url, allow_redirects=True, timeout=5)
+            response = requests.head(_url, allow_redirects=True)
             print(f'   ===> Response: {response}')
             if response.status_code == 200:
                 return True

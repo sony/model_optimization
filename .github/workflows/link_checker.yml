@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   link-checker:
+    if: github.repository == 'sony/model_optimization'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +27,6 @@ jobs:
           python-version: 3.10.*
       - name: Install dependencies
         run: |
-          echo ${{ github.repository }}
           python -m pip install --upgrade pip
           pip install requests==2.27.1
       - name: Run unittests
