@@ -18,6 +18,8 @@ import subprocess
 from shutil import rmtree
 from os import walk, getcwd, getenv
 from os.path import join, isdir, isfile
+from urllib.parse import urlparse
+
 import requests
 import re
 
@@ -30,6 +32,19 @@ import re
 #
 #     assert os.path.isfile(link_path) or os.path.isdir(link_path), f"Missing file or directory: {link_path}"
 
+def parse_github_blob_url(url):
+
+    parsed = urlparse(url)
+    parts = parsed.path.strip("/").split("/")
+
+    if len(parts) < 5 or parts[2] != "blob":
+        raise ValueError("Invalid GitHub blob URL")
+
+    owner, repo = parts[0], parts[1]
+    branch = parts[3]
+    filepath = "/".join(parts[4:])
+
+    return owner, repo, branch, filepath
 
 
 class TestDocsLinks(unittest.TestCase):
@@ -100,6 +115,18 @@ class TestDocsLinks(unittest.TestCase):
                 return True
         except Exception as e:
             print(f"Error checking link '{_url}': {e}")
+
+        try:
+            if 'blob' in _url:
+                owner, repo, branch, filepath = parse_github_blob_url(_url)
+                _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={branch}"
+                response = requests.head(_url, allow_redirects=True)
+                print(f'   ===> Response: {response}')
+                if response.status_code == 200:
+                    return True
+        except Exception as e:
+            print(f"Error checking link '{_url}': {e}")
+
         return False
 
     def test_readme_and_rst_files(self):
