@@ -30,20 +30,13 @@ class TestDocsLinks(unittest.TestCase):
 
     @staticmethod
     def check_link(_url, branch_name):
+        headers = {'User-Agent': 'Mozilla/5.0'}
         try:
-            retry_attempts = 5
-            for attempt in range(retry_attempts):
-                response = requests.get(_url)
-                print(f"[{response.status_code}] {_url}")
-                if response.status_code == 429:
-                    wait_time = 0.1  # Exponential backoff
-                    print(f"Rate-limited! Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)
-                else:
-                    break
+            response = requests.get(_url, headers=headers, timeout=1)
+            print(f"[{response.status_code}] {_url}")
 
-                if response.status_code == 200:
-                    return True
+            if response.status_code == 200:
+                return True
         except Exception as e:
             print(f"Error checking link '{_url}': {e}")
 
