@@ -31,6 +31,7 @@ class TestDocsLinks(unittest.TestCase):
     @staticmethod
     def check_link(_url, branch_name):
         if 'sony/model_optimization' in _url:
+            _url = _url.replace('/main/', f'/{branch_name}/')
             index = _url.find(f"/{branch_name}/")
             print(_url)
             print(branch_name)

@@ -36,6 +36,6 @@ jobs:
           twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_SSI_DEV_NIGHTLY_KEY }}
       - name: Post publish import test
         run: |
-          pip install mct-nightly tensorflow torch
+          pip install mct-nightly tensorflow torch torchvision
           version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
           echo $version
