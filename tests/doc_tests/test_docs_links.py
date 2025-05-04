@@ -33,10 +33,7 @@ class TestDocsLinks(unittest.TestCase):
             response = requests.get(_url)
             print(f"[{response.status_code}] {_url}")
             if response.status_code == 429:
-                print("Rate-limited! Headers:")
-                for k, v in response.headers.items():
-                    if "rate" in k.lower() or "retry" in k.lower():
-                        print(f"{k}: {v}")
+                print(response.text)  # Logs the full response body
             if response.status_code == 200:
                 return True
         except Exception as e:
