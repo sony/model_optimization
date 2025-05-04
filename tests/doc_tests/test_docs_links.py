@@ -32,9 +32,9 @@ class TestDocsLinks(unittest.TestCase):
     def check_link(_url, branch_name):
         if 'sony/model_optimization' in _url:
             index = _url.find(f"/{branch_name}/")
-
+            print(branch_name)
             if index != -1:
-                link_path = _url[index + len("/main/"):]
+                link_path = _url[index + len(f"/{branch_name}/"):]
                 print(link_path)
             else:
                 print("The substring 'main' was not found.")
