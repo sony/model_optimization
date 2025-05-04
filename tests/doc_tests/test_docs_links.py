@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import time
 import unittest
 import subprocess
 from shutil import rmtree
@@ -30,12 +31,19 @@ class TestDocsLinks(unittest.TestCase):
     @staticmethod
     def check_link(_url, branch_name):
         try:
-            response = requests.get(_url)
-            print(f"[{response.status_code}] {_url}")
-            if response.status_code == 429:
-                print(response.text)  # Logs the full response body
-            if response.status_code == 200:
-                return True
+            retry_attempts = 5
+            for attempt in range(retry_attempts):
+                response = requests.get(_url)
+                print(f"[{response.status_code}] {_url}")
+                if response.status_code == 429:
+                    wait_time = 0.1  # Exponential backoff
+                    print(f"Rate-limited! Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    break
+
+                if response.status_code == 200:
+                    return True
         except Exception as e:
             print(f"Error checking link '{_url}': {e}")
 
