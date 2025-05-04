@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import time
+import os
 import unittest
 import subprocess
 from shutil import rmtree
@@ -30,23 +30,36 @@ class TestDocsLinks(unittest.TestCase):
 
     @staticmethod
     def check_link(_url, branch_name):
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        try:
-            response = requests.get(_url, headers=headers, timeout=1)
-            print(f"[{response.status_code}] {_url}")
+        if 'sony/model_optimization' in _url:
+            index = _url.find(f"/{branch_name}/")
 
-            if response.status_code == 200:
-                return True
-        except Exception as e:
-            print(f"Error checking link '{_url}': {e}")
+            if index != -1:
+                link_path = _url[index + len("/main/"):]
+                print(link_path)
+            else:
+                print("The substring 'main' was not found.")
+                raise Exception()
 
-        try:
-            _url = _url.replace('/main/', f'/{branch_name}/')
-            response = requests.get(_url)
-            if response.status_code == 200:
-                return True
-        except Exception as e:
-            print(f"Error checking link '{_url}': {e}")
+            repo_root = f'https://github.com/sony/model_optimization/blob/{branch_name}/'
+            abs_path = os.path.join(repo_root, link_path)
+
+            assert os.path.isfile(abs_path), f"Missing file: {link_path}"
+        else:
+            try:
+                response = requests.head(_url)
+                print(f"[{response.status_code}] {_url}")
+                if response.status_code == 200:
+                    return True
+            except Exception as e:
+                print(f"Error checking link '{_url}': {e}")
+
+        # try:
+        #     _url = _url.replace('/main/', f'/{branch_name}/')
+        #     response = requests.get(_url)
+        #     if response.status_code == 200:
+        #         return True
+        # except Exception as e:
+        #     print(f"Error checking link '{_url}': {e}")
 
         return False
 
