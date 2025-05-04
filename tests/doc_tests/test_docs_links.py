@@ -117,9 +117,10 @@ class TestDocsLinks(unittest.TestCase):
             print(f"Error checking link '{_url}': {e}")
 
         try:
+            # GitHub action have limited requests-rate for 'blob' pages
             if 'blob' in _url:
                 owner, repo, branch, filepath = parse_github_blob_url(_url)
-                _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={branch}"
+                _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}?ref={branch}"
                 response = requests.head(_url, allow_redirects=True)
                 print(f'   ===> Response: {response}')
                 if response.status_code == 200:
