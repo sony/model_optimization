@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import unittest
+from time import sleep
 import subprocess
 from shutil import rmtree
 from os import walk, getcwd, getenv
@@ -29,8 +30,9 @@ class TestDocsLinks(unittest.TestCase):
 
     @staticmethod
     def check_link(_url, branch_name):
+        sleep(0.2)
         try:
-            response = requests.get(_url)
+            response = requests.head(_url, allow_redirects=True, timeout=5)
             print(f'   ===> Response: {response}')
             if response.status_code == 200:
                 return True
