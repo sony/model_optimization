@@ -42,10 +42,10 @@ class TestDocsLinks(unittest.TestCase):
                 print(f"The substring '/{branch_name}/' was not found.")
                 raise Exception()
 
-            repo_root = f'https://github.com/sony/model_optimization/blob/{branch_name}/'
+            repo_root = f'model_optimization/blob/{branch_name}/'
             abs_path = os.path.join(repo_root, link_path)
 
-            assert os.path.isfile(abs_path), f"Missing file: {link_path}"
+            assert os.path.isfile(abs_path), f"Missing file: {abs_path}"
         else:
             try:
                 response = requests.head(_url)
