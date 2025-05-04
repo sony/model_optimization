@@ -31,6 +31,7 @@ class TestDocsLinks(unittest.TestCase):
     def check_link(_url, branch_name):
         try:
             response = requests.get(_url)
+            print(f"[{response.status_code}] {_url}")
             if response.status_code == 200:
                 return True
         except Exception as e:
