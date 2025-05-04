@@ -105,6 +105,11 @@ class TestDocsLinks(unittest.TestCase):
                             # format: search for a string between <>, which is the link
                             _strs = re.findall(r"<([^<>]+)>", l)
                             for _link in _strs:
+                                if '/model_optimization/blob/main/' in _link:
+                                    print(f' -> replacing {_link}')
+                                    _link = join(mct_folder, _link.split('/model_optimization/blob/main/')[1])
+                                    print(f' -> with {_link}')
+
                                 if _link.startswith('ug-'):
                                     # A link starting with 'ug-' is a reference to another .rst file --> ignore
                                     # This link is checked when generating the docs
