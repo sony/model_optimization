@@ -103,7 +103,6 @@ class TestDocsLinks(unittest.TestCase):
     def check_link(_url, branch_name):
         try:
             response = requests.head(_url, allow_redirects=True)
-            print(f'   ===> Response: {response}')
             if response.status_code == 200:
                 return True
         except Exception as e:
@@ -121,6 +120,7 @@ class TestDocsLinks(unittest.TestCase):
             if 'blob' in _url:
                 owner, repo, branch, filepath = parse_github_blob_url(_url)
                 _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}?ref={branch}"
+                print(_url)
                 response = requests.head(_url, allow_redirects=True)
                 print(f'   ===> Response: {response}')
                 if response.status_code == 200:
