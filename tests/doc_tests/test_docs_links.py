@@ -73,7 +73,7 @@ class TestDocsLinks(unittest.TestCase):
 
                                 if '/model_optimization/blob/main/' in _link:
                                     print(f' -> replacing {_link}')
-                                    _link = _link.split('/model_optimization/blob/main/')[1]
+                                    _link = './' + _link.split('/model_optimization/blob/main/')[1]
                                     print(f' -> with {_link}')
 
                                 if _link[0] == '#':
