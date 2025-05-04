@@ -12,13 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import os
 import unittest
 import subprocess
 from shutil import rmtree
 from os import walk, getcwd, getenv
 from os.path import join, isdir, isfile
+from urllib.parse import urlparse
+
 import requests
 import re
+
+
+def parse_github_blob_url(url):
+
+    parsed = urlparse(url)
+    parts = parsed.path.strip("/").split("/")
+
+    if len(parts) < 5 or parts[2] != "blob":
+        raise ValueError("Invalid GitHub blob URL")
+
+    owner, repo = parts[0], parts[1]
+    branch = parts[3]
+    filepath = "/".join(parts[4:])
+
+    return owner, repo, branch, filepath
 
 
 class TestDocsLinks(unittest.TestCase):
@@ -30,6 +48,13 @@ class TestDocsLinks(unittest.TestCase):
     @staticmethod
     def check_link(_url, branch_name):
         try:
+            response = requests.head(_url, allow_redirects=True)
+            if response.status_code == 200:
+                return True
+        except Exception as e:
+            print(f"Error checking link '{_url}': {e}")
+        try:
+            _url = _url.replace('/main/', f'/{branch_name}/')
             response = requests.get(_url)
             if response.status_code == 200:
                 return True
@@ -37,10 +62,14 @@ class TestDocsLinks(unittest.TestCase):
             print(f"Error checking link '{_url}': {e}")
 
         try:
-            _url = _url.replace('/main/', f'/{branch_name}/')
-            response = requests.get(_url)
-            if response.status_code == 200:
-                return True
+            # GitHub action have limited requests-rate for 'blob' pages
+            if 'blob' in _url:
+                owner, repo, branch, filepath = parse_github_blob_url(_url)
+                _url = f"https://api.github.com/repos/{owner}/{repo}/contents/{filepath}"
+                print(_url)
+                response = requests.head(_url, allow_redirects=True)
+                if response.status_code == 200:
+                    return True
         except Exception as e:
             print(f"Error checking link '{_url}': {e}")
 
@@ -67,6 +96,8 @@ class TestDocsLinks(unittest.TestCase):
                                 _link = link_str.split(']')[-1][1:-1]
                                 # replace colab link with actual github link because accessing a broken link through colab doesn't return an error
                                 _link = _link.replace('://colab.research.google.com/github/', '://github.com/')
+                                if '/model_optimization/blob/main/' in _link:
+                                    _link = join(mct_folder, _link.split('/model_optimization/blob/main/')[1])
                                 if _link[0] == '#':
                                     # A link starting with '#' is a local reference to a headline in the current file --> ignore
                                     pass
@@ -96,6 +127,8 @@ class TestDocsLinks(unittest.TestCase):
                             # format: search for a string between <>, which is the link
                             _strs = re.findall(r"<([^<>]+)>", l)
                             for _link in _strs:
+                                if '/model_optimization/blob/main/' in _link:
+                                    _link = join(mct_folder, _link.split('/model_optimization/blob/main/')[1])
                                 if _link.startswith('ug-'):
                                     # A link starting with 'ug-' is a reference to another .rst file --> ignore
                                     # This link is checked when generating the docs

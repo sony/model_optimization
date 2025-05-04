@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   link-checker:
+    if: github.repository == 'sony/model_optimization'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
