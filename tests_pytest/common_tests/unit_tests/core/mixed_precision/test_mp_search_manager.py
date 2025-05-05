@@ -88,7 +88,8 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=False)
         ru = ResourceUtilization(weights_memory=100)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
-                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru)
+                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru,
+                                          mp_config=Mock())
         assert mgr.min_ru_config == {n3: 2, n4: 1}
         assert mgr.max_ru_config == {n3: 1, n4: 0}
         assert mgr.min_ru == {RUTarget.WEIGHTS: 3 * 14 * 2 / 8 + 2 * 71 * 4 / 8}
@@ -103,7 +104,8 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=False, a_mp=True)
         ru = ResourceUtilization(activation_memory=150)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
-                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru)
+                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru,
+                                          mp_config=Mock())
         # 6 x [8], 120 x [8, 2, 4], 40 x [4, 8], 273 x [2], 34 x [8]
         assert mgr.min_ru_config == {n2: 1, n3: 0}
         assert mgr.max_ru_config == {n2: 0, n3: 1}
@@ -130,7 +132,8 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=True)
         ru = ResourceUtilization(total_memory=200)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
-                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru)
+                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru,
+                                          mp_config=Mock())
         assert mgr.min_ru_config == {n2: 1, n3: 2, n4: 1}
         assert mgr.max_ru_config == {n2: 0, n3: 4, n4: 0}
 
@@ -233,7 +236,7 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=True)
         ru = ResourceUtilization(weights_memory=100, activation_memory=200, total_memory=300)
         mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru)
+                                          target_resource_utilization=ru, mp_config=Mock())
 
         cfg = mgr.copy_config_with_replacement(mgr.min_ru_config, n3, 4)
         # make sure original cfg was not changed in place
@@ -260,7 +263,7 @@ class TestMixedPrecisionSearchManager:
         # no bops
         ru_no_bops = ResourceUtilization(activation_memory=1, weights_memory=2, total_memory=3)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru_no_bops)
+                                          target_resource_utilization=ru_no_bops, mp_config=Mock())
         mgr.search()
 
         substitute_mock.assert_not_called()
@@ -271,7 +274,7 @@ class TestMixedPrecisionSearchManager:
         # with bops
         ru_bops = ResourceUtilization(activation_memory=1, bops=2)
         mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru_bops)
+                                          target_resource_utilization=ru_bops, mp_config=Mock())
         res = mgr.search()
         substitute_mock.assert_called_with(copy_mock.return_value, virt_sub_mock.return_value)
         assert mgr.mp_graph is substitute_mock.return_value
@@ -290,7 +293,7 @@ class TestMixedPrecisionSearchManager:
 
     def _run_search_test(self, g, ru, sensitivity, exp_cfg, fw_impl):
         mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru)
+                                          target_resource_utilization=ru, mp_config=Mock())
         mgr._build_sensitivity_mapping = Mock(return_value=sensitivity)
         res = mgr.search()
         assert res == exp_cfg
