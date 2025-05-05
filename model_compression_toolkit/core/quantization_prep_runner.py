@@ -108,6 +108,8 @@ def quantization_preparation_runner(graph: Graph,
     # Shift Negative Activations
     ######################################
     if core_config.quantization_config.shift_negative_activation_correction:
+        snc_fusing_patterns = fw_impl.get_snc_fusing_patterns()
+        transformed_graph.fusing_info.fusing_patterns.extend(snc_fusing_patterns)
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
                                                               core_config,
                                                               fw_info)

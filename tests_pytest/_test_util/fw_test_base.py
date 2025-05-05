@@ -28,7 +28,7 @@ class BaseFWIntegrationTest(abc.ABC):
     attach_to_fw_func: Callable
 
     def run_graph_preparation(self, model, datagen, tpc, quant_config=None,
-                              mp: bool = False, gptq: bool = False, bit_width_config=None, apply_snc=False):
+                              mp: bool = False, gptq: bool = False, bit_width_config=None):
         quant_config = quant_config or QuantizationConfig()
         graph = graph_preparation_runner(model,
                                          datagen,
@@ -39,12 +39,6 @@ class BaseFWIntegrationTest(abc.ABC):
                                          mixed_precision_enable=mp,
                                          running_gptq=gptq,
                                          bit_width_config=bit_width_config)
-        if apply_snc:
-            core_config = CoreConfig(quantization_config=quant_config)
-            graph = self.fw_impl.shift_negative_correction(graph,
-                                                           core_config,
-                                                           self.fw_info,
-                                                           use_dummy_stats=True)
 
         return graph
 

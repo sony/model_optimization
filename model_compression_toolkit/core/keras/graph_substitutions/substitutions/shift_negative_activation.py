@@ -228,8 +228,7 @@ def is_padding_node_and_node_has_padding(pad_node_to_consider: BaseNode,
 
 def keras_apply_shift_negative_correction(graph: Graph,
                                           core_config: CoreConfig,
-                                          fw_info: FrameworkInfo,
-                                          use_dummy_stats: bool = False) -> Graph:
+                                          fw_info: FrameworkInfo) -> Graph:
     """
     Apply shift negative correction (SNC) on a graph built from a Keras model.
 
@@ -256,6 +255,4 @@ def keras_apply_shift_negative_correction(graph: Graph,
                                            is_padding_node_and_node_has_padding,
                                            PADDING,
                                            BIAS,
-                                           USE_BIAS,
-                                           use_dummy_stats=use_dummy_stats
-                                           )
+                                           USE_BIAS)

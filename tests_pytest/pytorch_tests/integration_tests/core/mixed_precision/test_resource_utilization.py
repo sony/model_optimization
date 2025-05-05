@@ -70,3 +70,19 @@ class TestRUIntegrationTorch(BaseRUIntegrationTester, TorchFwMixin):
                 return x
 
         return Model()
+
+    def _build_snc_model(self):
+        class SncModel(nn.Module):
+            def __init__(self, input_channels=3):
+                super(SncModel, self).__init__()
+                self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=10, kernel_size=3, padding=1)
+                self.activation = nn.SiLU()  # Swish activation
+                self.conv2 = nn.Conv2d(in_channels=10, out_channels=1, kernel_size=3)
+
+            def forward(self, x):
+                x = self.conv1(x)
+                x = self.activation(x)
+                x = self.conv2(x)
+                return x
+
+        return SncModel()

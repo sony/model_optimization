@@ -37,6 +37,7 @@ from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
+from model_compression_toolkit.core.common.substitutions.shift_negative_activation import get_snc_tpc
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
 from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -227,6 +228,15 @@ class PytorchImplementation(FrameworkImplementation):
 
         # Run the model with the prepared input tensors
         return model(*torch_tensor_list)
+
+    def get_snc_fusing_patterns(self):
+        """
+        Returns: The fusing patterns to add to the graph when SNC is used for pytorch layers.
+        """
+        from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import AttachTpcToPytorch
+        tpc = get_snc_tpc()
+        fqc = AttachTpcToPytorch().attach(tpc)
+        return fqc.get_fusing_patterns()
 
     def shift_negative_correction(self,
                                   graph: Graph,

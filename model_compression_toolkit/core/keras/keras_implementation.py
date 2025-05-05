@@ -23,6 +23,7 @@ from tensorflow.keras.models import Model
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
+from model_compression_toolkit.core.common.substitutions.shift_negative_activation import get_snc_tpc
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
@@ -95,7 +96,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.mult
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
     ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
-    SeparableConvDecomposition, DEPTH_MULTIPLIER
+    SeparableConvDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shift_negative_activation import \
     keras_apply_shift_negative_correction
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.dwconv_to_conv import DwconvToConv
@@ -229,8 +230,7 @@ class KerasImplementation(FrameworkImplementation):
     def shift_negative_correction(self,
                                   graph: Graph,
                                   core_config: CoreConfig,
-                                  fw_info: FrameworkInfo,
-                                  use_dummy_stats: bool = False) -> Graph:
+                                  fw_info: FrameworkInfo) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
 
@@ -244,8 +244,16 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_apply_shift_negative_correction(graph,
                                                      core_config,
-                                                     fw_info,
-                                                     use_dummy_stats=use_dummy_stats)
+                                                     fw_info)
+
+    def get_snc_fusing_patterns(self):
+        """
+        Returns: The fusing patterns to add to the graph when SNC is used for keras layers.
+        """
+        from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import AttachTpcToKeras
+        tpc = get_snc_tpc()
+        fqc = AttachTpcToKeras().attach(tpc)
+        return fqc.get_fusing_patterns()
 
     def compute_activation_bias_correction(self,
                                            graph: Graph,

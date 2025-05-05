@@ -168,6 +168,14 @@ class FrameworkImplementation(ABC):
                              f'framework\'s run_model_inference method.')  # pragma: no cover
 
     @abstractmethod
+    def get_snc_fusing_patterns(self):
+        """
+        Returns: The fusing patterns to add to the graph when SNC is used for the framework layers.
+        """
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
+                             f'framework\'s get_snc_fusing_patterns method.')  # pragma: no cover
+
+    @abstractmethod
     def shift_negative_correction(self,
                                   graph: Graph,
                                   core_config: CoreConfig,
