@@ -17,11 +17,14 @@ import pytest
 import torch
 import torch.nn as nn
 
+from model_compression_toolkit.core import QuantizationConfig
+from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModel
 from model_compression_toolkit.core.pytorch.utils import set_model
 from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
     FakelyQuantONNXPyTorchExporter
 from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import DEFAULT_ONNX_OPSET_VERSION
 from model_compression_toolkit.exporter.model_wrapper import is_pytorch_layer_exportable
+from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import BaseTorchIntegrationTest
 
 
 class SingleOutputModel(nn.Module):
@@ -42,7 +45,16 @@ class MultipleOutputModel(nn.Module):
         return self.linear(x), x, x + 2
 
 
-class TestONNXExporter:
+class MultipleInputsModel(nn.Module):
+    def __init__(self):
+        super(MultipleInputsModel, self).__init__()
+        self.linear = nn.Linear(8, 5)
+
+    def forward(self, input1, input2):
+        return self.linear(input1) + self.linear(input2)
+
+
+class TestONNXExporter(BaseTorchIntegrationTest):
     test_input_1 = None
     test_expected_1 = ['output']
 
@@ -59,27 +71,38 @@ class TestONNXExporter:
     test_expected_5 = ("Mismatch between number of requested output names (['out', 'out_11', 'out_22', 'out_33']) and "
                        "model output count (3):\n")
 
-    def representative_data_gen(self, shape=(3, 8, 8), num_inputs=1, batch_size=2, num_iter=1):
-        for _ in range(num_iter):
-            yield [torch.randn(batch_size, *shape)] * num_inputs
+    def representative_data_gen(self, num_inputs=1):
+        batch_size, num_iter, shape = 2, 1, (3, 8, 8)
 
-    def get_exporter(self, model, save_model_path):
-        return FakelyQuantONNXPyTorchExporter(model,
-                                              is_pytorch_layer_exportable,
-                                              save_model_path,
-                                              self.representative_data_gen,
-                                              onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION)
+        def data_gen():
+            for _ in range(num_iter):
+                yield [torch.randn(batch_size, *shape)] * num_inputs
 
-    def export_model(self, model, save_model_path, output_names, expected_output_names):
-        exporter = self.get_exporter(model, save_model_path)
+        return data_gen
+
+    def get_pytorch_model(self, model, data_generator, minimal_tpc):
+        qc = QuantizationConfig()
+        graph = self.run_graph_preparation(model=model, datagen=data_generator, tpc=minimal_tpc,
+                                           quant_config=qc)
+        pytorch_model = FloatPyTorchModel(graph=graph)
+        return pytorch_model
+
+    def export_model(self, model, save_model_path, data_generator, output_names=None):
+        exporter = FakelyQuantONNXPyTorchExporter(model,
+                                                  is_pytorch_layer_exportable,
+                                                  save_model_path,
+                                                  data_generator,
+                                                  onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION)
 
         exporter.export(output_names)
 
         assert save_model_path.exists(), "ONNX file was not created"
         assert save_model_path.stat().st_size > 0, "ONNX file is empty"
 
-        # Load the ONNX model and check outputs
         onnx_model = onnx.load(str(save_model_path))
+        return onnx_model
+
+    def validate_outputs(self, onnx_model, expected_output_names):
         outputs = onnx_model.graph.output
 
         # Check number of outputs
@@ -98,23 +121,35 @@ class TestONNXExporter:
             (MultipleOutputModel(), test_input_3, test_expected_3),
             (MultipleOutputModel(), test_input_4, test_expected_4),
         ])
-    def test_output_model_name(self, tmp_path, model, output_names, expected_output_names):
+    def test_output_model_name(self, tmp_path, model, output_names, expected_output_names, minimal_tpc):
         save_model_path = tmp_path / "model.onnx"
-        set_model(model)
-
-        self.export_model(model, save_model_path, output_names=output_names,
-                          expected_output_names=expected_output_names)
+        data_generator = self.representative_data_gen(num_inputs=1)
+        pytorch_model = self.get_pytorch_model(model, data_generator, minimal_tpc)
+        onnx_model = self.export_model(pytorch_model, save_model_path, data_generator, output_names=output_names)
+        self.validate_outputs(onnx_model, expected_output_names)
 
     @pytest.mark.parametrize(
         ("model", "output_names", "expected_output_names"), [
             (MultipleOutputModel(), test_input_5, test_expected_5),
         ])
-    def test_wrong_number_output_model_name(self, tmp_path, model, output_names, expected_output_names):
+    def test_wrong_number_output_model_name(self, tmp_path, model, output_names, expected_output_names, minimal_tpc):
         save_model_path = tmp_path / "model.onnx"
-        set_model(model)
-
+        data_generator = self.representative_data_gen(num_inputs=1)
+        pytorch_model = self.get_pytorch_model(model, data_generator, minimal_tpc)
         try:
-            self.export_model(model, save_model_path, output_names=output_names,
-                              expected_output_names=expected_output_names)
+            onnx_model = self.export_model(pytorch_model, save_model_path, data_generator, output_names=output_names)
+            self.validate_outputs(onnx_model, expected_output_names)
         except Exception as e:
             assert expected_output_names == str(e)
+
+    def test_multiple_inputs(self, minimal_tpc, tmp_path):
+        """
+        Test that model with multiple inputs is exported to onnx file properly and that the exported onnx model
+        has all expected inputs.
+        """
+        save_model_path = tmp_path / "model.onnx"
+        model = MultipleInputsModel()
+        data_generator = self.representative_data_gen(num_inputs=2)
+        pytorch_model = self.get_pytorch_model(model, data_generator, minimal_tpc)
+        onnx_model = self.export_model(pytorch_model, save_model_path, data_generator)
+        assert [_input.name for _input in onnx_model.graph.input] == ["input1", "input2"]
