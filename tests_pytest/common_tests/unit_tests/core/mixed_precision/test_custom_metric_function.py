@@ -15,7 +15,7 @@
 import pytest
 import numpy as np
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -49,29 +49,20 @@ def get_sensitivity_evaluator(custom_metric_fn):
 
     mock_fw_info = Mock()
 
-    def custom_model_builder_return_value(*args, **kwargs):
-        mode = kwargs.get('mode')
-        if mode == ModelBuilderMode.FLOAT:
-            return (None, None)
-        else:
-            return (None, None, None)
-
     def custom_to_tensor(img):
         return img
 
     mock_fw_impl = Mock()
-    mock_fw_impl.model_builder.side_effect = custom_model_builder_return_value
     mock_fw_impl.to_tensor.side_effect = custom_to_tensor
 
     mp_cfg = MixedPrecisionQuantizationConfig(custom_metric_fn=custom_metric_fn)
-
-    sensitivity_eval = SensitivityEvaluation(graph=mock_graph,
-                                             quant_config=mp_cfg,
-                                             representative_data_gen=representative_data_gen,
-                                             fw_info=mock_fw_info,
-                                             fw_impl=mock_fw_impl)
+    with patch.object(SensitivityEvaluation, '_build_models', return_value=(Mock(), Mock(), Mock())):
+        sensitivity_eval = SensitivityEvaluation(graph=mock_graph,
+                                                 quant_config=mp_cfg,
+                                                 representative_data_gen=representative_data_gen,
+                                                 fw_info=mock_fw_info,
+                                                 fw_impl=mock_fw_impl)
     sensitivity_eval._configure_bitwidths_model = lambda *args, **kwargs: None  # Method does nothing
-    sensitivity_eval.model_mp = Mock()
     return sensitivity_eval
 
 
@@ -84,7 +75,7 @@ class TestMPCustomMetricFunction:
     def test_valid_metric_function(self, metric_fn, expected):
         sensitivity_eval = get_sensitivity_evaluator(metric_fn)
         assert len(sensitivity_eval.interest_points) == 0
-        assert sensitivity_eval.compute_metric(Mock()) == expected
+        assert sensitivity_eval.compute_metric({'test': 0}, {'test': 0}) == expected
 
     @pytest.mark.parametrize("metric_fn, expected", [
         (custom_str_metric, str.__name__),
@@ -94,4 +85,4 @@ class TestMPCustomMetricFunction:
         sensitivity_eval = get_sensitivity_evaluator(metric_fn)
         assert len(sensitivity_eval.interest_points) == 0
         with pytest.raises(TypeError, match=f'The custom_metric_fn is expected to return float or numpy float, got {expected}'):
-            sensitivity_metric = sensitivity_eval.compute_metric(Mock())
+            sensitivity_metric = sensitivity_eval.compute_metric(Mock(), Mock())
