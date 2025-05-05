@@ -51,7 +51,7 @@ class MixedPrecisionRUHelper:
         """
         act_qcs, w_qcs = self.get_quantization_candidates(mp_cfg)
 
-        ru, detailed_ru = self.ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
+        ru, detailed_ru = self.ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantizedNonFused,
                                                                           BitwidthMode.QCustom,
                                                                           act_qcs=act_qcs,
                                                                           w_qcs=w_qcs,

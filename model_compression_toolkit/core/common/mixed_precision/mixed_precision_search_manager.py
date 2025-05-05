@@ -295,9 +295,12 @@ class MixedPrecisionSearchManager:
 
         """
         act_qcs, w_qcs = self.ru_helper.get_quantization_candidates(config)
-        ru = self.ru_helper.ru_calculator.compute_resource_utilization(
-            target_criterion=TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs,
-            w_qcs=w_qcs, ru_targets=self.ru_targets, allow_unused_qcs=True)
+        ru = self.ru_helper.ru_calculator.compute_resource_utilization(target_criterion=TargetInclusionCriterion.AnyQuantizedNonFused,
+                                                                       bitwidth_mode=BitwidthMode.QCustom,
+                                                                       act_qcs=act_qcs,
+                                                                       w_qcs=w_qcs,
+                                                                       ru_targets=self.ru_targets,
+                                                                       allow_unused_qcs=True)
         return ru
 
     def _finalize_distance_metric(self, layer_to_metrics_mapping: Dict[BaseNode, List[float]]):

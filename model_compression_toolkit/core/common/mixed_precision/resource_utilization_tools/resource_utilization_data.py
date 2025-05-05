@@ -63,4 +63,4 @@ def compute_resource_utilization_data(in_model: Any,
                                                  running_gptq=False)
 
     ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
-    return ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized, BitwidthMode.QDefaultSP)
+    return ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantizedNonFused, BitwidthMode.QDefaultSP)
