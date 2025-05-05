@@ -16,7 +16,6 @@ import itertools
 
 import copy
 from collections import defaultdict
-from enum import Enum
 
 from tqdm import tqdm
 
@@ -41,17 +40,8 @@ from model_compression_toolkit.core.common.mixed_precision.search_methods.linear
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.logger import Logger
-
-
-class MPSensitivityNormalization(Enum):
-    """
-    MAXBIT: normalize sensitivity metrics of layer candidates by max-bit candidate (of that layer).
-    MINBIT: normalize sensitivity metrics of layer candidates by min-bit candidate (of that layer).
-    NONE: no normalization.
-    """
-    MAXBIT = 'max'
-    MINBIT = 'min'
-    NONE = 'none'
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
+    MixedPrecisionQuantizationConfig, MpMetricNormalization
 
 
 class MixedPrecisionSearchManager:
@@ -64,7 +54,8 @@ class MixedPrecisionSearchManager:
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
-                 target_resource_utilization: ResourceUtilization):
+                 target_resource_utilization: ResourceUtilization,
+                 mp_config: MixedPrecisionQuantizationConfig):
         """
 
         Args:
@@ -86,6 +77,7 @@ class MixedPrecisionSearchManager:
 
         self.sensitivity_evaluator = sensitivity_evaluator
         self.target_resource_utilization = target_resource_utilization
+        self.mp_config = mp_config
 
         self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
 
@@ -93,7 +85,6 @@ class MixedPrecisionSearchManager:
         self.ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
 
         self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
-        self.max_ru_config: Dict[BaseNode, int] = self.mp_graph.get_max_candidates_config(fw_info)
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(self.original_graph)
         if self.using_virtual_graph:
@@ -155,15 +146,9 @@ class MixedPrecisionSearchManager:
                              f"following targets: {unsatisfiable_targets}")
         return rel_target_ru
 
-    def _build_sensitivity_mapping(self,
-                                   normalization: MPSensitivityNormalization=MPSensitivityNormalization.NONE,
-                                   eps: float = 1e-6) -> Dict[BaseNode, List[float]]:
+    def _build_sensitivity_mapping(self) -> Dict[BaseNode, List[float]]:
         """
         This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
-
-        Args:
-            eps: if sensitivity for a non-max candidate is lower than for a max candidate, we set it to
-              sensitivity of a max candidate + epsilon.
 
         Returns:
             Mapping from nodes to their bitwidth candidates sensitivity.
@@ -171,6 +156,8 @@ class MixedPrecisionSearchManager:
 
         Logger.info('Starting to evaluate metrics')
         layer_to_metrics_mapping = defaultdict(list)
+        norm_method = self.mp_config.metric_normalization
+        eps = self.mp_config.metric_epsilon
         for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes)):
             candidates_sensitivity = np.empty(len(node.candidates_quantization_cfg))
             for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
@@ -180,20 +167,25 @@ class MixedPrecisionSearchManager:
                     a_cfg = {node: bitwidth_idx} if node.has_configurable_activation() else {}
                     w_cfg = {node: bitwidth_idx} if node.has_any_configurable_weight() else {}
                 candidates_sensitivity[bitwidth_idx] = self.sensitivity_evaluator.compute_metric(
-                    {n.name: ind for n, ind in a_cfg.items()},
-                    {n.name: ind for n, ind in w_cfg.items()}
+                    mp_a_cfg={n.name: ind for n, ind in a_cfg.items()},
+                    mp_w_cfg={n.name: ind for n, ind in w_cfg.items()}
                 )
-            if normalization != MPSensitivityNormalization.NONE:
-                if normalization == MPSensitivityNormalization.MAXBIT:
-                    ref_ind = node.find_max_candidate_index()
+
+            max_ind = None
+            if eps is not None or norm_method == MpMetricNormalization.MAXBIT:
+                max_ind = node.find_max_candidate_index()
+
+            if norm_method != MpMetricNormalization.NONE:
+                if norm_method == MpMetricNormalization.MAXBIT:
+                    ref_ind = max_ind
                 else:
-                    assert normalization == MPSensitivityNormalization.MINBIT
+                    assert norm_method == MpMetricNormalization.MINBIT
                     ref_ind = node.find_min_candidate_index()
                 candidates_sensitivity /= candidates_sensitivity[ref_ind]
-            if eps:
-                max_ind = node.find_max_candidate_index()
+
+            if eps is not None:
                 max_val = candidates_sensitivity[max_ind]
-                candidates_sensitivity = np.maximum(candidates_sensitivity, max_val)
+                candidates_sensitivity = np.maximum(candidates_sensitivity, max_val + eps)
                 candidates_sensitivity[max_ind] = max_val
 
             layer_to_metrics_mapping[node] = candidates_sensitivity
@@ -301,7 +293,7 @@ class MixedPrecisionSearchManager:
         # normalize metric for numerical stability
         max_dist = max(itertools.chain.from_iterable(layer_to_metrics_mapping.values()))
 
-        if max_dist >= self.sensitivity_evaluator.quant_config.metric_normalization_threshold:
+        if max_dist >= self.mp_config.metric_normalization_threshold:
             Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
                            f"this can cause numerical issues."
                            f"The program will proceed with mixed precision search after scaling the metric values,"

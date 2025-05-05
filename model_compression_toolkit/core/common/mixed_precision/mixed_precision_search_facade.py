@@ -98,10 +98,11 @@ def search_bit_width(graph: Graph,
 
     # Search manager and LP are highly coupled, so LP search method was moved inside search manager.
     search_manager = MixedPrecisionSearchManager(graph,
-                                                 fw_info,
-                                                 fw_impl,
-                                                 se,
-                                                 target_resource_utilization)
+                                                 fw_info=fw_info,
+                                                 fw_impl=fw_impl,
+                                                 sensitivity_evaluator=se,
+                                                 target_resource_utilization=target_resource_utilization,
+                                                 mp_config=mp_config)
     nodes_bit_cfg = search_manager.search()
 
     graph.skip_validation_check = False
