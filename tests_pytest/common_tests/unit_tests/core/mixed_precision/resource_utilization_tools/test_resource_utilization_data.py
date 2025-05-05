@@ -61,7 +61,7 @@ class TestResourceUtilizationData:
                                                     running_gptq=False)
 
         ru_calc_cls.assert_called_with(prep_runner.return_value, fw_info=fw_info_mock, fw_impl=fw_impl_mock)
-        ru_calc_cls.return_value.compute_resource_utilization.assert_called_with(TargetInclusionCriterion.AnyQuantized,
+        ru_calc_cls.return_value.compute_resource_utilization.assert_called_with(TargetInclusionCriterion.AnyQuantizedNonFused,
                                                                                  BitwidthMode.QDefaultSP)
         # make sure the original config wasn't changed
         assert core_cfg.quantization_config.weights_error_method == error_method
