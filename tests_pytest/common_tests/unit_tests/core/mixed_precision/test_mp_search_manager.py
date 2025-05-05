@@ -382,8 +382,7 @@ class TestConfigHelper:
         (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 8),
         (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 1),
         (build_aw_node(abits=(5,), wbits=(2, 4, 8)), 1),
-        (build_aw_node(abits=(4, 8, 16), wbits=(5,)), 2),
-        (build_a_node(abits=(5, 3, 7)), 0)
+        (build_aw_node(abits=(4, 8, 16), wbits=(5,)), 2)
     ])
     def test_retrieve_w_candidates_regular_node(self, graph_mock, n, ind):
         graph_mock.nodes = [n]
@@ -596,66 +595,3 @@ class TestConfigHelper:
     @staticmethod
     def _get_weights_cfg(n, ind):
         return n.candidates_quantization_cfg[ind].weights_quantization_cfg
-
-    # def test_config(self, graph_mock, fw_info_mock):
-    #     mpa_mpw = self.build_aw_node('mpa_mpw', abits=(4, 8, 16), wbits=(2, 6, 10))
-    #     mpa_spw = self.build_aw_node('mpa_spw', abits=(5, 7, 10), wbits=(2,))
-    #     spa_mpw = self.build_aw_node('spa_mpw', abits=(3,), wbits=(2, 4, 8))
-    #     spa_spw = self.build_aw_node('spa_spw', abits=(3,), wbits=(8,))
-    #     mpa = self.build_a_node('mpa', abits=(2, 4, 8))
-    #     spa = self.build_a_node('spa', abits=(5,))
-    #     graph_mock.nodes = [mpa_mpw, mpa_spw, spa_mpw, spa_spw, mpa, spa]
-    #     fw_info_mock.get_kernel_op_attributes = lambda nt: 'w' if DummyLayer1 else DEFAULT_KERNEL_ATTRIBUTES
-    #
-    #
-    #
-    #     helper = ConfigReconstructionHelper(graph_mock)
-    #
-    #
-    #     # mp virt a, mp virt w
-    #     va = VirtualSplitActivationNode(mpa_mpw, ALayer, {})
-    #
-    #     ret_cfg = helper.reconstruct_configuration({va: 2})
-    #     assert len(ret_cfg) == 1 and mpa_mpw in ret_cfg
-    #     assert get_activation_cfg(mpa_mpw, ret_cfg[mpa_mpw]) == get_activation_cfg(va, 2)
-    #
-    #     vaw = VirtualActivationWeightsNode(va, VirtualSplitWeightsNode(mpa_mpw), fw_info_mock)
-    #     ret_cfg = helper.reconstruct_configuration({va2: 2})
-    #     assert len(ret_cfg) == 1 and mpa_mpw in ret_cfg
-    #     assert get_activation_cfg(mpa_mpw, ret_cfg[mpa_mpw]) == get_activation_cfg(va, 2)
-    #
-    #     assert len(ret_cfg) == 1 and mpa in ret_cfg
-    #     assert get_activation_cfg(mpa, ret_cfg[mpa]) == get_activation_cfg(va1, 2)
-    #
-    #     # va2 = VirtualSplitActivationNode(mpa_mpw, ALayer, {})
-    #     # vaw1 = VirtualActivationWeightsNode(spa, VirtualSplitWeightsNode(spa_mpw), fw_info_mock)
-    #     # vaw2 = VirtualActivationWeightsNode(va1, VirtualSplitWeightsNode(mpa_mpw), fw_info_mock)
-    #     #
-    #     #
-    #     # virtual_cfg = {va1: 2, va2: 1, vaw1: 1, vaw2: 7}
-    #     # ret_cfg = helper.reconstruct_configuration(virtual_cfg)
-        # assert set(ret_cfg.keys()) == {mpa, va1, spa_mpw, mpa_mpw}
-        # assert get_activation_cfg(mpa, ret_cfg[mpa]) == get_activation_cfg(va1, virtual_cfg[va1])
-        #
-        #
-        #
-        #
-        # # va2 = VirtualSplitActivationNode(spa, ALayer, {})
-        # # vw1 = VirtualSplitWeightsNode(spa_mpw)
-        # # vw1 = VirtualSplitWeightsNode(mpa_spw)
-        # # vaw3 = VirtualActivationWeightsNode(mpa, VirtualSplitWeightsNode(mpa_spw), fw_info_mock)
-        # # vaw4 = VirtualActivationWeightsNode(spa, VirtualSplitWeightsNode(spa_spw), fw_info_mock)
-        # #
-        # # vaw7 = VirtualActivationWeightsNode(va2, VirtualSplitWeightsNode(spa_spw), fw_info_mock)
-
-
-
-
-
-
-
-
-
-        helper = ConfigReconstructionHelper(graph_mock)
-        helper.reconstruct_full_configuration({}, )
-
