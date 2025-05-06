@@ -100,7 +100,8 @@ if FOUND_ONNX:
             model_output = self.model(*model_input) if isinstance(model_input, (list, tuple)) else self.model(
                 model_input)
 
-            input_names = [n.name for n in self.model.node_sort if n.type == DummyPlaceHolder]
+            input_nodes = [n for n in self.model.node_sort if n.type == DummyPlaceHolder]
+            input_names = [f"input_{i}" for i in range(len(input_nodes))] if len(input_nodes) > 1 else ["input"]
             dynamic_axes = {name: {0: 'batch_size'} for name in input_names}
             if output_names is None:
                 # Determine number of outputs and prepare output_names and dynamic_axes
@@ -119,7 +120,6 @@ if FOUND_ONNX:
                                                              f"({output_names}) and model output count "
                                                              f"({num_of_outputs}):\n")
                 dynamic_axes.update({name: {0: 'batch_size'} for name in output_names})
-            dynamic_axes.update({"input": {0: 'batch_size'}})
             if hasattr(self.model, 'metadata'):
                 onnx_bytes = BytesIO()
                 torch.onnx.export(self.model,
