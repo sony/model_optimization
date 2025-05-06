@@ -74,7 +74,7 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         # Assert qat_ready can be saved and loaded
         _qat_ready_model_tmp_filepath = tempfile.mkstemp('.pt')[1]
         torch.save(self.qat_ready, _qat_ready_model_tmp_filepath)
-        self.qat_ready = torch.load(_qat_ready_model_tmp_filepath)
+        self.qat_ready = torch.load(_qat_ready_model_tmp_filepath, weights_only=False)
 
         self.final_model = mct.qat.pytorch_quantization_aware_training_finalize_experimental(self.qat_ready)
 
