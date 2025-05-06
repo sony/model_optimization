@@ -412,10 +412,14 @@ class ConfigReconstructionHelper:
         for virtual_node, virtual_qc_ind in virtual_cfg.items():
             orig_a_node, orig_a_candidates = self._retrieve_matching_orig_a_candidates(virtual_node, virtual_qc_ind)
             if orig_a_node and (include_non_configurable or orig_a_node.has_configurable_activation()):
+                # we may have retrieved multiple candidates with different weights configs and identical activation
+                # configs, so we just take the first
                 a_cfg[orig_a_node] = orig_a_candidates[0]
 
             orig_w_node, orig_w_candidates = self._retrieve_matching_orig_w_candidates(virtual_node, virtual_qc_ind)
             if orig_w_node and (include_non_configurable or orig_w_node.has_any_configurable_weight()):
+                # we may have retrieved multiple candidates with different activation configs and identical weights
+                # configs, so we just take the first
                 w_cfg[orig_w_node] = orig_w_candidates[0]
 
         return a_cfg, w_cfg
