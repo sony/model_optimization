@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import numpy as np
 
@@ -70,17 +70,17 @@ class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
         self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)
         self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
 
-    def set_active_activation_quantizer(self, index: int):
+    def set_active_activation_quantizer(self, index: Optional[int]):
         """
         Set an index to use for the activation quantizer to return when requested.
 
         Args:
             index: Index of a candidate quantization configuration to use its quantized
-                version of the float weight.
+                version of the float weight, or None to disable quantization.
         """
 
-        assert index < len(self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
-                                             f'possible nbits. Can not set index {index}'
+        assert index is None or index < len(self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
+                                                              f'possible nbits. Can not set index {index}'
         self.active_quantization_config_index = index
 
     def __call__(self,
@@ -96,6 +96,8 @@ class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
         Returns:
             Quantized activation tensor.
         """
+        if self.active_quantization_config_index is None:
+            return inputs.numpy()
         return self.activation_quantizers[self.active_quantization_config_index](inputs)
 
     def get_config(self) -> Dict[str, Any]:  # pragma: no cover
