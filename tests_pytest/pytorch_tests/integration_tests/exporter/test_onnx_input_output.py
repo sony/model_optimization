@@ -152,4 +152,4 @@ class TestONNXExporter(BaseTorchIntegrationTest):
         data_generator = self.representative_data_gen(num_inputs=2)
         pytorch_model = self.get_pytorch_model(model, data_generator, minimal_tpc)
         onnx_model = self.export_model(pytorch_model, save_model_path, data_generator)
-        assert [_input.name for _input in onnx_model.graph.input] == ["input1", "input2"]
+        assert [_input.name for _input in onnx_model.graph.input] == ["input_0", "input_1"]
