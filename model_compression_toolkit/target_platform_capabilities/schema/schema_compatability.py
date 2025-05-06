@@ -57,7 +57,6 @@ def get_conversion_map() -> dict:
     conversion_map = {
         schema_v1.TargetPlatformCapabilities: _schema_v1_to_v2,
     }
-
     return conversion_map
 
 
