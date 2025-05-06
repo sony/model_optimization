@@ -58,17 +58,6 @@ def get_conversion_map() -> dict:
         schema_v1.TargetPlatformCapabilities: _schema_v1_to_v2,
     }
 
-    """
-    new exp operator - new operator set
-    flag of ckass for tpc  - use or not use quantization preserving quantizers (in v5 it should be false)
-    fusion class - fln_quantization_config (after relu no quantizer or not), we need to know how to do that
-    todo:
-    init tpc v2 and use False in preserving, and False in FLN
-      
-    
-    
-    """
-
     return conversion_map
 
 

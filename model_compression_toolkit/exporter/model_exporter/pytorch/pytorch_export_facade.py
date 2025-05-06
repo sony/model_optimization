@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Callable
+from packaging import version
 
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.quantization_format import QuantizationFormat
@@ -21,7 +22,7 @@ from model_compression_toolkit.exporter.model_exporter.pytorch.export_serializat
 from model_compression_toolkit.logger import Logger
 
 
-DEFAULT_ONNX_OPSET_VERSION = 20
+DEFAULT_ONNX_OPSET_VERSION = 15
 
 
 if FOUND_TORCH:
@@ -29,6 +30,9 @@ if FOUND_TORCH:
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import FakelyQuantONNXPyTorchExporter
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import FakelyQuantTorchScriptPyTorchExporter
     from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
+
+    if version.parse(torch.__version__) >= version.parse("2.4"):
+        DEFAULT_ONNX_OPSET_VERSION = 20
 
     supported_serialization_quantization_export_dict = {
         PytorchExportSerializationFormat.TORCHSCRIPT: [QuantizationFormat.FAKELY_QUANT],
