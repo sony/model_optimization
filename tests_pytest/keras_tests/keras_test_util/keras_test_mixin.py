@@ -33,3 +33,8 @@ class KerasFwMixin:
         def f():
             yield [np.random.randn(*shape).astype(np.float32) for shape in shapes]
         return f
+
+    @staticmethod
+    def fetch_model_layers_by_cls(model, cls):
+        """ Fetch layers from keras model by layer class type. """
+        return [m for m in model.layers if isinstance(m, cls)]
