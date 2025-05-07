@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     ResourceUtilization
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.solution_refinement_procedure import \
     greedy_solution_refinement_procedure
 
@@ -78,11 +79,12 @@ def search_bit_width(graph: Graph,
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS utilization computation purposes)
-    se = fw_impl.get_sensitivity_evaluator(
+    se = SensitivityEvaluation(
         graph,
         mp_config,
         representative_data_gen=representative_data_gen,
         fw_info=fw_info,
+        fw_impl=fw_impl,
         disable_activation_for_metric=disable_activation_for_metric,
         hessian_info_service=hessian_info_service)
 
