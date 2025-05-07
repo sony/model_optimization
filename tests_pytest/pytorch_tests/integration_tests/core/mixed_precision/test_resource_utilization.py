@@ -21,8 +21,8 @@ from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwM
 
 
 class TestRUIntegrationTorch(BaseRUIntegrationTester, TorchFwMixin):
-    def test_orig_vs_virtual_graph_ru(self):
-        super().test_orig_vs_virtual_graph_ru()
+    def test_compute_ru(self):
+        super().test_compute_ru()
 
     def test_mult_output_activation(self):
         super().test_mult_output_activation()

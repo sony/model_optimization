@@ -29,7 +29,7 @@ from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
-    VirtualSplitWeightsNode
+    VirtualSplitWeightsNode, VirtualNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
@@ -533,6 +533,7 @@ class ResourceUtilizationCalculator:
         Returns:
             Node's BOPS count.
         """
+        assert not isinstance(n, VirtualNode), 'Use original graph to compute BOPS.'
         if target_criterion is None:
             target_criterion = TargetInclusionCriterion.Any
         if target_criterion not in [TargetInclusionCriterion.AnyQuantized, TargetInclusionCriterion.AnyQuantizedNonFused, TargetInclusionCriterion.Any]:
@@ -542,20 +543,6 @@ class ResourceUtilizationCalculator:
         self._validate_custom_qcs(act_qcs, bitwidth_mode)
         self._validate_custom_qcs(w_qc, bitwidth_mode)
 
-        if isinstance(n, VirtualSplitWeightsNode):
-            # Virtual weights node can only be present if it couldn't be merged into VirtualActivationWeightsNode.
-            # This means that during MP search we cannot compute bops for all A/W nbits combinations. To prevent
-            # inconsistencies we ignore such nodes for bops computation.
-            return 0
-
-        # Fetch the original weights node for mac computation (VirtualActivationWeightsNode input/output shapes are
-        # based on the activation original node, not weights original node)
-        orig_w_node = n
-        if isinstance(n, VirtualActivationWeightsNode):
-            orig_w_node = n.original_weights_node
-            if isinstance(orig_w_node, VirtualSplitWeightsNode):
-                orig_w_node = orig_w_node.origin_node
-
         # check if the node has kernel
         kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
         if len(kernel_attrs) > 1:  # pragma: no cover
@@ -564,21 +551,13 @@ class ResourceUtilizationCalculator:
             return 0
 
         kernel_attr = kernel_attrs[0]
-        node_mac = self.fw_impl.get_node_mac_operations(orig_w_node, self.fw_info)
+        node_mac = self.fw_impl.get_node_mac_operations(n, self.fw_info)
         if node_mac == 0:
             return node_mac
 
-        # find the activation node from which to get quantization info and for which to look in custom configuration
-        if isinstance(n, VirtualActivationWeightsNode):
-            # we don't need the original node (and cannot use it for custom configuration anyway)
-            a_node = n
-        else:
-            # if we are running on the original (non-virtual) graph, we only compute bops if it would be computed in an
-            # equivalent virtual graph for consistency.
-            a_node = get_input_activation_if_composable(self.graph, n, warn=False)
-            if a_node is None:
-                return 0
-
+        prev_nodes = self.graph.get_prev_nodes(n)
+        assert len(prev_nodes) == 1, f'Weights node is expected to have exactly one input, {n} has {len(prev_nodes)}'
+        a_node = prev_nodes[0]
         if (target_criterion == TargetInclusionCriterion.AnyQuantized and
                 not (a_node.is_activation_quantization_enabled() or n.is_weights_quantization_enabled(kernel_attr))):
             return 0

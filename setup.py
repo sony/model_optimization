@@ -42,6 +42,7 @@ setup(name='model_compression_toolkit',
       long_description=get_log_description(),
       long_description_content_type="text/markdown",
       description='A Model Compression Toolkit for neural networks',
+      author_email='ssi-dnn-dev@sony.com',
       packages=find_packages(include=["model_compression_toolkit", "model_compression_toolkit.*"]),
       classifiers=[
           "Programming Language :: Python :: 3",

@@ -24,8 +24,8 @@ from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMix
 
 
 class TestRUIntegrationKeras(BaseRUIntegrationTester, KerasFwMixin):
-    def test_orig_vs_virtual_graph_ru(self):
-        super().test_orig_vs_virtual_graph_ru()
+    def test_compute_ru(self):
+        super().test_compute_ru()
 
     def test_mult_output_activation(self):
         super().test_mult_output_activation()
