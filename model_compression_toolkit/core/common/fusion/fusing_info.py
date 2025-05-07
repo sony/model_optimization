@@ -117,7 +117,8 @@ class FusingInfo:
         Raises:
             ValueError: If the operation ID does not exist.
         """
-        if op_id not in self.fusing_data:
+        if op_id not in self.fusing_data or \
+            op_id not in self.fused_op_id_to_quant_config:
             raise ValueError(f"Fused operation {op_id} does not exist.")
         # Remove nodes from the mapping
         nodes = self.fusing_data[op_id]
