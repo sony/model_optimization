@@ -117,15 +117,14 @@ class FusingInfo:
         Raises:
             ValueError: If the operation ID does not exist.
         """
-        if op_id not in self.fusing_data or \
-            op_id not in self.fused_op_id_to_quant_config:
+        if op_id not in self.fusing_data:
             raise ValueError(f"Fused operation {op_id} does not exist.")
         # Remove nodes from the mapping
         nodes = self.fusing_data[op_id]
         for node in nodes:
             self.node_to_fused_node_map.pop(node.name, None)
         del self.fusing_data[op_id]
-        del self.fused_op_id_to_quant_config[op_id]
+        self.fused_op_id_to_quant_config.pop(op_id, None)
 
     def get_fused_node_name(self, node_name: str) -> Optional[str]:
         """
