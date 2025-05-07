@@ -68,7 +68,7 @@ class TestSensitivityEvaluation(BaseSensitivityEvaluationIntegTester, TorchFwMix
         super().test_configure_mp_model()
 
     def test_configure_mp_model_errors(self):
-        super().test_configure_mp_model()
+        super().test_configure_mp_model_errors()
 
     def test_compute_metric_method(self):
         super().test_compute_metric_method()

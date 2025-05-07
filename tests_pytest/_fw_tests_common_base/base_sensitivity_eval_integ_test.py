@@ -223,18 +223,22 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
         """ Test errors during model configuration. """
         model, g, se = self.model, self.g, self.se
         with pytest.raises(ValueError, match='Requested configuration is either empty or contain only None values'):
-            se._configured_mp_model({}, {})
+            with se._configured_mp_model({}, {}):
+                pass
 
         conv, relu, conv_tr = [n.name for n in g.get_topo_sorted_nodes() if n.has_configurable_activation()]
         _, fc = [n.name for n in g.get_topo_sorted_nodes() if n.has_any_configurable_weight()]
         with pytest.raises(ValueError, match='Requested configuration is either empty or contain only None values'):
-            se._configured_mp_model({relu: None}, {conv: None})
+            with se._configured_mp_model({relu: None}, {conv: None}):
+                pass
 
         with pytest.raises(ValueError, match='Not all mp configs were consumed'):
-            se._configured_mp_model({conv: 1}, {conv: 0, relu: None})
+            with se._configured_mp_model({conv: 1}, {conv: 0, relu: None}):
+                pass
 
         with pytest.raises(ValueError, match='Not all mp configs were consumed'):
-            se._configured_mp_model({conv: 1, fc: 0}, {conv: 0})
+            with se._configured_mp_model({conv: 1, fc: 0}, {conv: 0}):
+                pass
 
     def test_compute_metric_method(self):
         """ Test compute_metric method (not the metric computation itself) """

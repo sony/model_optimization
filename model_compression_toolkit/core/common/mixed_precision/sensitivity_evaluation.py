@@ -75,7 +75,7 @@ class SensitivityEvaluation:
         self.fw_impl = fw_impl
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
-            if not isinstance(hessian_info_service, HessianInfoService):
+            if not isinstance(hessian_info_service, HessianInfoService):    # pragma: no cover
                 Logger.critical(
                     f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
             self.hessian_info_service = hessian_info_service

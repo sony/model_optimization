@@ -15,7 +15,7 @@
 import typing
 from typing import Any, Optional
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:    # pragma: no cover
     from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 
 
