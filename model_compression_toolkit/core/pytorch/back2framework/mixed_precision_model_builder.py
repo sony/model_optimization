@@ -16,26 +16,18 @@
 from typing import List, Any, Tuple, Union, Dict
 
 import torch
-from mct_quantizers import PytorchQuantizationWrapper, QuantizationTarget, \
-    PytorchActivationQuantizationHolder
+from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
-from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
-from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 
-from model_compression_toolkit.core import FrameworkInfo
-from model_compression_toolkit.core import common
+from model_compression_toolkit.core import FrameworkInfo, common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
-
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
-
-from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
-    get_weights_inferable_quantizer_kwargs, get_activation_inferable_quantizer_kwargs
 from model_compression_toolkit.logger import Logger
 
 
@@ -77,44 +69,25 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
             n: A node of mct graph.
             layer: A pytorch layer
 
-        Returns: Wrapped layer with a configurable quantizer if the layer should quantized in mixed precision,
-        otherwise returns either the layer wrapped with a fixed precision inferable quantizer or the layer as is if it's
-        not supposed to be quantized.
+        Returns:
+            Wrapped layer with a configurable quantizer if the layer should be quantized in mixed precision, or the
+            layer as is.
 
+        Raises:
+            ValueError: if kernel attribute is quantized but not configurable.
         """
 
-        weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes(self.fw_info)]
         kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-        if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
-
-            if n.name in weights_conf_nodes_names:
-                return PytorchQuantizationWrapper(layer,
-                                                  weights_quantizers={
-                                                      kernel_attr: ConfigurableWeightsQuantizer(
-                                                          **self._get_weights_configurable_quantizer_kwargs(n,
-                                                                                                            kernel_attr),
-                                                          kernel_attr=kernel_attr)})
-            else:
-                # TODO: Do we want to include other quantized attributes that are not
-                #  the kernel attribute in the mixed precision model?
-                #  Currently, we only consider kernel attribute quantization (whether it is in mixed precision
-                #  or single precision).
-                node_weights_qc = n.get_unique_weights_candidates(kernel_attr)
-                if not len(node_weights_qc) == 1:
-                    Logger.critical(f"Expected a single weights quantization configuration for node '{n.name}', but found ({len(node_weights_qc)}) configurations.")# pragma: no cover
-
-                quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
-                                                                  node_weights_qc[0].weights_quantization_cfg
-                                                                  .get_attr_config(kernel_attr)
-                                                                  .weights_quantization_method,
-                                                                  BasePyTorchInferableQuantizer)
-                kwargs = get_weights_inferable_quantizer_kwargs(node_weights_qc[0].weights_quantization_cfg,
-                                                                kernel_attr)
-
-                return PytorchQuantizationWrapper(layer,
-                                                  weights_quantizers={kernel_attr: quantier_for_node(**kwargs)})
-
-        return layer
+        if kernel_attr is None or not n.is_weights_quantization_enabled(kernel_attr):
+            return layer
+        if not n.is_configurable_weight(kernel_attr):  # pragma: no cover
+            raise ValueError(f'Weight wrapper is not expected to be created for non-configurable weight of node {n}.')
+        return PytorchQuantizationWrapper(layer,
+                                          weights_quantizers={
+                                              kernel_attr: ConfigurableWeightsQuantizer(
+                                                  **self._get_weights_configurable_quantizer_kwargs(n,
+                                                                                                    kernel_attr),
+                                                  kernel_attr=kernel_attr)})
 
     def _get_weights_configurable_quantizer_kwargs(self, n: BaseNode, attr: str) -> Dict[str, Any]:
         """
@@ -145,9 +118,8 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
     def mixed_precision_activation_holder(self, n: BaseNode, holder_type: PytorchActivationQuantizationHolder = PytorchActivationQuantizationHolder) -> PytorchActivationQuantizationHolder:
         """
-        Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization for a node.
-        The layer should hold either a configurable activation quantizer, if it is quantized with mixed precision,
-        or an inferable quantizer for fixed single bit-width quantization.
+        Builds PytorchActivationQuantizationHolder layer with a configurable quantizer for mixed precision for a node
+        with a configurable activation.
 
         Args:
             n: Node to get PytorchActivationQuantizationHolder to attach in its output.
@@ -155,39 +127,35 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         Returns:
             A PytorchActivationQuantizationHolder layer for the node activation quantization.
+
+        Raises:
+            ValueError: if node's activation is not configurable.
         """
+        if holder_type != PytorchActivationQuantizationHolder:  # pragma: no cover
+            raise TypeError(f'Expected PytorchActivationQuantizationHolder holder type for mixed precision, got'
+                            f'{holder_type}')
 
-        activation_conf_nodes_names = [n.name for n in self.graph.get_activation_configurable_nodes()]
+        if not n.has_configurable_activation():  # pragma: no cover
+            raise ValueError(f'Activation holder is not expected to be created for a non-configurable activation of '
+                             f'node {n}')
 
-        activation_quantizers = []
-        if n.is_activation_quantization_enabled():
-            num_of_outputs = len(n.output_shape) if isinstance(n.output_shape, list) else 1
-            if n.name in activation_conf_nodes_names:
-                assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
-                node_q_cfg_candidates = n.candidates_quantization_cfg
+        num_of_outputs = len(n.output_shape) if isinstance(n.output_shape, list) else 1
 
-                # sorting the candidates by kernel attribute weights number of bits first and then by
-                # activation number of bits (in reversed order).
-                # since only kernel attribute is quantized in weights mixed precision,
-                # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
-                n.sort_node_candidates(self.fw_info)
+        node_q_cfg_candidates = n.candidates_quantization_cfg
 
-                max_candidate_idx = n.find_max_candidate_index()
+        # sorting the candidates by kernel attribute weights number of bits first and then by
+        # activation number of bits (in reversed order).
+        # since only kernel attribute is quantized in weights mixed precision,
+        # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
+        n.sort_node_candidates(self.fw_info)
 
-                kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-                activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
-                                                                            'max_candidate_idx': max_candidate_idx,
-                                                                            'kernel_attr': kernel_attr})] \
-                                        * num_of_outputs
-            else:
-                node_act_qc = n.get_unique_activation_candidates()
-                assert len(node_act_qc) == 1, f"Expected a single activation configuration for node '{n.name}', but found multiple ({len(node_act_qc)}) configurations."
-                quantizer_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
-                                                                   node_act_qc[0].activation_quantization_cfg.activation_quantization_method,
-                                                                   BasePyTorchInferableQuantizer)
-                kwargs = get_activation_inferable_quantizer_kwargs(node_act_qc[0].activation_quantization_cfg)
+        max_candidate_idx = n.find_max_candidate_index()
 
-                activation_quantizers = [quantizer_for_node(**kwargs)] * num_of_outputs
+        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
+                                                                    'max_candidate_idx': max_candidate_idx,
+                                                                    'kernel_attr': kernel_attr})] \
+                                * num_of_outputs
 
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node with no activation
