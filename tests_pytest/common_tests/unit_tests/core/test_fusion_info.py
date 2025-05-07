@@ -227,7 +227,6 @@ def test_is_node_in_fused_op_returns_false_for_absent_node(mock_graph, fusing_in
     assert not fi.is_node_in_fused_op(unrelated)
 
 
-
 def create_mock_base_node(name: str, layer_class: str):
     """
     Function for creating the mock nodes required for a simple neural network structure.
@@ -255,6 +254,7 @@ def fusing_patterns_with_qconfig():
     """
     return [{FUSED_LAYER_PATTERN: ["Conv2d", "ReLU"], FUSED_OP_QUANT_CONFIG: TEST_QC},
             {FUSED_LAYER_PATTERN: ["Conv2d", "Tanh"], FUSED_OP_QUANT_CONFIG: None}, 
+            {FUSED_LAYER_PATTERN: ["Conv2d", "BatchNorm2d", "ReLU6"], FUSED_OP_QUANT_CONFIG: TEST_QC},
             {FUSED_LAYER_PATTERN: ["Linear", "Softmax"], FUSED_OP_QUANT_CONFIG: TEST_QC }]
 
 @pytest.fixture
@@ -270,15 +270,20 @@ def mock_qconfig_set_nodes():
     Creates mock nodes representing a simple neural network structure.
     - Nodes: Conv2D, ReLU, Conv2D, Tanh, Linear, Softmax.
     """
-    node1 = create_mock_base_node(name='conv', layer_class='Conv2d')
-    node2 = create_mock_base_node(name='relu', layer_class='ReLU')
-    node3 = create_mock_base_node(name='conv_2', layer_class='Conv2d')
-    node4 = create_mock_base_node(name='tanh', layer_class='Tanh')
-    node5 = create_mock_base_node(name='linear', layer_class='Linear')
-    node6 = create_mock_base_node(name='softmax', layer_class='Softmax')
+    mock_node_list = []
+    mock_node_list.append(create_mock_base_node(name='conv_1', layer_class='Conv2d'))
+    mock_node_list.append(create_mock_base_node(name='relu_1', layer_class='ReLU'))
+    mock_node_list.append(create_mock_base_node(name='conv_2', layer_class='Conv2d'))
+    mock_node_list.append(create_mock_base_node(name='relu_2', layer_class='ReLU'))
+    mock_node_list.append(create_mock_base_node(name='conv_3', layer_class='Conv2d'))
+    mock_node_list.append(create_mock_base_node(name='tanh', layer_class='Tanh'))
+    mock_node_list.append(create_mock_base_node(name='conv_4', layer_class='Conv2d'))
+    mock_node_list.append(create_mock_base_node(name='bn', layer_class='BatchNorm2d'))
+    mock_node_list.append(create_mock_base_node(name='relu6', layer_class='ReLU6'))
+    mock_node_list.append(create_mock_base_node(name='linear', layer_class='Linear'))
+    mock_node_list.append(create_mock_base_node(name='softmax', layer_class='Softmax'))
 
-    return [node1, node2, node3, node4, node5, node6]
-
+    return mock_node_list
 
 @pytest.fixture
 def mock_qconfig_set_graph(mock_qconfig_set_nodes):
@@ -293,21 +298,31 @@ def mock_qconfig_set_graph(mock_qconfig_set_nodes):
     graph.get_topo_sorted_nodes.return_value = mock_nodes
 
     adjacency = {
-        mock_nodes[0]: [mock_nodes[1]],  # conv -> relu
-        mock_nodes[1]: [mock_nodes[2]],  # relu -> conv_2
-        mock_nodes[2]: [mock_nodes[3]],  # conv_2 -> silu
-        mock_nodes[3]: [mock_nodes[4]],  # silu -> linear
-        mock_nodes[4]: [mock_nodes[5]],  # linear -> softmax
-        mock_nodes[5]: []                # softmax has no outputs
+        mock_nodes[0]:  [mock_nodes[1]],  # conv_1 -> relu_1
+        mock_nodes[1]:  [mock_nodes[2]],  # relu_1 -> conv_2
+        mock_nodes[2]:  [mock_nodes[3]],  # conv_2 -> relu_2
+        mock_nodes[3]:  [mock_nodes[4]],  # relu_2 -> conv_3
+        mock_nodes[4]:  [mock_nodes[5]],  # conv_3 -> tanh
+        mock_nodes[5]:  [mock_nodes[6]],  # tanh -> conv_4
+        mock_nodes[6]:  [mock_nodes[7]],  # conv_4 -> bn
+        mock_nodes[7]:  [mock_nodes[8]],  # bn -> relu6
+        mock_nodes[8]:  [mock_nodes[9]],  # relu6 -> linear
+        mock_nodes[9]:  [mock_nodes[10]], # linear -> softmax
+        mock_nodes[10]: []                # softmax has no outputs
     }
 
     reverse_adjacency = {
-        mock_nodes[0]: [],               # conv has no inputs
-        mock_nodes[1]: [mock_nodes[0]],  # relu <- conv
-        mock_nodes[2]: [mock_nodes[1]],  # conv_2 <- relu
-        mock_nodes[3]: [mock_nodes[2]],  # silu <- conv_2
-        mock_nodes[4]: [mock_nodes[3]],  # linear <- silu
-        mock_nodes[5]: [mock_nodes[4]]   # softmax <- linear
+        mock_nodes[0]:  [],               # conv_1 has no inputs
+        mock_nodes[1]:  [mock_nodes[0]],  # relu_1 <- conv_1
+        mock_nodes[2]:  [mock_nodes[1]],  # conv_2 <- relu_1
+        mock_nodes[3]:  [mock_nodes[2]],  # relu_2 <- conv_2
+        mock_nodes[4]:  [mock_nodes[3]],  # conv_3 <- relu_2
+        mock_nodes[5]:  [mock_nodes[4]],  # tanh <- conv_3
+        mock_nodes[6]:  [mock_nodes[5]],  # conv_4 <- tanh
+        mock_nodes[7]:  [mock_nodes[6]],  # bn <- conv_4
+        mock_nodes[8]:  [mock_nodes[7]],  # relu6 <- bn
+        mock_nodes[9]:  [mock_nodes[8]],  # linear <- relu6
+        mock_nodes[10]: [mock_nodes[9]]   # softmax <- linear
     }
 
     graph.get_next_nodes.side_effect = lambda node: adjacency.get(node, [])
@@ -323,14 +338,18 @@ def test_fusing_info_qconfig_mapping(mock_qconfig_set_graph, fusing_info_generat
     fi = fusing_info_generator_with_qconfig.generate_fusing_info(mock_qconfig_set_graph)
     fi_qconfig_map = fi.get_fusing_quantization_config_map()
 
-    expected_op1_id = f"{FUSED_OP_ID_PREFIX}conv_relu"
-    expected_op2_id = f"{FUSED_OP_ID_PREFIX}conv_2_tanh"
-    expected_op3_id = f"{FUSED_OP_ID_PREFIX}linear_softmax"
+    expected_op1_id = f"{FUSED_OP_ID_PREFIX}conv_1_relu_1"
+    expected_op2_id = f"{FUSED_OP_ID_PREFIX}conv_2_relu_2"
+    expected_op3_id = f"{FUSED_OP_ID_PREFIX}conv_3_tanh"
+    expected_op4_id = f"{FUSED_OP_ID_PREFIX}conv_4_bn_relu6"
+    expected_op5_id = f"{FUSED_OP_ID_PREFIX}linear_softmax"
 
-    assert len(fi_qconfig_map) == 3
+    assert len(fi_qconfig_map) == 5
     assert fi_qconfig_map[expected_op1_id] == TEST_QC
-    assert fi_qconfig_map[expected_op2_id] == None
-    assert fi_qconfig_map[expected_op3_id] == TEST_QC
+    assert fi_qconfig_map[expected_op2_id] == TEST_QC
+    assert fi_qconfig_map[expected_op3_id] == None
+    assert fi_qconfig_map[expected_op4_id] == TEST_QC
+    assert fi_qconfig_map[expected_op5_id] == TEST_QC
 
 
 def test_add_fused_operation_adds_data_and_qconfig(mock_qconfig_set_graph, fusing_info_generator_with_qconfig):
@@ -342,7 +361,7 @@ def test_add_fused_operation_adds_data_and_qconfig(mock_qconfig_set_graph, fusin
     fi_qconfig_map = fi.get_fusing_quantization_config_map()
 
     ### Checking the number of mappings before addition
-    assert len(fi_qconfig_map) == 3
+    assert len(fi_qconfig_map) == 5
 
     node1 = create_mock_base_node(name='conv_a', layer_class='Conv2d')
     node2 = create_mock_base_node(name='relu_b', layer_class='ReLU')
@@ -356,7 +375,7 @@ def test_add_fused_operation_adds_data_and_qconfig(mock_qconfig_set_graph, fusin
     assert fi.get_fused_node_name("conv_a") == op_id
     assert fi.get_fused_node_name("relu_b") == op_id
 
-    assert len(fi_qconfig_map) == 4
+    assert len(fi_qconfig_map) == 6
     assert fi.get_fused_op_quantization_config(op_id) == TEST_QC
 
 
@@ -367,19 +386,38 @@ def test_remove_fusing_data_and_qconfig(mock_qconfig_set_graph, fusing_info_gene
 
     fi = fusing_info_generator_with_qconfig.generate_fusing_info(mock_qconfig_set_graph)
 
-    ### Delete Conv2D + ReLU pattern.
-    conv_node, relu_node, _, _, _, _ = mock_qconfig_set_nodes
-    op_id = f"{FUSED_OP_ID_PREFIX}conv_relu"
+    conv_1_node, relu_1_node = mock_qconfig_set_nodes[0], mock_qconfig_set_nodes[1]    ### Conv2D(conv_1) + ReLU(relu_1) pattern.
+    conv_2_node, relu_2_node = mock_qconfig_set_nodes[2], mock_qconfig_set_nodes[3]    ### Conv2D(conv_2) + ReLU(relu_2) pattern. targeted for deletion.
+    conv_3_node, tanh_node   = mock_qconfig_set_nodes[4], mock_qconfig_set_nodes[5]    ### Conv2D(conv_3) + Tanh(tanh) pattern.
+    conv_4_node, bn_node, relu6_node = mock_qconfig_set_nodes[6], mock_qconfig_set_nodes[7], mock_qconfig_set_nodes[8]  ### Conv2D(conv_4) + BatchNorm2d(bn) + ReLU6(relu6) pattern.
+    linear, softmax_node     = mock_qconfig_set_nodes[9], mock_qconfig_set_nodes[10]   ### Linear(linear) + Softmax(softmax) pattern.
+
+    op1_id = f"{FUSED_OP_ID_PREFIX}conv_1_relu_1"
+    op2_id = f"{FUSED_OP_ID_PREFIX}conv_2_relu_2"   ### Conv2D(conv_2) + ReLU(relu_2) pattern. targeted for deletion.
+    op3_id = f"{FUSED_OP_ID_PREFIX}conv_3_tanh"
+    op4_id = f"{FUSED_OP_ID_PREFIX}conv_4_bn_relu6"
+    op5_id = f"{FUSED_OP_ID_PREFIX}linear_softmax"
 
     ### Checking the mapping information before deletion.
-    assert len(fi.get_fusing_quantization_config_map()) == 3
-    assert fi.get_fused_op_quantization_config(op_id) == TEST_QC
-    assert fi.get_fused_nodes(op_id) == (conv_node, relu_node)
+    assert len(fi.get_fusing_quantization_config_map()) == 5
+    assert fi.get_fused_op_quantization_config(op2_id) == TEST_QC
+    assert fi.get_fused_nodes(op2_id) == (conv_2_node, relu_2_node)
 
-    fi.remove_fused_operation(op_id)
-    fi_qconfig_map = fi.get_fusing_quantization_config_map()
+    fi.remove_fused_operation(op2_id)
 
     ### Checking the mapping information after deletion.
-    assert len(fi.get_fusing_quantization_config_map()) == 2
-    assert fi.get_fused_op_quantization_config(op_id) == None
-    assert fi.get_fused_nodes(op_id) == None
+    assert len(fi.get_fusing_quantization_config_map()) == 4
+    assert fi.get_fused_op_quantization_config(op2_id) == None
+    assert fi.get_fused_nodes(op2_id) == None
+
+    ### Checking that the mapping information for the other operations remains unchanged.
+    ### Confirm that the mapping information with the same structure as the deleted one still exists and has not been removed.
+    assert fi.get_fused_op_quantization_config(op1_id) == TEST_QC
+    assert fi.get_fused_nodes(op1_id) == (conv_1_node, relu_1_node)
+
+    assert fi.get_fused_op_quantization_config(op3_id) == None
+    assert fi.get_fused_nodes(op3_id) == (conv_3_node, tanh_node)
+    assert fi.get_fused_op_quantization_config(op4_id) == TEST_QC
+    assert fi.get_fused_nodes(op4_id) == (conv_4_node, bn_node, relu6_node)
+    assert fi.get_fused_op_quantization_config(op5_id) == TEST_QC
+    assert fi.get_fused_nodes(op5_id) == (linear, softmax_node)
