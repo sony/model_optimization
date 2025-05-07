@@ -399,6 +399,8 @@ def shift_negative_function(graph: Graph,
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
     add_node_qco = add_node.get_qco(graph.fqc).quantization_configurations
+    assert original_non_linear_activation_nbits in [c.activation_n_bits for c in add_node_qco]
+
     for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
         for attr in add_node.get_node_weights_attributes():
             # TODO: do we not quantize the weights of this 'add' on purpose?
