@@ -20,11 +20,14 @@ from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoG
 from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.constants import FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
+from mct_quantizers import QuantizationMethod
 
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 
 # Setup TEST_QC and TEST_QCO for testing.
-TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
+TEST_QC_1 = generate_test_op_qc(**generate_test_attr_configs(default_cfg_nbits=8, default_cfg_quantizatiom_method = QuantizationMethod.POWER_OF_TWO))
+TEST_QC_2 = generate_test_op_qc(**generate_test_attr_configs(default_cfg_nbits=4, default_cfg_quantizatiom_method = QuantizationMethod.LUT_POT_QUANTIZER))
+TEST_QC_3 = generate_test_op_qc(**generate_test_attr_configs(default_cfg_nbits=2, default_cfg_quantizatiom_method = QuantizationMethod.LUT_SYM_QUANTIZER))
 
 
 class MockBaseNode:
@@ -252,10 +255,10 @@ def fusing_patterns_with_qconfig():
     """
     - Returns predefined fusing patterns: Conv2D + ReLU and  Conv2D + Tanh, Linear + Softmax.
     """
-    return [{FUSED_LAYER_PATTERN: ["Conv2d", "ReLU"], FUSED_OP_QUANT_CONFIG: TEST_QC},
+    return [{FUSED_LAYER_PATTERN: ["Conv2d", "ReLU"], FUSED_OP_QUANT_CONFIG: TEST_QC_1},
             {FUSED_LAYER_PATTERN: ["Conv2d", "Tanh"], FUSED_OP_QUANT_CONFIG: None}, 
-            {FUSED_LAYER_PATTERN: ["Conv2d", "BatchNorm2d", "ReLU6"], FUSED_OP_QUANT_CONFIG: TEST_QC},
-            {FUSED_LAYER_PATTERN: ["Linear", "Softmax"], FUSED_OP_QUANT_CONFIG: TEST_QC }]
+            {FUSED_LAYER_PATTERN: ["Conv2d", "BatchNorm2d", "ReLU6"], FUSED_OP_QUANT_CONFIG: TEST_QC_2},
+            {FUSED_LAYER_PATTERN: ["Linear", "Softmax"], FUSED_OP_QUANT_CONFIG: TEST_QC_3 }]
 
 @pytest.fixture
 def fusing_info_generator_with_qconfig(fusing_patterns_with_qconfig):
@@ -345,11 +348,11 @@ def test_fusing_info_qconfig_mapping(mock_qconfig_set_graph, fusing_info_generat
     expected_op5_id = f"{FUSED_OP_ID_PREFIX}linear_softmax"
 
     assert len(fi_qconfig_map) == 5
-    assert fi_qconfig_map[expected_op1_id] == TEST_QC
-    assert fi_qconfig_map[expected_op2_id] == TEST_QC
+    assert fi_qconfig_map[expected_op1_id] == TEST_QC_1
+    assert fi_qconfig_map[expected_op2_id] == TEST_QC_1
     assert fi_qconfig_map[expected_op3_id] == None
-    assert fi_qconfig_map[expected_op4_id] == TEST_QC
-    assert fi_qconfig_map[expected_op5_id] == TEST_QC
+    assert fi_qconfig_map[expected_op4_id] == TEST_QC_2
+    assert fi_qconfig_map[expected_op5_id] == TEST_QC_3
 
 
 def test_add_fused_operation_adds_data_and_qconfig(mock_qconfig_set_graph, fusing_info_generator_with_qconfig):
@@ -376,7 +379,7 @@ def test_add_fused_operation_adds_data_and_qconfig(mock_qconfig_set_graph, fusin
     assert fi.get_fused_node_name("relu_b") == op_id
 
     assert len(fi_qconfig_map) == 6
-    assert fi.get_fused_op_quantization_config(op_id) == TEST_QC
+    assert fi.get_fused_op_quantization_config(op_id) == TEST_QC_1
 
 
 def test_remove_fusing_data_and_qconfig(mock_qconfig_set_graph, fusing_info_generator_with_qconfig, mock_qconfig_set_nodes):
@@ -400,7 +403,7 @@ def test_remove_fusing_data_and_qconfig(mock_qconfig_set_graph, fusing_info_gene
 
     ### Checking the mapping information before deletion.
     assert len(fi.get_fusing_quantization_config_map()) == 5
-    assert fi.get_fused_op_quantization_config(op2_id) == TEST_QC
+    assert fi.get_fused_op_quantization_config(op2_id) == TEST_QC_1
     assert fi.get_fused_nodes(op2_id) == (conv_2_node, relu_2_node)
 
     fi.remove_fused_operation(op2_id)
@@ -412,12 +415,12 @@ def test_remove_fusing_data_and_qconfig(mock_qconfig_set_graph, fusing_info_gene
 
     ### Checking that the mapping information for the other operations remains unchanged.
     ### Confirm that the mapping information with the same structure as the deleted one still exists and has not been removed.
-    assert fi.get_fused_op_quantization_config(op1_id) == TEST_QC
+    assert fi.get_fused_op_quantization_config(op1_id) == TEST_QC_1
     assert fi.get_fused_nodes(op1_id) == (conv_1_node, relu_1_node)
 
     assert fi.get_fused_op_quantization_config(op3_id) == None
     assert fi.get_fused_nodes(op3_id) == (conv_3_node, tanh_node)
-    assert fi.get_fused_op_quantization_config(op4_id) == TEST_QC
+    assert fi.get_fused_op_quantization_config(op4_id) == TEST_QC_2
     assert fi.get_fused_nodes(op4_id) == (conv_4_node, bn_node, relu6_node)
-    assert fi.get_fused_op_quantization_config(op5_id) == TEST_QC
+    assert fi.get_fused_op_quantization_config(op5_id) == TEST_QC_3
     assert fi.get_fused_nodes(op5_id) == (linear, softmax_node)
