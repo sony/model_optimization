@@ -23,7 +23,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.reader.graph_builders import edges_builder, nodes_builder
 from model_compression_toolkit.core.pytorch.utils import set_model
-from sony_custom_layers.pytorch import CustomLayer
+from edgemdt_cl.pytorch import CustomLayer
 
 
 def _trace_model(root: Union[torch.nn.Module, Callable[..., Any]]) -> GraphModule:
