@@ -63,17 +63,13 @@ def get_sensitivity_evaluator(custom_metric_fn):
     mock_fw_impl.model_builder.side_effect = custom_model_builder_return_value
     mock_fw_impl.to_tensor.side_effect = custom_to_tensor
 
-    mock_set_layer_to_bitwidth = Mock()
-
     mp_cfg = MixedPrecisionQuantizationConfig(custom_metric_fn=custom_metric_fn)
 
     sensitivity_eval = SensitivityEvaluation(graph=mock_graph,
                                              quant_config=mp_cfg,
                                              representative_data_gen=representative_data_gen,
                                              fw_info=mock_fw_info,
-                                             fw_impl=mock_fw_impl,
-                                             set_layer_to_bitwidth=mock_set_layer_to_bitwidth
-                                             )
+                                             fw_impl=mock_fw_impl)
     sensitivity_eval._configure_bitwidths_model = lambda *args, **kwargs: None  # Method does nothing
     sensitivity_eval.model_mp = Mock()
     return sensitivity_eval

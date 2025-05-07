@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Union, Iterable, List
+from typing import Union, Iterable, List, Callable
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core import QuantizationConfig
@@ -70,7 +70,8 @@ def full_attr_name(canonical_name: Union[str, dict, Iterable]):
 
 
 def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, ()),
-                   convert_canonical_attr=True, q_preserving=False) -> CandidateNodeQuantizationConfig:
+                   convert_canonical_attr=True, q_preserving=False,
+                   activation_quantization_fn: Callable=None) -> CandidateNodeQuantizationConfig:
     """
     Build quantization config with configurable nbits and enabling/disabling quantization only.
 
@@ -113,7 +114,7 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
         signedness=Signedness.AUTO
     )
     a_qcfg = NodeActivationQuantizationConfig(qc=qc, op_cfg=op_cfg,
-                                              activation_quantization_fn=None,
+                                              activation_quantization_fn=activation_quantization_fn,
                                               activation_quantization_params_fn=None)
     # full names from the layers
     attr_names = list(w_attr.keys())
