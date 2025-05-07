@@ -170,7 +170,9 @@ class TestWeightsActivationSplit(unittest.TestCase):
 
         for n in split_graph.get_topo_sorted_nodes():
             if isinstance(n, VirtualSplitWeightsNode):
-                self.assertEqual(n.candidates_quantization_cfg, n.origin_node.candidates_quantization_cfg)
+                self.assertTrue(len(n.candidates_quantization_cfg) == 3)
+                self.assertFalse(any(c.activation_quantization_cfg.enable_activation_quantization
+                                     for c in n.candidates_quantization_cfg))
             if isinstance(n, VirtualSplitActivationNode):
                 self.assertTrue(len(n.candidates_quantization_cfg) == 3,
                                 "The activation split node should have only activation configurable candidates.")

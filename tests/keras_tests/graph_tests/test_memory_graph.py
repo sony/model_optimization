@@ -84,7 +84,7 @@ class TestMemoryGraph(unittest.TestCase):
 
         self.assertTrue(len(memory_graph.a_nodes) == 4)
         self.assertTrue(len(memory_graph.b_nodes) == 4)
-        self.assertTrue(graph.get_topo_sorted_nodes()[0] in memory_graph.sources_a)
+        self.assertTrue(graph.get_topo_sorted_nodes()[0].name in [node.name for node in memory_graph.sources_a])
         self.assertTrue(len(memory_graph.sinks_b) == 1)
         self.assertTrue(memory_graph.memory_lbound_single_op == 264)
 
@@ -99,7 +99,7 @@ class TestMemoryGraph(unittest.TestCase):
 
         self.assertTrue(len(memory_graph.a_nodes) == 5)
         self.assertTrue(len(memory_graph.b_nodes) == 6)
-        self.assertTrue(graph.get_topo_sorted_nodes()[0] in memory_graph.sources_a)
+        self.assertTrue(graph.get_topo_sorted_nodes()[0].name in [node.name for node in memory_graph.sources_a])
         self.assertTrue(len(memory_graph.sinks_b) == 1)
         self.assertTrue(memory_graph.memory_lbound_single_op == 576)
 
@@ -117,7 +117,7 @@ class TestMemoryGraph(unittest.TestCase):
 
         self.assertTrue(len(memory_graph.a_nodes) == 5)
         self.assertTrue(len(memory_graph.b_nodes) == 5)
-        self.assertTrue(graph.get_topo_sorted_nodes()[0] in memory_graph.sources_a)
+        self.assertTrue(graph.get_topo_sorted_nodes()[0].name in [node.name for node in memory_graph.sources_a])
         self.assertTrue(len(memory_graph.sinks_b) == 1)
         self.assertTrue(memory_graph.memory_lbound_single_op == 199)
 

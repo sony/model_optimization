@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import abc
+import math
 
 import typing
 
@@ -46,6 +47,7 @@ layers = keras.layers
 class MixedPrecisionBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, val_batch_size=1, num_calibration_iter=1):
         super().__init__(unit_test, val_batch_size=val_batch_size, num_calibration_iter=num_calibration_iter)
+        self.max_cut = 10 * 10 * 32 + 13 * 13 * 32
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
@@ -361,7 +363,7 @@ class MixedPrecisionSearchTotalMemoryNonConfNodesTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         # Total ResourceUtilization for weights in 2 bit avg and non-configurable activation in 8 bit
-        self.target_total_ru = ResourceUtilization(total_memory=17920 * 2 / 8 + 6176)
+        self.target_total_ru = ResourceUtilization(total_memory=17920 * 2 / 8 + math.ceil(self.max_cut * 8 / 8))
 
     def get_resource_utilization(self):
         return self.target_total_ru

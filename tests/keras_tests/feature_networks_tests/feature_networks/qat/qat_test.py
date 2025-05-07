@@ -286,11 +286,13 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
 
 
 class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
-    def __init__(self, unit_test, ru_weights=17919, ru_activation=5407, expected_mp_cfg=[0, 4, 0, 0]):
-        self.ru_weights = ru_weights
-        self.ru_activation = ru_activation
-        self.expected_mp_cfg = expected_mp_cfg
+    def __init__(self, unit_test, ru_weights=17919, ru_activation=None, expected_mp_cfg=None):
         super().__init__(unit_test, activation_layers_idx=[1, 3, 6])
+        self.ru_weights = ru_weights
+        # The default test case is that the max cut (which is the fused conv-relu layer tensors, input and output)
+        # must be reduced to 4 bits on average.
+        self.ru_activation = ru_activation or (self.max_cut * 4 / 8)
+        self.expected_mp_cfg = expected_mp_cfg or [0, 4, 0, 1]  # input, conv, conv2, relu
 
     def run_test(self, **kwargs):
         model_float = self.create_networks()

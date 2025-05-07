@@ -24,10 +24,10 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 from mct_quantizers import pytorch_quantizers
 
-
 if FOUND_ONNX:
     import onnx
     from mct_quantizers.pytorch.metadata import add_onnx_metadata
+
 
     class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         """
@@ -63,7 +63,7 @@ if FOUND_ONNX:
             self._use_onnx_custom_quantizer_ops = use_onnx_custom_quantizer_ops
             self._onnx_opset_version = onnx_opset_version
 
-        def export(self) -> None:
+        def export(self, output_names=None) -> None:
             """
             Convert an exportable (fully-quantized) PyTorch model to a fakely-quant model
             (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
@@ -95,6 +95,28 @@ if FOUND_ONNX:
                 Logger.info(f"Exporting fake-quant onnx model: {self.save_model_path}")
 
             model_input = to_torch_tensor(next(self.repr_dataset()))
+            model_output = self.model(*model_input) if isinstance(model_input, (list, tuple)) else self.model(
+                model_input)
+
+            if output_names is None:
+                # Determine number of outputs and prepare output_names and dynamic_axes
+                if isinstance(model_output, (list, tuple)):
+                    output_names = [f"output_{i}" for i in range(len(model_output))]
+                    dynamic_axes = {'input': {0: 'batch_size'}}
+                    dynamic_axes.update({name: {0: 'batch_size'} for name in output_names})
+                else:
+                    output_names = ['output']
+                    dynamic_axes = {'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+            else:
+                if isinstance(model_output, (list, tuple)):
+                    num_of_outputs = len(model_output)
+                else:
+                    num_of_outputs = 1
+                assert len(output_names) == num_of_outputs, (f"Mismatch between number of requested output names "
+                                                             f"({output_names}) and model output count "
+                                                             f"({num_of_outputs}):\n")
+                dynamic_axes = {'input': {0: 'batch_size'}}
+                dynamic_axes.update({name: {0: 'batch_size'} for name in output_names})
 
             if hasattr(self.model, 'metadata'):
                 onnx_bytes = BytesIO()
@@ -104,9 +126,8 @@ if FOUND_ONNX:
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
                                   input_names=['input'],
-                                  output_names=['output'],
-                                  dynamic_axes={'input': {0: 'batch_size'},
-                                                'output': {0: 'batch_size'}})
+                                  output_names=output_names,
+                                  dynamic_axes=dynamic_axes)
                 onnx_model = onnx.load_from_string(onnx_bytes.getvalue())
                 onnx_model = add_onnx_metadata(onnx_model, self.model.metadata)
                 onnx.save_model(onnx_model, self.save_model_path)
@@ -117,9 +138,8 @@ if FOUND_ONNX:
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
                                   input_names=['input'],
-                                  output_names=['output'],
-                                  dynamic_axes={'input': {0: 'batch_size'},
-                                                'output': {0: 'batch_size'}})
+                                  output_names=output_names,
+                                  dynamic_axes=dynamic_axes)
 
             for layer in self.model.children():
                 # Set disable for reuse for weight quantizers if quantizer was reused
