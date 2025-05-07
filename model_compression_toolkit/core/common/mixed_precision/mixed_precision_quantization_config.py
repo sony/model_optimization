@@ -27,6 +27,7 @@ class MixedPrecisionQuantizationConfig:
     Args:
         compute_distance_fn (Callable): Function to compute a distance between two tensors. If None, using pre-defined distance methods based on the layer type for each layer.
         distance_weighting_method (MpDistanceWeighting): MpDistanceWeighting enum value that provides a function to use when weighting the distances among different layers when computing the sensitivity metric.
+        custom_metric_fn (Callable): Function to compute a custom metric. As input gets the model_mp and returns a float value for metric. If None, uses interest point metric.
         num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
         configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
         num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
@@ -39,6 +40,7 @@ class MixedPrecisionQuantizationConfig:
 
     compute_distance_fn: Optional[Callable] = None
     distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG
+    custom_metric_fn: Optional[Callable] = None
     num_of_images: int = MP_DEFAULT_NUM_SAMPLES
     configuration_overwrite: Optional[List[int]] = None
     num_interest_points_factor: float = field(default=1.0, metadata={"description": "Should be between 0.0 and 1.0"})

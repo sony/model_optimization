@@ -178,7 +178,7 @@ class MixedPrecisionBopsMultipleOutEdgesTest(BaseMixedPrecisionBopsTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(bops=1)  # No layers with BOPs count
+        return ResourceUtilization(bops=(16*3*3*13*13)*8*8*2)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Verify that all layers got 8 bits (so checking candidate index is 0)

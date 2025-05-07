@@ -343,6 +343,13 @@ def shift_negative_function(graph: Graph,
     graph.set_out_stats_collector_to_node(add_node, add_node_stats_collector)
     graph.shift_stats_collector(add_node, np.array(shift_value))
 
+    set_quantization_configs_to_node(fw_info=fw_info,
+                                     node=add_node,
+                                     graph=graph,
+                                     quant_config=core_config.quantization_config,
+                                     fqc=graph.fqc,
+                                     mixed_precision_enable=core_config.is_mixed_precision_enabled)
+
     if padding is not None:
         pad_node = create_pad_node(op2d_node.name,
                                    add_node.name,
@@ -372,13 +379,6 @@ def shift_negative_function(graph: Graph,
                                               add_node_stats_collector)  # We ignore the padding effect on statistics
 
         op2d_node.input_shape = pad_node.output_shape
-
-    set_quantization_configs_to_node(fw_info=fw_info,
-                                     node=add_node,
-                                     graph=graph,
-                                     quant_config=core_config.quantization_config,
-                                     fqc=graph.fqc,
-                                     mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
     original_non_linear_activation_nbits = non_linear_node_cfg_candidate.activation_n_bits
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.

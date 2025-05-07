@@ -38,9 +38,6 @@ class MemoryGraph(DirectedBipartiteGraph):
         Args:
             model_graph: A graph representation of a model.
         """
-
-        self.model_graph = model_graph
-
         nodes = list(model_graph.nodes)
         memory_tensors = []
         node_to_tensor = []

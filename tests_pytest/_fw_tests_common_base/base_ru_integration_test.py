@@ -110,7 +110,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         """ Build framework datagen with 'bhwc_input_shape' """
         raise NotImplementedError()
 
-    def test_orig_vs_virtual_graph_ru(self):
+    def test_compute_ru(self):
         """ Test detailed ru computation on original and the corresponding virtual graphs. """
         # model is sequential so that activation cuts are well uniquely defined.
         model = self._build_sequential_model()
@@ -151,25 +151,6 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
                                               total_memory=max(exp_cuts_ru) + sum(exp_w_ru),
                                               bops=sum(exp_bops))
 
-        # generate virtual graph and make sure resource utilization results are identical
-        virtual_graph = substitute(copy.deepcopy(graph),
-                                   self.fw_impl.get_substitutions_virtual_weights_activation_coupling())
-        assert len(virtual_graph.nodes) == 7
-        assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualActivationWeightsNode)]) == 4
-        assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualSplitActivationNode)]) == 3
-
-        ru_calc = ResourceUtilizationCalculator(virtual_graph, self.fw_impl, self.fw_info)
-        ru_virtual, detailed_virtual = ru_calc.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                                            BitwidthMode.QMinBit,
-                                                                            return_detailed=True)
-        assert ru_virtual == ru_orig
-
-        assert (self._extract_values(detailed_virtual[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru))
-        # virtual composed node contains both activation's const and weights' kernel
-        assert (self._extract_values(detailed_virtual[RUTarget.WEIGHTS]) ==
-                [exp_w_ru[0], sum(exp_w_ru[1:3]), *exp_w_ru[3:]])
-        assert self._extract_values(detailed_virtual[RUTarget.BOPS]) == exp_bops
-
     def test_mult_output_activation(self):
         """ Tests the case when input activation has multiple outputs -> virtual weights nodes are not merged
             into VirtualActivationWeightsNode. """
@@ -195,36 +176,13 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         exp_w_ru = [3*3*1*15 * linear_w_min_nbit/8,
                     3*3*3*5 * linear_w_min_nbit/8,
                     16*16*15*10 * linear_w_min_nbit/8]
-        # bops are not computed for virtual weights nodes
-        exp_bops = [(16*16*15*10)*default_a_nbit*linear_w_min_nbit]
+        exp_bops = [(3*3*1*15*16*16)*default_a_nbit*linear_w_min_nbit,
+                    (3*3*3*5*16*16)*default_a_nbit*linear_w_min_nbit,
+                    (16*16*15*10)*default_a_nbit*linear_w_min_nbit]
 
         assert self._extract_values(detailed_orig[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)
         assert self._extract_values(detailed_orig[RUTarget.WEIGHTS]) == exp_w_ru
         assert self._extract_values(detailed_orig[RUTarget.BOPS]) == exp_bops
-
-        # Validation is skipped because fusing information is not relevant for the virtual graph.
-        # Therefore, validation checks are disabled before the virtual graph substitution and
-        # re-enabled once it completes.
-        graph.skip_validation_check = True
-        virtual_graph = substitute(copy.deepcopy(graph),
-                                   self.fw_impl.get_substitutions_virtual_weights_activation_coupling())
-        graph.skip_validation_check = False
-
-        assert len(virtual_graph.nodes) == 8
-        assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualActivationWeightsNode)]) == 1
-        assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualSplitActivationNode)]) == 3
-        assert len([n for n in virtual_graph.nodes if isinstance(n, VirtualSplitWeightsNode)]) == 2
-
-        ru_calc = ResourceUtilizationCalculator(virtual_graph, self.fw_impl, self.fw_info)
-        ru_virtual, detailed_virtual = ru_calc.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
-                                                                            BitwidthMode.QMinBit,
-                                                                            return_detailed=True)
-        assert ru_virtual == ru_orig
-        # conv and dwconv each remain as a pair of virtual W and virtual A nodes. Remaining virtual W nodes mess up the
-        # cuts - but this should only add virtualW-virtualA cuts, all cuts from the original graph should stay identical
-        assert not set(exp_cuts_ru) - set(detailed_virtual[RUTarget.ACTIVATION].values())
-        assert self._extract_values(detailed_virtual[RUTarget.WEIGHTS]) == exp_w_ru
-        assert self._extract_values(detailed_virtual[RUTarget.BOPS]) == exp_bops
 
     def _prepare_graph(self, model, disable_linear_collapse: bool=False):
         # If disable_linear_collapse is False we use the default quantization config
