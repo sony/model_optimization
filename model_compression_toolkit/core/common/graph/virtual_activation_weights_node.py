@@ -12,22 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import abc
 import uuid
-
-from typing import Dict, Any, Tuple
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
     VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
-
+from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTES
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-import numpy as np
-
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 
 
-class VirtualSplitNode(BaseNode):
+class VirtualNode(BaseNode, abc.ABC):
+    """ Base class for all virtual nodes. """
+    pass
+
+
+class VirtualSplitNode(VirtualNode, abc.ABC):
     """
     A class that represents a node that was split from a kernel node (node with weights).
     """
@@ -73,14 +76,11 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
         super().__init__(origin_node)
 
         self.name = origin_node.name + VIRTUAL_WEIGHTS_SUFFIX
-        # Virtual weights node is created only to be absorbed into virtual composed node right away.
-        # However, in some cases composition is impossible and virtual weights node can remain in the graph.
-        # In such case it messes up resource utilization computation, specifically activation cuts. In order to minimize
-        # the impact, we preserve the behavior of the original node wrt activation (shape and quantization),
-        # so that prev - virtualW cut is identical to prev-origin_node. Only the cut virtualW-virtualA will be different
-        # from the original graph, so in the worst case the utilization will be higher in virtual graph.
-        # This should guarantee that the utilization of the original graph does not exceed the requested target.
-        self.candidates_quantization_cfg = origin_node.candidates_quantization_cfg
+
+        self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates(kernel_attr)
+        for c in self.candidates_quantization_cfg:
+            c.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
+            c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
 
 
 class VirtualSplitActivationNode(VirtualSplitNode):
@@ -113,7 +113,7 @@ class VirtualSplitActivationNode(VirtualSplitNode):
             c.weights_quantization_cfg.weights_n_bits = FLOAT_BITWIDTH
 
 
-class VirtualActivationWeightsNode(BaseNode):
+class VirtualActivationWeightsNode(VirtualNode):
     """
     A node that represents a composition of pair of sequential activation node and weights (kernel) node.
     This structure is used for mixed-precision search with bit-operation constraint.
@@ -149,7 +149,7 @@ class VirtualActivationWeightsNode(BaseNode):
         weights = weights_node.weights.copy()
         act_node_w_rename = {}
         if act_node.weights:
-            if not fw_info.get_kernel_op_attributes(act_node)[0] is None:
+            if fw_info.get_kernel_op_attributes(act_node) != DEFAULT_KERNEL_ATTRIBUTES:
                 raise NotImplementedError(f'Node {act_node} with kernel cannot be used as activation for '
                                           f'VirtualActivationWeightsNode.')
             if act_node.has_any_configurable_weight():

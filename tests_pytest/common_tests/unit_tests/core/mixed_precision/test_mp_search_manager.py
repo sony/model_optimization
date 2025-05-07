@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Optional
+
+import copy
+
 import pytest
 from unittest.mock import Mock
 
@@ -21,6 +25,8 @@ from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTES
 from model_compression_toolkit.core.common.graph.edge import Edge
+from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
+    VirtualSplitActivationNode, VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_ru_helper import MixedPrecisionRUHelper
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
     MixedPrecisionSearchManager, ConfigReconstructionHelper
@@ -245,7 +251,7 @@ class TestMixedPrecisionSearchManager:
                                  'mixed_precision_search_manager.copy.deepcopy')
         mocker.patch.object(MixedPrecisionRUHelper, 'compute_utilization')
 
-        recon_cfg_mock = mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_config_from_virtual_graph')
+        recon_cfg_mock = mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_full_configuration')
         mocker.patch.object(MixedPrecisionSearchManager, '_prepare_and_run_solver')
 
         virt_sub_mock = Mock()
@@ -289,3 +295,303 @@ class TestMixedPrecisionSearchManager:
         res = mgr.search()
         assert res == exp_cfg
         return res, mgr
+
+
+class TestConfigHelper:
+    class AWLayer:
+        pass
+
+    class ALayer:
+        pass
+
+    class VALayer:
+        pass
+
+    kernel_attr = 'im_kernel'
+
+    @pytest.fixture(autouse=True)
+    def fw_info_mock(self, fw_info_mock):
+        self.fw_info_mock = fw_info_mock
+        self.fw_info_mock.get_kernel_op_attributes = \
+            lambda nt: [self.kernel_attr] if nt == self.AWLayer else DEFAULT_KERNEL_ATTRIBUTES
+
+    @staticmethod
+    def build_aw_node(abits, wbits, name='aw', layer_cls=AWLayer, w_attr=kernel_attr):
+        qcs = []
+        for abit in abits:
+            for wbit in wbits:
+                qcs.append(build_nbits_qc(abit, True, w_attr={w_attr: (wbit, True)}))
+        return build_node(name, layer_class=layer_cls, canonical_weights={w_attr: np.ones(50)}, qcs=qcs)
+
+    @staticmethod
+    def build_a_node(abits, name='a', layer_cls=ALayer):
+        return build_node(name, layer_class=layer_cls, qcs=[build_nbits_qc(abit) for abit in abits])
+
+    @pytest.mark.parametrize('n, ind', [
+        (build_a_node(abits=(5, 3, 7)), 1),
+        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 8),
+        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 5),
+        (build_aw_node(abits=(5,), wbits=(2, 4, 8)), 2),
+    ])
+    def test_retrieve_a_candidates_regular_node(self, graph_mock, n, ind):
+        graph_mock.nodes = [n]
+        helper = ConfigReconstructionHelper(graph_mock)
+        ret_n, ret_inds = helper._retrieve_matching_orig_a_candidates(copy.deepcopy(n), ind)
+        assert ret_n is n
+        assert ret_inds == [ind]
+
+    @pytest.mark.parametrize('abits, wbits, vind', [
+        ((4, 8, 16), (2, 6, 10, 12), 0),
+        ((4, 8, 16), (2, 6, 10, 12), 2),
+        ((4,), (2, 6, 10), 0)
+    ])
+    def test_retrieve_a_candidates_virt_split_node(self, graph_mock, abits, wbits, vind):
+        orig_n = self.build_aw_node(abits=abits, wbits=wbits)
+        graph_mock.nodes = [orig_n]
+        helper = ConfigReconstructionHelper(graph_mock)
+        van = VirtualSplitActivationNode(copy.deepcopy(orig_n), self.VALayer, {})
+        ret_n, ret_inds = helper._retrieve_matching_orig_a_candidates(van, vind)
+        assert ret_n is orig_n
+        assert len(ret_inds) == len(wbits)
+        self._validate_activation(orig_n, ret_inds, van, vind)
+
+        vwn = VirtualSplitWeightsNode(orig_n, self.kernel_attr)
+        assert helper._retrieve_matching_orig_a_candidates(vwn, vind) == (None, None)
+
+    @pytest.mark.parametrize('orig_a_n, build_va, orig_w_n, v_ind', [
+        (build_a_node(abits=(2, 4, 8)), False, build_aw_node(abits=(5, 7, 3), wbits=(3, 6)), 5),
+        (build_a_node(abits=(2,)), False, build_aw_node(abits=(5, 7), wbits=(3, 4, 6)), 2),
+        (build_aw_node(abits=(2, 4, 6), wbits=(3, 5, 7, 9)), True, build_aw_node(abits=(8, 10), wbits=(11, 12)), 5),
+        (build_aw_node(abits=(2, 4, 6), wbits=(3, 5, 7, 9)), True, build_aw_node(abits=(8, 10), wbits=(11, 12)), 3),
+        (build_aw_node(abits=(2,), wbits=(3,)), True, build_aw_node(abits=(8,), wbits=(11,)), 0)
+    ])
+    def test_retrieve_a_candidates_virt_aw_node(self, graph_mock, orig_a_n, build_va, orig_w_n, v_ind):
+        graph_mock.nodes = [orig_a_n]
+        a_n = copy.deepcopy(orig_a_n)
+        if build_va:
+            a_n = VirtualSplitActivationNode(a_n, self.VALayer, {})
+        vaw_n = VirtualActivationWeightsNode(act_node=a_n,
+                                             weights_node=VirtualSplitWeightsNode(orig_w_n, self.kernel_attr),
+                                             fw_info=self.fw_info_mock)
+        helper = ConfigReconstructionHelper(graph_mock)
+        ret_n, ret_inds = helper._retrieve_matching_orig_a_candidates(vaw_n, v_ind)
+        assert ret_n is orig_a_n
+        self._validate_activation(orig_a_n, ret_inds, vaw_n, v_ind)
+
+    @pytest.mark.parametrize('n, ind', [
+        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 8),
+        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 1),
+        (build_aw_node(abits=(5,), wbits=(2, 4, 8)), 1),
+        (build_aw_node(abits=(4, 8, 16), wbits=(5,)), 2)
+    ])
+    def test_retrieve_w_candidates_regular_node(self, graph_mock, n, ind):
+        graph_mock.nodes = [n]
+        helper = ConfigReconstructionHelper(graph_mock)
+        ret_n, ret_inds = helper._retrieve_matching_orig_w_candidates(copy.deepcopy(n), ind)
+        assert ret_n is n
+        assert ret_inds == [ind]
+
+    def test_retrieve_w_candidates_activation_node(self, graph_mock):
+        n = self.build_a_node(abits=(5, 3, 7))
+        graph_mock.nodes = [n]
+        helper = ConfigReconstructionHelper(graph_mock)
+        assert helper._retrieve_matching_orig_w_candidates(n, 0) == (None, None)
+
+    @pytest.mark.parametrize('abits, wbits, vind', [
+        ((4, 8, 16), (2, 6, 10, 12), 0),
+        ((4, 8, 16), (2, 6, 10, 12), 2),
+        ((4,), (2, 6, 10), 0),
+        ((2, 6, 10), (4,), 0)
+    ])
+    def test_retrieve_w_candidates_virt_split_node(self, graph_mock, abits, wbits, vind):
+        orig_n = self.build_aw_node(abits=abits, wbits=wbits)
+        graph_mock.nodes = [orig_n]
+        vw_n = VirtualSplitWeightsNode(copy.deepcopy(orig_n), self.kernel_attr)
+        helper = ConfigReconstructionHelper(graph_mock)
+        ret_n, ret_inds = helper._retrieve_matching_orig_w_candidates(vw_n, vind)
+        assert ret_n is orig_n
+        self._validate_weights(orig_n, ret_inds, vw_n, vind)
+
+        va_n = VirtualSplitActivationNode(copy.deepcopy(orig_n), self.VALayer, {})
+        assert helper._retrieve_matching_orig_w_candidates(va_n, vind) == (None, None)
+
+    @pytest.mark.parametrize('orig_a_n, build_va, orig_w_n, v_ind', [
+        (build_a_node(abits=(2, 4, 8, 16)), False, build_aw_node(abits=(5, 7), wbits=(3, 6, 9)), 11),
+        (build_a_node(abits=(2, 4, 8, 16)), True, build_aw_node(abits=(5, 7), wbits=(3, 6, 9)), 7),
+        (build_a_node(abits=(2, 4, 8, 16)), True, build_aw_node(abits=(5, 7), wbits=(3,)), 2),
+        (build_a_node(abits=(2,)), False, build_aw_node(abits=(5, 7), wbits=(3, 4, 6)), 2),
+        (build_a_node(abits=(2,)), True, build_aw_node(abits=(8,), wbits=(11,)), 0)
+    ])
+    def test_retrieve_w_candidates_virt_aw_node(self, graph_mock, orig_a_n, build_va, orig_w_n, v_ind):
+        graph_mock.nodes = [orig_a_n]
+        a_n = copy.deepcopy(orig_a_n)
+        if build_va:
+            a_n = VirtualSplitActivationNode(a_n, self.VALayer, {})
+        vaw_n = VirtualActivationWeightsNode(act_node=a_n,
+                                             weights_node=VirtualSplitWeightsNode(orig_w_n, self.kernel_attr),
+                                             fw_info=self.fw_info_mock)
+        helper = ConfigReconstructionHelper(graph_mock)
+        ret_n, ret_inds = helper._retrieve_matching_orig_a_candidates(vaw_n, v_ind)
+        assert ret_n is orig_a_n
+        self._validate_activation(orig_a_n, ret_inds, vaw_n, v_ind)
+
+    @pytest.mark.parametrize('build_va, v_ind', [(False, 5)]) #[(True, 8), (False, 5)])
+    def test_retrieve_w_candidates_virt_aw_node_multiple_weights(self, graph_mock, build_va, v_ind):
+        """ A node contains non-kernel non-configurable weights, w node contains additional non-configurable weight,
+            some of weight attrs are identical. Configs should be retrieved by configurable weight of w_node. """
+        orig_a_node = build_node(
+            'a', layer_class=self.ALayer,
+            canonical_weights={'foo': np.ones(2), 'bar': np.ones(3), 1: np.ones(4)},
+            qcs=[build_nbits_qc(ab, True, w_attr={'foo': (4, True), 'bar': (5, True)},
+                                pos_attr=(6, True, [1])) for ab in (2, 3, 7)]
+        )
+        orig_w_node = build_node(
+            'a', layer_class=self.AWLayer,
+            canonical_weights={'bar': np.ones(2), self.kernel_attr: np.ones(3), 1: np.ones(4)},
+            qcs=[build_nbits_qc(ab, True, w_attr={'bar': (4, True), self.kernel_attr: (wb, True)},
+                                pos_attr=(6, True, [1])) for ab in (2, 3) for wb in (9, 10, 11)]
+        )
+        graph_mock.nodes = [orig_a_node, orig_w_node]
+        a_node = copy.deepcopy(orig_a_node)
+        if build_va:
+            a_node = VirtualSplitActivationNode(a_node, self.ALayer, {})
+        vaw = VirtualActivationWeightsNode(act_node=a_node,
+                                           weights_node=VirtualSplitWeightsNode(copy.deepcopy(orig_w_node), self.kernel_attr),
+                                           fw_info=self.fw_info_mock)
+        helper = ConfigReconstructionHelper(graph_mock)
+        ret_n, ret_inds = helper._retrieve_matching_orig_w_candidates(vaw, v_ind)
+        assert ret_n is orig_w_node
+        self._validate_weights(orig_w_node, ret_inds, vaw, v_ind, attrs=[self.kernel_attr])
+
+    def test_reconstruct_separate_aw_configs_regular_nodes(self, graph_mock):
+        mpa = self.build_a_node(name='mpa', abits=(4, 8, 16))
+        mpa_mpw = self.build_aw_node(name='mpa_mpw', abits=(2, 3, 4), wbits=(5, 6))
+        spa_mpw = self.build_aw_node(name='spa_mpw', abits=(2,), wbits=(5, 6, 7))
+        mpa_spw = self.build_aw_node(name='mpa_spw', abits=(2, 3, 4), wbits=(5,))
+        graph_mock.nodes = [mpa, mpa_mpw, spa_mpw, mpa_spw]
+
+        helper = ConfigReconstructionHelper(graph_mock)
+        v_cfg = {mpa: 1, mpa_mpw: 4, spa_mpw: 2, mpa_spw: 1}
+        a_cfg, w_cfg = helper.reconstruct_separate_aw_configs(v_cfg, include_non_configurable=False)
+        assert a_cfg == {n: v_cfg[n] for n in (mpa, mpa_mpw, mpa_spw)}
+        assert w_cfg == {n: v_cfg[n] for n in (mpa_mpw, spa_mpw)}
+
+        a_cfg, w_cfg = helper.reconstruct_separate_aw_configs(v_cfg, include_non_configurable=True)
+        assert a_cfg == {n: v_cfg[n] for n in (mpa, mpa_mpw, spa_mpw, mpa_spw)}
+        assert w_cfg == {n: v_cfg[n] for n in (mpa_mpw, spa_mpw, mpa_spw)}
+
+    @pytest.mark.parametrize('incl_non_conf', [True, False])
+    def test_reconstruct_separate_aw_configs_virtual_nodes(self, graph_mock, incl_non_conf):
+        spa = self.build_a_node(name='spa', abits=(4,))
+        mpa_mpw = self.build_aw_node(name='mpa_mpw', abits=(2, 3, 4), wbits=(5, 6, 7))
+        mpa_spw = self.build_aw_node(name='mpa_spw', abits=(7, 8, 9), wbits=(5,))
+        mpa_mpw2 = self.build_aw_node(name='mpa_mpw2', abits=(6, 7), wbits=(3, 4, 5))
+        graph_mock.nodes = [spa, mpa_mpw, mpa_spw, mpa_mpw2]
+        vaw1 = VirtualActivationWeightsNode(copy.deepcopy(spa),
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw), self.kernel_attr),
+                                            self.fw_info_mock)
+        va1 = VirtualSplitActivationNode(copy.deepcopy(mpa_spw), self.ALayer, {})
+        vw = VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw2), self.kernel_attr)
+        vaw2 = VirtualActivationWeightsNode(VirtualSplitActivationNode(copy.deepcopy(mpa_mpw2), self.ALayer, {}),
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_spw), self.kernel_attr),
+                                            self.fw_info_mock)
+
+        v_cfg = {vaw1: 2, va1: 1, vw: 2, vaw2: 1}
+
+        def validate_activation(n, vn, ret_cfg):
+            assert self._get_activation_cfg(n, ret_cfg[n]) == self._get_activation_cfg(vn, v_cfg[vn])
+
+        def validate_weights(n, vn, ret_cfg):
+            assert self._get_weights_cfg(n, ret_cfg[n]) == self._get_weights_cfg(vn, v_cfg[vn])
+
+        helper = ConfigReconstructionHelper(graph_mock)
+        a_cfg, w_cfg = helper.reconstruct_separate_aw_configs(v_cfg, include_non_configurable=incl_non_conf)
+        if incl_non_conf:
+            assert set(a_cfg.keys()) == {spa, mpa_spw, mpa_mpw2}
+            assert set(w_cfg.keys()) == {mpa_spw, mpa_mpw, mpa_mpw2}
+        else:
+            assert set(a_cfg.keys()) == {mpa_spw, mpa_mpw2}
+            assert set(w_cfg.keys()) == {mpa_mpw, mpa_mpw2}
+        validate_activation(mpa_spw, va1, a_cfg)
+        validate_activation(mpa_mpw2, vaw2, a_cfg)
+        validate_weights(mpa_mpw, vaw1, w_cfg)
+        validate_weights(mpa_mpw2, vw, w_cfg)
+
+    @pytest.mark.parametrize('incl_non_conf', [True, False])
+    def test_reconstruct_full_configuration(self, graph_mock, incl_non_conf):
+        # orig nodes for virtual nodes
+        spa = self.build_a_node(name='spa', abits=(4,))
+        mpa_mpw = self.build_aw_node(name='mpa_mpw', abits=(2, 3, 4), wbits=(5, 6, 7))
+        mpa_spw = self.build_aw_node(name='mpa_spw', abits=(7, 8, 9), wbits=(5,))
+        spa_mpw = self.build_aw_node(name='spa_mpw', abits=(6,), wbits=(3, 4, 5))
+        # orig nodes as is
+        mpa_mpw2 = self.build_aw_node(name='mpa_mpw2', abits=(4, 5, 6), wbits=(2, 6, 8))
+        mpa_spw2 = self.build_aw_node(name='mpa_spw2', abits=(4, 5, 6), wbits=(3,))
+        spa_mpw2 = self.build_aw_node(name='spa_spw2', abits=(5,), wbits=(2, 6, 8))
+
+        graph_mock.nodes = [spa, mpa_mpw, mpa_spw, spa_mpw, mpa_mpw2, mpa_spw2, spa_mpw2]
+        vaw1 = VirtualActivationWeightsNode(copy.deepcopy(spa),
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw), self.kernel_attr),
+                                            self.fw_info_mock)
+        vaw2 = VirtualActivationWeightsNode(VirtualSplitActivationNode(copy.deepcopy(mpa_mpw), self.ALayer, {}),
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_spw), self.kernel_attr),
+                                            self.fw_info_mock)
+        va = VirtualSplitActivationNode(copy.deepcopy(mpa_spw), self.ALayer, {})
+        vw = VirtualSplitWeightsNode(copy.deepcopy(spa_mpw), self.kernel_attr)
+
+        v_cfg = {vaw1: 2, vaw2: 1, va: 2, vw: 2, mpa_mpw2: 7, mpa_spw2: 1, spa_mpw2: 2}
+
+        def validate_activation(n, vn, ret_cfg):
+            assert self._get_activation_cfg(n, ret_cfg[n]) == self._get_activation_cfg(vn, v_cfg[vn]), n
+
+        def validate_weights(n, vn, ret_cfg):
+            assert self._get_weights_cfg(n, ret_cfg[n]) == self._get_weights_cfg(vn, v_cfg[vn]), n
+
+        helper = ConfigReconstructionHelper(graph_mock)
+        ret_cfg = helper.reconstruct_full_configuration(v_cfg, include_non_configurable=incl_non_conf)
+
+        exp_keys = {mpa_mpw, mpa_spw, spa_mpw, mpa_mpw2, spa_mpw2, mpa_spw2}
+        if incl_non_conf:
+            exp_keys.add(spa)
+            assert ret_cfg[spa] == 0
+        assert set(ret_cfg.keys()) == exp_keys
+        validate_activation(mpa_mpw, vaw2, ret_cfg)
+        validate_weights(mpa_mpw, vaw1, ret_cfg)
+        validate_activation(mpa_spw, va, ret_cfg)
+        validate_weights(spa_mpw, vw, ret_cfg)
+        for n in (mpa_mpw2, spa_mpw2, mpa_spw2):
+            assert v_cfg[n] == ret_cfg[n], n
+
+    def _validate_activation(self, orig_n, ret_inds, vn, vind):
+        """ Validates that all returned candidate indices of the original node match activation config of the virtual
+            candidate, and all matching indices have been retrieved. """
+        for i, _ in enumerate(orig_n.candidates_quantization_cfg):
+            if i in ret_inds:
+                assert self._get_activation_cfg(orig_n, i) == self._get_activation_cfg(vn, vind)
+            else:
+                assert (self._get_activation_cfg(orig_n, i).activation_n_bits !=
+                        self._get_activation_cfg(vn, vind).activation_n_bits)
+
+    def _validate_weights(self, orig_n, ret_inds, vn, vind, attrs=None):
+        """ Validates that all returned candidate indices of the original node match eights config of the virtual
+            candidate, and all matching indices have been retrieved. """
+        for i, _ in enumerate(orig_n.candidates_quantization_cfg):
+            orig_cfg = self._get_weights_cfg(orig_n, i)
+            v_cfg = self._get_weights_cfg(vn, vind)
+            if i in ret_inds:
+                if attrs:
+                    assert all(orig_cfg.get_attr_config(attr) == v_cfg.get_attr_config(attr) for attr in attrs)
+                else:
+                    assert orig_cfg == v_cfg
+            else:
+                attrs = attrs or orig_n.weights.keys()
+                assert any(orig_cfg.get_attr_config(attr).weights_n_bits != v_cfg.get_attr_config(attr).weights_n_bits
+                           for attr in attrs)
+
+    @staticmethod
+    def _get_activation_cfg(n, ind):
+        return n.candidates_quantization_cfg[ind].activation_quantization_cfg
+
+    @staticmethod
+    def _get_weights_cfg(n, ind):
+        return n.candidates_quantization_cfg[ind].weights_quantization_cfg
