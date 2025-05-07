@@ -214,6 +214,7 @@ class TargetPlatformCapabilities(BaseModel):
         add_metadata (bool): Flag to determine if metadata should be added.
         name (str): Name of the Target Platform Model.
         is_simd_padding (bool): Indicates if SIMD padding is applied.
+        insert_preserving_quantizers (bool): Whether to include quantizers for quantization preserving operations in the quantized model.
         SCHEMA_VERSION (int): Version of the schema for the Target Platform Model.
     """
     default_qco: QuantizationConfigOptions
@@ -224,7 +225,9 @@ class TargetPlatformCapabilities(BaseModel):
     tpc_platform_type: Optional[str]
     add_metadata: bool = True
     name: Optional[str] = "default_tpc"
+
     is_simd_padding: bool = False
+    insert_preserving_quantizers: bool = False
 
     SCHEMA_VERSION: int = 2
 
