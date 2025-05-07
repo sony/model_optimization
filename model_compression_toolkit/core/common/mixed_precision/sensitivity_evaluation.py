@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import contextlib
 import copy
 import itertools
 
 import numpy as np
-from typing import Callable, Any, List, Tuple
+from typing import Callable, Any, List, Tuple, Dict, Optional
 
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -74,7 +75,7 @@ class SensitivityEvaluation:
         self.fw_impl = fw_impl
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
-            if not isinstance(hessian_info_service, HessianInfoService):
+            if not isinstance(hessian_info_service, HessianInfoService):    # pragma: no cover
                 Logger.critical(
                     f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
             self.hessian_info_service = hessian_info_service
@@ -156,7 +157,7 @@ class SensitivityEvaluation:
             axis_list.append(axis if distance_fn == compute_kl_divergence else None)
         return distance_fns_list, axis_list
 
-    def compute_metric(self, mp_a_cfg: Dict[str, int], mp_w_cfg: Dict[str, int]) -> float:
+    def compute_metric(self, mp_a_cfg: Dict[str, Optional[int]], mp_w_cfg: Dict[str, Optional[int]]) -> float:
         """
         Compute the sensitivity metric of the MP model for a given configuration (the sensitivity
         is computed based on the similarity of the interest points' outputs between the MP model
@@ -171,21 +172,29 @@ class SensitivityEvaluation:
             The sensitivity metric of the MP model for a given configuration.
         """
 
-        # Configure MP model with the given configuration.
-        self._configure_bitwidths_model(mp_a_cfg, mp_w_cfg)
+        with self._configured_mp_model(mp_a_cfg, mp_w_cfg):
+            sensitivity_metric = self._compute_metric()
 
-        # Compute the distance metric
-        if self.quant_config.custom_metric_fn is None:
-            ipts_distances, out_pts_distances = self._compute_distance()
-            sensitivity_metric = self._compute_mp_distance_measure(ipts_distances, out_pts_distances,
-                                              self.quant_config.distance_weighting_method)
-        else:
+        return sensitivity_metric
+
+    def _compute_metric(self) -> float:
+        """
+        Compute sensitivity metric on a configured mp model.
+
+        Returns:
+            Sensitivity metric.
+        """
+        if self.quant_config.custom_metric_fn:
             sensitivity_metric = self.quant_config.custom_metric_fn(self.model_mp)
             if not isinstance(sensitivity_metric, (float, np.floating)):
-                raise TypeError(f'The custom_metric_fn is expected to return float or numpy float, got {type(sensitivity_metric).__name__}')
+                raise TypeError(
+                    f'The custom_metric_fn is expected to return float or numpy float, got {type(sensitivity_metric).__name__}')
+            return sensitivity_metric
 
-        # restore configured nodes back to float
-        self._configure_bitwidths_model({n: None for n in mp_a_cfg}, {n: None for n in mp_w_cfg})
+        # compute default metric
+        ipts_distances, out_pts_distances = self._compute_distance()
+        sensitivity_metric = self._compute_mp_distance_measure(ipts_distances, out_pts_distances,
+                                                               self.quant_config.distance_weighting_method)
         return sensitivity_metric
 
     def _init_baseline_tensors_list(self):
@@ -206,7 +215,8 @@ class SensitivityEvaluation:
 
         evaluation_graph = copy.deepcopy(self.graph)
 
-        # Disable quantization for non-configurable nodes, and, if requested, for all activations.
+        # Disable quantization for non-configurable nodes, and, if requested, for all activations (quantizers won't
+        # be added to the model).
         for n in evaluation_graph.get_topo_sorted_nodes():
             if self.disable_activation_for_metric or not n.has_configurable_activation():
                 for c in n.candidates_quantization_cfg:
@@ -261,35 +271,46 @@ class SensitivityEvaluation:
         # Return the mean approximation value across all images for each interest point
         return np.mean(approx_by_image, axis=0)
 
-    def _configure_bitwidths_model(self, mp_a_cfg: Dict[str, int], mp_w_cfg: Dict[str, int]):
+    @contextlib.contextmanager
+    def _configured_mp_model(self, mp_a_cfg: Dict[str, Optional[int]], mp_w_cfg: Dict[str, Optional[int]]):
         """
-        Configure specific configurable layers of the mp model.
+        Context manager to configure specific configurable layers of the mp model. At exit, configuration is
+        automatically restored to un-quantized.
 
         Args:
             mp_a_cfg: Nodes bitwidth indices to configure activation quantizers to.
             mp_w_cfg: Nodes bitwidth indices to configure weights quantizers to.
 
         """
-        node_names = set(mp_a_cfg.keys()).union(set(mp_w_cfg.keys()))
-        mp_a_cfg = copy.deepcopy(mp_a_cfg)
-        mp_w_cfg = copy.deepcopy(mp_w_cfg)
+        if not (mp_a_cfg and any(v is not None for v in mp_a_cfg.values()) or
+                mp_w_cfg and any(v is not None for v in mp_w_cfg.values())):
+            raise ValueError(f'Requested configuration is either empty or contain only None values.')
 
-        for n in node_names:
-            node_quant_layers = self.conf_node2layers.get(n)
-            if node_quant_layers is None:    # pragma: no cover
-                raise ValueError(f"Matching layers for node {n} not found in the mixed precision model configuration.")
-            for qlayer in node_quant_layers:
-                assert isinstance(qlayer, (self.fw_impl.activation_quant_layer_cls,
-                                           self.fw_impl.weights_quant_layer_cls)), f'{type(qlayer)} of node {n}'
-                if isinstance(qlayer, self.fw_impl.activation_quant_layer_cls) and n in mp_a_cfg:
-                    set_activation_quant_layer_to_bitwidth(qlayer, mp_a_cfg[n], self.fw_impl)
-                    mp_a_cfg.pop(n)
-                elif isinstance(qlayer, self.fw_impl.weights_quant_layer_cls) and n in mp_w_cfg:
-                    set_weights_quant_layer_to_bitwidth(qlayer, mp_w_cfg[n], self.fw_impl)
-                    mp_w_cfg.pop(n)
-        if mp_a_cfg or mp_w_cfg:
-            raise ValueError(f'Not all mp configs were consumed, remaining activation config {mp_a_cfg}, '
-                             f'weights config {mp_w_cfg}')
+        # defined here so that it can't be used directly
+        def configure(a_cfg, w_cfg):
+            node_names = set(a_cfg.keys()).union(set(w_cfg.keys()))
+            for n in node_names:
+                node_quant_layers = self.conf_node2layers.get(n)
+                if node_quant_layers is None:    # pragma: no cover
+                    raise ValueError(f"Matching layers for node {n} not found in the mixed precision model configuration.")
+                for qlayer in node_quant_layers:
+                    assert isinstance(qlayer, (self.fw_impl.activation_quant_layer_cls,
+                                               self.fw_impl.weights_quant_layer_cls)), f'Unexpected {type(qlayer)} of node {n}'
+                    if isinstance(qlayer, self.fw_impl.activation_quant_layer_cls) and n in a_cfg:
+                        set_activation_quant_layer_to_bitwidth(qlayer, a_cfg[n], self.fw_impl)
+                        a_cfg.pop(n)
+                    elif isinstance(qlayer, self.fw_impl.weights_quant_layer_cls) and n in w_cfg:
+                        set_weights_quant_layer_to_bitwidth(qlayer, w_cfg[n], self.fw_impl)
+                        w_cfg.pop(n)
+            if a_cfg or w_cfg:
+                raise ValueError(f'Not all mp configs were consumed, remaining activation config {a_cfg}, '
+                                 f'weights config {w_cfg}.')
+
+        configure(mp_a_cfg.copy(), mp_w_cfg.copy())
+        try:
+            yield
+        finally:
+            configure({n: None for n in mp_a_cfg}, {n: None for n in mp_w_cfg})
 
     def _compute_points_distance(self,
                                  baseline_tensors: List[Any],

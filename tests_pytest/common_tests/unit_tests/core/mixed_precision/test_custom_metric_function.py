@@ -15,11 +15,10 @@
 import pytest
 import numpy as np
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 
 
 def custom_float_metric(model_mp) -> float:
@@ -62,7 +61,7 @@ def get_sensitivity_evaluator(custom_metric_fn):
                                                  representative_data_gen=representative_data_gen,
                                                  fw_info=mock_fw_info,
                                                  fw_impl=mock_fw_impl)
-    sensitivity_eval._configure_bitwidths_model = lambda *args, **kwargs: None  # Method does nothing
+    sensitivity_eval._configured_mp_model = MagicMock()
     return sensitivity_eval
 
 
