@@ -17,7 +17,7 @@ ______________________________________________________________________
   <a href="#license">License</a>
 </p>
 <p align="center">
-  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/pytorch-2.2%20%7C%202.3%20%7C%202.4%20%7C%202.5-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/pytorch-2.3%20%7C%202.4%20%7C%202.5%20%7C%202.6-blue" /></a>
   <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/tensorflow-2.14%20%7C%202.15-blue" /></a>
   <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue" /></a>
   <a href="https://github.com/sony/model_optimization/releases"><img src="https://img.shields.io/github/v/release/sony/model_optimization" /></a>
@@ -30,7 +30,7 @@ ________________________________________________________________________________
 
 ## <div align="center">Getting Started</div>
 ### Quick Installation
-Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.1 or Tensorflow>=2.14.
+Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.3 or Tensorflow>=2.14.
 ```
 pip install model-compression-toolkit
 ```
