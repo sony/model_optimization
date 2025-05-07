@@ -48,63 +48,6 @@ If the linear node pads the input tensor with zeros, we modify the padded value 
 """
 
 
-def get_snc_tpc():
-    default_op_cfg = OpQuantizationConfig(
-        default_weight_attr_config=AttributeQuantizationConfig(),
-        attr_weights_configs_mapping={},
-        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-        activation_n_bits=8,
-        supported_input_activation_n_bits=[8],
-        enable_activation_quantization=True,
-        enable_weights_quantization=True,
-        quantization_preserving=False,
-        fixed_scale=None,
-        fixed_zero_point=None,
-        simd_size=32,
-        signedness=Signedness.AUTO
-    )
-    default_cfg = QuantizationConfigOptions(quantization_configurations=[default_op_cfg])
-
-    # Linear operators
-    linear_ops = [
-        OperatorSetNames.CONV,
-        OperatorSetNames.DEPTHWISE_CONV,
-        OperatorSetNames.FULLY_CONNECTED
-    ]
-
-    # Nonlinear activation functions that may output negative values
-    nonlinear_ops = [
-        OperatorSetNames.SWISH,
-        OperatorSetNames.PRELU,
-        OperatorSetNames.LEAKY_RELU,
-        OperatorSetNames.ELU,
-        OperatorSetNames.GELU
-    ]
-
-    # Create a set of all operator types used
-    all_ops = set(linear_ops + nonlinear_ops + [OperatorSetNames.ADD])
-    operator_sets = [OperatorsSet(name=op_name) for op_name in all_ops]
-
-    # Create fusing patterns: (linear -> nonlinear -> add)
-    fusing_patterns = [
-        Fusing(operator_groups=(
-            OperatorsSet(name=linear),
-            OperatorsSet(name=nonlinear),
-            OperatorsSet(name=OperatorSetNames.ADD)
-        ))
-        for linear in linear_ops
-        for nonlinear in nonlinear_ops
-    ]
-
-    # Define TPC with all operators and fusing patterns
-    tpc = TargetPlatformCapabilities(
-        default_qco=default_cfg,
-        tpc_platform_type='snc_temporal_tpc',
-        operator_set=operator_sets,
-        fusing_patterns=fusing_patterns
-    )
-    return tpc
-
 def op2d_bias_correction(op2d_node: BaseNode,
                          shift_to_correct: float,
                          fw_info: FrameworkInfo,
@@ -476,16 +419,15 @@ def shift_negative_function(graph: Graph,
 
     if len(previous_nodes) == 1:
         fused_candidates = [previous_nodes[0], non_linear_node, add_node]
+        graph.fusing_info.fusing_patterns.append([n.type for n in fused_candidates])
+        fused_op_id = graph.fusing_info.generate_fused_op_id(fused_candidates)
 
-        if graph.fusing_info.is_nodes_eligible_to_be_fused(fused_candidates):
-            fused_op_id = graph.fusing_info.generate_fused_op_id(fused_candidates)
+        # If the non-linear is already part of a fused op - remove the existing one before adding the new one
+        if graph.fusing_info.is_node_in_fused_op(non_linear_node):
+            existing_fused_op = graph.fusing_info.get_fused_node_name(non_linear_node.name)
+            graph.fusing_info.remove_fused_operation(existing_fused_op)
 
-            # If the non-linear is already part of a fused op - remove the existing one before adding the new one
-            if graph.fusing_info.is_node_in_fused_op(non_linear_node):
-                existing_fused_op = graph.fusing_info.get_fused_node_name(non_linear_node.name)
-                graph.fusing_info.remove_fused_operation(existing_fused_op)
-
-            graph.fusing_info.add_fused_operation(fused_op_id, tuple(fused_candidates))
+        graph.fusing_info.add_fused_operation(fused_op_id, tuple(fused_candidates))
 
     if non_linear_node_cfg_candidate.shift_negative_threshold_recalculation:
         activation_param = get_activations_qparams(activation_quant_cfg=non_linear_node_cfg_candidate,

@@ -23,7 +23,6 @@ from tensorflow.keras.models import Model
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
-from model_compression_toolkit.core.common.substitutions.shift_negative_activation import get_snc_tpc
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
@@ -245,15 +244,6 @@ class KerasImplementation(FrameworkImplementation):
         return keras_apply_shift_negative_correction(graph,
                                                      core_config,
                                                      fw_info)
-
-    def get_snc_fusing_patterns(self):
-        """
-        Returns: The fusing patterns to add to the graph when SNC is used for keras layers.
-        """
-        from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import AttachTpcToKeras
-        tpc = get_snc_tpc()
-        fqc = AttachTpcToKeras().attach(tpc)
-        return fqc.get_fusing_patterns()
 
     def compute_activation_bias_correction(self,
                                            graph: Graph,

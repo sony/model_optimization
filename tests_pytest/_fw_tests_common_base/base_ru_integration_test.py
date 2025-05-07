@@ -290,8 +290,6 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         for c in non_linear_node.candidates_quantization_cfg:
             c.activation_quantization_cfg.activation_quantization_params = {THRESHOLD: 100.0}
 
-        snc_fusing_patterns = self.fw_impl.get_snc_fusing_patterns()
-        graph.fusing_info.fusing_patterns.extend(snc_fusing_patterns)
         graph = self.fw_impl.shift_negative_correction(graph,
                                                        core_config,
                                                        self.fw_info)
