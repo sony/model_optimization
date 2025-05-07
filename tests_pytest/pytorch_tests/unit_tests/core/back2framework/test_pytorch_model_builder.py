@@ -171,11 +171,8 @@ class TestPyTorchModelBuilder():
                                                 wrapper=lambda n, m:
                                                 fully_quantized_wrapper(n, m,
                                                                         fw_impl=fw_impl_mock),
-                                                get_activation_quantizer_holder_fn=lambda n:
-                                                get_activation_quantizer_holder(n,
-                                                                                fw_impl=fw_impl_mock),
-                                                get_preserving_activation_quantizer_holder_fn=lambda n:
-                                                get_preserving_activation_quantizer_holder(n,
+                                                get_activation_quantizer_holder_fn=lambda n, holder_type:
+                                                get_activation_quantizer_holder(n, holder_type,
                                                                                 fw_impl=fw_impl_mock)).build_model()
         
         # check conv

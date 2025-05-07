@@ -34,7 +34,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
-from mct_quantizers import PytorchQuantizationWrapper
+from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 
 
 def _build_input_tensors_list(node: BaseNode,
@@ -211,8 +211,7 @@ class PytorchModel(torch.nn.Module):
                  append2output: List[Any] = None,
                  return_float_outputs: bool = False,
                  wrapper: Callable = None,
-                 get_activation_quantizer_holder_fn: Callable = None,
-                 get_preserving_activation_quantizer_holder_fn: Callable = None):
+                 get_activation_quantizer_holder_fn: Callable = None):
         """
         Construct a Pytorch model.
 
@@ -235,7 +234,7 @@ class PytorchModel(torch.nn.Module):
         self.return_float_outputs = return_float_outputs
         self.wrapper = wrapper
         self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
-        self.get_preserving_activation_quantizer_holder = get_preserving_activation_quantizer_holder_fn
+        # self.get_preserving_activation_quantizer_holder = get_preserving_activation_quantizer_holder_fn
         self.reuse_groups = {}
         self._reused_nodes = []
 
@@ -345,15 +344,24 @@ class PytorchModel(torch.nn.Module):
             else:
                 self.add_module(node.name, node_op)
 
+            # activation_quantizer_holder = None
+            # if self.use_activation_holder_during_model_building:
+            #     if node.is_activation_quantization_enabled():
+            #         activation_quantizer_holder = self.get_activation_quantizer_holder(node)
+                
+            #     elif node.is_quantization_preserving() and self.use_preserving_activation_holder_during_model_building:
+            #         prev_node = self.graph.retrieve_preserved_quantization_node(node)
+            #         if prev_node.is_activation_quantization_enabled():
+            #             activation_quantizer_holder = self.get_preserving_activation_quantizer_holder(prev_node)
             activation_quantizer_holder = None
             if self.use_activation_holder_during_model_building:
                 if node.is_activation_quantization_enabled():
-                    activation_quantizer_holder = self.get_activation_quantizer_holder(node)
+                    activation_quantizer_holder = self.get_activation_quantizer_holder(node, holder_type=PytorchActivationQuantizationHolder)
                 
-                elif node.is_quantization_preserving() and self.use_preserving_activation_holder_during_model_building:
+                elif node.is_quantization_preserving():
                     prev_node = self.graph.retrieve_preserved_quantization_node(node)
                     if prev_node.is_activation_quantization_enabled():
-                        activation_quantizer_holder = self.get_preserving_activation_quantizer_holder(prev_node)
+                        activation_quantizer_holder = self.get_activation_quantizer_holder(prev_node, holder_type=PytorchPreservingActivationQuantizationHolder)
 
             if activation_quantizer_holder is not None:
                 activation_quantizer_holder_name = node.name + '_' + ACTIVATION_HOLDER_QUANTIZER
@@ -450,8 +458,7 @@ class PyTorchModelBuilder(BaseModelBuilder):
                  fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = False,
                  wrapper: Callable = None,
-                 get_activation_quantizer_holder_fn: Callable = None,
-                 get_preserving_activation_quantizer_holder_fn: Callable = None):
+                 get_activation_quantizer_holder_fn: Callable = None):
         """
 
         Args:
@@ -471,7 +478,7 @@ class PyTorchModelBuilder(BaseModelBuilder):
 
         self.wrapper = wrapper
         self.get_activation_quantizer_holder_fn = get_activation_quantizer_holder_fn
-        self.get_preserving_activation_quantizer_holder_fn = get_preserving_activation_quantizer_holder_fn
+        # self.get_preserving_activation_quantizer_holder_fn = get_preserving_activation_quantizer_holder_fn
 
     def build_model(self) -> Tuple[PytorchModel, UserInformation]:
         """
@@ -483,5 +490,4 @@ class PyTorchModelBuilder(BaseModelBuilder):
                             self.append2output,
                             return_float_outputs=self.return_float_outputs,
                             wrapper=self.wrapper,
-                            get_activation_quantizer_holder_fn=self.get_activation_quantizer_holder_fn,
-                            get_preserving_activation_quantizer_holder_fn=self.get_preserving_activation_quantizer_holder_fn), self.graph.user_info
+                            get_activation_quantizer_holder_fn=self.get_activation_quantizer_holder_fn), self.graph.user_info
