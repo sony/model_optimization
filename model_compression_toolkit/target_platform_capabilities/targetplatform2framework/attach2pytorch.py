@@ -99,6 +99,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
                                                         Eq('p', 2) | Eq('p', None))],
             OperatorSetNames.SSD_POST_PROCESS: [],  # no such operator in pytorch
             OperatorSetNames.COMBINED_NON_MAX_SUPPRESSION: [MulticlassNMS, MulticlassNMSWithIndices],
+            OperatorSetNames.EXP: [torch.exp],
         }
 
         pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),

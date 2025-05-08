@@ -100,7 +100,8 @@ class AttachTpcToKeras(AttachTpcToFramework):
             OperatorSetNames.LOG_SOFTMAX: [tf.nn.log_softmax],
             OperatorSetNames.ADD_BIAS: [tf.nn.bias_add],
             OperatorSetNames.L2NORM: [tf.math.l2_normalize],
-            OperatorSetNames.SSD_POST_PROCESS: [SSDPostProcess]
+            OperatorSetNames.SSD_POST_PROCESS: [SSDPostProcess],
+            OperatorSetNames.EXP: [tf.math.exp]
         }
 
         self._opset2attr_mapping = {
