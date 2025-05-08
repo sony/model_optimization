@@ -91,6 +91,8 @@ class OperatorSetNames(str, Enum):
     STRIDED_SLICE = "StridedSlice"
     SSD_POST_PROCESS = "SSDPostProcess"
     EXP = "Exp"
+    SIN = "Sin"
+    COS = "Cos"
 
     @classmethod
     def get_values(cls):

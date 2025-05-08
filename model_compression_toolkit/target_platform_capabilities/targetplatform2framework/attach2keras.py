@@ -101,7 +101,9 @@ class AttachTpcToKeras(AttachTpcToFramework):
             OperatorSetNames.ADD_BIAS: [tf.nn.bias_add],
             OperatorSetNames.L2NORM: [tf.math.l2_normalize],
             OperatorSetNames.SSD_POST_PROCESS: [SSDPostProcess],
-            OperatorSetNames.EXP: [tf.math.exp]
+            OperatorSetNames.EXP: [tf.math.exp],
+            OperatorSetNames.SIN: [tf.math.sin],
+            OperatorSetNames.COS: [tf.math.cos]
         }
 
         self._opset2attr_mapping = {
