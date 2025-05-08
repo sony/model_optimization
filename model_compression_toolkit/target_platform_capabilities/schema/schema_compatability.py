@@ -50,7 +50,7 @@ def _schema_v1_to_v2(
         Compatability behavior: Set field to False by default
     2. New field in Fusing: fuse_op_quantization_config
         Compatability behavior: set enable_activation_quantization=False in every fuse_op_quantization_config
-    3. New operator name: EXP
+    3. New operator set names: EXP, SIN, COS
         Compatability behavior: Not required
     :return: TargetPlatformCapabilities instance of schema version 2
     """
