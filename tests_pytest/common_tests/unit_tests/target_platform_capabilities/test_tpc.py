@@ -16,8 +16,6 @@ import os
 import pytest
 from pydantic import ValidationError
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as current_schema
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v1
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v2
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS, \
@@ -63,7 +61,6 @@ def get_tpc(selected_schema):
         tpc_platform_type="dump_to_json",
         add_metadata=False
     )
-
 
 
 @pytest.fixture
