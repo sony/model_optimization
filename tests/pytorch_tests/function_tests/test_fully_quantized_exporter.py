@@ -94,7 +94,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         print(f"Float Pytorch .pth Model: {float_model_file}")
 
         model = copy.deepcopy(self.fully_quantized_mbv2)
-        model.load_state_dict(torch.load(model_file))
+        model.load_state_dict(torch.load(model_file, weights_only=False))
         model.eval()
         model(next(self.representative_data_gen()))
 

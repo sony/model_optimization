@@ -51,7 +51,7 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         return tempfile.mkstemp('.pt')[1]
 
     def load_exported_model(self, filepath):
-        return torch.load(filepath)
+        return torch.load(filepath, weights_only=False)
 
     def infer(self, model, images):
         return model(images)
@@ -74,7 +74,7 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         # Assert qat_ready can be saved and loaded
         _qat_ready_model_tmp_filepath = tempfile.mkstemp('.pt')[1]
         torch.save(self.qat_ready, _qat_ready_model_tmp_filepath)
-        self.qat_ready = torch.load(_qat_ready_model_tmp_filepath)
+        self.qat_ready = torch.load(_qat_ready_model_tmp_filepath, weights_only=False)
 
         self.final_model = mct.qat.pytorch_quantization_aware_training_finalize_experimental(self.qat_ready)
 
@@ -82,7 +82,7 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         self.final_model(images[0])
         _final_model_tmp_filepath = tempfile.mkstemp('.pt')[1]
         torch.save(self.final_model, _final_model_tmp_filepath)
-        self.final_model = torch.load(_final_model_tmp_filepath)
+        self.final_model = torch.load(_final_model_tmp_filepath, weights_only=False)
         self.final_model(images[0])
 
         self.filepath = self.get_tmp_filepath()
