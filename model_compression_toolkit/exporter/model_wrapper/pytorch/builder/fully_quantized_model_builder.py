@@ -93,7 +93,7 @@ if FOUND_TORCH:
         If the layer is not supposed to be wrapped with an activation quantizer - return None.
         Args:
             node: Node to attach a PytorchActivationQuantizationHolder to its output.
-            holder_type: 
+            holder_type: ActivationQuantizationHolder type
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
@@ -127,7 +127,7 @@ if FOUND_TORCH:
                                                           wrapper=lambda n, m:
                                                           fully_quantized_wrapper(n, m,
                                                                                   fw_impl=fw_impl),
-                                                          get_activation_quantizer_holder_fn=lambda n, holder_type=None:
+                                                          get_activation_quantizer_holder_fn=lambda n, holder_type:
                                                           get_activation_quantizer_holder(n, holder_type,
                                                                                           fw_impl=fw_impl)).build_model()
 

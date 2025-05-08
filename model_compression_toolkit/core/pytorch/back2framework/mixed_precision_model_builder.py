@@ -143,7 +143,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                 'max_candidate_idx': max_candidate_idx
                 }
 
-    def mixed_precision_activation_holder(self, n: BaseNode, holder_type) -> PytorchActivationQuantizationHolder:
+    def mixed_precision_activation_holder(self, n: BaseNode, holder_type=PytorchActivationQuantizationHolder) -> PytorchActivationQuantizationHolder:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization for a node.
         The layer should hold either a configurable activation quantizer, if it is quantized with mixed precision,
@@ -151,6 +151,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         Args:
             n: Node to get PytorchActivationQuantizationHolder to attach in its output.
+            holder_type: ActivationQuantizationHolder type
 
         Returns:
             A PytorchActivationQuantizationHolder layer for the node activation quantization.
@@ -192,7 +193,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
-            return PytorchActivationQuantizationHolder(activation_quantizers[0])
+            return holder_type(activation_quantizers[0])
 
         Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover
 
