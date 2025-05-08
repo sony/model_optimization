@@ -109,7 +109,7 @@ class Fusing(TargetPlatformModelComponent):
         name (Optional[str]): The name for the Fusing instance. If not provided, it is generated from the operator groups' names.
     """
     operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetGroup], Field(discriminator='type')], ...]
-    fuse_op_quantization_config: Optional[OpQuantizationConfig] = None
+    fuse_op_quantization_config: OpQuantizationConfig = None
     name: Optional[str] = None  # Will be set in the validator if not given.
 
     model_config = ConfigDict(frozen=True)
