@@ -51,7 +51,7 @@ class BaseTpcAttach2FrameworkTest(abc.ABC):
 
     def test_attach2fw_init(self):
         # verify built-in opset to operator mapping structure
-        assert len(self.attach2fw._opset2layer) == 57  # number of built-in operator sets
+        assert len(self.attach2fw._opset2layer) == 60  # number of built-in operator sets
         assert all(opset in self.attach2fw._opset2layer for opset in list(schema.OperatorSetNames))
         assert all(isinstance(key, schema.OperatorSetNames) for key in self.attach2fw._opset2layer.keys())
         assert all(isinstance(value, list) for value in self.attach2fw._opset2layer.values())

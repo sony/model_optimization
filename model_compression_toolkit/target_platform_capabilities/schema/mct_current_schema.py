@@ -1,4 +1,4 @@
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.v2 as schema
 
 OperatorSetNames = schema.OperatorSetNames
 Signedness = schema.Signedness
