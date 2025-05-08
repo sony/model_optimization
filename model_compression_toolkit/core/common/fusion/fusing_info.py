@@ -428,6 +428,7 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode']) -
             return True
     return False
 
+
 def _get_fusing_layer_patterns(fusing_patterns: List[Dict[Any, OpQuantizationConfig]]) -> List[List[Any]]:
     """
     Extracts the fusing layer patterns from the provided fusing patterns.
