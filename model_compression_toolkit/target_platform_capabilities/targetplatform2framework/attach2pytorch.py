@@ -32,7 +32,7 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2fw import \
     AttachTpcToFramework
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Eq
-from sony_custom_layers.pytorch import MulticlassNMS, MulticlassNMSWithIndices
+from edgemdt_cl.pytorch import MulticlassNMS, MulticlassNMSWithIndices
 
 
 class AttachTpcToPytorch(AttachTpcToFramework):
