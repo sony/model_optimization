@@ -16,7 +16,7 @@
 import pytest
 from unittest.mock import Mock
 
-from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_activation_quantizer_holder, get_preserving_activation_quantizer_holder
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_activation_quantizer_holder
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 
 def test_get_activation_quantizer_holder(fw_impl_mock):
