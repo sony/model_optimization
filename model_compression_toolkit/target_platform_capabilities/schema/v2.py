@@ -105,7 +105,7 @@ class Fusing(TargetPlatformModelComponent):
     Attributes:
         operator_groups (Tuple[Union[OperatorsSet, OperatorSetGroup], ...]): A tuple of operator groups,
                                                                               each being either an OperatorSetGroup or an OperatorsSet.
-        fuse_op_quantization_config (Optional[OpQuantizationConfig]): The quantization configuration for the fused operator.
+        fuse_op_quantization_config (OpQuantizationConfig): The quantization configuration for the fused operator.
         name (Optional[str]): The name for the Fusing instance. If not provided, it is generated from the operator groups' names.
     """
     operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetGroup], Field(discriminator='type')], ...]
@@ -218,11 +218,11 @@ class TargetPlatformCapabilities(BaseModel):
         SCHEMA_VERSION (int): Version of the schema for the Target Platform Model.
     """
     default_qco: QuantizationConfigOptions
-    operator_set: Optional[Tuple[OperatorsSet, ...]]
-    fusing_patterns: Optional[Tuple[Fusing, ...]]
-    tpc_minor_version: Optional[int]
-    tpc_patch_version: Optional[int]
-    tpc_platform_type: Optional[str]
+    operator_set: Optional[Tuple[OperatorsSet, ...]] = None
+    fusing_patterns: Optional[Tuple[Fusing, ...]] = None
+    tpc_minor_version: Optional[int] = None
+    tpc_patch_version: Optional[int] = None
+    tpc_platform_type: Optional[str] = None
     add_metadata: bool = True
     name: Optional[str] = "default_tpc"
 
