@@ -129,6 +129,12 @@ class FusingInfo:
         """
         return self.fusing_data.get(op_id)
 
+    def get_nodes_to_disable_activation_quantization(self) -> List['BaseNode']:
+        """
+        Returns a list of the nodes that their activation quantization is disabled due to fusing.
+        """
+        return [node for nodes in self.get_all_fused_operations().values() for node in nodes[:-1]]
+
     def is_node_in_fused_op(self, node: 'BaseNode') -> bool:
         """
         Check if a node is part of any fused operation.

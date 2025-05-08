@@ -300,9 +300,10 @@ class TestActivationUtilizationMethods:
         qp = build_node('qp', qcs=[build_qc(4, False, q_preserving=True)])
 
         graph_mock.nodes = [sp1, sp2, sp3, mp, noq, qp]
+        graph_mock.fusing_info = FusingInfo(fusing_data={'FusedNode_n1_n2': (sp1, sp2)})
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
 
-        assert len(TIC) == 4, 'enum changed, update tests'
+        assert len(TIC) == 5, 'enum changed, update tests'
         assert ru_calc._get_target_activation_nodes(TIC.QConfigurable, include_reused=True) == [sp1, mp]
         assert ru_calc._get_target_activation_nodes(TIC.QConfigurable, include_reused=False) == [sp1]
 
@@ -311,6 +312,9 @@ class TestActivationUtilizationMethods:
 
         assert ru_calc._get_target_activation_nodes(TIC.AnyQuantized, include_reused=True) == [sp1, sp2, sp3, mp, qp]
         assert ru_calc._get_target_activation_nodes(TIC.AnyQuantized, include_reused=False) == [sp1, sp2, qp]
+
+        assert ru_calc._get_target_activation_nodes(TIC.AnyQuantizedNonFused, include_reused=True) == [sp2, sp3, mp, qp]
+        assert ru_calc._get_target_activation_nodes(TIC.AnyQuantizedNonFused, include_reused=False) == [sp2, qp]
 
         assert ru_calc._get_target_activation_nodes(TIC.Any, include_reused=True) == [sp1, sp2, sp3, mp, noq, qp]
         assert ru_calc._get_target_activation_nodes(TIC.Any, include_reused=False) == [sp1, sp2, noq, qp]
@@ -501,7 +505,7 @@ class TestActivationMaxCutUtilization:
         graph_mock.find_node_by_name = MethodType(Graph.find_node_by_name, graph_mock)
         graph_mock.retrieve_preserved_quantization_node = lambda x: mp2 if x.name == 'qp' else x
 
-        graph_mock.fusing_info = FusingInfo()
+        graph_mock.fusing_info = FusingInfo(fusing_data={'FusedNode_sp_mp':(sp, mp)})
 
         # we should not use total size, setting it to bad number
         cut_elems1 = MemoryElements(elements={ActivationMemoryTensor(mp_reuse.output_shape, 'mp_reuse', 0)}, total_size=-1)
@@ -628,12 +632,13 @@ class TestActivationMaxCutUtilization:
 
     def test_get_cut_target_nodes(self, prepare_compute_cuts):
         ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2, qp) = prepare_compute_cuts
-        assert len(TIC) == 4
+        assert len(TIC) == 5
         sorted_res = lambda res: sorted(res, key=lambda n: n.name)
         assert sorted_res(ru_calc._get_cut_target_nodes(cut2, TIC.Any)) == [mp, mp_reuse, noq, sp]
         assert sorted_res(ru_calc._get_cut_target_nodes(cut2, TIC.AnyQuantized)) == [mp, mp_reuse, sp]
         assert sorted_res(ru_calc._get_cut_target_nodes(cut2, TIC.QConfigurable)) == [mp, mp_reuse]
         assert sorted_res(ru_calc._get_cut_target_nodes(cut2, TIC.QNonConfigurable)) == [sp]
+        assert sorted_res(ru_calc._get_cut_target_nodes(cut2, TIC.AnyQuantizedNonFused)) == [mp, mp_reuse]
 
     def test_compute_act_utilization_by_cut(self, prepare_compute_cuts):
         ru_calc, (cut1, cut2, cut3, cut4), (mp_reuse, mp, noq, sp, mp2, qp) = prepare_compute_cuts
@@ -789,11 +794,12 @@ class TestWeightUtilizationMethods:
         assert node.has_positional_weights
 
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
-        assert len(TIC) == 4, 'enum changed, update the test'
+        assert len(TIC) == 5, 'enum changed, update the test'
         assert ru_calc._get_target_weight_attrs(node, TIC.QConfigurable) == full_attr_name(['foo'])
         assert ru_calc._get_target_weight_attrs(node, TIC.QNonConfigurable) == full_attr_name(['bar', 1, 2])
         assert ru_calc._get_target_weight_attrs(node, TIC.AnyQuantized) == full_attr_name(['foo', 'bar', 1, 2])
         assert ru_calc._get_target_weight_attrs(node, TIC.Any) == full_attr_name(['foo', 'bar', 'baz', 1, 2])
+        assert ru_calc._get_target_weight_attrs(node, TIC.AnyQuantizedNonFused) == full_attr_name(['foo', 'bar', 1, 2])
 
     def test_collect_target_nodes_w_attrs(self, graph_mock, fw_impl_mock, fw_info_mock):
         node = build_node('mixed', canonical_weights={'foo': np.array(1.), 'bar': np.array(2.), 3: np.array(3.)},
@@ -1130,10 +1136,10 @@ class TestBOPSAndVirtualGraph:
         with pytest.raises(ValueError, match=ru_calc.unexpected_qc_nodes_error):
             ru_calc.compute_node_bops(Mock(), TIC.Any, BM.QCustom, act_qcs={'unknown': Mock()})
 
-    @pytest.mark.parametrize('target_criterion', set(TIC) - {TIC.Any, TIC.AnyQuantized})
+    @pytest.mark.parametrize('target_criterion', set(TIC) - {TIC.Any, TIC.AnyQuantized, TIC.AnyQuantizedNonFused})
     def test_node_bops_invalid_criterion(self, graph_mock, fw_impl_mock, fw_info_mock, target_criterion):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock, fw_info_mock)
-        with pytest.raises(ValueError, match='BOPS computation is supported only for Any and AnyQuantized targets.'):
+        with pytest.raises(ValueError, match='BOPS computation is supported only for Any, AnyQuantized and AnyQuantizedNonFused targets.'):
             ru_calc.compute_node_bops(Mock(), target_criterion, BM.Float)
 
     def test_compute_bops(self, fw_impl_mock, fw_info_mock,):

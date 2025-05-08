@@ -255,5 +255,4 @@ def keras_apply_shift_negative_correction(graph: Graph,
                                            is_padding_node_and_node_has_padding,
                                            PADDING,
                                            BIAS,
-                                           USE_BIAS
-                                           )
+                                           USE_BIAS)

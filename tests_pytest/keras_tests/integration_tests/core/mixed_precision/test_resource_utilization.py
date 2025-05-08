@@ -17,6 +17,7 @@ import keras
 import numpy as np
 import tensorflow as tf
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, Input, Subtract, Flatten
+from tensorflow.python.keras.layers import Activation
 
 from tests_pytest._fw_tests_common_base.base_ru_integration_test import BaseRUIntegrationTester
 from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMixin
@@ -28,6 +29,9 @@ class TestRUIntegrationKeras(BaseRUIntegrationTester, KerasFwMixin):
 
     def test_mult_output_activation(self):
         super().test_mult_output_activation()
+
+    def test_snc_fusing(self):
+        super().test_snc_fusing()
 
     def _data_gen(self):
         return self.get_basic_data_gen([self.bhwc_input_shape])()
@@ -49,4 +53,11 @@ class TestRUIntegrationKeras(BaseRUIntegrationTester, KerasFwMixin):
         x = Subtract()([x1, x2])
         x = Flatten()(x)
         outputs = Dense(10)(x)
+        return keras.Model(inputs=inputs, outputs=outputs)
+
+    def _build_snc_model(self):
+        inputs = Input(shape=self.bhwc_input_shape[1:])
+        x = Conv2D(filters=10, kernel_size=3, padding='same')(inputs)
+        x = Activation(activation='swish')(x)
+        outputs = Conv2D(filters=1, kernel_size=3)(x)
         return keras.Model(inputs=inputs, outputs=outputs)

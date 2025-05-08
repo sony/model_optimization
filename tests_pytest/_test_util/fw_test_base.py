@@ -15,7 +15,7 @@
 import abc
 from typing import Callable
 
-from model_compression_toolkit.core import FrameworkInfo, QuantizationConfig
+from model_compression_toolkit.core import FrameworkInfo, QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 
@@ -39,4 +39,7 @@ class BaseFWIntegrationTest(abc.ABC):
                                          mixed_precision_enable=mp,
                                          running_gptq=gptq,
                                          bit_width_config=bit_width_config)
+
         return graph
+
+

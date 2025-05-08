@@ -95,7 +95,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.mult
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
     ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
-    SeparableConvDecomposition, DEPTH_MULTIPLIER
+    SeparableConvDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shift_negative_activation import \
     keras_apply_shift_negative_correction
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.dwconv_to_conv import DwconvToConv

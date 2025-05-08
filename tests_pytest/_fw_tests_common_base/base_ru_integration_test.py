@@ -15,8 +15,11 @@
 import abc
 import copy
 from typing import  Generator
+from unittest.mock import Mock
 
-from model_compression_toolkit.core import QuantizationConfig
+from model_compression_toolkit.constants import THRESHOLD
+
+from model_compression_toolkit.core import QuantizationConfig, CoreConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitActivationNode, VirtualSplitWeightsNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
@@ -85,6 +88,44 @@ def build_tpc():
     return tpc, linear_w_min_nbit, linear_a_min_nbit, default_w_nbit, default_a_nbit, binary_out_a_bit
 
 
+def build_snc_tpc():
+    """Build a minimal TPC for SNC: all ops use a default config except Add, which supports 2/4/8-bit activations."""
+    # Default config for all non-Add ops
+    default_op_cfg = OpQuantizationConfig(
+        default_weight_attr_config=AttributeQuantizationConfig(),
+        attr_weights_configs_mapping={},
+        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        supported_input_activation_n_bits=[8],
+        enable_activation_quantization=True,
+        enable_weights_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        simd_size=32,
+        signedness=Signedness.AUTO
+    )
+
+    # Configs for Add op with different activation bit-widths
+    add_opset, _ = configure_mp_activation_opsets(
+        # This configuration is aimed to the swish so after the SNC, this will be used by the 'add' op
+        opset_names=[OperatorSetNames.SWISH],
+        base_op_config=default_op_cfg,
+        a_nbits=[8]
+    )
+
+    default_cfg = QuantizationConfigOptions(quantization_configurations=[default_op_cfg])
+
+    tpc = TargetPlatformCapabilities(
+        default_qco=default_cfg,
+        tpc_platform_type='snc_test',
+        operator_set=add_opset,
+        fusing_patterns=None
+    )
+    linear_w_min_nbit, linear_a_min_nbit, default_w_nbit, default_a_nbit, binary_out_a_bit = 8, 8, 8, 8, 8
+    return tpc, linear_w_min_nbit, linear_a_min_nbit, default_w_nbit, default_a_nbit, binary_out_a_bit
+
+
 class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
     """ Test resource utilization calculator on a real framework model with graph preparation """
     bhwc_input_shape = (1, 18, 18, 3)
@@ -102,6 +143,13 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         r""" build framework model for test_mult_output_activation:
               x - conv2d(k=3, filters=15, groups=3)  \  subtract -> flatten -> fc(10)
                 \ dwconv2d(k=3, dm=5)                /
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def _build_snc_model(self):
+        r""" build framework model for test_snc_fusing:
+              x -> conv2d -> swish -> conv2d
         """
         raise NotImplementedError()
 
@@ -184,10 +232,47 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         assert self._extract_values(detailed_orig[RUTarget.WEIGHTS]) == exp_w_ru
         assert self._extract_values(detailed_orig[RUTarget.BOPS]) == exp_bops
 
-    def _prepare_graph(self, model, disable_linear_collapse: bool=False):
+    def test_snc_fusing(self):
+        model = self._build_snc_model()
+        graph, nbits = self._prepare_graph(model, snc_tpc=True)
+
+        core_config = CoreConfig(quantization_config=self._get_quantization_config())
+
+        # Set dummy output stats collector
+        dummy_collector = Mock()
+        dummy_collector.get_min_max_values.return_value = (-1.0, 100.0)
+        non_linear_node = graph.get_topo_sorted_nodes()[2]  # the swish node
+        graph.set_out_stats_collector_to_node(non_linear_node, dummy_collector)
+
+        # Set the activation threshold manually
+        for c in non_linear_node.candidates_quantization_cfg:
+            c.activation_quantization_cfg.activation_quantization_params = {THRESHOLD: 100.0}
+
+        graph = self.fw_impl.shift_negative_correction(graph,
+                                                       core_config,
+                                                       self.fw_info)
+
+        linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits
+
+        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
+        ru_orig, detailed_orig = ru_calc.compute_resource_utilization(TargetInclusionCriterion.AnyQuantizedNonFused,
+                                                                      BitwidthMode.QMinBit,
+                                                                      return_detailed=True)
+
+        exp_cuts_ru = [18 * 18 * 3 * default_a_nbit / 8,
+                       (18 * 18 * 3 * default_a_nbit + 18 * 18 * 10 * binary_out_a_bit) / 8,
+                       (18 * 18 * 10 * binary_out_a_bit + 16 * 16 * 1 * linear_a_min_nbit) / 8,
+                       16 * 16 * 1 * linear_a_min_nbit / 8]
+
+        assert self._extract_values(detailed_orig[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)
+
+    def _get_quantization_config(self, disable_linear_collapse: bool=False):
+        return QuantizationConfig(linear_collapsing=False) if disable_linear_collapse else QuantizationConfig()
+
+    def _prepare_graph(self, model, disable_linear_collapse: bool=False, snc_tpc:bool = False):
+        tpc, *nbits = build_snc_tpc() if snc_tpc else build_tpc()
         # If disable_linear_collapse is False we use the default quantization config
-        tpc, *nbits = build_tpc()
-        qcfg = QuantizationConfig(linear_collapsing=False) if disable_linear_collapse else QuantizationConfig()
+        qcfg = self._get_quantization_config(disable_linear_collapse)
         graph = self.run_graph_preparation(model, self._data_gen, tpc, qcfg, mp=True)
         return graph, nbits
 
