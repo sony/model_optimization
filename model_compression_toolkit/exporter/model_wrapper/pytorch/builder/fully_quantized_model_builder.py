@@ -65,26 +65,28 @@ if FOUND_TORCH:
         return module
 
 
-    def get_activation_quantizer_holder(node: BaseNode, holder_type: PytorchActivationQuantizationHolder, fw_impl) -> Callable:
+    def get_activation_quantizer_holder(node: BaseNode, holder_type: PytorchActivationQuantizationHolder, fw_impl, **kwargs) -> Callable:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization of a node.
         If the layer is not supposed to be wrapped with an activation quantizer - return None.
+
         Args:
             node: Node to attach a PytorchActivationQuantizationHolder to its output.
             holder_type: The type of the activation quantization holder to use.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
         # Holder by definition uses a single quantizer for the activation quantization
-        # thus we make sure this is the only possible case (unless it's a node we no activation
+        # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
         _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
         if len(activation_quantizers) == 1:
-            if holder_type == PytorchActivationQuantizationHolder:
-                return holder_type(activation_quantizers[0])
-            elif holder_type == PytorchPreservingActivationQuantizationHolder:
-                return holder_type(activation_quantizers[0], quantization_bypass=True)
+            return holder_type(activation_quantizers[0], **kwargs)
+            # else:
+            #     Logger.critical(f'Unknown activation quantization holder type: {holder_type}.')
+
         Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {node}')
@@ -105,9 +107,9 @@ if FOUND_TORCH:
                                                           wrapper=lambda n, m:
                                                           fully_quantized_wrapper(n, m,
                                                                                   fw_impl=fw_impl),
-                                                          get_activation_quantizer_holder_fn=lambda n, holder_type:
+                                                          get_activation_quantizer_holder_fn=lambda n, holder_type, **kwargs:
                                                           get_activation_quantizer_holder(n, holder_type,
-                                                                                          fw_impl=fw_impl)).build_model()
+                                                                                          fw_impl=fw_impl, **kwargs)).build_model()
 
         Logger.info("\nPlease run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
                     "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
