@@ -30,7 +30,7 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quant
 
 
 def get_activation_quantizer_holder(n: common.BaseNode,
-                                    qat_config: QATConfig) -> Callable:
+                                    qat_config: QATConfig, holder_type) -> Callable:
     """
     Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
     If the layer is not supposed to be wrapped with activation quantizers - return None.
