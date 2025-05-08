@@ -70,8 +70,8 @@ def tpc_schema_v2():
         default_qco=TEST_QC,
         operator_set=(op1, op2, op3),
         fusing_patterns=(
-            schema_v2.Fusing(operator_groups=(op12, op3), fuse_op_quantization_config=TEST_QC),
-            schema_v2.Fusing(operator_groups=(op1, op2), fuse_op_quantization_config=TEST_QC)
+            schema_v2.Fusing(operator_groups=(op12, op3), fuse_op_quantization_config=TEST_QCO),
+            schema_v2.Fusing(operator_groups=(op1, op2), fuse_op_quantization_config=TEST_QCO)
         ),
         tpc_minor_version=1,
         tpc_patch_version=0,
@@ -79,15 +79,18 @@ def tpc_schema_v2():
         add_metadata=False,
         insert_preserving_quantizers=False
     )
+
+
 def get_tpc(selected_schema):
     """
     :param selected_schema: A schema to create tpc from
     :return: TargetPlatformCapabilities instance using the given selected_schema
     """
+    return tpc_schema_v1()
     return {
-        schema_v1: tpc_schema_v1,
-        schema_v2: tpc_schema_v2,
-    }[selected_schema]()
+        schema_v1.TargetPlatformCapabilities: tpc_schema_v1,
+        schema_v2.TargetPlatformCapabilities: tpc_schema_v2,
+    }[selected_schema.TargetPlatformCapabilities]()
 
 
 @pytest.fixture
