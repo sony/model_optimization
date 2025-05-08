@@ -105,7 +105,7 @@ class Fusing(TargetPlatformModelComponent):
     Attributes:
         operator_groups (Tuple[Union[OperatorsSet, OperatorSetGroup], ...]): A tuple of operator groups,
                                                                               each being either an OperatorSetGroup or an OperatorsSet.
-        fuse_op_quantization_config (OpQuantizationConfig): The quantization configuration for the fused operator.
+        fuse_op_quantization_config (Optional[OpQuantizationConfig]): The quantization configuration for the fused operator.
         name (Optional[str]): The name for the Fusing instance. If not provided, it is generated from the operator groups' names.
     """
     operator_groups: Tuple[Annotated[Union[OperatorsSet, OperatorSetGroup], Field(discriminator='type')], ...]
