@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
-from unittest.mock import Mock, patch
 
 import model_compression_toolkit as mct
 import torch

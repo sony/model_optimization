@@ -17,7 +17,6 @@ from unittest.mock import Mock
 from typing import List
 import torch
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_activation_quantizer_holder, fully_quantized_wrapper
-from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 
 from model_compression_toolkit.core.common import Graph

@@ -27,7 +27,6 @@ if FOUND_TORCH:
     from mct_quantizers.common.constants import OP_CALL_ARGS, OP_CALL_KWARGS
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
     from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-    from mct_quantizers.pytorch.quantizers.base_pytorch_inferable_quantizer import BasePyTorchInferableQuantizer
 
 
     def fully_quantized_wrapper(node: common.BaseNode,
