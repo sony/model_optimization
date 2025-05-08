@@ -65,13 +65,13 @@ if FOUND_TORCH:
         return module
 
 
-    def get_activation_quantizer_holder(node: BaseNode, holder_type, fw_impl) -> Callable:
+    def get_activation_quantizer_holder(node: BaseNode, holder_type: PytorchActivationQuantizationHolder, fw_impl) -> Callable:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization of a node.
         If the layer is not supposed to be wrapped with an activation quantizer - return None.
         Args:
             node: Node to attach a PytorchActivationQuantizationHolder to its output.
-            holder_type: ActivationQuantizationHolder type
+            holder_type: The type of the activation quantization holder to use.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.

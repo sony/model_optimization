@@ -143,7 +143,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                 'max_candidate_idx': max_candidate_idx
                 }
 
-    def mixed_precision_activation_holder(self, n: BaseNode, holder_type=PytorchActivationQuantizationHolder) -> PytorchActivationQuantizationHolder:
+    def mixed_precision_activation_holder(self, n: BaseNode, holder_type: PytorchActivationQuantizationHolder = PytorchActivationQuantizationHolder) -> PytorchActivationQuantizationHolder:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization for a node.
         The layer should hold either a configurable activation quantizer, if it is quantized with mixed precision,
@@ -151,7 +151,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         Args:
             n: Node to get PytorchActivationQuantizationHolder to attach in its output.
-            holder_type: ActivationQuantizationHolder type
+            holder_type: The type of the activation quantization holder to use.
 
         Returns:
             A PytorchActivationQuantizationHolder layer for the node activation quantization.
