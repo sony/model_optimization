@@ -197,11 +197,12 @@ class PytorchGPTQTrainer(GPTQTrainer):
         #  quantized, do we need to wrap them as well?
         return layer
 
-    def get_activation_quantizer_holder(self, n: BaseNode) -> Callable:
+    def get_activation_quantizer_holder(self, n: BaseNode, holder_type: PytorchActivationQuantizationHolder = PytorchActivationQuantizationHolder) -> Callable:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization of a node.
         Args:
             n: Node to attach a PytorchActivationQuantizationHolder to its output.
+            holder_type: The type of the activation quantization holder to use.
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
@@ -213,7 +214,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                             f"but {len(activation_quantizers)} were found for node {n.name}. "
                             f"Ensure the node is configured with a single activation quantizer.")
         quantizer = self.gradual_act_quantizer_wrapper_factory(activation_quantizers[0])
-        return PytorchActivationQuantizationHolder(quantizer)
+        return holder_type(quantizer)
 
     def build_gptq_model(self):
         """
