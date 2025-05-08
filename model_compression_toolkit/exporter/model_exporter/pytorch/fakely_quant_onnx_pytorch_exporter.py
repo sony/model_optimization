@@ -18,6 +18,8 @@ from io import BytesIO
 import torch.nn
 
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
+
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.verify_packages import FOUND_ONNX
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
@@ -98,15 +100,17 @@ if FOUND_ONNX:
             model_output = self.model(*model_input) if isinstance(model_input, (list, tuple)) else self.model(
                 model_input)
 
+            input_nodes = [n for n in self.model.node_sort if n.type == DummyPlaceHolder]
+            input_names = [f"input_{i}" for i in range(len(input_nodes))] if len(input_nodes) > 1 else ["input"]
+            dynamic_axes = {name: {0: 'batch_size'} for name in input_names}
             if output_names is None:
                 # Determine number of outputs and prepare output_names and dynamic_axes
                 if isinstance(model_output, (list, tuple)):
                     output_names = [f"output_{i}" for i in range(len(model_output))]
-                    dynamic_axes = {'input': {0: 'batch_size'}}
                     dynamic_axes.update({name: {0: 'batch_size'} for name in output_names})
                 else:
                     output_names = ['output']
-                    dynamic_axes = {'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+                    dynamic_axes.update({'output': {0: 'batch_size'}})
             else:
                 if isinstance(model_output, (list, tuple)):
                     num_of_outputs = len(model_output)
@@ -115,9 +119,7 @@ if FOUND_ONNX:
                 assert len(output_names) == num_of_outputs, (f"Mismatch between number of requested output names "
                                                              f"({output_names}) and model output count "
                                                              f"({num_of_outputs}):\n")
-                dynamic_axes = {'input': {0: 'batch_size'}}
                 dynamic_axes.update({name: {0: 'batch_size'} for name in output_names})
-
             if hasattr(self.model, 'metadata'):
                 onnx_bytes = BytesIO()
                 torch.onnx.export(self.model,
@@ -125,7 +127,7 @@ if FOUND_ONNX:
                                   onnx_bytes,
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
-                                  input_names=['input'],
+                                  input_names=input_names,
                                   output_names=output_names,
                                   dynamic_axes=dynamic_axes)
                 onnx_model = onnx.load_from_string(onnx_bytes.getvalue())
@@ -137,7 +139,7 @@ if FOUND_ONNX:
                                   self.save_model_path,
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
-                                  input_names=['input'],
+                                  input_names=input_names,
                                   output_names=output_names,
                                   dynamic_axes=dynamic_axes)
 
