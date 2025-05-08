@@ -100,7 +100,7 @@ def get_conversion_map() -> dict:
 
 
 def tpc_to_current_schema_version(
-        tpc: Union[all_tpc_types]) -> current_schema.TargetPlatformCapabilities:  # pragma: no cover
+        tpc: Union[all_tpc_types]) -> current_schema.TargetPlatformCapabilities:
     """
     Given tpc instance of some schema version, convert it to the current MCT schema version.
 
