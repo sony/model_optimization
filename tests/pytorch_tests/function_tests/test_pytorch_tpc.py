@@ -26,7 +26,7 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.constants import PYTORCH, FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL, KERNEL_ATTR, WEIGHTS_N_BITS, PYTORCH_KERNEL, BIAS_ATTR, BIAS
@@ -236,15 +236,15 @@ class TestPytorchTPModel(unittest.TestCase):
                                                fusing_patterns=tuple(fusing_patterns),
                                                add_metadata=False)
 
-        hm_keras = FrameworkQuantizationCapabilities(hm)
-        with hm_keras:
+        hm_torch = FrameworkQuantizationCapabilities(hm)
+        with hm_torch:
             OperationsSetToLayers("opA", [torch.conv2d])
             OperationsSetToLayers("opB", [torch.tanh])
             OperationsSetToLayers("opC", [LayerFilterParams(torch.relu, Greater("max_value", 7), negative_slope=0)])
 
-        fusings = hm_keras.get_fusing_patterns()
+        fusings = hm_torch.get_fusing_patterns()
         self.assertEqual(len(fusings), 2)
-        p0, p1 = fusings[0], fusings[1]
+        p0, p1 = fusings[0].get(FUSED_LAYER_PATTERN), fusings[1].get(FUSED_LAYER_PATTERN)
 
         self.assertEqual(len(p0), 3)
         self.assertEqual(p0[0], torch.conv2d)
