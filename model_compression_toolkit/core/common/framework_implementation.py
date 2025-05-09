@@ -13,24 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 from abc import ABC, abstractmethod
-from typing import Callable, Any, List, Tuple, Dict, Generator
+from typing import Callable, Any, List, Tuple, Generator, Type
 
 import numpy as np
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianInfoService
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.core.common.user_info import UserInformation
 
 
 class FrameworkImplementation(ABC):
@@ -38,6 +34,10 @@ class FrameworkImplementation(ABC):
     An abstract class with abstract methods that should be implemented when supporting a new
     framework in MCT.
     """
+    weights_quant_layer_cls: Type
+    activation_quant_layer_cls: Type
+    configurable_weights_quantizer_cls: Type
+    configurable_activation_quantizer_cls: Type
 
     @property
     def constants(self):
@@ -326,33 +326,6 @@ class FrameworkImplementation(ABC):
         raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_after_second_moment_correction '
                              f'method.')  # pragma: no cover
-
-    @abstractmethod
-    def get_sensitivity_evaluator(self,
-                                  graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfig,
-                                  representative_data_gen: Callable,
-                                  fw_info: FrameworkInfo,
-                                  hessian_info_service: HessianInfoService = None,
-                                  disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
-        """
-        Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
-        configuration (comparing to the float model).
-
-        Args:
-            graph: Graph to build its float and mixed-precision models.
-            quant_config: QuantizationConfig of how the model should be quantized.
-            representative_data_gen: Dataset to use for retrieving images for the models inputs.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-            disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_info_service: HessianInfoService to fetch information based on Hessian-approximation.
-
-        Returns:
-            A function that computes the metric.
-        """
-
-        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
-                             f'framework\'s get_sensitivity_evaluator method.')  # pragma: no cover
 
     def get_node_prior_info(self, node: BaseNode,
                             fw_info: FrameworkInfo,

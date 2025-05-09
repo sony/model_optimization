@@ -89,33 +89,13 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         """
 
         kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-        if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
-            weights_conf_nodes_names = [node.name for node in self.graph.get_weights_configurable_nodes(self.fw_info)]
-            if n.name in weights_conf_nodes_names:
-                wq = ConfigurableWeightsQuantizer(**self._get_weights_configurable_quantizer_kwargs(n, kernel_attr))
-                return KerasQuantizationWrapper(layer, weights_quantizers={kernel_attr: wq})
-            else:
-                # TODO: Do we want to include other quantized attributes that are not
-                #  the kernel attribute in the mixed precision model?
-                #  Currently, we only consider kernel attribute quantization (whether it is in mixed precision
-                #  or single precision).
-                node_weights_qc = n.get_unique_weights_candidates(kernel_attr)
-                if not len(node_weights_qc) == 1:
-                    Logger.critical(f"Expected a unique weights configuration for node {n.name}, but found {len(node_weights_qc)} configurations.")# pragma: no cover
-
-                weights_quant_cfg = node_weights_qc[0].weights_quantization_cfg
-                weights_quant_method = weights_quant_cfg.get_attr_config(kernel_attr).weights_quantization_method
-                quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
-                                                                  weights_quant_method,
-                                                                  BaseKerasInferableQuantizer)
-                kwargs = get_inferable_quantizer_kwargs(weights_quant_cfg,
-                                                        QuantizationTarget.Weights,
-                                                        kernel_attr)
-
-                return KerasQuantizationWrapper(layer,
-                                                weights_quantizers={kernel_attr: quantier_for_node(**kwargs)})
-
-        return layer
+        if kernel_attr is None:
+            return layer
+        assert n.is_configurable_weight(kernel_attr), 'weight wrapper is not expected to be created for non-configurable weight'
+        weights_conf_nodes_names = [node.name for node in self.graph.get_weights_configurable_nodes(self.fw_info)]
+        assert n.name in weights_conf_nodes_names
+        wq = ConfigurableWeightsQuantizer(**self._get_weights_configurable_quantizer_kwargs(n, kernel_attr))
+        return KerasQuantizationWrapper(layer, weights_quantizers={kernel_attr: wq})
 
     def _get_weights_configurable_quantizer_kwargs(self, n: BaseNode, attr: str) -> Dict[str, Any]:
         """
@@ -157,40 +137,22 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         Returns:
             A KerasActivationQuantizationHolder layer for the node activation quantization.
         """
+        assert n.has_configurable_activation(), 'activation holder is not expected to be created for non-configurable activation'
+        num_of_outputs = len(n.output_shape) if isinstance(n.output_shape, list) else 1
+        node_q_cfg_candidates = n.candidates_quantization_cfg
 
-        activation_conf_nodes_names = [n.name for n in self.graph.get_activation_configurable_nodes()]
+        # sorting the candidates by kernel attribute weights number of bits first and then by
+        # activation number of bits (in reversed order).
+        # since only kernel attribute is quantized in weights mixed precision,
+        # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
+        n.sort_node_candidates(self.fw_info)
 
-        activation_quantizers = []
-        if n.is_activation_quantization_enabled():
-            num_of_outputs = len(n.output_shape) if isinstance(n.output_shape, list) else 1
-
-            if n.name in activation_conf_nodes_names:
-                assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
-                node_q_cfg_candidates = n.candidates_quantization_cfg
-
-                # sorting the candidates by kernel attribute weights number of bits first and then by
-                # activation number of bits (in reversed order).
-                # since only kernel attribute is quantized in weights mixed precision,
-                # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
-                n.sort_node_candidates(self.fw_info)
-
-                max_candidate_idx = n.find_max_candidate_index()
-                kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-                activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
-                                                                            'max_candidate_idx': max_candidate_idx,
-                                                                            'kernel_attr': kernel_attr})] \
-                                        * num_of_outputs
-            else:
-                node_act_qc = n.get_unique_activation_candidates()
-                assert len(node_act_qc) == 1, f"Expecting node {n.name} to have a unique activation configuration, " \
-                                              f"but {len(node_act_qc)} different configurations exist."
-                quantizer_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
-                                                                   node_act_qc[0].activation_quantization_cfg.activation_quantization_method,
-                                                                   BaseKerasInferableQuantizer)
-                kwargs = get_inferable_quantizer_kwargs(node_act_qc[0].activation_quantization_cfg,
-                                                        QuantizationTarget.Activation)
-
-                activation_quantizers = [quantizer_for_node(**kwargs)] * num_of_outputs
+        max_candidate_idx = n.find_max_candidate_index()
+        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
+                                                                    'max_candidate_idx': max_candidate_idx,
+                                                                    'kernel_attr': kernel_attr})] \
+                                 * num_of_outputs
 
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node with no activation

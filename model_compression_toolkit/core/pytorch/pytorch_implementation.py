@@ -26,14 +26,12 @@ from torch.nn import Module, Sigmoid, Softmax
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
-from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
@@ -112,6 +110,10 @@ class PytorchImplementation(FrameworkImplementation):
     """
     A class with implemented methods to support optimizing Pytorch models.
     """
+    weights_quant_layer_cls = PytorchQuantizationWrapper,
+    activation_quant_layer_cls = PytorchActivationQuantizationHolder
+    configurable_weights_quantizer_cls = ConfigurableWeightsQuantizer
+    configurable_activation_quantizer_cls = ConfigurableActivationQuantizer
 
     def __init__(self):
         super().__init__()
@@ -396,43 +398,6 @@ class PytorchImplementation(FrameworkImplementation):
         if quant_config.weights_second_moment_correction:
             substitutions_list.append(pytorch_batchnorm_refusing())
         return substitutions_list
-
-    def get_sensitivity_evaluator(self,
-                                  graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfig,
-                                  representative_data_gen: Callable,
-                                  fw_info: FrameworkInfo,
-                                  disable_activation_for_metric: bool = False,
-                                  hessian_info_service: HessianInfoService = None
-                                  ) -> SensitivityEvaluation:
-        """
-        Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
-        configuration (comparing to the float model).
-
-        Args:
-            graph: Graph to build its float and mixed-precision models.
-            quant_config: QuantizationConfig of how the model should be quantized.
-            representative_data_gen: Dataset to use for retrieving images for the models inputs.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-            disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_info_service: HessianScoresService to fetch approximations of the hessian scores for the float model.
-
-        Returns:
-            A SensitivityEvaluation object.
-        """
-
-        return SensitivityEvaluation(graph=graph,
-                                     quant_config=quant_config,
-                                     representative_data_gen=representative_data_gen,
-                                     fw_info=fw_info,
-                                     fw_impl=self,
-                                     set_layer_to_bitwidth=partial(set_layer_to_bitwidth,
-                                                                   weights_quantizer_type=ConfigurableWeightsQuantizer,
-                                                                   activation_quantizer_type=ConfigurableActivationQuantizer,
-                                                                   weights_quant_layer_type=PytorchQuantizationWrapper,
-                                                                   activation_quant_layer_type=PytorchActivationQuantizationHolder),
-                                     disable_activation_for_metric=disable_activation_for_metric,
-                                     hessian_info_service=hessian_info_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,

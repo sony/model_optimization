@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from functools import partial
-from typing import List, Any, Tuple, Callable, Dict, Union, Generator
+from typing import List, Any, Tuple, Callable, Union, Generator
 
 import numpy as np
 import tensorflow as tf
@@ -22,7 +22,7 @@ from tensorflow.keras.models import Model
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
@@ -35,8 +35,6 @@ from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
-from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
 from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME, \
     COMBINED_NMS
@@ -61,7 +59,7 @@ else:
     from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add   # pragma: no cover
     from keras.layers.core import TFOpLambda   # pragma: no cover
 
-from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -95,7 +93,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.mult
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
     ScaleEqualization, ScaleEqualizationWithPad, ScaleEqualizationMidActivation, ScaleEqualizationMidActivationWithPad
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
-    SeparableConvDecomposition, DEPTH_MULTIPLIER
+    SeparableConvDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shift_negative_activation import \
     keras_apply_shift_negative_correction
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.dwconv_to_conv import DwconvToConv
@@ -110,9 +108,10 @@ class KerasImplementation(FrameworkImplementation):
     """
     A class with implemented methods to support optimizing Keras models.
     """
-
-    def __init__(self):
-        super().__init__()
+    weights_quant_layer_cls = KerasQuantizationWrapper
+    activation_quant_layer_cls = KerasActivationQuantizationHolder
+    configurable_weights_quantizer_cls = ConfigurableWeightsQuantizer
+    configurable_activation_quantizer_cls = ConfigurableActivationQuantizer
 
     @property
     def constants(self):
@@ -400,42 +399,6 @@ class KerasImplementation(FrameworkImplementation):
         if quant_config.weights_second_moment_correction:
             substitutions_list.append(keras_batchnorm_refusing())
         return substitutions_list
-
-    def get_sensitivity_evaluator(self,
-                                  graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfig,
-                                  representative_data_gen: Callable,
-                                  fw_info: FrameworkInfo,
-                                  disable_activation_for_metric: bool = False,
-                                  hessian_info_service: HessianInfoService = None) -> SensitivityEvaluation:
-        """
-        Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
-        configuration (comparing to the float model).
-
-        Args:
-            graph: Graph to build its float and mixed-precision models.
-            quant_config: QuantizationConfig of how the model should be quantized.
-            representative_data_gen: Dataset to use for retrieving images for the models inputs.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
-            disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_info_service: HessianScoresService to fetch scores based on a Hessian-approximation for the float model.
-
-        Returns:
-            A SensitivityEvaluation object.
-        """
-
-        return SensitivityEvaluation(graph=graph,
-                                     quant_config=quant_config,
-                                     representative_data_gen=representative_data_gen,
-                                     fw_info=fw_info,
-                                     fw_impl=self,
-                                     set_layer_to_bitwidth=partial(set_layer_to_bitwidth,
-                                                                   weights_quantizer_type=ConfigurableWeightsQuantizer,
-                                                                   activation_quantizer_type=ConfigurableActivationQuantizer,
-                                                                   weights_quant_layer_type=KerasQuantizationWrapper,
-                                                                   activation_quant_layer_type=KerasActivationQuantizationHolder),
-                                     disable_activation_for_metric=disable_activation_for_metric,
-                                     hessian_info_service=hessian_info_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,

@@ -12,39 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any
+import typing
+from typing import Any, Optional
+
+if typing.TYPE_CHECKING:    # pragma: no cover
+    from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 
 
-def set_layer_to_bitwidth(quantization_layer: Any,
-                          bitwidth_idx: int,
-                          weights_quantizer_type: type,
-                          activation_quantizer_type: type,
-                          weights_quant_layer_type: type,
-                          activation_quant_layer_type: type):
+def set_activation_quant_layer_to_bitwidth(quantization_layer: Any,
+                                           bitwidth_idx: Optional[int],
+                                           fw_impl: 'FrameworkImplementation'):
     """
-    Configures a layer's configurable quantizer to work with a different bit-width.
+    Configures a layer's configurable activation quantizer to work with a different bit-width.
     The bit-width_idx is the index of the actual quantizer the quantizer object in the quantization_layer wraps/holds.
 
     Args:
         quantization_layer: Layer to change its bit-width.
-        bitwidth_idx: Index of the bit-width the layer should work with.
-        weights_quantizer_type: A class of weights quantizer with configurable bitwidth options.
-        activation_quantizer_type: A class of activation quantizer with configurable bitwidth options.
-        weights_quant_layer_type: A class of a weights layer wrapper.
-        activation_quant_layer_type: A class of an activation quantization holder.
+        bitwidth_idx: Index of the bit-width the layer should work with, or None to disable quantization.
+        fw_impl: framework implementation object.
     """
+    assert isinstance(quantization_layer, fw_impl.activation_quant_layer_cls)
+    assert isinstance(quantization_layer.activation_holder_quantizer, fw_impl.configurable_activation_quantizer_cls)
+    quantization_layer.activation_holder_quantizer.set_active_activation_quantizer(bitwidth_idx)
 
-    if isinstance(quantization_layer, weights_quant_layer_type):
-        for _, quantizer in quantization_layer.weights_quantizers.items():
-            if isinstance(quantizer, weights_quantizer_type):
-                # Setting bitwidth only for configurable layers. There might be wrapped layers that aren't configurable,
-                # for instance, if only activations are quantized with mixed precision and weights are quantized with
-                # fixed precision
-                quantizer.set_weights_bit_width_index(bitwidth_idx)
 
-    if isinstance(quantization_layer, activation_quant_layer_type):
-        if isinstance(quantization_layer.activation_holder_quantizer, activation_quantizer_type):
-            # Setting bitwidth only for configurable layers. There might be activation layers that isn't configurable,
-            # for instance, if only weights are quantized with mixed precision and activation are quantized with
-            # fixed precision
-            quantization_layer.activation_holder_quantizer.set_active_activation_quantizer(bitwidth_idx)
+def set_weights_quant_layer_to_bitwidth(quantization_layer: Any,
+                                        bitwidth_idx: Optional[int],
+                                        fw_impl: 'FrameworkImplementation'):
+    """
+    Configures a layer's configurable weights quantizer to work with a different bit-width.
+    The bit-width_idx is the index of the actual quantizer the quantizer object in the quantization_layer wraps/holds.
+
+    Args:
+        quantization_layer: Layer to change its bit-width.
+        bitwidth_idx: Index of the bit-width the layer should work with, or None to disable quantization.
+        fw_impl: framework implementation object.
+    """
+    assert isinstance(quantization_layer, fw_impl.weights_quant_layer_cls)
+    configurable_quantizers = [q for q in quantization_layer.weights_quantizers.values()
+                               if isinstance(q, fw_impl.configurable_weights_quantizer_cls)]
+    assert configurable_quantizers
+    for quantizer in configurable_quantizers:
+        quantizer.set_weights_bit_width_index(bitwidth_idx)

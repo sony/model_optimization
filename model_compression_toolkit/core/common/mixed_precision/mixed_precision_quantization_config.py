@@ -14,9 +14,21 @@
 # ==============================================================================
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import List, Callable, Optional
 from model_compression_toolkit.constants import MP_DEFAULT_NUM_SAMPLES, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+
+
+class MpMetricNormalization(Enum):
+    """
+    MAXBIT: normalize sensitivity metrics of layer candidates by max-bitwidth candidate (of that layer).
+    MINBIT: normalize sensitivity metrics of layer candidates by min-bitwidth candidate (of that layer).
+    NONE: no normalization.
+    """
+    MAXBIT = 'MAXBIT'
+    MINBIT = 'MINBIT'
+    NONE = 'NONE'
 
 
 @dataclass
@@ -27,7 +39,6 @@ class MixedPrecisionQuantizationConfig:
     Args:
         compute_distance_fn (Callable): Function to compute a distance between two tensors. If None, using pre-defined distance methods based on the layer type for each layer.
         distance_weighting_method (MpDistanceWeighting): MpDistanceWeighting enum value that provides a function to use when weighting the distances among different layers when computing the sensitivity metric.
-        custom_metric_fn (Callable): Function to compute a custom metric. As input gets the model_mp and returns a float value for metric. If None, uses interest point metric.
         num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
         configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
         num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
@@ -36,11 +47,16 @@ class MixedPrecisionQuantizationConfig:
         refine_mp_solution (bool): Whether to try to improve the final mixed-precision configuration using a greedy algorithm that searches layers to increase their bit-width, or not.
         metric_normalization_threshold (float): A threshold for checking the mixed precision distance metric values, In case of values larger than this threshold, the metric will be scaled to prevent numerical issues.
         hessian_batch_size (int): The Hessian computation batch size. used only if using mixed precision with Hessian-based objective.
-    """
+        metric_normalization (MpMetricNormalization): Metric normalization method.
+        metric_epsilon (float | None): ensure minimal distance between the metric for any non-max-bidwidth candidate
+          and a max-bitwidth candidate, i.e. metric(non-max-bitwidth) >= metric(max-bitwidth) + epsilon.
+          If none, the computed metrics are used as is.
+        custom_metric_fn (Callable): Function to compute a custom metric. As input gets the model_mp and returns a
+          float value for metric. If None, uses interest point metric.
 
+    """
     compute_distance_fn: Optional[Callable] = None
     distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG
-    custom_metric_fn: Optional[Callable] = None
     num_of_images: int = MP_DEFAULT_NUM_SAMPLES
     configuration_overwrite: Optional[List[int]] = None
     num_interest_points_factor: float = field(default=1.0, metadata={"description": "Should be between 0.0 and 1.0"})
@@ -49,6 +65,9 @@ class MixedPrecisionQuantizationConfig:
     refine_mp_solution: bool = True
     metric_normalization_threshold: float = 1e10
     hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE
+    metric_normalization: MpMetricNormalization = MpMetricNormalization.NONE
+    metric_epsilon: Optional[float] = 1e-6
+    custom_metric_fn: Optional[Callable] = None
     _is_mixed_precision_enabled: bool = field(init=False, default=False)
 
     def __post_init__(self):
