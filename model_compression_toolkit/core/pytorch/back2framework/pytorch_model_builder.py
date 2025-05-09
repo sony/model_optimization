@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2025 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
-from mct_quantizers import PytorchQuantizationWrapper
+from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
 
 
 def _build_input_tensors_list(node: BaseNode,
@@ -332,13 +332,21 @@ class PytorchModel(torch.nn.Module):
             else:
                 self.add_module(node.name, node_op)
 
-            # Add activation quantization modules if an activation holder is configured for this node
-            if node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:
-                activation_quantizer_holder = self.get_activation_quantizer_holder(node)
-                if activation_quantizer_holder is not None:
-                    self.add_module(node.name + '_' + ACTIVATION_HOLDER_QUANTIZER, activation_quantizer_holder)
-                    self.node_to_activation_quantization_holder.update(
-                        {node.name: node.name + '_' + ACTIVATION_HOLDER_QUANTIZER})
+            activation_quantizer_holder = None
+            if self.use_activation_holder_during_model_building:
+                if node.is_activation_quantization_enabled():
+                    activation_quantizer_holder = self.get_activation_quantizer_holder(node, holder_type=PytorchActivationQuantizationHolder)
+                
+                elif node.is_quantization_preserving():
+                    prev_node = self.graph.retrieve_preserved_quantization_node(node)
+                    if prev_node.is_activation_quantization_enabled():
+                        activation_quantizer_holder = self.get_activation_quantizer_holder(prev_node, holder_type=PytorchPreservingActivationQuantizationHolder)
+
+            if activation_quantizer_holder is not None:
+                activation_quantizer_holder_name = node.name + '_' + ACTIVATION_HOLDER_QUANTIZER
+                self.add_module(activation_quantizer_holder_name, activation_quantizer_holder)
+                self.node_to_activation_quantization_holder.update(
+                    {node.name: activation_quantizer_holder_name})
 
     def forward(self,
                 *args: Any) -> Any:
