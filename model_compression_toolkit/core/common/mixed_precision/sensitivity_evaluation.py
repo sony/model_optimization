@@ -20,6 +20,8 @@ from typing import Callable, Any, List, Tuple
 from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import \
+    set_activation_quant_layer_to_bitwidth, set_weights_quant_layer_to_bitwidth
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence
@@ -41,7 +43,6 @@ class SensitivityEvaluation:
                  representative_data_gen: Callable,
                  fw_info: FrameworkInfo,
                  fw_impl: Any,
-                 set_layer_to_bitwidth: Callable,
                  disable_activation_for_metric: bool = False,
                  hessian_info_service: HessianInfoService = None
                  ):
@@ -63,8 +64,6 @@ class SensitivityEvaluation:
             quant_config: MP Quantization configuration for how the graph should be quantized.
             representative_data_gen: Dataset used for getting batches for inference.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-            set_layer_to_bitwidth: A fw-dependent function that allows to configure a configurable MP model
-                    with a specific bit-width configuration.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
             hessian_info_service: HessianInfoService to fetch Hessian approximation information.
 
@@ -74,7 +73,6 @@ class SensitivityEvaluation:
         self.representative_data_gen = representative_data_gen
         self.fw_info = fw_info
         self.fw_impl = fw_impl
-        self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
             if not isinstance(hessian_info_service, HessianInfoService):
@@ -307,7 +305,13 @@ class SensitivityEvaluation:
                 f"Matching layers for node {node_name} not found in the mixed precision model configuration.")  # pragma: no cover
 
         for current_layer in layers_to_config:
-            self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
+            if isinstance(current_layer, self.fw_impl.activation_quant_layer_cls):
+                set_activation_quant_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure],
+                                                       self.fw_impl)
+            else:
+                assert isinstance(current_layer, self.fw_impl.weights_quant_layer_cls)
+                set_weights_quant_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure],
+                                                    self.fw_impl)
 
     def _compute_points_distance(self,
                                  baseline_tensors: List[Any],

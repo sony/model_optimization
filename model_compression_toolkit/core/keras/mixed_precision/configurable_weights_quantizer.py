@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from functools import partial
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
     verify_candidates_descending_order, init_quantized_weights
@@ -88,17 +88,17 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
         self.active_quantization_config_index = self.max_candidate_idx
 
     def set_weights_bit_width_index(self,
-                                    index: int):
+                                    index: Optional[int]):
         """
         Change the "active" bitwidth index the configurable quantizer uses, so a different quantized weight
         will be used.
 
         Args:
-            index: Quantization configuration candidate index to use.
+            index: Quantization configuration candidate index to use, or None to disable quantization.
 
         """
 
-        if index >= len(self.node_q_cfg):
+        if index and index >= len(self.node_q_cfg):
             Logger.critical(f'Quantizer supports only {len(self.node_q_cfg)} bit width configurations; index {index} is out of range.')# pragma: no cover
         self.active_quantization_config_index = index
 
@@ -118,7 +118,8 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
             specific quantization configuration candidate (the candidate's index is the
             index that is in active_quantization_config_index the quantizer holds).
         """
-
+        if self.active_quantization_config_index is None:
+            return self.float_weights
         return self.quantized_weights[self.active_quantization_config_index]
 
     def get_config(self) -> Dict[str, Any]:  # pragma: no cover
