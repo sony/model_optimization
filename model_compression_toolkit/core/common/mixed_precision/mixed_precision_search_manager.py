@@ -19,7 +19,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Set
 
 import numpy as np
 
@@ -82,16 +82,16 @@ class MixedPrecisionSearchManager:
         self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
 
         self.ru_targets = target_resource_utilization.get_restricted_targets()
-        self.ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
+        self.orig_graph_ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
 
         self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
 
-        self.config_reconstruction_helper = ConfigReconstructionHelper(self.original_graph)
+        self.config_reconstructor = None
+        orig_min_config = self.min_ru_config
         if self.using_virtual_graph:
-            real_min_ru_config = self.config_reconstruction_helper.reconstruct_full_configuration(self.min_ru_config)
-            self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, real_min_ru_config)
-        else:
-            self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, self.min_ru_config)
+            self.config_reconstructor = ConfigReconstructionHelper(self.original_graph)
+            orig_min_config = self.config_reconstructor.reconstruct_full_configuration(self.min_ru_config)
+        self.min_ru = self.orig_graph_ru_helper.compute_utilization(self.ru_targets, orig_min_config)
 
     def search(self) -> Dict[BaseNode, int]:
         """
@@ -103,7 +103,7 @@ class MixedPrecisionSearchManager:
         mp_config = self._prepare_and_run_solver()
 
         if self.using_virtual_graph:
-            mp_config = self.config_reconstruction_helper.reconstruct_full_configuration(mp_config)
+            mp_config = self.config_reconstructor.reconstruct_full_configuration(mp_config)
 
         return mp_config
 
@@ -162,7 +162,7 @@ class MixedPrecisionSearchManager:
             candidates_sensitivity = np.empty(len(node.candidates_quantization_cfg))
             for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
                 if self.using_virtual_graph:
-                    a_cfg, w_cfg = self.config_reconstruction_helper.reconstruct_separate_aw_configs({node: bitwidth_idx})
+                    a_cfg, w_cfg = self.config_reconstructor.reconstruct_separate_aw_configs({node: bitwidth_idx})
                 else:
                     a_cfg = {node: bitwidth_idx} if node.has_configurable_activation() else {}
                     w_cfg = {node: bitwidth_idx} if node.has_any_configurable_weight() else {}
@@ -234,8 +234,9 @@ class MixedPrecisionSearchManager:
                 else:
                     cfg = self.min_ru_config.copy()
                     cfg[node] = candidate_idx
-                    real_cfg = self.config_reconstruction_helper.reconstruct_full_configuration(cfg)
-                    candidate_rus = self.ru_helper.compute_utilization(self.ru_targets, real_cfg)
+                    if self.using_virtual_graph:
+                        cfg = self.config_reconstructor.reconstruct_full_configuration(cfg)
+                    candidate_rus = self.orig_graph_ru_helper.compute_utilization(self.ru_targets, cfg)
 
                 for target, ru in candidate_rus.items():
                     rus_per_candidate[target].append(ru)
@@ -273,8 +274,8 @@ class MixedPrecisionSearchManager:
         with the given config.
 
         """
-        act_qcs, w_qcs = self.ru_helper.get_quantization_candidates(config)
-        ru = self.ru_helper.ru_calculator.compute_resource_utilization(
+        act_qcs, w_qcs = self.orig_graph_ru_helper.get_quantization_candidates(config)
+        ru = self.orig_graph_ru_helper.ru_calculator.compute_resource_utilization(
             target_criterion=TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs,
             w_qcs=w_qcs, ru_targets=self.ru_targets, allow_unused_qcs=True)
         return ru
