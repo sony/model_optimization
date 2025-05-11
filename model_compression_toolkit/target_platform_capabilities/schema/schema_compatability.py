@@ -34,15 +34,15 @@ def is_tpc_instance(tpc_obj_or_path: Any) -> bool:
     return type(tpc_obj_or_path) in all_tpc_types
 
 
-def get_schema_by_version(schema_version: int):
+def get_schema_by_version(schema_version: str):
     return {
-        1: schema_v1,
-        2: schema_v2
+        "1": schema_v1,
+        "2": schema_v2
     }[schema_version]
 
 
 def _schema_v1_to_v2(
-        tpc: schema_v1.TargetPlatformCapabilities) -> schema_v2.TargetPlatformCapabilities:  # pragma: no cover
+        tpc: schema_v1.TargetPlatformCapabilities) -> schema_v2.TargetPlatformCapabilities:
     """
     Converts given tpc of schema version 1 to schema version 2.
     Schema v2 updates:

@@ -23,7 +23,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.schema_compat
 
 def _get_json_schema(tpc_json_path: str):
     with open(tpc_json_path, 'r', encoding='utf-8') as f:
-        schema_version = json.load(f)["SCHEMA_VERSION"]
+        schema_version = str(json.load(f)["SCHEMA_VERSION"])
     return get_schema_by_version(schema_version)
 
 
