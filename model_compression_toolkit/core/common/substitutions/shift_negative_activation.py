@@ -426,7 +426,8 @@ def shift_negative_function(graph: Graph,
 
     if len(previous_nodes) == 1:
         fused_candidates = [previous_nodes[0], non_linear_node, add_node]
-        graph.fusing_info.fusing_patterns.append([n.type for n in fused_candidates])
+        # graph.fusing_info.fusing_patterns.append([n.type for n in fused_candidates])
+        graph.fusing_info.manual_fused_ops.append([n.name for n in fused_candidates])
         fused_op_id = graph.fusing_info.generate_fused_op_id(fused_candidates)
 
         # If the non-linear is already part of a fused op - remove the existing one before adding the new one

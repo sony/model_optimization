@@ -28,7 +28,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
     ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig, \
-    OpQuantizationConfig, QuantizationConfigOptions, Signedness, OperatorSetNames, TargetPlatformCapabilities
+    OpQuantizationConfig, QuantizationConfigOptions, Signedness, OperatorSetNames, TargetPlatformCapabilities, Fusing, OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
 from tests_pytest._test_util.fw_test_base import BaseFWIntegrationTest
 from tests_pytest._test_util.tpc_util import configure_mp_opsets_for_kernel_bias_ops, configure_mp_activation_opsets
@@ -107,9 +107,9 @@ def build_snc_tpc():
     )
 
     # Configs for Add op with different activation bit-widths
-    add_opset, _ = configure_mp_activation_opsets(
+    swish_opset, _ = configure_mp_activation_opsets(
         # This configuration is aimed to the swish so after the SNC, this will be used by the 'add' op
-        opset_names=[OperatorSetNames.SWISH],
+        opset_names=[OperatorSetNames.SWISH, OperatorSetNames.CONV, OperatorSetNames.ADD],
         base_op_config=default_op_cfg,
         a_nbits=[8]
     )
@@ -119,8 +119,12 @@ def build_snc_tpc():
     tpc = TargetPlatformCapabilities(
         default_qco=default_cfg,
         tpc_platform_type='snc_test',
-        operator_set=add_opset,
-        fusing_patterns=None
+        operator_set=swish_opset,
+        fusing_patterns=[
+        Fusing(operator_groups=(
+            OperatorsSet(name=OperatorSetNames.CONV),
+            OperatorsSet(name=OperatorSetNames.SWISH)))
+    ]
     )
     linear_w_min_nbit, linear_a_min_nbit, default_w_nbit, default_a_nbit, binary_out_a_bit = 8, 8, 8, 8, 8
     return tpc, linear_w_min_nbit, linear_a_min_nbit, default_w_nbit, default_a_nbit, binary_out_a_bit
@@ -236,12 +240,18 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         model = self._build_snc_model()
         graph, nbits = self._prepare_graph(model, snc_tpc=True)
 
+        ru_calculator = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
+        ru_before_snc, detailed_ru_before_snc = ru_calculator.compute_resource_utilization(
+            TargetInclusionCriterion.AnyQuantizedNonFused,
+            BitwidthMode.QMinBit,
+            return_detailed=True)
+
         core_config = CoreConfig(quantization_config=self._get_quantization_config())
 
         # Set dummy output stats collector
         dummy_collector = Mock()
         dummy_collector.get_min_max_values.return_value = (-1.0, 100.0)
-        non_linear_node = graph.get_topo_sorted_nodes()[2]  # the swish node
+        non_linear_node = graph.get_topo_sorted_nodes()[5]  # the swish node
         graph.set_out_stats_collector_to_node(non_linear_node, dummy_collector)
 
         # Set the activation threshold manually
@@ -260,17 +270,25 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
                                                                       return_detailed=True)
 
         exp_cuts_ru = [18 * 18 * 3 * default_a_nbit / 8,
-                       (18 * 18 * 3 * default_a_nbit + 18 * 18 * 10 * binary_out_a_bit) / 8,
-                       (18 * 18 * 10 * binary_out_a_bit + 16 * 16 * 1 * linear_a_min_nbit) / 8,
-                       16 * 16 * 1 * linear_a_min_nbit / 8]
+                       (18 * 18 * 3 * default_a_nbit + 18 * 18 * 3 * binary_out_a_bit) / 8,
+                       (18 * 18 * 3 * default_a_nbit + 18 * 18 * 3 * binary_out_a_bit + 18 * 18 * 3 * binary_out_a_bit) / 8,
+                       (18 * 18 * 3 * default_a_nbit + 16 * 16 * 1 * binary_out_a_bit) / 8,
+                       (16 * 16 * 1 * binary_out_a_bit + 14 * 14 * 2 * linear_a_min_nbit) / 8,
+                       14 * 14 * 2 * linear_a_min_nbit / 8]
 
         assert self._extract_values(detailed_orig[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)
+        assert self._extract_values(detailed_ru_before_snc[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)
 
     def _get_quantization_config(self, disable_linear_collapse: bool=False):
         return QuantizationConfig(linear_collapsing=False) if disable_linear_collapse else QuantizationConfig()
 
-    def _prepare_graph(self, model, disable_linear_collapse: bool=False, snc_tpc:bool = False):
+    def _prepare_graph(self, model, disable_linear_collapse: bool=False, snc_tpc:bool = False, imx500_tpc:bool = False):
         tpc, *nbits = build_snc_tpc() if snc_tpc else build_tpc()
+        if imx500_tpc:
+            import edgemdt_tpc
+            tpc = edgemdt_tpc.get_target_platform_capabilities('4.0')
+            # import model_compression_toolkit as mct
+            # tpc = mct.get_target_platform_capabilities("pytorch", "default", "v4")
         # If disable_linear_collapse is False we use the default quantization config
         qcfg = self._get_quantization_config(disable_linear_collapse)
         graph = self.run_graph_preparation(model, self._data_gen, tpc, qcfg, mp=True)

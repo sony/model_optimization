@@ -27,6 +27,12 @@ class TestRUIntegrationTorch(BaseRUIntegrationTester, TorchFwMixin):
     def test_mult_output_activation(self):
         super().test_mult_output_activation()
 
+    def test_snc_fusing(self):
+        super().test_snc_fusing()
+
+    def test_ru_data_invariant_to_snc_fusing(self):
+        super().test_ru_data_invariant_to_snc_fusing()
+
     def _data_gen(self):
         bchw_shape = tuple([self.bhwc_input_shape[i] for i in (0, 3, 1, 2)])
         return self.get_basic_data_gen([bchw_shape])()
@@ -75,14 +81,20 @@ class TestRUIntegrationTorch(BaseRUIntegrationTester, TorchFwMixin):
         class SncModel(nn.Module):
             def __init__(self, input_channels=3):
                 super(SncModel, self).__init__()
-                self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=10, kernel_size=3, padding=1)
+                self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=3, kernel_size=3, padding=1)
                 self.activation = nn.SiLU()  # Swish activation
-                self.conv2 = nn.Conv2d(in_channels=10, out_channels=1, kernel_size=3)
+                self.conv2 = nn.Conv2d(in_channels=3, out_channels=1, kernel_size=3)
+                self.conv3 = nn.Conv2d(in_channels=1, out_channels=2, kernel_size=3)
 
             def forward(self, x):
-                x = self.conv1(x)
-                x = self.activation(x)
+                y = self.conv1(x)
+                y = self.activation(y)
+                x = x+y
                 x = self.conv2(x)
+                x = self.activation(x)
+                x = self.conv3(x)
+                x = self.activation(x)
                 return x
 
         return SncModel()
+
