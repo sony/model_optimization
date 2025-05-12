@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import os
+
 import itertools
 
 import copy
@@ -19,7 +21,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Set
 
 import numpy as np
 
@@ -40,6 +42,8 @@ from model_compression_toolkit.core.common.mixed_precision.search_methods.linear
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
+    MixedPrecisionQuantizationConfig, MpMetricNormalization
 
 
 class MixedPrecisionSearchManager:
@@ -52,7 +56,8 @@ class MixedPrecisionSearchManager:
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
-                 target_resource_utilization: ResourceUtilization):
+                 target_resource_utilization: ResourceUtilization,
+                 mp_config: MixedPrecisionQuantizationConfig):
         """
 
         Args:
@@ -74,21 +79,21 @@ class MixedPrecisionSearchManager:
 
         self.sensitivity_evaluator = sensitivity_evaluator
         self.target_resource_utilization = target_resource_utilization
+        self.mp_config = mp_config
 
         self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
 
         self.ru_targets = target_resource_utilization.get_restricted_targets()
-        self.ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
+        self.orig_graph_ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
 
         self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
-        self.max_ru_config: Dict[BaseNode, int] = self.mp_graph.get_max_candidates_config(fw_info)
 
-        self.config_reconstruction_helper = ConfigReconstructionHelper(self.original_graph)
+        self.config_reconstructor = None
+        orig_min_config = self.min_ru_config
         if self.using_virtual_graph:
-            real_min_ru_config = self.config_reconstruction_helper.reconstruct_full_configuration(self.min_ru_config)
-            self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, real_min_ru_config)
-        else:
-            self.min_ru = self.ru_helper.compute_utilization(self.ru_targets, self.min_ru_config)
+            self.config_reconstructor = ConfigReconstructionHelper(self.original_graph)
+            orig_min_config = self.config_reconstructor.reconstruct_full_configuration(self.min_ru_config)
+        self.min_ru = self.orig_graph_ru_helper.compute_utilization(self.ru_targets, orig_min_config)
 
     def search(self) -> Dict[BaseNode, int]:
         """
@@ -100,7 +105,7 @@ class MixedPrecisionSearchManager:
         mp_config = self._prepare_and_run_solver()
 
         if self.using_virtual_graph:
-            mp_config = self.config_reconstruction_helper.reconstruct_full_configuration(mp_config)
+            mp_config = self.config_reconstructor.reconstruct_full_configuration(mp_config)
 
         return mp_config
 
@@ -143,61 +148,64 @@ class MixedPrecisionSearchManager:
                              f"following targets: {unsatisfiable_targets}")
         return rel_target_ru
 
-    def _build_sensitivity_mapping(self, eps: float = 1e-6) -> Dict[BaseNode, List[float]]:
+    def _build_sensitivity_mapping(self) -> Dict[BaseNode, List[float]]:
         """
         This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
-
-        Args:
-            eps: if sensitivity for a non-max candidate is lower than for a max candidate, we set it to
-              sensitivity of a max candidate + epsilon.
 
         Returns:
             Mapping from nodes to their bitwidth candidates sensitivity.
         """
-
         Logger.info('Starting to evaluate metrics')
+        norm_method = self.mp_config.metric_normalization
+        eps = self.mp_config.metric_epsilon
 
-        orig_sorted_nodes = self.original_graph.get_configurable_sorted_nodes(self.fw_info)
+        verbose = 'VERBOSE_MP_METRIC' in os.environ
 
-        def topo_cfg(cfg: dict) -> list:
-            topo_cfg = [cfg[n] for n in orig_sorted_nodes]
-            assert len(topo_cfg) == len(cfg)
-            return topo_cfg
+        def normalize(node_candidates_metrics, max_ind):
+            if norm_method == MpMetricNormalization.NONE:
+                return node_candidates_metrics
+            if norm_method == MpMetricNormalization.MAXBIT:
+                ref_ind = max_ind
+            elif norm_method == MpMetricNormalization.MINBIT:
+                ref_ind = node.find_min_candidate_index()
+            else:  # pragma: no cover
+                raise ValueError(f'Unexpected MpMetricNormalization mode {norm_method}')
+            normalized_metrics = node_candidates_metrics / node_candidates_metrics[ref_ind]
+            if verbose and not np.array_equal(normalized_metrics, node_candidates_metrics):
+                print(f'{"normalized metric:":25}', candidates_sensitivity)
+            return normalized_metrics
 
-        def compute_metric(cfg, node_idx=None, baseline_cfg=None):
-            return self.sensitivity_evaluator.compute_metric(topo_cfg(cfg),
-                                                             node_idx,
-                                                             topo_cfg(baseline_cfg) if baseline_cfg else None)
-
-        if self.using_virtual_graph:
-            origin_max_config = self.config_reconstruction_helper.reconstruct_full_configuration(self.max_ru_config)
-            max_config_value = compute_metric(origin_max_config)
-        else:
-            max_config_value = compute_metric(self.max_ru_config)
+        def ensure_maxbit_minimal_metric(node_candidates_metrics, max_ind):
+            if eps is None:
+                return node_candidates_metrics
+            # We want maxbit configuration to have the minimal distance metric (so that optimization objective
+            # doesn't prefer lower bits). If we got a smaller metric for non-maxbit, we update it to metric(maxbit)+eps.
+            max_val = node_candidates_metrics[max_ind]
+            metrics = np.maximum(node_candidates_metrics, max_val + eps)
+            metrics[max_ind] = max_val
+            if verbose and not np.array_equal(metrics, node_candidates_metrics):
+                print(f'{"eps-adjusted metric:":25}', candidates_sensitivity)
+            return metrics
 
         layer_to_metrics_mapping = defaultdict(list)
         for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes)):
+            candidates_sensitivity = np.empty(len(node.candidates_quantization_cfg))
             for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
-                if self.max_ru_config[node] == bitwidth_idx:
-                    # This is a computation of the metric for the max configuration, assign pre-calculated value
-                    layer_to_metrics_mapping[node].append(max_config_value)
-                    continue
-
-                # Create a configuration that differs at one layer only from the baseline model
-                mp_model_configuration = self.max_ru_config.copy()
-                mp_model_configuration[node] = bitwidth_idx
-
-                # Build a distance matrix using the function we got from the framework implementation.
                 if self.using_virtual_graph:
-                    # Reconstructing original graph's configuration from virtual graph's configuration
-                    orig_mp_config = self.config_reconstruction_helper.reconstruct_full_configuration(mp_model_configuration)
-                    changed_nodes = [orig_sorted_nodes.index(n) for n, ind in orig_mp_config.items()
-                                     if origin_max_config[n] != ind]
-                    metric_value = compute_metric(orig_mp_config, changed_nodes, origin_max_config)
+                    a_cfg, w_cfg = self.config_reconstructor.reconstruct_separate_aw_configs({node: bitwidth_idx})
                 else:
-                    metric_value = compute_metric(mp_model_configuration, [node_idx], self.max_ru_config)
-                metric_value = max(metric_value, max_config_value + eps)
-                layer_to_metrics_mapping[node].append(metric_value)
+                    a_cfg = {node: bitwidth_idx} if node.has_configurable_activation() else {}
+                    w_cfg = {node: bitwidth_idx} if node.has_any_configurable_weight() else {}
+                candidates_sensitivity[bitwidth_idx] = self.sensitivity_evaluator.compute_metric(
+                    mp_a_cfg={n.name: ind for n, ind in a_cfg.items()},
+                    mp_w_cfg={n.name: ind for n, ind in w_cfg.items()}
+                )
+            if verbose:
+                print(f'{node.name}\n{"raw metric:":25}', candidates_sensitivity)
+            max_ind = node.find_max_candidate_index()
+            candidates_sensitivity = normalize(candidates_sensitivity, max_ind)
+            candidates_sensitivity = ensure_maxbit_minimal_metric(candidates_sensitivity, max_ind)
+            layer_to_metrics_mapping[node] = candidates_sensitivity
 
         # Finalize distance metric mapping
         self._finalize_distance_metric(layer_to_metrics_mapping)
@@ -244,8 +252,9 @@ class MixedPrecisionSearchManager:
                 else:
                     cfg = self.min_ru_config.copy()
                     cfg[node] = candidate_idx
-                    real_cfg = self.config_reconstruction_helper.reconstruct_full_configuration(cfg)
-                    candidate_rus = self.ru_helper.compute_utilization(self.ru_targets, real_cfg)
+                    if self.using_virtual_graph:
+                        cfg = self.config_reconstructor.reconstruct_full_configuration(cfg)
+                    candidate_rus = self.orig_graph_ru_helper.compute_utilization(self.ru_targets, cfg)
 
                 for target, ru in candidate_rus.items():
                     rus_per_candidate[target].append(ru)
@@ -283,8 +292,8 @@ class MixedPrecisionSearchManager:
         with the given config.
 
         """
-        act_qcs, w_qcs = self.ru_helper.get_quantization_candidates(config)
-        ru = self.ru_helper.ru_calculator.compute_resource_utilization(
+        act_qcs, w_qcs = self.orig_graph_ru_helper.get_quantization_candidates(config)
+        ru = self.orig_graph_ru_helper.ru_calculator.compute_resource_utilization(
             target_criterion=TargetInclusionCriterion.AnyQuantized, bitwidth_mode=BitwidthMode.QCustom, act_qcs=act_qcs,
             w_qcs=w_qcs, ru_targets=self.ru_targets, allow_unused_qcs=True)
         return ru
@@ -303,7 +312,7 @@ class MixedPrecisionSearchManager:
         # normalize metric for numerical stability
         max_dist = max(itertools.chain.from_iterable(layer_to_metrics_mapping.values()))
 
-        if max_dist >= self.sensitivity_evaluator.quant_config.metric_normalization_threshold:
+        if max_dist >= self.mp_config.metric_normalization_threshold:
             Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
                            f"this can cause numerical issues."
                            f"The program will proceed with mixed precision search after scaling the metric values,"
@@ -387,7 +396,9 @@ class ConfigReconstructionHelper:
 
         return orig_cfg
 
-    def reconstruct_separate_aw_configs(self, virtual_cfg: Dict[BaseNode, int], include_non_configurable: bool) \
+    def reconstruct_separate_aw_configs(self,
+                                        virtual_cfg: Dict[BaseNode, int],
+                                        include_non_configurable: bool = False) \
             -> Tuple[Dict[BaseNode, int], Dict[BaseNode, int]]:
         """
         Retrieves original activation and weights nodes and corresponding candidates for a given configuration of the
