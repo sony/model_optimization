@@ -58,7 +58,7 @@ class TorchFwMixin:
 
     @staticmethod
     def fetch_model_layers_by_cls(model, cls):
-        """ Fetch layers from torch module by layer class type. """
+        """ Fetch layers from torch module by layer class type.  """
         return [m for m in model.modules() if isinstance(m, cls)]
 
 
