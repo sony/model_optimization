@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import os
+
 import itertools
 
 import copy
@@ -153,11 +155,37 @@ class MixedPrecisionSearchManager:
         Returns:
             Mapping from nodes to their bitwidth candidates sensitivity.
         """
-
         Logger.info('Starting to evaluate metrics')
-        layer_to_metrics_mapping = defaultdict(list)
         norm_method = self.mp_config.metric_normalization
         eps = self.mp_config.metric_epsilon
+
+        verbose = 'VERBOSE_MP_METRIC' in os.environ
+
+        def normalize(node_candidates_metrics, max_ind):
+            if norm_method == MpMetricNormalization.NONE:
+                return node_candidates_metrics
+            if norm_method == MpMetricNormalization.MAXBIT:
+                ref_ind = max_ind
+            elif norm_method == MpMetricNormalization.MINBIT:
+                ref_ind = node.find_min_candidate_index()
+            else:  # pragma: no cover
+                raise ValueError(f'Unexpected MpMetricNormalization mode {norm_method}')
+            normalized_metrics = node_candidates_metrics / node_candidates_metrics[ref_ind]
+            if verbose and not np.array_equal(normalized_metrics, node_candidates_metrics):
+                print(f'{"normalized metric:":25}', candidates_sensitivity)
+            return normalized_metrics
+
+        def ensure_maxbit_minimal_metric(node_candidates_metrics, max_ind):
+            if eps is None:
+                return node_candidates_metrics
+            max_val = node_candidates_metrics[max_ind]
+            metrics = np.maximum(node_candidates_metrics, max_val + eps)
+            metrics[max_ind] = max_val
+            if verbose and not np.array_equal(metrics, node_candidates_metrics):
+                print(f'{"eps-adjusted metric:":25}', candidates_sensitivity)
+            return metrics
+
+        layer_to_metrics_mapping = defaultdict(list)
         for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes)):
             candidates_sensitivity = np.empty(len(node.candidates_quantization_cfg))
             for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
@@ -170,25 +198,13 @@ class MixedPrecisionSearchManager:
                     mp_a_cfg={n.name: ind for n, ind in a_cfg.items()},
                     mp_w_cfg={n.name: ind for n, ind in w_cfg.items()}
                 )
-
-            max_ind = None
-            if eps is not None or norm_method == MpMetricNormalization.MAXBIT:
-                max_ind = node.find_max_candidate_index()
-
-            if norm_method != MpMetricNormalization.NONE:
-                if norm_method == MpMetricNormalization.MAXBIT:
-                    ref_ind = max_ind
-                else:
-                    assert norm_method == MpMetricNormalization.MINBIT
-                    ref_ind = node.find_min_candidate_index()
-                candidates_sensitivity /= candidates_sensitivity[ref_ind]
-
-            if eps is not None:
-                max_val = candidates_sensitivity[max_ind]
-                candidates_sensitivity = np.maximum(candidates_sensitivity, max_val + eps)
-                candidates_sensitivity[max_ind] = max_val
-
+            if verbose:
+                print(f'{node.name}\n{"raw metric:":25}', candidates_sensitivity)
+            max_ind = node.find_max_candidate_index()
+            candidates_sensitivity = normalize(candidates_sensitivity, max_ind)
+            candidates_sensitivity = ensure_maxbit_minimal_metric(candidates_sensitivity, max_ind)
             layer_to_metrics_mapping[node] = candidates_sensitivity
+
         # Finalize distance metric mapping
         self._finalize_distance_metric(layer_to_metrics_mapping)
 
