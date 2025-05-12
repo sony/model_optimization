@@ -178,6 +178,8 @@ class MixedPrecisionSearchManager:
         def ensure_maxbit_minimal_metric(node_candidates_metrics, max_ind):
             if eps is None:
                 return node_candidates_metrics
+            # We want maxbit configuration to have the minimal distance metric (so that optimization objective
+            # doesn't prefer lower bits). If we got a smaller metric for non-maxbit, we update it to metric(maxbit)+eps.
             max_val = node_candidates_metrics[max_ind]
             metrics = np.maximum(node_candidates_metrics, max_val + eps)
             metrics[max_ind] = max_val

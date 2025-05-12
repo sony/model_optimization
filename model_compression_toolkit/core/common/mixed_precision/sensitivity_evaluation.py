@@ -287,7 +287,7 @@ class SensitivityEvaluation:
             raise ValueError(f'Requested configuration is either empty or contain only None values.')
 
         # defined here so that it can't be used directly
-        def configure(a_cfg, w_cfg):
+        def apply_bitwidth_config(a_cfg, w_cfg):
             node_names = set(a_cfg.keys()).union(set(w_cfg.keys()))
             for n in node_names:
                 node_quant_layers = self.conf_node2layers.get(n)
@@ -306,11 +306,11 @@ class SensitivityEvaluation:
                 raise ValueError(f'Not all mp configs were consumed, remaining activation config {a_cfg}, '
                                  f'weights config {w_cfg}.')
 
-        configure(mp_a_cfg.copy(), mp_w_cfg.copy())
+        apply_bitwidth_config(mp_a_cfg.copy(), mp_w_cfg.copy())
         try:
             yield
         finally:
-            configure({n: None for n in mp_a_cfg}, {n: None for n in mp_w_cfg})
+            apply_bitwidth_config({n: None for n in mp_a_cfg}, {n: None for n in mp_w_cfg})
 
     def _compute_points_distance(self,
                                  baseline_tensors: List[Any],
