@@ -119,7 +119,7 @@ class TestTPModelInitialization:
         Test tpc initialization for all supported schemas & future schemas (i.e. schema with newer version
         than current schema). Test goal is to validate new (not in use yet) schemas are covered by Coverage test
         """
-        tpc_by_schema = tpc_by_schema_version
+        tpc_by_schema = tpc_by_future_schema_version
 
 
 class TestSchemaCompatability:
@@ -145,6 +145,14 @@ class TestSchemaCompatability:
         assert isinstance(tpc_schema_v2, schema_v2.TargetPlatformCapabilities)
         assert tpc_schema_v2.insert_preserving_quantizers is False
         assert tpc_schema_v2.fusing_patterns[0].fuse_op_quantization_config.enable_activation_quantization is False
+
+    def test_json_schema_compatibility(self, tpc, valid_export_path):
+        """Tests that a tpc exported using schema v1 is imported as current schema tpc."""
+        tpc_schema_v1 = get_tpc(schema_v1)
+        assert isinstance(tpc_schema_v1, schema_v1.TargetPlatformCapabilities)
+        export_target_platform_capabilities(tpc_schema_v1, str(valid_export_path))
+        imported_model = load_target_platform_capabilities(str(valid_export_path))
+        assert isinstance(imported_model, current_schema.TargetPlatformCapabilities)
 
 
 class TestTPModelInputOutput:
