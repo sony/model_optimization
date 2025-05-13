@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any, List
+from typing import List, Optional
 
 from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import ConfigurableQuantizerIdentifier
 from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
@@ -87,20 +87,18 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
 
         self.active_quantization_config_index = self.max_candidate_idx
 
-    def set_weights_bit_width_index(self,
-                                    index: int):
+    def set_weights_bit_width_index(self, index:Optional[int]):
         """
         Change the "active" bitwidth index the configurable quantizer uses, so a different quantized weight
         will be used.
 
         Args:
-            index: Quantization configuration candidate index to use.
+            index: Quantization configuration candidate index to use, or None to disable quantization.
 
         """
 
-        assert index < len(self.node_q_cfg), \
-            f'Quantizer has {len(self.node_q_cfg)} ' \
-            f'possible nbits. Can not set index {index}'
+        assert index is None or index < len(self.node_q_cfg), \
+            f'Quantizer has {len(self.node_q_cfg)} possible nbits. Can not set index {index}'
         self.active_quantization_config_index = index
 
     def __call__(self,
@@ -112,12 +110,16 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
             to the current active_quantization_config_index.
 
         Args:
-            inputs: Input tensor (not used in this function since the weights are already quantized).
+            inputs: Input tensor (only used if quantization is disabled).
 
         Returns:
             Quantized weight, that was quantized using number of bits that is in a
                 specific quantization configuration candidate (the candidate's index is the
-                index that is in active_quantization_config_index the quantizer holds).
+                index that is in active_quantization_config_index the quantizer holds),
+                or detached input if quantization is disabled.
         """
-
+        if self.active_quantization_config_index is None:
+            # Note: must be detached, otherwise quantization wrapper will inject it back as a Parameter to the
+            # underlying layer, which then causes crash during inference next time the quantizer is enabled
+            return inputs.detach()
         return self.quantized_weights[self.active_quantization_config_index]

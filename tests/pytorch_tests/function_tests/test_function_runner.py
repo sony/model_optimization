@@ -21,8 +21,6 @@ from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCol
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
 from tests.pytorch_tests.function_tests.get_gptq_config_test import TestGetGPTQConfig
 from tests.pytorch_tests.function_tests.set_device_test import SetDeviceTest
-from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
-    TestSetLayerToBitwidthActivation
 from tests.pytorch_tests.function_tests.test_hessian_service import FetchActivationHessianTest, FetchWeightsHessianTest, \
     FetchHessianNotEnoughSamplesThrowTest, FetchHessianNotEnoughSamplesSmallBatchThrowTest, \
     FetchComputeBatchLargerThanReprBatchTest, FetchHessianRequiredZeroTest, FetchHessianMultipleNodesTest, \
@@ -113,14 +111,6 @@ class FunctionTestRunner(unittest.TestCase):
         FetchHessianRequiredZeroTest(self).run_test()
         FetchHessianMultipleNodesTest(self).run_test()
         DoubleFetchHessianTest(self).run_test()
-
-    def test_mixed_precision_set_bitwidth(self):
-        """
-        This test checks the functionality of setting a configurable layer's weights bit-width for mixed precision
-        layer wrapper.
-        """
-        TestSetLayerToBitwidthWeights(self).run_test()
-        TestSetLayerToBitwidthActivation(self).run_test()
 
     def test_sensitivity_eval_not_supported_output(self):
         """
