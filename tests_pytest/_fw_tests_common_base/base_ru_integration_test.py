@@ -273,8 +273,8 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
                        (18 * 18 * 3 * default_a_nbit + 18 * 18 * 3 * binary_out_a_bit) / 8,
                        (18 * 18 * 3 * default_a_nbit + 18 * 18 * 3 * binary_out_a_bit + 18 * 18 * 3 * binary_out_a_bit) / 8,
                        (18 * 18 * 3 * default_a_nbit + 16 * 16 * 1 * binary_out_a_bit) / 8,
-                       (16 * 16 * 1 * binary_out_a_bit + 14 * 14 * 2 * linear_a_min_nbit) / 8,
-                       14 * 14 * 2 * linear_a_min_nbit / 8]
+                       (16 * 16 * 1 * binary_out_a_bit + 16 * 16 * 2 * linear_a_min_nbit) / 8,
+                       16 * 16 * 2 * linear_a_min_nbit / 8]
 
         assert self._extract_values(detailed_orig[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)
         assert self._extract_values(detailed_ru_before_snc[RUTarget.ACTIVATION], sort=True) == sorted(exp_cuts_ru)

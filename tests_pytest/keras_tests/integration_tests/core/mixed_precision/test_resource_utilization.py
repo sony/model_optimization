@@ -16,7 +16,7 @@
 import keras
 import numpy as np
 import tensorflow as tf
-from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, Input, Subtract, Flatten
+from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, Input, Subtract, Flatten, Add
 from tensorflow.python.keras.layers import Activation
 
 from tests_pytest._fw_tests_common_base.base_ru_integration_test import BaseRUIntegrationTester
@@ -57,7 +57,12 @@ class TestRUIntegrationKeras(BaseRUIntegrationTester, KerasFwMixin):
 
     def _build_snc_model(self):
         inputs = Input(shape=self.bhwc_input_shape[1:])
-        x = Conv2D(filters=10, kernel_size=3, padding='same')(inputs)
-        x = Activation(activation='swish')(x)
-        outputs = Conv2D(filters=1, kernel_size=3)(x)
+        y = Conv2D(3, kernel_size=3, padding='same')(inputs)
+        y = Activation('swish')(y)
+
+        x = Add()([inputs, y])
+        x = Conv2D(1, kernel_size=3)(x)
+        x = Activation('swish')(x)
+        x = Conv2D(2, kernel_size=3, padding='same')(x)
+        outputs = Activation('swish')(x)
         return keras.Model(inputs=inputs, outputs=outputs)

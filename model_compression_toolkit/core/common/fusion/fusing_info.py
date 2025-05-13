@@ -94,6 +94,10 @@ class FusingInfo:
             raise ValueError(f"Fused operation {op_id} does not exist.")
         # Remove nodes from the mapping
         nodes = self.fusing_data[op_id]
+        node_names = [n.name for n in nodes]
+        if node_names in self.manual_fused_ops:
+            self.manual_fused_ops.remove(node_names)
+
         for node in nodes:
             self.node_to_fused_node_map.pop(node.name, None)
         del self.fusing_data[op_id]
@@ -266,6 +270,7 @@ class FusingInfo:
             f"  Total fused operations: {len(self.fusing_data)}\n"
             f"  Fusing Data:\n{fusing_data_repr}\n"
             f"  Node-to-Fused Mapping:\n  {mapping_repr}\n"
+            f"  Manual ops:\n  {self.manual_fused_ops}\n"
             f")"
         )
 
@@ -274,10 +279,6 @@ class FusingInfoGenerator:
     def __init__(self, fusing_patterns, manual_fused_ops=None):
         self._fusing_patterns = fusing_patterns
         self._manual_fused_ops = manual_fused_ops or []
-        # if manual_fused_ops is None or len(manual_fused_ops)==0:
-        #     self._manual_fused_ops = []
-        # else:
-        #     self._manual_fused_ops = manual_fused_ops
 
     def generate_fusing_info(self, graph: 'Graph') -> FusingInfo:
         """
