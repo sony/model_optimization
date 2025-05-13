@@ -194,7 +194,7 @@ def compute_cs(float_tensor: np.ndarray,
     cs = np.sum(float_flat * fxp_flat, axis=axis) / ((float_norm * fxp_norm) + eps)
 
     # Return a non-negative float (smaller value -> more similarity)
-    return (1.0 - cs) / 2.0
+    return np.maximum((1.0 - cs) / 2.0, 0)
 
 
 def compute_lp_norm(float_tensor: np.ndarray,

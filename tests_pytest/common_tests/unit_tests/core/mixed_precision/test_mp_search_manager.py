@@ -12,27 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Optional
-
 import copy
 
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import numpy as np
 
-from model_compression_toolkit.core import ResourceUtilization
+from model_compression_toolkit.core import ResourceUtilization, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTES
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitActivationNode, VirtualSplitWeightsNode
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
+    MpMetricNormalization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_ru_helper import MixedPrecisionRUHelper
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
     MixedPrecisionSearchManager, ConfigReconstructionHelper
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
-from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc, DummyLayer
 
 
 class DummyLayer1:
@@ -88,9 +89,9 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=False)
         ru = ResourceUtilization(weights_memory=100)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
-                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru)
+                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru,
+                                          mp_config=Mock())
         assert mgr.min_ru_config == {n3: 2, n4: 1}
-        assert mgr.max_ru_config == {n3: 1, n4: 0}
         assert mgr.min_ru == {RUTarget.WEIGHTS: 3 * 14 * 2 / 8 + 2 * 71 * 4 / 8}
 
         rel_ru = mgr._compute_relative_ru_matrices()
@@ -103,10 +104,10 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=False, a_mp=True)
         ru = ResourceUtilization(activation_memory=150)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
-                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru)
+                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru,
+                                          mp_config=Mock())
         # 6 x [8], 120 x [8, 2, 4], 40 x [4, 8], 273 x [2], 34 x [8]
         assert mgr.min_ru_config == {n2: 1, n3: 0}
-        assert mgr.max_ru_config == {n2: 0, n3: 1}
         self._assert_dict_allclose(mgr.min_ru,
                                    {RUTarget.ACTIVATION: np.array([48, 48+240, 240+160, 160+546, 546+272, 272])/8},
                                    sort_axis=0)
@@ -130,9 +131,9 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=True)
         ru = ResourceUtilization(total_memory=200)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
-                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru)
+                                          sensitivity_evaluator=Mock(), target_resource_utilization=ru,
+                                          mp_config=Mock())
         assert mgr.min_ru_config == {n2: 1, n3: 2, n4: 1}
-        assert mgr.max_ru_config == {n2: 0, n3: 4, n4: 0}
 
         self._assert_dict_allclose(mgr.min_ru,
                                    {RUTarget.TOTAL: 81.5 + np.array([48, 288, 400, 706, 818, 272]) / 8},
@@ -158,6 +159,51 @@ class TestMixedPrecisionSearchManager:
         self._assert_dict_allclose(rel_constraint,
                                    {RUTarget.TOTAL: 200 - 81.5 - np.array([48, 288, 400, 706, 818, 272]) / 8},
                                    sort_axis=0)
+
+    def test_compute_relative_ru_virtual_graph(self, mocker, graph_mock, fw_info_mock, fw_impl_mock):
+        """ Test compute ru mapping for virtual graph. Here we mostly test apis integration.
+            - mock virtual graph, config reconstructor and ru helper compute_utilization
+            - config reconstructor is called with correct args
+            - compute_utilization is called on reconstructed configs
+            - compute_utilization results are aggregated correctly
+        """
+        # mock virtual graph
+        vg_mock = Mock()
+        v_nodes = [Mock(candidates_quantization_cfg=[Mock(), Mock(), Mock()]),
+                   Mock(candidates_quantization_cfg=[Mock(), Mock()])]
+        vg_mock.get_configurable_sorted_nodes = lambda *args: v_nodes
+        vg_mock.get_min_candidates_config = Mock(return_value={v_nodes[0]: 1, v_nodes[1]: 0})
+        mocker.patch.object(MixedPrecisionSearchManager, '_get_mp_graph', Mock(return_value=(vg_mock, True)))
+
+        # mock compute_utilization - first call is in ctor for minru
+        compute_ru_mock = mocker.patch.object(MixedPrecisionRUHelper, 'compute_utilization',
+                                              Mock(side_effect=[{RUTarget.BOPS: 5, RUTarget.TOTAL: 10},
+                                                                {RUTarget.BOPS: 11, RUTarget.TOTAL: 12},
+                                                                {RUTarget.BOPS: 13, RUTarget.TOTAL: 14},
+                                                                {RUTarget.BOPS: 15, RUTarget.TOTAL: 16}]))
+        # mock reconstructed configs
+        reconstructed_cfgs = [Mock(), Mock(), Mock(), Mock()]
+        recon_cfg_mock = mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_full_configuration',
+                                             Mock(side_effect=reconstructed_cfgs))
+        mgr = MixedPrecisionSearchManager(graph_mock, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+                                          sensitivity_evaluator=Mock(),
+                                          target_resource_utilization=ResourceUtilization(bops=100, total_memory=100),
+                                          mp_config=Mock())
+        ru = mgr._compute_relative_ru_matrices()
+
+        # first call is from c'tor for min_ru. After that we only compute non-min configurations.
+        # Note: min config is copied inside, but it's a shallow copy so the node objects remain the same
+        assert recon_cfg_mock.call_args_list == [
+            call({v_nodes[0]: 1, v_nodes[1]: 0}),
+            call({v_nodes[0]: 0, v_nodes[1]: 0}),
+            call({v_nodes[0]: 2, v_nodes[1]: 0}),
+            call({v_nodes[0]: 1, v_nodes[1]: 1})
+        ]
+        assert compute_ru_mock.call_args_list == [call({RUTarget.BOPS, RUTarget.TOTAL}, rcfg)
+                                                  for rcfg in reconstructed_cfgs]
+        assert len(ru) == 2
+        assert np.array_equal(ru[RUTarget.BOPS], np.array([6, 0, 8, 0, 10]))
+        assert np.array_equal(ru[RUTarget.TOTAL], np.array([2, 0, 4, 0, 6]))
 
     def test_search_weights(self, fw_info_mock, fw_impl_mock):
         """ Tests mp search with weights ru constraint.  """
@@ -187,7 +233,7 @@ class TestMixedPrecisionSearchManager:
 
         # max config solution, tight max cut ru constraint
         res, mgr = run(a_mem=1280/8, sensitivity={n2: [1, 2, 3], n3: [5, 4]}, exp_cfg={n2: 0, n3: 1})
-        assert res == mgr.max_ru_config
+        assert res == {n2: 0, n3: 1}
 
         run(a_mem=1280/8-1, sensitivity={n2: [1, 2, 4], n3: [6, 4]}, exp_cfg={n2: 1, n3: 1})
 
@@ -209,7 +255,7 @@ class TestMixedPrecisionSearchManager:
         ru = ResourceUtilization(activation_memory=160, weights_memory=255, total_memory=415)
         sensitivity = {n2: [1, 2, 4], n3: [4, 4, 4, 4, 1, 4], n4: [1, 4, 3]}
         res, mgr = run(ru, sensitivity, exp_cfg={n2: 0, n3: 4, n4: 0})
-        assert res == mgr.max_ru_config
+        assert res == {n2: 0, n3: 4, n4: 0}
 
         # reduce each ru target one at a time and check it's taken into account
         ru = ResourceUtilization(activation_memory=159, weights_memory=255, total_memory=415)
@@ -233,7 +279,7 @@ class TestMixedPrecisionSearchManager:
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=True)
         ru = ResourceUtilization(weights_memory=100, activation_memory=200, total_memory=300)
         mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru)
+                                          target_resource_utilization=ru, mp_config=Mock())
 
         cfg = mgr.copy_config_with_replacement(mgr.min_ru_config, n3, 4)
         # make sure original cfg was not changed in place
@@ -242,43 +288,202 @@ class TestMixedPrecisionSearchManager:
         ru_res = mgr.compute_resource_utilization_for_config(cfg)
         assert ru_res == ResourceUtilization(weights_memory=113, activation_memory=866/8, total_memory=221.25)
 
-    def test_bops_no_bops_flow(self, fw_info_mock, fw_impl_mock, mocker):
-        g, _ = build_graph(fw_info_mock, w_mp=True, a_mp=True)
+    @pytest.mark.parametrize('w_mp, a_mp, target_ru, exp_virtual', [
+        (True, True, ResourceUtilization(activation_memory=1, weights_memory=2, total_memory=3), False),
+        (True, True, ResourceUtilization(bops=1), True),
+        (True, False, ResourceUtilization(bops=1), False),
+        (False, True, ResourceUtilization(bops=1), False)
+    ])
+    def test_bops_no_bops_high_level_flow(self, fw_info_mock, fw_impl_mock, mocker, w_mp, a_mp, target_ru, exp_virtual):
+        """ Tests that mp manager is instantiated correctly w.r.t virtual graph, and search method
+            returns config w.r.t to the original graph in both cases. """
+        g, _ = build_graph(fw_info_mock, w_mp=w_mp, a_mp=a_mp)
 
         substitute_mock = mocker.patch('model_compression_toolkit.core.common.mixed_precision.'
                                        'mixed_precision_search_manager.substitute')
         copy_mock = mocker.patch('model_compression_toolkit.core.common.mixed_precision.'
                                  'mixed_precision_search_manager.copy.deepcopy')
-        mocker.patch.object(MixedPrecisionRUHelper, 'compute_utilization')
-
-        recon_cfg_mock = mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_full_configuration')
-        mocker.patch.object(MixedPrecisionSearchManager, '_prepare_and_run_solver')
+        compute_ru_mock = mocker.patch.object(MixedPrecisionRUHelper, 'compute_utilization')
+        ru_helper_spy = mocker.patch('model_compression_toolkit.core.common.mixed_precision.'
+                                     'mixed_precision_search_manager.MixedPrecisionRUHelper',
+                                     Mock(wraps=MixedPrecisionRUHelper))
+        cfg_recon_helper = mocker.patch('model_compression_toolkit.core.common.mixed_precision.'
+                                        'mixed_precision_search_manager.ConfigReconstructionHelper',
+                                        Mock(wraps=ConfigReconstructionHelper))
+        reconstructed_configs = [Mock(), Mock()]
+        recon_cfg_mock = mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_full_configuration',
+                                             Mock(side_effect=reconstructed_configs))
+        prepare_and_run_mock = mocker.patch.object(MixedPrecisionSearchManager, '_prepare_and_run_solver')
 
         virt_sub_mock = Mock()
         fw_impl_mock.get_substitutions_virtual_weights_activation_coupling = virt_sub_mock
 
-        # no bops
-        ru_no_bops = ResourceUtilization(activation_memory=1, weights_memory=2, total_memory=3)
         mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru_no_bops)
-        mgr.search()
-
-        substitute_mock.assert_not_called()
-        assert mgr.using_virtual_graph is False
-        assert mgr.mp_graph is g and mgr.original_graph is g
-        recon_cfg_mock.assert_not_called()
-
-        # with bops
-        ru_bops = ResourceUtilization(activation_memory=1, bops=2)
-        mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru_bops)
+                                          target_resource_utilization=target_ru, mp_config=Mock())
         res = mgr.search()
-        substitute_mock.assert_called_with(copy_mock.return_value, virt_sub_mock.return_value)
-        assert mgr.mp_graph is substitute_mock.return_value
-        assert mgr.original_graph is g
-        assert mgr.using_virtual_graph is True
-        recon_cfg_mock.assert_called()
-        assert res == recon_cfg_mock.return_value
+        # ru should always be computed on the original graph
+        ru_helper_spy.assert_called_with(g, fw_info_mock, fw_impl_mock)
+        if exp_virtual:
+            substitute_mock.assert_called_with(copy_mock.return_value, virt_sub_mock.return_value)
+            assert mgr.mp_graph is substitute_mock.return_value
+            assert mgr.original_graph is g
+            assert mgr.using_virtual_graph is True
+            cfg_recon_helper.assert_called_with(g)
+            assert mgr.config_reconstructor is not None
+            # reconstruct_full_configuration should be called twice, in ctor for min_ru computation and on final config
+            assert recon_cfg_mock.call_args_list == [call(mgr.min_ru_config), call(prepare_and_run_mock.return_value)]
+            # min ru should be computed on reconstructed config
+            assert compute_ru_mock.call_args_list[0] == call(mgr.ru_targets, reconstructed_configs[0])
+            assert mgr.min_ru == compute_ru_mock.return_value
+            assert res == reconstructed_configs[1]
+        else:
+            substitute_mock.assert_not_called()
+            assert mgr.using_virtual_graph is False
+            assert mgr.mp_graph is g and mgr.original_graph is g
+            assert mgr.config_reconstructor is None
+            recon_cfg_mock.assert_not_called()
+            assert res == prepare_and_run_mock.return_value
+
+    def test_build_sensitivity_mapping(self, fw_info_mock, fw_impl_mock):
+        """ Test build sensitivity metric for regular graph (non-virtual)
+            - real graph with real quantization candidates (dummy node types and weights)
+            - check correct configurations (from graph) are passed to mock sensitivity evaluator.
+            - final sensitivity is built correctly from mocked computed metrics.
+        """
+        a_conf = build_node('a_conf', layer_class=DummyLayer2, qcs=[build_nbits_qc(nb) for nb in (4, 2)])
+        a_conf_w = build_node('a_conf_w',
+                              canonical_weights={'foo': np.ones(10)},
+                              qcs=[build_nbits_qc(nb, w_attr={'foo': (8, True)}) for nb in (4, 16)])
+        w_conf = build_node('w_conf',
+                            canonical_weights={'foo': np.ones(10)},
+                            qcs=[build_nbits_qc(4, w_attr={'foo': (nb, True)}) for nb in (8, 16)])
+        aw_conf = build_node('aw_conf', canonical_weights={'foo': np.ones(10)},
+                             qcs=[build_nbits_qc(ab, w_attr={'foo': (wb, True)})
+                                  for ab, wb in [(4, 8), (4, 4), (8, 8), (8, 4)]])
+        g = Graph(name='g', input_nodes=[a_conf], output_nodes=[aw_conf], nodes=[a_conf_w, aw_conf],
+                  edge_list=[Edge(a_conf, a_conf_w, 0, 0), Edge(a_conf_w, w_conf, 0, 0), Edge(w_conf, aw_conf, 0, 0)])
+
+        se = Mock(spec_set=SensitivityEvaluation)
+
+        def compute_metric_mock(mp_a_cfg, mp_w_cfg):
+            a = list(mp_a_cfg.values())[0] if mp_a_cfg else 0
+            w = list(mp_w_cfg.values())[0] if mp_w_cfg else 0
+            return a + 0.1*w
+        se.compute_metric = Mock(side_effect=compute_metric_mock)
+
+        fw_info_mock.get_kernel_op_attributes = lambda nt: ['foo'] if nt is DummyLayer else DEFAULT_KERNEL_ATTRIBUTES
+        fw_info_mock.is_kernel_op = lambda nt: nt is DummyLayer
+        mp_config = MixedPrecisionQuantizationConfig(metric_normalization=MpMetricNormalization.NONE,
+                                                     metric_epsilon=None)
+        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+                                          sensitivity_evaluator=se,
+                                          target_resource_utilization=ResourceUtilization(total_memory=100),
+                                          mp_config=mp_config)
+        res = mgr._build_sensitivity_mapping()
+        call_args = se.compute_metric.call_args_list
+        for i in range(2):
+            assert call_args[i] == call(mp_a_cfg={'a_conf': i}, mp_w_cfg={}), i
+        for i in range(2):
+            assert call_args[2+i] == call(mp_a_cfg={'a_conf_w': i}, mp_w_cfg={}), i
+        for i in range(2):
+            assert call_args[4+i] == call(mp_a_cfg={}, mp_w_cfg={'w_conf': i})
+        for i in range(4):
+            assert call_args[6+i] == call(mp_a_cfg={'aw_conf': i}, mp_w_cfg={'aw_conf': i}), i
+        assert len(res) == 4
+        assert np.allclose(res[a_conf], np.array([0, 1]))
+        assert np.allclose(res[a_conf_w], np.array([0, 1]))
+        assert np.allclose(res[w_conf], np.array([0, 0.1]))
+        assert np.allclose(res[aw_conf], np.array([0, 1.1, 2.2, 3.3]))
+
+    def test_build_sensitivity_mapping_virtual_graph(self, graph_mock, fw_info_mock, fw_impl_mock, mocker):
+        """ Test build_sensitivity method for virtual graph. We only test apis integration:
+            - mock virtual graph, config reconstructor and sensitivity evaluator.
+            - reconstruct_separate_aw_configs is called with correct args
+            - correct configurations are passed to sensitivity evaluator compute_metrics
+            - sensitivity matrix is built correctly from compute_metrics results
+        """
+        vg_mock = Mock()
+        v_nodes = [Mock(candidates_quantization_cfg=[Mock(), Mock(), Mock()]),
+                   Mock(candidates_quantization_cfg=[Mock(), Mock()])]
+        vg_mock.get_configurable_sorted_nodes = lambda *args: v_nodes
+        mocker.patch.object(MixedPrecisionSearchManager, '_get_mp_graph', Mock(return_value=(vg_mock, True)))
+
+        se_mock = Mock()
+        se_mock.compute_metric = Mock(side_effect=list(range(5)))
+
+        mocker.patch.object(MixedPrecisionRUHelper, 'compute_utilization')
+        mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_full_configuration')
+        # configs returned by config reconstructor
+        aw_configs = [({build_node('a'): 3}, {build_node('b'): 5}),
+                      ({build_node('c'): 2}, {}),
+                      ({}, {build_node('c'): 0}),
+                      ({build_node('c'): 1}, {build_node('d'): 2, build_node('e'): 3}),
+                      ({build_node('d'): 5, build_node('e'): 4}, {})]
+        recon_aw_cfgs_mock = mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_separate_aw_configs',
+                                                 Mock(side_effect=aw_configs))
+        mp_config = MixedPrecisionQuantizationConfig(metric_epsilon=None,
+                                                     metric_normalization=MpMetricNormalization.NONE)
+        mgr = MixedPrecisionSearchManager(graph_mock, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+                                          sensitivity_evaluator=se_mock,
+                                          target_resource_utilization=ResourceUtilization(bops=100),
+                                          mp_config=mp_config)
+        res = mgr._build_sensitivity_mapping()
+        # check that config reconstruction is called with correct arguments
+        assert recon_aw_cfgs_mock.call_args_list == [call({v_nodes[0]: 0}),
+                                                     call({v_nodes[0]: 1}),
+                                                     call({v_nodes[0]: 2}),
+                                                     call({v_nodes[1]: 0}),
+                                                     call({v_nodes[1]: 1})]
+        # check that compute metrics is called with correct arguments
+        assert se_mock.compute_metric.call_args_list == [call(mp_a_cfg={'a': 3}, mp_w_cfg={'b': 5}),
+                                                         call(mp_a_cfg={'c': 2}, mp_w_cfg={}),
+                                                         call(mp_a_cfg={}, mp_w_cfg={'c': 0}),
+                                                         call(mp_a_cfg={'c': 1}, mp_w_cfg={'d': 2, 'e': 3}),
+                                                         call(mp_a_cfg={'d': 5, 'e': 4}, mp_w_cfg={})]
+        # check final results
+        assert len(res) == 2
+        assert np.array_equal(res[v_nodes[0]], np.array([0, 1, 2]))
+        assert np.array_equal(res[v_nodes[1]], np.array([3, 4]))
+
+    @pytest.mark.parametrize('norm, eps, max_thresh, exp1, exp2', [
+        (MpMetricNormalization.NONE, None, 10, [1, 2, 3, 4], [1, 2, 3]),
+        (MpMetricNormalization.NONE, None, 3.9, [.25, .5, .75, 1], [.25, .5, .75]),
+        (MpMetricNormalization.NONE, 0, 10, [3, 3, 3, 4], [2, 2, 3]),
+        (MpMetricNormalization.NONE, 0.1, 10, [3.1, 3.1, 3, 4], [2.1, 2, 3]),
+        (MpMetricNormalization.MAXBIT, None, 10, [1 / 3, 2 / 3, 1, 4 / 3], [1 / 2, 1, 3 / 2]),
+        (MpMetricNormalization.MAXBIT, 0, 10, [1, 1, 1, 4 / 3], [1, 1, 3 / 2]),
+        (MpMetricNormalization.MINBIT, None, 10, [.5, 1, 1.5, 2], [1/3, 2/3, 1]),
+        (MpMetricNormalization.MINBIT, 0.1, 10, [1.6, 1.6, 1.5, 2], [2 / 3 + .1, 2 / 3, 1]),
+        (MpMetricNormalization.MINBIT, 0.1, 2, [.8, .8, .75, 1], [1 / 3 + .05, 1 / 3, .5])
+    ])
+    def test_build_sensitivity_mapping_params(self, fw_impl_mock, fw_info_mock, norm, eps, max_thresh, exp1, exp2):
+        """ Tests sensitivity normalization method, epsilon and threshold. """
+        ph = build_node('ph', qcs=[build_nbits_qc()])
+        n1 = build_node('n1', qcs=[build_nbits_qc(nb) for nb in (4, 2, 16, 8)])
+        n2 = build_node('n2', qcs=[build_nbits_qc(nb) for nb in (4, 8, 2)])
+        g = Graph(name='g', input_nodes=[ph], nodes=[n1], output_nodes=[n2],
+                  edge_list=[Edge(ph, n1, 0, 0), Edge(n1, n2, 0, 0)])
+
+        se = Mock(spec_set=SensitivityEvaluation)
+        se.compute_metric = lambda mp_a_cfg, mp_w_cfg: list(mp_a_cfg.values())[0] + 1
+
+        fw_info_mock.get_kernel_op_attributes = lambda nt: DEFAULT_KERNEL_ATTRIBUTES
+        fw_info_mock.is_kernel_op = lambda nt: False
+
+        mp_config = MixedPrecisionQuantizationConfig(metric_normalization=norm,
+                                                     metric_epsilon=eps,
+                                                     metric_normalization_threshold=max_thresh)
+        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+                                          sensitivity_evaluator=se,
+                                          target_resource_utilization=ResourceUtilization(activation_memory=100),
+                                          mp_config=mp_config)
+        mgr._finalize_distance_metric = Mock(wraps=mgr._finalize_distance_metric)
+
+        res = mgr._build_sensitivity_mapping()
+        assert set(res.keys()) == {n1, n2}
+        assert np.allclose(res[n1], np.array(exp1))
+        assert np.allclose(res[n2], np.array(exp2))
+        mgr._finalize_distance_metric.assert_called_with(res)
 
     def _assert_dict_allclose(self, res, exp_res, sort_axis=None):
         assert len(exp_res) == len(res)
@@ -290,7 +495,7 @@ class TestMixedPrecisionSearchManager:
 
     def _run_search_test(self, g, ru, sensitivity, exp_cfg, fw_impl):
         mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl, sensitivity_evaluator=Mock(),
-                                          target_resource_utilization=ru)
+                                          target_resource_utilization=ru, mp_config=Mock())
         mgr._build_sensitivity_mapping = Mock(return_value=sensitivity)
         res = mgr.search()
         assert res == exp_cfg

@@ -56,6 +56,11 @@ class TorchFwMixin:
         assert isinstance(layer, PytorchQuantizationWrapper)
         return layer.weights_quantizers[weight_name]
 
+    @staticmethod
+    def fetch_model_layers_by_cls(model, cls):
+        """ Fetch layers from torch module by layer class type.  """
+        return [m for m in model.modules() if isinstance(m, cls)]
+
 
 class BaseTorchIntegrationTest(BaseFWIntegrationTest, TorchFwMixin, abc.ABC):
     """ Base class for Torch integration tests. """
