@@ -393,27 +393,25 @@ class FusingInfoGenerator:
                     fusing_info[fused_op_id] = tuple(fusing_nodes)
                     fused_nodes.extend(fusing_nodes)
 
-        for manual_nodes_list in self._manual_fused_ops:
-            # Resolve nodes from names
-            manual_nodes = [graph.find_node_by_name(n)[0] for n in manual_nodes_list]
-            assert len(manual_nodes_list) == len(manual_nodes)
+        for manual_names in self._manual_fused_ops:
+            manual_nodes = [graph.find_node_by_name(n)[0] for n in manual_names]
+            assert len(manual_names) == len(manual_nodes)
 
-            # Remove any existing fused op that contains any of these nodes
-            nodes_to_remove = set()
-            for fused_op_id, fused_nodes in fusing_info.items():
-                if any(node in fused_nodes for node in manual_nodes):
-                    nodes_to_remove.add(fused_op_id)
+            # Remove any existing fused ops containing any of the manual nodes
+            fused_ids_to_remove = {
+                op_id for op_id, nodes in fusing_info.items()
+                if any(node in nodes for node in manual_nodes)
+            }
+            for op_id in fused_ids_to_remove:
+                del fusing_info[op_id]
 
-            for fused_op_id in nodes_to_remove:
-                del fusing_info[fused_op_id]
-
-            # Add the new manual fused operation
-            fused_op_id = FUSED_OP_ID_PREFIX + '_'.join(manual_nodes_list)
+            fused_op_id = FusingInfo.generate_fused_op_id(manual_nodes)
             assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
             fusing_info[fused_op_id] = tuple(manual_nodes)
 
-
-        return FusingInfo(fusing_data=fusing_info, fusing_patterns=self._fusing_patterns, manual_fused_ops=self._manual_fused_ops)
+        return FusingInfo(fusing_data=fusing_info,
+                          fusing_patterns=self._fusing_patterns,
+                          manual_fused_ops=self._manual_fused_ops)
 
 
 def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
