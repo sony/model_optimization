@@ -42,7 +42,7 @@ else:
     from keras import Input
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.constants import TENSORFLOW, FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     QNNPACK_TP_MODEL, TFLITE_TP_MODEL, KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS, WEIGHTS_N_BITS
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -250,7 +250,7 @@ class TestKerasTPModel(unittest.TestCase):
 
         fusings = hm_keras.get_fusing_patterns()
         self.assertEqual(len(fusings), 2)
-        p0, p1 = fusings[0], fusings[1]
+        p0, p1 = fusings[0].get(FUSED_LAYER_PATTERN), fusings[1].get(FUSED_LAYER_PATTERN)
 
         self.assertEqual(len(p0), 3)
         self.assertEqual(p0[0], Conv2D)

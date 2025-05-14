@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
+from edgemdt_cl.keras.object_detection.ssd_post_process import SSDPostProcess
 from mct_quantizers.keras.metadata import MetadataLayer
 from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import get_tpc
 
