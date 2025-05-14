@@ -153,7 +153,8 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
     @abc.abstractmethod
     def _build_snc_model(self):
         r""" build framework model for test_snc_fusing:
-              x -> conv2d -> swish -> conv2d
+              x -> conv2d -> swish -> add -> conv2d -> swish -> conv2d(with padding) -> swish
+                -------------------->
         """
         raise NotImplementedError()
 
@@ -282,13 +283,8 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
     def _get_quantization_config(self, disable_linear_collapse: bool=False):
         return QuantizationConfig(linear_collapsing=False) if disable_linear_collapse else QuantizationConfig()
 
-    def _prepare_graph(self, model, disable_linear_collapse: bool=False, snc_tpc:bool = False, imx500_tpc:bool = False):
+    def _prepare_graph(self, model, disable_linear_collapse: bool=False, snc_tpc:bool = False):
         tpc, *nbits = build_snc_tpc() if snc_tpc else build_tpc()
-        if imx500_tpc:
-            import edgemdt_tpc
-            tpc = edgemdt_tpc.get_target_platform_capabilities('4.0')
-            # import model_compression_toolkit as mct
-            # tpc = mct.get_target_platform_capabilities("pytorch", "default", "v4")
         # If disable_linear_collapse is False we use the default quantization config
         qcfg = self._get_quantization_config(disable_linear_collapse)
         graph = self.run_graph_preparation(model, self._data_gen, tpc, qcfg, mp=True)
