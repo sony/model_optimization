@@ -187,6 +187,65 @@ def remove_node_between_two_nodes(graph: Graph,
     graph.remove_node(node_to_remove)
 
 
+def fuse_padding_with_op2d(graph: 'BaseGraph', pad_node: 'BaseNode', op2d_node: 'BaseNode') -> None:
+    """
+    Add a padding node to the fused operation containing op2d_node.
+    If op2d_node is not already in a fused op, create a new fused group with both nodes.
+
+    Args:
+        graph: The computational graph.
+        pad_node: The padding node to be added.
+        op2d_node: The Conv2D or similar op node following the pad.
+    """
+    fusing_info = graph.fusing_info
+
+    if fusing_info.is_node_in_fused_op(op2d_node):
+        fused_id = fusing_info.get_fused_node_name(op2d_node.name)
+        fused_nodes = fusing_info.get_fused_nodes(fused_id)
+        fusing_info.remove_fused_operation(fused_id)
+    else:
+        fused_nodes = [op2d_node]
+
+    new_fused_nodes = [pad_node] + list(fused_nodes)
+    fused_op_id = fusing_info.generate_fused_op_id(new_fused_nodes)
+
+    fusing_info.add_fused_operation(fused_op_id, tuple(new_fused_nodes))
+    fusing_info.manual_fused_ops.append([n.name for n in new_fused_nodes])
+
+def update_fused_op_with_add(graph: 'BaseGraph', non_linear_node: 'BaseNode', add_node: 'BaseNode') -> None:
+    """
+    Update the fused operation to include an Add node that follows a non-linear activation node.
+
+    Args:
+        graph: The computational graph.
+        non_linear_node: The non-linear activation node (e.g., ReLU).
+        add_node: The Add node inserted after the non-linear node.
+    """
+    fusing_info = graph.fusing_info
+    prev_node = graph.get_prev_nodes(non_linear_node)[0]
+
+    # Gather existing fused nodes (if any)
+    fused_candidates = []
+    for node in (prev_node, non_linear_node):
+        if fusing_info.is_node_in_fused_op(node):
+            fused_id = fusing_info.get_fused_node_name(node.name)
+            fused_candidates.extend(fusing_info.get_fused_nodes(fused_id))
+    fused_candidates.append(add_node)
+
+    # Remove duplicates while preserving order
+    fused_candidates = list(dict.fromkeys(fused_candidates))
+
+    # Remove existing fused ops involving prev_node or non_linear_node
+    for node in (prev_node, non_linear_node):
+        if fusing_info.is_node_in_fused_op(node):
+            fusing_info.remove_fused_operation(fusing_info.get_fused_node_name(node.name))
+
+    # Register new fused operation
+    fused_op_id = fusing_info.generate_fused_op_id(fused_candidates)
+    fusing_info.manual_fused_ops.append([n.name for n in fused_candidates])
+    fusing_info.add_fused_operation(fused_op_id, tuple(fused_candidates))
+
+
 def shift_negative_function(graph: Graph,
                             core_config: CoreConfig,
                             non_linear_node: BaseNode,
@@ -349,40 +408,9 @@ def shift_negative_function(graph: Graph,
                                      fqc=graph.fqc,
                                      mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
-
-    previous_nodes = graph.get_prev_nodes(non_linear_node)
-
-    fused_candidates = []
-    if graph.fusing_info.is_node_in_fused_op(previous_nodes[0]):
-        fused_prev_op2d_id = graph.fusing_info.get_fused_node_name(previous_nodes[0].name)
-        fused_candidates.extend(list(graph.fusing_info.get_fused_nodes(fused_prev_op2d_id)))
-    if graph.fusing_info.is_node_in_fused_op(non_linear_node):
-        fused_prev_nonlinear_id = graph.fusing_info.get_fused_node_name(non_linear_node.name)
-        fused_candidates.extend(list(graph.fusing_info.get_fused_nodes(fused_prev_nonlinear_id)))
-    fused_candidates.append(add_node)
-
-    def remove_duplicates(lst):
-        seen = set()
-        result = []
-        for item in lst:
-            if item not in seen:
-                seen.add(item)
-                result.append(item)
-        return result
-
-    fused_candidates = remove_duplicates(fused_candidates)
-    fused_op_id = graph.fusing_info.generate_fused_op_id(fused_candidates)
-
-    # If the non-linear is already part of a fused op - remove the existing one before adding the new one
-    if graph.fusing_info.is_node_in_fused_op(previous_nodes[0]):
-        existing_fused_op = graph.fusing_info.get_fused_node_name(previous_nodes[0].name)
-        graph.fusing_info.remove_fused_operation(existing_fused_op)
-    if graph.fusing_info.is_node_in_fused_op(non_linear_node):
-        existing_fused_op = graph.fusing_info.get_fused_node_name(non_linear_node.name)
-        graph.fusing_info.remove_fused_operation(existing_fused_op)
-
-    graph.fusing_info.manual_fused_ops.append([n.name for n in fused_candidates])
-    graph.fusing_info.add_fused_operation(fused_op_id, tuple(fused_candidates))
+    update_fused_op_with_add(graph=graph,
+                             non_linear_node=non_linear_node,
+                             add_node=add_node)
 
     # If sum([pad_top, pad_btm, pad_left, pad_right])==0 it means we do not pad in any side, thus
     # we do not add a padding node as this is meaningless
@@ -450,41 +478,13 @@ def shift_negative_function(graph: Graph,
         candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
                                                                                     SIGNED: False})
 
-        # TODO: do we ignore the TPC configuration about 'add' ops?
         candidate_qc.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
 
-    # Update fusing info after adding the 'add' node
-    # if len(previous_nodes) == 1:
-    #     fused_candidates = [previous_nodes[0], non_linear_node, add_node]
-    #     # graph.fusing_info.fusing_patterns.append([n.type for n in fused_candidates])
-    #     graph.fusing_info.manual_fused_ops.append([n.name for n in fused_candidates])
-    #     fused_op_id = graph.fusing_info.generate_fused_op_id(fused_candidates)
-    #
-    #     # If the non-linear is already part of a fused op - remove the existing one before adding the new one
-    #     if graph.fusing_info.is_node_in_fused_op(non_linear_node):
-    #         existing_fused_op = graph.fusing_info.get_fused_node_name(non_linear_node.name)
-    #         graph.fusing_info.remove_fused_operation(existing_fused_op)
-    #
-    #     graph.fusing_info.add_fused_operation(fused_op_id, tuple(fused_candidates))
-
-
-
+    # Add the new padding node to a fused op with the op2d.
     if pad_node:
-        if graph.fusing_info.is_node_in_fused_op(op2d_node):
-            current_op2d_fused_id = graph.fusing_info.get_fused_node_name(op2d_node.name)
-            current_fused_nodes = graph.fusing_info.get_fused_nodes(current_op2d_fused_id)
-            new_fused_nodes = [pad_node] + list(current_fused_nodes)
-            new_fused_op_id = graph.fusing_info.generate_fused_op_id(new_fused_nodes)
-
-            graph.fusing_info.remove_fused_operation(current_op2d_fused_id)
-            graph.fusing_info.add_fused_operation(new_fused_op_id, tuple(new_fused_nodes))
-            graph.fusing_info.manual_fused_ops.append([n.name for n in new_fused_nodes])
-        else:
-            new_fused_nodes = [pad_node] + [op2d_node]
-            new_fused_op_id = graph.fusing_info.generate_fused_op_id(new_fused_nodes)
-
-            graph.fusing_info.add_fused_operation(new_fused_op_id, tuple(new_fused_nodes))
-            graph.fusing_info.manual_fused_ops.append([n.name for n in new_fused_nodes])
+        fuse_padding_with_op2d(graph=graph,
+                               pad_node=pad_node,
+                               op2d_node=op2d_node)
 
     if non_linear_node_cfg_candidate.shift_negative_threshold_recalculation:
         activation_param = get_activations_qparams(activation_quant_cfg=non_linear_node_cfg_candidate,
