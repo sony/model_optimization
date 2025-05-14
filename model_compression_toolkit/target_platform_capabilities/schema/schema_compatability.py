@@ -61,7 +61,7 @@ def _schema_v1_to_v2(
         activation_quantization_method=v1_default_qco.activation_quantization_method,
         activation_n_bits=v1_default_qco.activation_n_bits,
         supported_input_activation_n_bits=v1_default_qco.supported_input_activation_n_bits,
-        enable_activation_quantization=False,
+        enable_activation_quantization=False,  # set to False by default because feature not exist in schema v1
         quantization_preserving=v1_default_qco.quantization_preserving,
         fixed_scale=v1_default_qco.fixed_scale,
         fixed_zero_point=v1_default_qco.fixed_zero_point,
@@ -82,7 +82,7 @@ def _schema_v1_to_v2(
                                                          tpc_patch_version=tpc.tpc_patch_version,
                                                          tpc_platform_type=tpc.tpc_platform_type,
                                                          add_metadata=tpc.add_metadata,
-                                                         insert_preserving_quantizers=False)
+                                                         insert_preserving_quantizers=False)  # set to False by default because feature not exist in schema v1
     return tpc_schema_v2
 
 
