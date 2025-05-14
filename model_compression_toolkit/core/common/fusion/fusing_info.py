@@ -36,12 +36,14 @@ class FusingInfo:
     belong to fused operations and validate this info is correct after changes in the graph.
 
     The core structures maintained are:
+    - 'fusing_patterns': The patterns to generate the fused operators from.
+    - 'manual_fused_ops': List of sequence of node names to handle as fused ops (even if they are not part of the fusing patterns).
     - `fusing_data`: A dictionary mapping fused operation IDs to lists of nodes that belong to that operation.
     - `node_to_fused_node_map`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
 
     """
-    fusing_patterns: any = None
-    manual_fused_ops: any = None
+    fusing_patterns: List[list[any]] = None
+    manual_fused_ops: List[List[str]] = None
     fusing_data: Dict[str, Tuple['BaseNode']] = field(default_factory=dict)
     node_to_fused_node_map: Dict[str, str] = field(init=False, default_factory=dict)
     fused_op_id_to_quant_config: Dict[str, OpQuantizationConfig] = field(default_factory=dict)
@@ -329,8 +331,8 @@ class FusingInfo:
 
 
 class FusingInfoGenerator:
-    def __init__(self, fusing_patterns, manual_fused_ops=None):
-        self._fusing_patterns = fusing_patterns
+    def __init__(self, fusing_patterns=None, manual_fused_ops=None):
+        self._fusing_patterns = fusing_patterns or []
         self._manual_fused_ops = manual_fused_ops or []
 
     def generate_fusing_info(self, graph: 'Graph') -> FusingInfo:
@@ -439,20 +441,19 @@ def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
     return valid_fusing_patterns
 
 
-def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode'], manual_fused_names=None) -> bool:
+def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode'], manual_fused_names: List[List[str]]=None) -> bool:
     """
     Check if the fusion is valid: exist in fusing_patterns
     Args:
         fusing_patterns: supported fusing patterns
         nodes: nodes which are participating in fusion
+        manual_fused_names: list of nodes names to handle as a valid fusing op.
     Returns:
         whether the fusion in valid
     """
-    manual_fused_names = manual_fused_names or []
     node_names = [n.name for n in nodes]
-    for manual_names in manual_fused_names:
-        if len(manual_names) == len(node_names) and all(a == b for a, b in zip(manual_names, node_names)):
-            return True
+    if any(manual == node_names for manual in (manual_fused_names or [])):
+        return True
 
     fusion_depth = len(nodes)
     if fusion_depth <= 1:

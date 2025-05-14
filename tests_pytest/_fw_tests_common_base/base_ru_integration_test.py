@@ -241,6 +241,14 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         model = self._build_snc_model()
         graph, nbits = self._prepare_graph(model, snc_tpc=True)
 
+        expected_node_fuse_op = {'conv1': 'FusedNode_conv1_activation',
+                                 'activation': 'FusedNode_conv1_activation',
+                                 'conv2': 'FusedNode_conv2_activation_1',
+                                 'activation_1': 'FusedNode_conv2_activation_1',
+                                 'conv3': 'FusedNode_conv3_activation_2',
+                                 'activation_2': 'FusedNode_conv3_activation_2'}
+        assert graph.fusing_info.node_to_fused_node_map == expected_node_fuse_op
+
         ru_calculator = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
         ru_before_snc, detailed_ru_before_snc = ru_calculator.compute_resource_utilization(
             TargetInclusionCriterion.AnyQuantizedNonFused,
@@ -262,6 +270,16 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         graph = self.fw_impl.shift_negative_correction(graph,
                                                        core_config,
                                                        self.fw_info)
+
+        expected_node_fuse_op = {'conv1': 'FusedNode_conv1_activation',
+                                 'activation': 'FusedNode_conv1_activation',
+                                 'conv2': 'FusedNode_conv2_activation_1_activation_1_post_add',
+                                 'activation_1': 'FusedNode_conv2_activation_1_activation_1_post_add',
+                                 'activation_1_post_add': 'FusedNode_conv2_activation_1_activation_1_post_add',
+                                 'conv3_pre_pad': 'FusedNode_conv3_pre_pad_conv3_activation_2',
+                                 'conv3': 'FusedNode_conv3_pre_pad_conv3_activation_2',
+                                 'activation_2': 'FusedNode_conv3_pre_pad_conv3_activation_2'}
+        assert graph.fusing_info.node_to_fused_node_map == expected_node_fuse_op
 
         linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits
 
