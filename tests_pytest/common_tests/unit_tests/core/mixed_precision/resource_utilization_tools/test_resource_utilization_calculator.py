@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 
-from model_compression_toolkit.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.constants import FLOAT_BITWIDTH, FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
@@ -555,7 +555,8 @@ class TestActivationMaxCutUtilization:
                 if i + fuse_len <= num_nodes:
                     fused = tuple(nodes[j] for j in range(i, i + fuse_len))
                     fused_name = f"FusedNode_{'_'.join(n.name for n in fused)}"
-                    fused_patterns.append([n.layer_class for n in fused])
+                    fused_pattern = {FUSED_LAYER_PATTERN: [n.layer_class for n in fused], FUSED_OP_QUANT_CONFIG: None}
+                    fused_patterns.append(fused_pattern)
                     fused_data[fused_name] = fused
                     i += fuse_len
                 else:
