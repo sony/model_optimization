@@ -114,6 +114,8 @@ def test_quantization_preserving_holder():
     # check flatten1 (same conv)
     flatten1_activation_holder_quantizer = quantized_model.flatten1_activation_holder_quantizer
     assert isinstance(flatten1_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
+    print("$$$$$$$$$$$$$$$$$$$$")
+    print(f"{flatten1_activation_holder_quantizer.quantization_bypass}, {type(flatten1_activation_holder_quantizer.quantization_bypass)}")
     assert flatten1_activation_holder_quantizer.quantization_bypass == True
     assert flatten1_activation_holder_quantizer.activation_holder_quantizer.num_bits == conv_activation_holder_quantizer.activation_holder_quantizer.num_bits
     assert flatten1_activation_holder_quantizer.activation_holder_quantizer.signed == conv_activation_holder_quantizer.activation_holder_quantizer.signed
