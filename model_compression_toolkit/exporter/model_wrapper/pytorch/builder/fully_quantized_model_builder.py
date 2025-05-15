@@ -84,8 +84,6 @@ if FOUND_TORCH:
         _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
         if len(activation_quantizers) == 1:
             return holder_type(activation_quantizers[0], **kwargs)
-            # else:
-            #     Logger.critical(f'Unknown activation quantization holder type: {holder_type}.')
 
         Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
