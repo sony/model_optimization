@@ -9,7 +9,7 @@ PuLP
 matplotlib<3.10.0
 scipy
 protobuf
-mct-quantizers-nightly
+mct-quantizers==1.6.0
 pydantic>=2.0
 edge-mdt-cl-dev
 
