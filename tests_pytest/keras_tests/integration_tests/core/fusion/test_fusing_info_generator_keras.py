@@ -23,6 +23,7 @@ from tests_pytest._fw_tests_common_base.fusing.base_fusing_info_generator_test i
 from tests_pytest._test_util.graph_builder_utils import build_node
 from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMixin
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from model_compression_toolkit.constants import FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
 
 from tensorflow.keras import backend as K
 
@@ -52,8 +53,12 @@ class TestFusingConvRelu(BaseTestFusingInfoGeneratorKeras):
             schema.OperatorsSet(name=schema.OperatorSetNames.RELU)))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_relu": (
                 build_node(name="conv1_conv2_collapsed"),
@@ -91,8 +96,12 @@ class TestFusingAnyActKeras(BaseTestFusingInfoGeneratorKeras):
             schema.OperatorsSet(name="AnyAct")))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_tanh":
                 (build_node(name="conv1_conv2_collapsed"),
@@ -144,8 +153,12 @@ class TestFusingConvReLUOnlyKeras(BaseTestFusingInfoGeneratorKeras):
             schema.OperatorsSet(name="AnyAct")))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_conv2_collapsed_tanh":
                 (build_node(name="conv1_conv2_collapsed"),
@@ -207,8 +220,17 @@ class TestFusingComplexPatternsKeras(BaseTestFusingInfoGeneratorKeras):
                                        schema.OperatorsSet(name=schema.OperatorSetNames.ADD))),
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[1]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[2]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[3]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[4]], FUSED_OP_QUANT_CONFIG: None},
+        {FUSED_LAYER_PATTERN: [fusing_patterns[5]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_swish1_add":
                 (build_node(name="conv1"),
@@ -291,8 +313,12 @@ class TestFusingConvSwishWithMultiSuccessorsKeras(BaseTestFusingInfoGeneratorKer
             schema.OperatorsSet(name=schema.OperatorSetNames.SWISH)))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv1_swish": (
                 build_node(name="conv1"),
@@ -334,8 +360,12 @@ class TestFusingConvReluWithMultiPredecessorsKeras(BaseTestFusingInfoGeneratorKe
             schema.OperatorsSet(name=schema.OperatorSetNames.RELU)))
     ]
 
+    expected_fusing_patterns = [
+        {FUSED_LAYER_PATTERN: [fusing_patterns[0]], FUSED_OP_QUANT_CONFIG: None}
+    ]
+
     expected_fi = FusingInfo(
-        fusing_patterns=fusing_patterns,
+        fusing_patterns=expected_fusing_patterns,
         fusing_data={
             "FusedNode_conv3_relu": (
                 build_node(name="conv3"),

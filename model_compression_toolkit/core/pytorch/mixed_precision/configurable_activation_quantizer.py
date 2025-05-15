@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List, Any
+from typing import List, Optional
 
 from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import ConfigurableQuantizerIdentifier
 from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
@@ -70,18 +70,15 @@ class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
         self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)
         self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
 
-    def set_active_activation_quantizer(self,
-                                        index: int):
+    def set_active_activation_quantizer(self, index: Optional[int]):
         """
         Set an activation quantizer to use by the layer wrapped by the module.
 
         Args:
-            index: Index of a candidate quantization configuration to use its quantizer
-                for quantizing the activation.
+            index: Index of a candidate quantization configuration to use, or None to disable quantization.
         """
-
-        assert index < len(self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
-                                             f'possible nbits. Can not set index {index}'
+        assert index is None or index < len(self.node_q_cfg), (f'Quantizer has {len(self.node_q_cfg)} possible nbits. '
+                                                               f'Can not set index {index}')
         self.active_quantization_config_index = index
 
     def __call__(self,
@@ -97,5 +94,6 @@ class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
         Returns:
             Quantized activation tensor.
         """
-
+        if self.active_quantization_config_index is None:
+            return inputs
         return self.activation_quantizers[self.active_quantization_config_index](inputs)

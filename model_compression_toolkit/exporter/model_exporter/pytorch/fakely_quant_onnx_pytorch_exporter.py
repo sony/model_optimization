@@ -100,8 +100,7 @@ if FOUND_ONNX:
             model_output = self.model(*model_input) if isinstance(model_input, (list, tuple)) else self.model(
                 model_input)
 
-            input_nodes = [n for n in self.model.node_sort if n.type == DummyPlaceHolder]
-            input_names = [f"input_{i}" for i in range(len(input_nodes))] if len(input_nodes) > 1 else ["input"]
+            input_names = [f"input_{i}" for i in range(len(model_input))] if len(model_input) > 1 else ["input"]
             dynamic_axes = {name: {0: 'batch_size'} for name in input_names}
             if output_names is None:
                 # Determine number of outputs and prepare output_names and dynamic_axes

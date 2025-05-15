@@ -14,6 +14,8 @@
 #  ==============================================================================
 
 from model_compression_toolkit.target_platform_capabilities import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig
+from model_compression_toolkit.constants import FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
 from dataclasses import dataclass, field
 
 from typing import Optional, List, Dict, Any, Tuple
@@ -41,6 +43,7 @@ class FusingInfo:
     fusing_patterns: any = None
     fusing_data: Dict[str, Tuple['BaseNode']] = field(default_factory=dict)
     node_to_fused_node_map: Dict[str, str] = field(init=False, default_factory=dict)
+    fused_op_id_to_quant_config: Dict[str, OpQuantizationConfig] = field(default_factory=dict)
 
     def __post_init__(self):
         """Validates and initializes mappings after dataclass instantiation."""
@@ -49,6 +52,7 @@ class FusingInfo:
             assert isinstance(op_nodes, tuple) and len(op_nodes) > 1, f"Found invalid fused op nodes: {op_nodes}"
 
         self._init_node_mapping()
+        self._init_quantization_config_map()
 
     def _init_node_mapping(self) -> None:
         """
@@ -58,6 +62,15 @@ class FusingInfo:
         for op_id, nodes in self.fusing_data.items():
             for node in nodes:
                 self.node_to_fused_node_map[node.name] = op_id
+
+    def _init_quantization_config_map(self) -> None:
+        """
+        Init the mapping between fused operation IDs and their quantization configurations.
+        """
+        self.fused_op_id_to_quant_config.clear()
+        if self.fusing_patterns is not None:
+            for op_id, nodes in self.fusing_data.items():
+                self.set_fused_op_quantization_config(op_id, nodes)
 
     def add_fused_operation(self, op_id: str, nodes: Tuple['BaseNode']) -> None:
         """
@@ -78,6 +91,22 @@ class FusingInfo:
         for node in nodes:
             self.node_to_fused_node_map[node.name] = op_id
 
+        # Update the quantization config mapping for this operation
+        if self.fusing_patterns is not None:
+            self.set_fused_op_quantization_config(op_id, nodes)
+
+    def set_fused_op_quantization_config(self, op_id: str, nodes: Tuple['BaseNode']) -> None:
+        """
+        Set the quantization configuration for a given fused operation ID.
+
+        Args:
+            op_id (str): The identifier for the fused operation.
+            nodes (Tuple[BaseNode]): The tuple of nodes that form the fused operation.
+        """
+        fusing_pattern = next((fp for fp in self.fusing_patterns if is_valid_fusion([fp.get(FUSED_LAYER_PATTERN)], nodes)), None)
+        if fusing_pattern is not None:
+            self.fused_op_id_to_quant_config[op_id] = fusing_pattern.get(FUSED_OP_QUANT_CONFIG)
+
     def remove_fused_operation(self, op_id: str) -> None:
         """
         Remove a fused operation by its ID.
@@ -95,6 +124,7 @@ class FusingInfo:
         for node in nodes:
             self.node_to_fused_node_map.pop(node.name, None)
         del self.fusing_data[op_id]
+        self.fused_op_id_to_quant_config.pop(op_id, None)
 
     def get_fused_node_name(self, node_name: str) -> Optional[str]:
         """
@@ -117,6 +147,15 @@ class FusingInfo:
         """
         return self.node_to_fused_node_map.copy()
 
+    def get_fusing_quantization_config_map(self) -> Dict[str, OpQuantizationConfig]:
+        """
+        Retrieve a copy of the mapping from fused operation IDs to their quantization configurations.
+
+        Returns:
+            A dictionary mapping each fused operation ID to its quantization configuration.
+        """
+        return self.fused_op_id_to_quant_config.copy()
+
     def get_fused_nodes(self, op_id: str) -> Optional[List['BaseNode']]:
         """
         Retrieve the list of nodes for a given fused operation ID.
@@ -128,6 +167,18 @@ class FusingInfo:
             Optional[List[BaseNode]]: The list of nodes for the operation, or None if not found.
         """
         return self.fusing_data.get(op_id)
+
+    def get_fused_op_quantization_config(self, op_id: str) -> OpQuantizationConfig:
+        """
+        Retrieve the quantization configuration for a given fused operation ID.
+
+        Args:
+            op_id (str): The identifier for the fused operation.
+
+        Returns:
+            OpQuantizationConfig: The quantization configuration for the operation, or None if not found.
+        """
+        return self.fused_op_id_to_quant_config.get(op_id)
 
     def is_node_in_fused_op(self, node: 'BaseNode') -> bool:
         """
@@ -216,10 +267,11 @@ class FusingInfo:
             all_fused_nodes.update(node_set)
 
             # Check 4: Ensure the sequence matches a valid fusing pattern
-            if not is_valid_fusion(self.fusing_patterns, nodes):
+            valid_fusing_patterns = _get_fusing_layer_patterns(self.fusing_patterns)
+            if not is_valid_fusion(valid_fusing_patterns, nodes):
                 raise ValueError(
                     f"Fused operation {op_id} does not match any valid fusing pattern "
-                    f"from {self.fusing_patterns}."
+                    f"from {valid_fusing_patterns}."
                 )
 
     def is_nodes_eligible_to_be_fused(self, nodes: List['BaseNode']) -> bool:
@@ -240,7 +292,8 @@ class FusingInfo:
             return False
 
         # Check if the provided nodes match a valid fusion pattern
-        return is_valid_fusion(fusing_patterns=self.fusing_patterns, nodes=nodes)
+        valid_fusing_patterns = _get_fusing_layer_patterns(self.fusing_patterns)
+        return is_valid_fusion(fusing_patterns=valid_fusing_patterns, nodes=nodes)
 
     def __repr__(self) -> str:
         """
@@ -287,8 +340,11 @@ class FusingInfoGenerator:
         if not self._fusing_patterns:
             return FusingInfo(fusing_patterns=self._fusing_patterns)
 
+        # Extract fusing layer patterns
+        fusing_layer_patterns = _get_fusing_layer_patterns(self._fusing_patterns)
+
         # Find max fusion
-        max_layers_fusing = max([len(fusing_pattern) for fusing_pattern in self._fusing_patterns])
+        max_layer_patterns = max([len(fusing_layer_pattern) for fusing_layer_pattern in fusing_layer_patterns])
 
         # Travel along the graph to find layers for fusing
         nodes = graph.get_topo_sorted_nodes()
@@ -302,9 +358,9 @@ class FusingInfoGenerator:
                 continue
             # Start fusing search
             fusing_nodes = []  # nodes that are candidates for participating in fusing
-            patterns = copy.deepcopy(self._fusing_patterns)
+            patterns = copy.deepcopy(fusing_layer_patterns)
             next_nodes = [node]
-            for i in range(max_layers_fusing):
+            for i in range(max_layer_patterns):
                 patterns = get_valid_fusing_patterns_for_node(patterns, next_nodes[0], i)
                 if len(patterns) == 0:  # Give up if no more fusion pattern
                     break
@@ -314,7 +370,7 @@ class FusingInfoGenerator:
                     break
 
             # New fusion
-            if is_valid_fusion(self._fusing_patterns, fusing_nodes):
+            if is_valid_fusion(fusing_layer_patterns, fusing_nodes):
                 fused_op_id = FusingInfo.generate_fused_op_id(fusing_nodes)
                 assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
                 fusing_info[fused_op_id] = tuple(fusing_nodes)
@@ -371,3 +427,15 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode']) -
         if counter == fusion_depth:
             return True
     return False
+
+
+def _get_fusing_layer_patterns(fusing_patterns: List[Dict[Any, OpQuantizationConfig]]) -> List[List[Any]]:
+    """
+    Extracts the fusing layer patterns from the provided fusing patterns.
+    Args:
+        fusing_patterns: List of patterns of layers/LayerFilterParams to fuse and their mapping quantization config.
+
+    Returns:
+        supported fusing layer patterns
+    """
+    return [f.get(FUSED_LAYER_PATTERN) for f in fusing_patterns]

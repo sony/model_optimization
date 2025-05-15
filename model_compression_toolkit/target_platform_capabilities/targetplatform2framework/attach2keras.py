@@ -20,7 +20,7 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2fw import \
     AttachTpcToFramework
 
-from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
+from edgemdt_cl.keras.object_detection.ssd_post_process import SSDPostProcess
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
