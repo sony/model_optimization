@@ -108,7 +108,8 @@ def get_tpc():
     operator_set.extend([conv, fc])
     tpc = schema.TargetPlatformCapabilities(
         default_qco=default_configuration_options,
-        operator_set=tuple(operator_set))
+        operator_set=tuple(operator_set),
+        insert_preserving_quantizers=True)
     return tpc
 
 # test graph
@@ -167,12 +168,12 @@ class TestPyTorchModelBuilder():
         graph = get_test_graph()
         fw_impl_mock.get_inferable_quantizers.side_effect = lambda node: get_inferable_quantizers_mock(node)
         exportable_model, _ = PyTorchModelBuilder(graph=graph,
-                                                wrapper=lambda n, m:
-                                                fully_quantized_wrapper(n, m,
-                                                                        fw_impl=fw_impl_mock),
-                                                get_activation_quantizer_holder_fn=lambda n, holder_type:
-                                                get_activation_quantizer_holder(n, holder_type,
-                                                                                fw_impl=fw_impl_mock)).build_model()
+                                                  wrapper=lambda n, m:
+                                                  fully_quantized_wrapper(n, m,
+                                                                          fw_impl=fw_impl_mock),
+                                                  get_activation_quantizer_holder_fn=lambda n, holder_type, **kwargs:
+                                                  get_activation_quantizer_holder(n, holder_type,
+                                                                                  fw_impl=fw_impl_mock, **kwargs)).build_model()
         
         # check conv
         conv_activation_holder_quantizer = exportable_model.conv_activation_holder_quantizer

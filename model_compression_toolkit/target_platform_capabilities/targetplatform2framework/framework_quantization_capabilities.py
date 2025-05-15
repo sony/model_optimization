@@ -239,7 +239,17 @@ class FrameworkQuantizationCapabilities(ImmutableClass):
     def is_simd_padding(self) -> bool:
         """
 
-        Returns: Check if the TP model defines that padding due to SIMD constrains occurs.
+        Returns: Check if the TPC defines that padding due to SIMD constrains occurs.
 
         """
         return self.tpc.is_simd_padding
+
+    @property
+    def insert_preserving_quantizers(self) -> bool:
+        """
+
+        Returns: Check if the TPC defines that a quantizer for quantization preserving operators should be added to the
+            constructed model.
+
+        """
+        return self.tpc.insert_preserving_quantizers
