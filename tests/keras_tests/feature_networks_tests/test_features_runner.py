@@ -495,7 +495,7 @@ class FeatureNetworkTest(unittest.TestCase):
         ShiftNegActivationPostAddTest(self,
                                       linear_op_to_test=layers.Conv2D(3, 4),
                                       activation_op_to_test=layers.Activation('swish'),
-                                      post_add_nbits=7).run_test()
+                                      post_add_nbits=8).run_test()
 
     def test_activation_decomposition(self):
         ActivationDecompositionTest(self, activation_function='swish').run_test()

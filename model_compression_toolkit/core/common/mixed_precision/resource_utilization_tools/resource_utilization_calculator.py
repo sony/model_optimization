@@ -67,11 +67,13 @@ class TargetInclusionCriterion(Enum):
     QNonConfigurable: non-configurable targets (single quantization candidate).
     AnyQuantized: any quantized targets (configurable and non-configurable).
     Any: all targets (quantized + float).
+    QuantizedNonFused: any quantized targets that are not inside fused operations.
     """
     QConfigurable = auto()
     QNonConfigurable = auto()
     AnyQuantized = auto()
     Any = auto()
+    AnyQuantizedNonFused = auto()
 
 
 class Utilization(NamedTuple):
@@ -534,8 +536,9 @@ class ResourceUtilizationCalculator:
         assert not isinstance(n, VirtualNode), 'Use original graph to compute BOPS.'
         if target_criterion is None:
             target_criterion = TargetInclusionCriterion.Any
-        if target_criterion not in [TargetInclusionCriterion.AnyQuantized, TargetInclusionCriterion.Any]:
-            raise ValueError('BOPS computation is supported only for Any and AnyQuantized targets.')
+        if target_criterion not in [TargetInclusionCriterion.AnyQuantized, TargetInclusionCriterion.AnyQuantizedNonFused, TargetInclusionCriterion.Any]:
+            raise ValueError(
+                'BOPS computation is supported only for Any, AnyQuantized and AnyQuantizedNonFused targets.')
 
         self._validate_custom_qcs(act_qcs, bitwidth_mode)
         self._validate_custom_qcs(w_qc, bitwidth_mode)
@@ -621,7 +624,7 @@ class ResourceUtilizationCalculator:
         weight_attrs = n.get_node_weights_attributes()
         if target_criterion == TargetInclusionCriterion.QConfigurable:
             weight_attrs = [attr for attr in weight_attrs if n.is_configurable_weight(attr)]
-        elif target_criterion == TargetInclusionCriterion.AnyQuantized:
+        elif target_criterion in [TargetInclusionCriterion.AnyQuantized, TargetInclusionCriterion.AnyQuantizedNonFused]:
             weight_attrs = [attr for attr in weight_attrs if n.is_weights_quantization_enabled(attr)]
         elif target_criterion == TargetInclusionCriterion.QNonConfigurable:
             quantized = [attr for attr in weight_attrs if n.is_weights_quantization_enabled(attr)]
@@ -671,6 +674,10 @@ class ResourceUtilizationCalculator:
             nodes = [n for n in nodes if n.has_configurable_activation()]
         elif target_criterion == TargetInclusionCriterion.AnyQuantized:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled() or n.is_quantization_preserving()]
+        elif target_criterion == TargetInclusionCriterion.AnyQuantizedNonFused:
+            nodes = [n for n in nodes if n.is_activation_quantization_enabled() or n.is_quantization_preserving()]
+            # remove fused nodes (due to SNC, where the non-linear is quantized, even though it should not be quantized)
+            nodes = [n for n in nodes if n not in self.graph.fusing_info.get_nodes_to_disable_activation_quantization()]
         elif target_criterion == TargetInclusionCriterion.QNonConfigurable:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled() and not n.has_configurable_activation()]
         elif target_criterion != TargetInclusionCriterion.Any:    # pragma: no cover

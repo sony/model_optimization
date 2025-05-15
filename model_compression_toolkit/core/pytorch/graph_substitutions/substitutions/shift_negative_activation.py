@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 import operator
 from typing import Tuple, Any, Callable
 
@@ -149,9 +150,9 @@ def create_pad_node(next_node_name: str,
     op_call_kwargs = {PAD: [pad_left, pad_right, pad_top, pad_btm],
                VALUE: float(value_to_pad)}
 
-    padded_shape = input_shape[0]
-    padded_shape[1] += pad_top + pad_btm
-    padded_shape[2] += pad_left + pad_right
+    padded_shape = copy.deepcopy(input_shape[0])
+    padded_shape[2] += pad_top + pad_btm
+    padded_shape[3] += pad_left + pad_right
     pad_node = common.graph.functional_node.FunctionalNode(pad_node_name,
                                                            {},
                                                            input_shape,
@@ -241,5 +242,4 @@ def pytorch_apply_shift_negative_correction(graph: Graph,
                                            PADDING,
                                            BIAS,
                                            USE_BIAS,
-                                           params_search_quantization_fn=params_search_quantization_fn
-                                           )
+                                           params_search_quantization_fn=params_search_quantization_fn)
