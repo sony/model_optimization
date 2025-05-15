@@ -86,9 +86,6 @@ if FOUND_TORCH:
         # quantization, which in this case has an empty list).
         _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
         if len(activation_quantizers) == 1:
-            print("%%%%%%%%%%%%%%% KWARGS %%%%%%%%%%%%%%%%")
-            print(f"{node.name}")
-            print(kwargs)
             return holder_type(activation_quantizers[0], **kwargs)
 
         Logger.critical(
