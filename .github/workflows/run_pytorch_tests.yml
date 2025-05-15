@@ -34,7 +34,7 @@ jobs:
           pip check
       - name: Run pytest
         run: |
-          pytest tests_pytest/pytorch_tests
+          pytest tests_pytest/pytorch_tests -s
       - name: Run unittests
         run: |
           python -m unittest discover tests/pytorch_tests -v

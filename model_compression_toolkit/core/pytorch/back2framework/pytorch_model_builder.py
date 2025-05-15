@@ -233,6 +233,7 @@ class PytorchModel(torch.nn.Module):
         self.return_float_outputs = return_float_outputs
         self.wrapper = wrapper
         self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
+        self.insert_preserving_quantizers = graph.fqc.insert_preserving_quantizers
         self.reuse_groups = {}
         self._reused_nodes = []
 
@@ -335,12 +336,17 @@ class PytorchModel(torch.nn.Module):
             activation_quantizer_holder = None
             if self.use_activation_holder_during_model_building:
                 if node.is_activation_quantization_enabled():
-                    activation_quantizer_holder = self.get_activation_quantizer_holder(node, holder_type=PytorchActivationQuantizationHolder)
+                    activation_quantizer_holder = self.get_activation_quantizer_holder(node,
+                                                                                       holder_type=PytorchActivationQuantizationHolder)
                 
                 elif node.is_quantization_preserving():
                     prev_node = self.graph.retrieve_preserved_quantization_node(node)
                     if prev_node.is_activation_quantization_enabled():
-                        activation_quantizer_holder = self.get_activation_quantizer_holder(prev_node, holder_type=PytorchPreservingActivationQuantizationHolder)
+                        if self.insert_preserving_quantizers:
+                            holder_kwargs = {'quantization_bypass': True}
+                            activation_quantizer_holder = self.get_activation_quantizer_holder(prev_node,
+                                                                                               holder_type=PytorchPreservingActivationQuantizationHolder,
+                                                                                               **holder_kwargs)
 
             if activation_quantizer_holder is not None:
                 activation_quantizer_holder_name = node.name + '_' + ACTIVATION_HOLDER_QUANTIZER
