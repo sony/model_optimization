@@ -88,7 +88,6 @@ def get_tpc(insert_preserving):
         operator_set=tuple(operator_set),
         insert_preserving_quantizers=insert_preserving)
 
-    tpc.show()
     return tpc
 
 
