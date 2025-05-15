@@ -109,7 +109,7 @@ def test_quantization_preserving_holder():
     # check conv
     conv_activation_holder_quantizer = quantized_model.conv_activation_holder_quantizer
     assert isinstance(conv_activation_holder_quantizer, PytorchActivationQuantizationHolder)
-    print(dict(quantized_model.named_modules()))
+
     # check flatten1 (same conv)
     flatten1_activation_holder_quantizer = quantized_model.flatten1_activation_holder_quantizer
     assert isinstance(flatten1_activation_holder_quantizer, PytorchPreservingActivationQuantizationHolder)
