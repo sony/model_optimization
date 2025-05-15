@@ -15,9 +15,10 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Edit requirements mct-quantizers name # Remove the entire line in requirements.txt so no need special care for the specified version
-        run: |
-          sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
+# To override mct-quantizers package with nightly version
+#      - name: Edit requirements mct-quantizers name # Remove the entire line in requirements.txt so no need special care for the specified version
+#        run: |
+#          sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
