@@ -116,11 +116,12 @@ if FOUND_TORCH:
         fw_impl = PytorchImplementation()
 
         target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
+        target_platform_capabilities.show()
         # Attach tpc model to framework
         attach2pytorch = AttachTpcToPytorch()
         framework_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
                                                              core_config.quantization_config.custom_tpc_opset_to_layer)
-
+        print(f"======================={framework_platform_capabilities.tpc.insert_preserving_quantizers}======================")
         # Ignore hessian info service as it is not used here yet.
         tg, bit_widths_config, _, scheduling_info = core_runner(in_model=in_module,
                                                                 representative_data_gen=representative_data_gen,
