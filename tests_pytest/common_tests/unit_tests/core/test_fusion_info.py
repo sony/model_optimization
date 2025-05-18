@@ -205,8 +205,8 @@ def test_add_fused_operation_adds_data(mock_graph, fusing_info_generator):
     fi.add_fused_operation(op_id, (node1, node2))
 
     assert op_id in fi.get_all_fused_operations()
-    assert fi.get_fused_node_name("a") == op_id
-    assert fi.get_fused_node_name("b") == op_id
+    assert fi.get_fused_op_id_for_node("a") == op_id
+    assert fi.get_fused_op_id_for_node("b") == op_id
 
 def test_remove_fused_operation_raises_for_missing_op(mock_graph, fusing_info_generator):
     fi = FusingInfo()
@@ -375,8 +375,8 @@ def test_add_fused_operation_adds_data_and_qconfig(mock_qconfig_set_graph, fusin
 
     ### Checking the mapping information after addition
     assert op_id in fi.get_all_fused_operations()
-    assert fi.get_fused_node_name("conv_a") == op_id
-    assert fi.get_fused_node_name("relu_b") == op_id
+    assert fi.get_fused_op_id_for_node("conv_a") == op_id
+    assert fi.get_fused_op_id_for_node("relu_b") == op_id
 
     assert len(fi_qconfig_map) == 6
     assert fi.get_fused_op_quantization_config(op_id) == TEST_QC_1

@@ -23,8 +23,6 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import create_node_activation_qc, \
     set_quantization_configs_to_node
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
@@ -33,6 +31,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import z_score_filter
+from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -188,6 +187,65 @@ def remove_node_between_two_nodes(graph: Graph,
     graph.remove_node(node_to_remove)
 
 
+def fuse_padding_with_op2d(graph: 'BaseGraph', pad_node: 'BaseNode', op2d_node: 'BaseNode') -> None:
+    """
+    Add a padding node to the fused operation containing op2d_node.
+    If op2d_node is not already in a fused op, create a new fused group with both nodes.
+
+    Args:
+        graph: The computational graph.
+        pad_node: The padding node to be added.
+        op2d_node: The Conv2D or similar op node following the pad.
+    """
+    fusing_info = graph.fusing_info
+
+    if fusing_info.is_node_in_fused_op(op2d_node):
+        fused_id = fusing_info.get_fused_op_id_for_node(op2d_node.name)
+        fused_nodes = fusing_info.get_fused_nodes(fused_id)
+        fusing_info.remove_fused_operation(fused_id)
+    else:
+        fused_nodes = [op2d_node]
+
+    new_fused_nodes = [pad_node] + list(fused_nodes)
+    fused_op_id = fusing_info.generate_fused_op_id(new_fused_nodes)
+
+    fusing_info.add_fused_operation(fused_op_id, tuple(new_fused_nodes))
+    fusing_info.add_manual_nodes_to_fuse([n.name for n in new_fused_nodes])
+
+def update_fused_op_with_add(graph: 'BaseGraph', non_linear_node: 'BaseNode', add_node: 'BaseNode') -> None:
+    """
+    Update the fused operation to include an Add node that follows a non-linear activation node.
+
+    Args:
+        graph: The computational graph.
+        non_linear_node: The non-linear activation node (e.g., ReLU).
+        add_node: The Add node inserted after the non-linear node.
+    """
+    fusing_info = graph.fusing_info
+    prev_node = graph.get_prev_nodes(non_linear_node)[0]
+
+    # Gather existing fused nodes (if any)
+    fused_candidates = []
+    for node in (prev_node, non_linear_node):
+        if fusing_info.is_node_in_fused_op(node):
+            fused_id = fusing_info.get_fused_op_id_for_node(node.name)
+            fused_candidates.extend(fusing_info.get_fused_nodes(fused_id))
+    fused_candidates.append(add_node)
+
+    # Remove duplicates while preserving order
+    fused_candidates = list(dict.fromkeys(fused_candidates))
+
+    # Remove existing fused ops involving prev_node or non_linear_node
+    for node in (prev_node, non_linear_node):
+        if fusing_info.is_node_in_fused_op(node):
+            fusing_info.remove_fused_operation(fusing_info.get_fused_op_id_for_node(node.name))
+
+    # Register new fused operation
+    fused_op_id = fusing_info.generate_fused_op_id(fused_candidates)
+    fusing_info.add_manual_nodes_to_fuse([n.name for n in fused_candidates])
+    fusing_info.add_fused_operation(fused_op_id, tuple(fused_candidates))
+
+
 def shift_negative_function(graph: Graph,
                             core_config: CoreConfig,
                             non_linear_node: BaseNode,
@@ -232,7 +290,6 @@ def shift_negative_function(graph: Graph,
     Returns:
         Graph after applying the shifting and correction.
     """
-
     min_to_correct, max_value2compare = graph.get_out_stats_collector(non_linear_node).get_min_max_values()
 
     if not non_linear_node.is_all_activation_candidates_equal():
@@ -241,6 +298,7 @@ def shift_negative_function(graph: Graph,
 
     # all candidates have same activation config, so taking the first candidate for calculations
     non_linear_node_cfg_candidate = non_linear_node.candidates_quantization_cfg[0].activation_quantization_cfg
+
 
     # get the non-linear activation threshold
     activation_threshold = non_linear_node_cfg_candidate.activation_quantization_params.get(THRESHOLD)
@@ -350,7 +408,14 @@ def shift_negative_function(graph: Graph,
                                      fqc=graph.fqc,
                                      mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
-    if padding is not None:
+    update_fused_op_with_add(graph=graph,
+                             non_linear_node=non_linear_node,
+                             add_node=add_node)
+
+    # If sum([pad_top, pad_btm, pad_left, pad_right])==0 it means we do not pad in any side, thus
+    # we do not add a padding node as this is meaningless
+    pad_node = None
+    if padding is not None and sum([pad_top, pad_btm, pad_left, pad_right])>0:
         pad_node = create_pad_node(op2d_node.name,
                                    add_node.name,
                                    shift_value,
@@ -394,8 +459,16 @@ def shift_negative_function(graph: Graph,
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
     add_node_qco = add_node.get_qco(graph.fqc).quantization_configurations
+    add_supported_bitwidths = [c.activation_n_bits for c in add_node_qco]
+    if original_non_linear_activation_nbits not in add_supported_bitwidths:
+        raise ValueError(
+            f"Add supported activation bit-widths according to the TPC are: {add_supported_bitwidths}, but non-linear "
+            f"bitwidth is {original_non_linear_activation_nbits}. Consider adapting the TPC so 'Add' will support the "
+            f"same bitwidth as {non_linear_node.type} or disable shift negative correction.")
+
     for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
         for attr in add_node.get_node_weights_attributes():
+            # TODO: do we not quantize the weights of this 'add' on purpose?
             candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 
         candidate_qc.activation_quantization_cfg = create_node_activation_qc(core_config.quantization_config,
@@ -404,7 +477,14 @@ def shift_negative_function(graph: Graph,
 
         candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
                                                                                     SIGNED: False})
+
         candidate_qc.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
+
+    # Add the new padding node to a fused op with the op2d.
+    if pad_node:
+        fuse_padding_with_op2d(graph=graph,
+                               pad_node=pad_node,
+                               op2d_node=op2d_node)
 
     if non_linear_node_cfg_candidate.shift_negative_threshold_recalculation:
         activation_param = get_activations_qparams(activation_quant_cfg=non_linear_node_cfg_candidate,

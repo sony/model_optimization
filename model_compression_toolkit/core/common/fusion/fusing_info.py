@@ -36,22 +36,28 @@ class FusingInfo:
     belong to fused operations and validate this info is correct after changes in the graph.
 
     The core structures maintained are:
+    - 'fusing_patterns': The patterns to generate the fused operators from.
+    - 'manual_fused_ops': List of sequence of node names to handle as fused ops (even if they are not part of the fusing patterns).
     - `fusing_data`: A dictionary mapping fused operation IDs to lists of nodes that belong to that operation.
     - `node_to_fused_node_map`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
 
     """
-    fusing_patterns: any = None
+    fusing_patterns: List[list[any]] = None
+    manual_fused_ops: List[List[str]] = None
     fusing_data: Dict[str, Tuple['BaseNode']] = field(default_factory=dict)
     node_to_fused_node_map: Dict[str, str] = field(init=False, default_factory=dict)
     fused_op_id_to_quant_config: Dict[str, OpQuantizationConfig] = field(default_factory=dict)
 
     def __post_init__(self):
         """Validates and initializes mappings after dataclass instantiation."""
+        self.fusing_patterns = self.fusing_patterns or []
         for op_id, op_nodes in self.fusing_data.items():
             assert isinstance(op_id, str) and op_id.startswith(FUSED_OP_ID_PREFIX), f"Found invalid fused op id: {op_id}"
             assert isinstance(op_nodes, tuple) and len(op_nodes) > 1, f"Found invalid fused op nodes: {op_nodes}"
 
         self._init_node_mapping()
+        self._manual_fused_ops = self.manual_fused_ops or []
+        del self.manual_fused_ops
         self._init_quantization_config_map()
 
     def _init_node_mapping(self) -> None:
@@ -62,6 +68,26 @@ class FusingInfo:
         for op_id, nodes in self.fusing_data.items():
             for node in nodes:
                 self.node_to_fused_node_map[node.name] = op_id
+
+    def get_manual_nodes_to_fuse(self) -> List[List[str]]:
+        """
+        Get the list of node names to be fused manually.
+        """
+        return self._manual_fused_ops
+
+
+    def add_manual_nodes_to_fuse(self, node_names: List[str]):
+        """
+        Add a list of node names to be fused manually.
+
+        Args:
+            node_names: List of nodes to be fused.
+
+        """
+        assert isinstance(node_names, list)
+        assert all([isinstance(n, str) for n in node_names])
+        assert node_names not in self._manual_fused_ops, f"{node_names} is already in manual fused ops: {self._manual_fused_ops}"
+        self._manual_fused_ops.append(node_names)
 
     def _init_quantization_config_map(self) -> None:
         """
@@ -121,12 +147,16 @@ class FusingInfo:
             raise ValueError(f"Fused operation {op_id} does not exist.")
         # Remove nodes from the mapping
         nodes = self.fusing_data[op_id]
+        node_names = [n.name for n in nodes]
+        if node_names in self._manual_fused_ops:
+            self._manual_fused_ops.remove(node_names)
+
         for node in nodes:
             self.node_to_fused_node_map.pop(node.name, None)
         del self.fusing_data[op_id]
         self.fused_op_id_to_quant_config.pop(op_id, None)
 
-    def get_fused_node_name(self, node_name: str) -> Optional[str]:
+    def get_fused_op_id_for_node(self, node_name: str) -> Optional[str]:
         """
         Get the name of the fused node containing the given original node name.
 
@@ -167,6 +197,12 @@ class FusingInfo:
             Optional[List[BaseNode]]: The list of nodes for the operation, or None if not found.
         """
         return self.fusing_data.get(op_id)
+
+    def get_nodes_to_disable_activation_quantization(self) -> List['BaseNode']:
+        """
+        Returns a list of the nodes that their activation quantization is disabled due to fusing.
+        """
+        return [node for nodes in self.get_all_fused_operations().values() for node in nodes[:-1]]
 
     def get_fused_op_quantization_config(self, op_id: str) -> OpQuantizationConfig:
         """
@@ -268,7 +304,7 @@ class FusingInfo:
 
             # Check 4: Ensure the sequence matches a valid fusing pattern
             valid_fusing_patterns = _get_fusing_layer_patterns(self.fusing_patterns)
-            if not is_valid_fusion(valid_fusing_patterns, nodes):
+            if not is_valid_fusion(valid_fusing_patterns, nodes, self._manual_fused_ops):
                 raise ValueError(
                     f"Fused operation {op_id} does not match any valid fusing pattern "
                     f"from {valid_fusing_patterns}."
@@ -311,13 +347,17 @@ class FusingInfo:
             f"  Total fused operations: {len(self.fusing_data)}\n"
             f"  Fusing Data:\n{fusing_data_repr}\n"
             f"  Node-to-Fused Mapping:\n  {mapping_repr}\n"
+            f"  Manual fused ops:\n  {self._manual_fused_ops}\n"
             f")"
         )
 
 
 class FusingInfoGenerator:
-    def __init__(self, fusing_patterns):
-        self._fusing_patterns = fusing_patterns
+    def __init__(self, fusing_patterns: List[list] = None, manual_fused_ops: List[List[str]] = None):
+        self._fusing_patterns = fusing_patterns or []
+        assert isinstance(self._fusing_patterns, list)
+        self._manual_fused_ops = manual_fused_ops or []
+        assert isinstance(self._manual_fused_ops, list)
 
     def generate_fusing_info(self, graph: 'Graph') -> FusingInfo:
         """
@@ -338,7 +378,7 @@ class FusingInfoGenerator:
             - Each node belongs to at most one fused operation.
         """
         if not self._fusing_patterns:
-            return FusingInfo(fusing_patterns=self._fusing_patterns)
+            return FusingInfo(fusing_patterns=self._fusing_patterns, manual_fused_ops=self._manual_fused_ops)
 
         # Extract fusing layer patterns
         fusing_layer_patterns = _get_fusing_layer_patterns(self._fusing_patterns)
@@ -352,31 +392,53 @@ class FusingInfoGenerator:
         fusing_info: Dict[str, Tuple['BaseNode']] = {}
         fused_nodes = []  # nodes that are participating in fusing
 
-        for node in nodes:
-            # Skip if already in fusing
-            if node in fused_nodes:
-                continue
-            # Start fusing search
-            fusing_nodes = []  # nodes that are candidates for participating in fusing
-            patterns = copy.deepcopy(fusing_layer_patterns)
-            next_nodes = [node]
-            for i in range(max_layer_patterns):
-                patterns = get_valid_fusing_patterns_for_node(patterns, next_nodes[0], i)
-                if len(patterns) == 0:  # Give up if no more fusion pattern
-                    break
-                fusing_nodes.append(next_nodes[0])
-                next_nodes = graph.get_next_nodes(fusing_nodes[-1])
-                if len(next_nodes) != 1:  # Give up if node has more than one connection (not supported for fusion)
-                    break
+        if len(self._fusing_patterns)>0:
+            for node in nodes:
+                # Skip if already in fusing
+                if node in fused_nodes:
+                    continue
+                # Start fusing search
+                fusing_nodes = []  # nodes that are candidates for participating in fusing
+                patterns = copy.deepcopy(fusing_layer_patterns)
+                next_nodes = [node]
+                for i in range(max_layer_patterns):
+                    patterns = get_valid_fusing_patterns_for_node(patterns, next_nodes[0], i)
+                    if len(patterns) == 0:  # Give up if no more fusion pattern
+                        break
+                    fusing_nodes.append(next_nodes[0])
+                    next_nodes = graph.get_next_nodes(fusing_nodes[-1])
+                    if len(next_nodes) != 1:  # Give up if node has more than one connection (not supported for fusion)
+                        break
 
-            # New fusion
-            if is_valid_fusion(fusing_layer_patterns, fusing_nodes):
-                fused_op_id = FusingInfo.generate_fused_op_id(fusing_nodes)
-                assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
-                fusing_info[fused_op_id] = tuple(fusing_nodes)
-                fused_nodes.extend(fusing_nodes)
+                # New fusion
+                if is_valid_fusion(fusing_layer_patterns, fusing_nodes):
+                    fused_op_id = FusingInfo.generate_fused_op_id(fusing_nodes)
+                    assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
+                    fusing_info[fused_op_id] = tuple(fusing_nodes)
+                    fused_nodes.extend(fusing_nodes)
 
-        return FusingInfo(fusing_data=fusing_info, fusing_patterns=self._fusing_patterns)
+        for manual_names in self._manual_fused_ops:
+            manual_nodes = [graph.find_node_by_name(n) for n in manual_names]
+            for n in manual_nodes:
+                if len(n) != 1:
+                    raise ValueError(f"Expected exactly one node, but got {len(n)}")
+            manual_nodes = [n[0] for n in manual_nodes]
+
+            # Remove any existing fused ops containing any of the manual nodes
+            fused_ids_to_remove = {
+                op_id for op_id, nodes in fusing_info.items()
+                if any(node in nodes for node in manual_nodes)
+            }
+            for op_id in fused_ids_to_remove:
+                del fusing_info[op_id]
+
+            fused_op_id = FusingInfo.generate_fused_op_id(manual_nodes)
+            assert fused_op_id not in fusing_info, f"{fused_op_id} is already in fusing info: {fusing_info}"
+            fusing_info[fused_op_id] = tuple(manual_nodes)
+
+        return FusingInfo(fusing_data=fusing_info,
+                          fusing_patterns=self._fusing_patterns,
+                          manual_fused_ops=self._manual_fused_ops)
 
 
 def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
@@ -404,15 +466,20 @@ def get_valid_fusing_patterns_for_node(fusing_patterns: List[List[Any]],
     return valid_fusing_patterns
 
 
-def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode']) -> bool:
+def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List['BaseNode'], manual_fused_names: List[List[str]]=None) -> bool:
     """
     Check if the fusion is valid: exist in fusing_patterns
     Args:
         fusing_patterns: supported fusing patterns
         nodes: nodes which are participating in fusion
+        manual_fused_names: list of nodes names to handle as a valid fusing op.
     Returns:
         whether the fusion in valid
     """
+    node_names = [n.name for n in nodes]
+    if any(manual == node_names for manual in (manual_fused_names or [])):
+        return True
+
     fusion_depth = len(nodes)
     if fusion_depth <= 1:
         return False

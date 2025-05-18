@@ -149,7 +149,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         # the current info, or this creates a new fusion and the old pattern should be
         # replaced with the new one.
         fi = graph.fusing_info
-        fused_op = fi.get_fused_node_name(source_node.name)
+        fused_op = fi.get_fused_op_id_for_node(source_node.name)
         if fused_op:
             fused_nodes = list(fi.get_fused_nodes(fused_op))
             assert source_node in fused_nodes

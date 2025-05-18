@@ -46,12 +46,14 @@ class GraphFuser:
             The updated graph with fused nodes replacing the original node groups.
         """
         graph_copy = copy.deepcopy(graph)
-        expected_fusing_info = FusingInfoGenerator(graph_copy.fusing_info.fusing_patterns).generate_fusing_info(graph_copy)
+        expected_fusing_info = FusingInfoGenerator(graph_copy.fusing_info.fusing_patterns,
+                                                   graph_copy.fusing_info.get_manual_nodes_to_fuse()).generate_fusing_info(graph_copy)
 
-        if expected_fusing_info != graph_copy.fusing_info:
+        existing_fusing_info = graph_copy.fusing_info
+        if expected_fusing_info != existing_fusing_info:
             raise ValueError(
                 f"Mismatch between expected and existing fusing information.\n"
-                f"Expected:\n{expected_fusing_info}\nExisting:\n{graph_copy.fusing_info}"
+                f"Expected:\n{expected_fusing_info}\nExisting:\n{existing_fusing_info}"
             )
 
         fused_operations = list(graph_copy.fusing_info.get_all_fused_operations().items())
