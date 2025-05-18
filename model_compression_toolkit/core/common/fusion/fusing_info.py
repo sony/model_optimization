@@ -50,12 +50,14 @@ class FusingInfo:
 
     def __post_init__(self):
         """Validates and initializes mappings after dataclass instantiation."""
+        self.fusing_patterns = self.fusing_patterns or []
         for op_id, op_nodes in self.fusing_data.items():
             assert isinstance(op_id, str) and op_id.startswith(FUSED_OP_ID_PREFIX), f"Found invalid fused op id: {op_id}"
             assert isinstance(op_nodes, tuple) and len(op_nodes) > 1, f"Found invalid fused op nodes: {op_nodes}"
 
         self._init_node_mapping()
         self._manual_fused_ops = self.manual_fused_ops or []
+        del self.manual_fused_ops
         self._init_quantization_config_map()
 
     def _init_node_mapping(self) -> None:
@@ -66,6 +68,13 @@ class FusingInfo:
         for op_id, nodes in self.fusing_data.items():
             for node in nodes:
                 self.node_to_fused_node_map[node.name] = op_id
+
+    def get_manual_nodes_to_fuse(self) -> List[List[str]]:
+        """
+        Get the list of node names to be fused manually.
+        """
+        return self._manual_fused_ops
+
 
     def add_manual_nodes_to_fuse(self, node_names: List[str]):
         """
