@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 from torch import nn
 
 from model_compression_toolkit.core.pytorch import constants
@@ -70,5 +71,6 @@ class TestSensitivityEvaluation(BaseSensitivityEvaluationIntegTester, TorchFwMix
     def test_configure_mp_model_errors(self):
         super().test_configure_mp_model_errors()
 
-    def test_compute_metric_method(self):
-        super().test_compute_metric_method()
+    @pytest.mark.parametrize('custom', [False, True])
+    def test_compute_metric_method(self, custom, mocker):
+        super()._run_test_compute_metric_method(custom, mocker)

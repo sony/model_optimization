@@ -21,7 +21,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from typing import Dict, List, Tuple, Optional, Set
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
@@ -39,7 +39,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_ru_he
     MixedPrecisionRUHelper
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     MixedPrecisionIntegerLPSolver
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \

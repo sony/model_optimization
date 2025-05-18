@@ -17,7 +17,7 @@ import torch
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from mct_quantizers.pytorch.quantizer_utils import to_torch_tensor
 
-from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import \
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.set_layer_to_bitwidth import \
     set_activation_quant_layer_to_bitwidth, set_weights_quant_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \

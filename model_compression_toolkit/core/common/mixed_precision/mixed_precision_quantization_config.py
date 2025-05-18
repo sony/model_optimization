@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Callable, Optional
 from model_compression_toolkit.constants import MP_DEFAULT_NUM_SAMPLES, ACT_HESSIAN_DEFAULT_BATCH_SIZE
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
 
 
 class MpMetricNormalization(Enum):

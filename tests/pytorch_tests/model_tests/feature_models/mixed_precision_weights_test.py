@@ -17,7 +17,7 @@ import torch
 from torch.nn import Conv2d
 
 from model_compression_toolkit.core import ResourceUtilization
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tpc, \
     get_op_quantization_configs

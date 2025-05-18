@@ -18,7 +18,9 @@ import numpy as np
 from unittest.mock import Mock, patch, MagicMock
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.metric_calculators import \
+    CustomMetricCalculator
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import SensitivityEvaluation
 
 
 def custom_float_metric(model_mp) -> float:
@@ -55,11 +57,9 @@ def get_sensitivity_evaluator(custom_metric_fn):
     mock_fw_impl.to_tensor.side_effect = custom_to_tensor
 
     mp_cfg = MixedPrecisionQuantizationConfig(custom_metric_fn=custom_metric_fn)
-    with patch.object(SensitivityEvaluation, '_build_models', return_value=(Mock(), Mock(), Mock())):
-        sensitivity_eval = SensitivityEvaluation(graph=mock_graph,
-                                                 quant_config=mp_cfg,
-                                                 representative_data_gen=representative_data_gen,
-                                                 fw_info=mock_fw_info,
+    with patch.object(SensitivityEvaluation, '_build_mp_model', return_value=(Mock(), Mock())):
+        sensitivity_eval = SensitivityEvaluation(graph=mock_graph, mp_config=mp_cfg,
+                                                 representative_data_gen=representative_data_gen, fw_info=mock_fw_info,
                                                  fw_impl=mock_fw_impl)
     sensitivity_eval._configured_mp_model = MagicMock()
     return sensitivity_eval
@@ -73,7 +73,7 @@ class TestMPCustomMetricFunction:
     ])
     def test_valid_metric_function(self, metric_fn, expected):
         sensitivity_eval = get_sensitivity_evaluator(metric_fn)
-        assert len(sensitivity_eval.interest_points) == 0
+        assert isinstance(sensitivity_eval.metric_calculator, CustomMetricCalculator)
         assert sensitivity_eval.compute_metric({'test': 0}, {'test': 0}) == expected
 
     @pytest.mark.parametrize("metric_fn, expected", [
@@ -82,6 +82,5 @@ class TestMPCustomMetricFunction:
     ])
     def test_type_invalid_metric_function(self, metric_fn, expected):
         sensitivity_eval = get_sensitivity_evaluator(metric_fn)
-        assert len(sensitivity_eval.interest_points) == 0
         with pytest.raises(TypeError, match=f'The custom_metric_fn is expected to return float or numpy float, got {expected}'):
-            sensitivity_metric = sensitivity_eval.compute_metric(Mock(), Mock())
+            sensitivity_eval.compute_metric(Mock(), Mock())
