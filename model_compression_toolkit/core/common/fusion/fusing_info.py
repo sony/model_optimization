@@ -331,9 +331,11 @@ class FusingInfo:
 
 
 class FusingInfoGenerator:
-    def __init__(self, fusing_patterns=None, manual_fused_ops=None):
+    def __init__(self, fusing_patterns: List[list] = None, manual_fused_ops: List[List[str]] = None):
         self._fusing_patterns = fusing_patterns or []
+        assert isinstance(self._fusing_patterns, list)
         self._manual_fused_ops = manual_fused_ops or []
+        assert isinstance(self._manual_fused_ops, list)
 
     def generate_fusing_info(self, graph: 'Graph') -> FusingInfo:
         """
