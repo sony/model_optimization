@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from enum import Enum
+from enum import Enum, auto
 from functools import partial
 
 import numpy as np
@@ -68,6 +68,9 @@ class MpDistanceWeighting(Enum):
 
     AVG = partial(get_average_weights)
     LAST_LAYER = partial(get_last_layer_weights)
+    AVG_AFTER = auto()  # average over layers starting from the candidate's layer
+    AVG_WITH_THRESH = auto()  # take into account only layers with distance above threshold
+    EXP_NORM_WEIGHT = auto()  # compute weight using exponential normalization
 
     def __call__(self, distance_matrix: np.ndarray) -> np.ndarray:
         return self.value(distance_matrix)

@@ -15,7 +15,7 @@
 import numpy as np
 from typing import runtime_checkable, Protocol, Callable, Any, List, Tuple
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig, MpDistanceWeighting
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
@@ -282,38 +282,65 @@ class DistanceMetricCalculator(MetricCalculator):
 
         return ipts_distances, out_pts_distances
 
-    @staticmethod
-    def _compute_mp_distance_measure(ipts_distances: np.ndarray,
+    print_sigma = True
+    def _compute_mp_distance_measure(self,
+                                     ipts_distances: np.ndarray,
                                      out_pts_distances: np.ndarray,
-                                     metrics_weights_fn: Callable) -> float:
+                                     distance_weighting: MpDistanceWeighting,
+                                     mp_a_cfg: Dict[str, Optional[int]],
+                                     mp_w_cfg: Dict[str, Optional[int]]) -> float:
         """
         Computes the final distance value out of a distance matrix.
 
         Args:
             ipts_distances: A matrix that contains the distances between the baseline and MP models
-                for each interest point.
+                for each interest point, of shape (interest points, samples).
             out_pts_distances: A matrix that contains the distances between the baseline and MP models
                 for each output point.
-            metrics_weights_fn: A callable that produces the scores to compute weighted distance for interest points.
+            distance_weighting: A callable that produces the scores to compute weighted distance for interest points.
 
         Returns: Distance value.
         """
-        mean_ipts_distance = 0
-        if len(ipts_distances) > 0:
-            mean_distance_per_layer = ipts_distances.mean(axis=1)
+        assert ipts_distances.size
+        # average over samples
+        ipts_mean_distances = ipts_distances.mean(axis=1)
+        print('Interest pts distances:', ipts_mean_distances)
+        if distance_weighting in [MpDistanceWeighting.AVG, MpDistanceWeighting.LAST_LAYER]:
+            weights = distance_weighting(ipts_mean_distances)
+        elif distance_weighting == MpDistanceWeighting.AVG_AFTER:
+            # exclude interest points before the first candidate nodes (the order is approximated by topo sort)
+            assert self.quant_config.custom_metric_fn is None
+            candidate_nodes = set(mp_a_cfg.keys()).union(mp_w_cfg.keys())
+            # get all nodes incl and after the candidate (interest points are not limited to configurable nodes)
+            first_ind = min(self.graph_sorted_nodes_names.index(n) for n in candidate_nodes)
+            nodes = self.graph_sorted_nodes_names[first_ind:]
+            weights = np.array([int(ip.name in nodes) for ip in self.interest_points])
+        elif distance_weighting == MpDistanceWeighting.AVG_WITH_THRESH:
+            # exclude interest points with distance below threshold
+            assert self.quant_config.distance_threshold is not None
+            weights = np.where(np.abs(ipts_distances) > self.quant_config.distance_threshold, 1, 0)
+        elif distance_weighting == MpDistanceWeighting.EXP_NORM_WEIGHT:
+            import os
+            sigma = float(os.getenv('MP_EXP_SIGMA', 1))
+            if self.print_sigma:
+                print('EXP_NORM_WEIGHT SIGMA', sigma)
+                self.print_sigma = False
+            weights = 1 - np.exp(-ipts_mean_distances / sigma)
+            print('weights', weights)
+        else:
+            raise ValueError(f'Unexpected MpDistanceWeighting {distance_weighting}')
 
-            # Use weights such that every layer's distance is weighted differently (possibly).
-            weight_scores = metrics_weights_fn(ipts_distances)
-            weight_scores = np.asarray(weight_scores) if isinstance(weight_scores, List) else weight_scores
-            weight_scores = weight_scores.flatten()
-
-            mean_ipts_distance = np.average(mean_distance_per_layer, weights=weight_scores)
+        if weights.any():
+            mean_ipts_distance = np.average(ipts_mean_distances, weights=weights)
+        else:
+            Logger.warning('All weights for interest points are 0')
+            mean_ipts_distance = 0
 
         mean_output_distance = 0
         if len(out_pts_distances) > 0:
             mean_distance_per_output = out_pts_distances.mean(axis=1)
             mean_output_distance = np.average(mean_distance_per_output)
-
+        print(f'{mean_ipts_distance=} {mean_output_distance=}')
         return mean_output_distance + mean_ipts_distance
 
     def _get_images_batches(self, num_of_images: int) -> List[Any]:

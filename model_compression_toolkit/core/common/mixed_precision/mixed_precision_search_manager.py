@@ -211,11 +211,11 @@ class MixedPrecisionSearchManager:
         if verbose:
             np.set_printoptions(precision=8, floatmode='maxprec')
             name_len = max(len(n.name) for n in debug_mapping)
-            s = 'METRIC BEGIN'
+            s = '\nMETRIC BEGIN'
             for n, d in debug_mapping.items():
                 s += (f'\n{n.name:{name_len}}' + f'\n{" ":{name_len-10}}'.join([f'{k} {v}' for k, v in d.items()]))
             s += '\nMETRIC END'
-            print(s)
+            Logger.info(s)
         # Finalize distance metric mapping
         self._finalize_distance_metric(layer_to_metrics_mapping)
 
