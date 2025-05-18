@@ -21,9 +21,13 @@ from tensorflow.python.keras.layers import Activation
 
 from tests_pytest._fw_tests_common_base.base_ru_integration_test import BaseRUIntegrationTester
 from tests_pytest.keras_tests.keras_test_util.keras_test_mixin import KerasFwMixin
+from tensorflow.keras import backend as K
 
 
 class TestRUIntegrationKeras(BaseRUIntegrationTester, KerasFwMixin):
+
+    K.clear_session()  # Reset global layer naming to avoid name conflicts across tests
+
     def test_compute_ru(self):
         super().test_compute_ru()
 
@@ -65,4 +69,11 @@ class TestRUIntegrationKeras(BaseRUIntegrationTester, KerasFwMixin):
         x = Activation('swish')(x)
         x = Conv2D(2, kernel_size=3, padding='same')(x)
         outputs = Activation('swish')(x)
-        return keras.Model(inputs=inputs, outputs=outputs)
+        float_model = keras.Model(inputs=inputs, outputs=outputs)
+        return float_model, {'conv1': float_model.layers[1].name,
+                             'conv2': float_model.layers[4].name,
+                             'conv3': float_model.layers[6].name,
+                             'act1': float_model.layers[2].name,
+                             'act2': float_model.layers[5].name,
+                             'act3': float_model.layers[7].name}
+

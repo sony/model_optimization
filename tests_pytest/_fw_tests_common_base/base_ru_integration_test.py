@@ -238,15 +238,16 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         assert self._extract_values(detailed_orig[RUTarget.BOPS]) == exp_bops
 
     def test_snc_fusing(self):
-        model = self._build_snc_model()
+        model, layer_names = self._build_snc_model()
+
         graph, nbits = self._prepare_graph(model, snc_tpc=True)
 
-        expected_node_fuse_op = {'conv1': 'FusedNode_conv1_activation',
-                                 'activation': 'FusedNode_conv1_activation',
-                                 'conv2': 'FusedNode_conv2_activation_1',
-                                 'activation_1': 'FusedNode_conv2_activation_1',
-                                 'conv3': 'FusedNode_conv3_activation_2',
-                                 'activation_2': 'FusedNode_conv3_activation_2'}
+        expected_node_fuse_op = {f"{layer_names['conv1']}": f"FusedNode_{layer_names['conv1']}_{layer_names['act1']}",
+                                 f"{layer_names['act1']}": f"FusedNode_{layer_names['conv1']}_{layer_names['act1']}",
+                                 f"{layer_names['conv2']}": f"FusedNode_{layer_names['conv2']}_{layer_names['act2']}",
+                                 f"{layer_names['act2']}": f"FusedNode_{layer_names['conv2']}_{layer_names['act2']}",
+                                 f"{layer_names['conv3']}": f"FusedNode_{layer_names['conv3']}_{layer_names['act3']}",
+                                 f"{layer_names['act3']}": f"FusedNode_{layer_names['conv3']}_{layer_names['act3']}"}
         assert graph.fusing_info.node_to_fused_node_map == expected_node_fuse_op
 
         ru_calculator = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
@@ -271,14 +272,14 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
                                                        core_config,
                                                        self.fw_info)
 
-        expected_node_fuse_op = {'conv1': 'FusedNode_conv1_activation',
-                                 'activation': 'FusedNode_conv1_activation',
-                                 'conv2': 'FusedNode_conv2_activation_1_activation_1_post_add',
-                                 'activation_1': 'FusedNode_conv2_activation_1_activation_1_post_add',
-                                 'activation_1_post_add': 'FusedNode_conv2_activation_1_activation_1_post_add',
-                                 'conv3_pre_pad': 'FusedNode_conv3_pre_pad_conv3_activation_2',
-                                 'conv3': 'FusedNode_conv3_pre_pad_conv3_activation_2',
-                                 'activation_2': 'FusedNode_conv3_pre_pad_conv3_activation_2'}
+        expected_node_fuse_op = {f"{layer_names['conv1']}": f"FusedNode_{layer_names['conv1']}_{layer_names['act1']}",
+                                 f"{layer_names['act1']}": f"FusedNode_{layer_names['conv1']}_{layer_names['act1']}",
+                                 f"{layer_names['conv2']}": f"FusedNode_{layer_names['conv2']}_{layer_names['act2']}_{layer_names['act2']}_post_add",
+                                 f"{layer_names['act2']}": f"FusedNode_{layer_names['conv2']}_{layer_names['act2']}_{layer_names['act2']}_post_add",
+                                 f"{layer_names['act2']}_post_add": f"FusedNode_{layer_names['conv2']}_{layer_names['act2']}_{layer_names['act2']}_post_add",
+                                 f"{layer_names['conv3']}_pre_pad": f"FusedNode_{layer_names['conv3']}_pre_pad_{layer_names['conv3']}_{layer_names['act3']}",
+                                 f"{layer_names['conv3']}": f"FusedNode_{layer_names['conv3']}_pre_pad_{layer_names['conv3']}_{layer_names['act3']}",
+                                 f"{layer_names['act3']}": f"FusedNode_{layer_names['conv3']}_pre_pad_{layer_names['conv3']}_{layer_names['act3']}"}
         assert graph.fusing_info.node_to_fused_node_map == expected_node_fuse_op
 
         linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits

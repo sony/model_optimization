@@ -93,5 +93,11 @@ class TestRUIntegrationTorch(BaseRUIntegrationTester, TorchFwMixin):
                 x = self.activation(x)
                 return x
 
-        return SncModel()
+        float_model = SncModel()
+        return float_model, {'conv1': 'conv1',
+                             'conv2': 'conv2',
+                             'conv3': 'conv3',
+                             'act1': 'activation',
+                             'act2': 'activation_1',
+                             'act3': 'activation_2'}
 
