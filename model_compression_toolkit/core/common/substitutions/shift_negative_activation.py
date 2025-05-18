@@ -210,7 +210,7 @@ def fuse_padding_with_op2d(graph: 'BaseGraph', pad_node: 'BaseNode', op2d_node: 
     fused_op_id = fusing_info.generate_fused_op_id(new_fused_nodes)
 
     fusing_info.add_fused_operation(fused_op_id, tuple(new_fused_nodes))
-    fusing_info.manual_fused_ops.append([n.name for n in new_fused_nodes])
+    fusing_info.add_manual_nodes_to_fuse([n.name for n in new_fused_nodes])
 
 def update_fused_op_with_add(graph: 'BaseGraph', non_linear_node: 'BaseNode', add_node: 'BaseNode') -> None:
     """
@@ -242,7 +242,7 @@ def update_fused_op_with_add(graph: 'BaseGraph', non_linear_node: 'BaseNode', ad
 
     # Register new fused operation
     fused_op_id = fusing_info.generate_fused_op_id(fused_candidates)
-    fusing_info.manual_fused_ops.append([n.name for n in fused_candidates])
+    fusing_info.add_manual_nodes_to_fuse([n.name for n in fused_candidates])
     fusing_info.add_fused_operation(fused_op_id, tuple(fused_candidates))
 
 

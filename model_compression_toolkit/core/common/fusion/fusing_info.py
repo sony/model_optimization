@@ -55,7 +55,7 @@ class FusingInfo:
             assert isinstance(op_nodes, tuple) and len(op_nodes) > 1, f"Found invalid fused op nodes: {op_nodes}"
 
         self._init_node_mapping()
-        self.manual_fused_ops = self.manual_fused_ops or []
+        self._manual_fused_ops = self.manual_fused_ops or []
         self._init_quantization_config_map()
 
     def _init_node_mapping(self) -> None:
@@ -66,6 +66,19 @@ class FusingInfo:
         for op_id, nodes in self.fusing_data.items():
             for node in nodes:
                 self.node_to_fused_node_map[node.name] = op_id
+
+    def add_manual_nodes_to_fuse(self, node_names: List[str]):
+        """
+        Add a list of node names to be fused manually.
+
+        Args:
+            node_names: List of nodes to be fused.
+
+        """
+        assert isinstance(node_names, list)
+        assert all([isinstance(n, str) for n in node_names])
+        assert node_names not in self._manual_fused_ops, f"{node_names} is already in manual fused ops: {self._manual_fused_ops}"
+        self._manual_fused_ops.append(node_names)
 
     def _init_quantization_config_map(self) -> None:
         """
@@ -126,8 +139,8 @@ class FusingInfo:
         # Remove nodes from the mapping
         nodes = self.fusing_data[op_id]
         node_names = [n.name for n in nodes]
-        if node_names in self.manual_fused_ops:
-            self.manual_fused_ops.remove(node_names)
+        if node_names in self._manual_fused_ops:
+            self._manual_fused_ops.remove(node_names)
 
         for node in nodes:
             self.node_to_fused_node_map.pop(node.name, None)
@@ -282,7 +295,7 @@ class FusingInfo:
 
             # Check 4: Ensure the sequence matches a valid fusing pattern
             valid_fusing_patterns = _get_fusing_layer_patterns(self.fusing_patterns)
-            if not is_valid_fusion(valid_fusing_patterns, nodes, self.manual_fused_ops):
+            if not is_valid_fusion(valid_fusing_patterns, nodes, self._manual_fused_ops):
                 raise ValueError(
                     f"Fused operation {op_id} does not match any valid fusing pattern "
                     f"from {valid_fusing_patterns}."
@@ -325,7 +338,7 @@ class FusingInfo:
             f"  Total fused operations: {len(self.fusing_data)}\n"
             f"  Fusing Data:\n{fusing_data_repr}\n"
             f"  Node-to-Fused Mapping:\n  {mapping_repr}\n"
-            f"  Manual fused ops:\n  {self.manual_fused_ops}\n"
+            f"  Manual fused ops:\n  {self._manual_fused_ops}\n"
             f")"
         )
 
