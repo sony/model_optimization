@@ -200,7 +200,7 @@ def fuse_padding_with_op2d(graph: 'BaseGraph', pad_node: 'BaseNode', op2d_node: 
     fusing_info = graph.fusing_info
 
     if fusing_info.is_node_in_fused_op(op2d_node):
-        fused_id = fusing_info.get_fused_node_name(op2d_node.name)
+        fused_id = fusing_info.get_fused_op_id_for_node(op2d_node.name)
         fused_nodes = fusing_info.get_fused_nodes(fused_id)
         fusing_info.remove_fused_operation(fused_id)
     else:
@@ -228,7 +228,7 @@ def update_fused_op_with_add(graph: 'BaseGraph', non_linear_node: 'BaseNode', ad
     fused_candidates = []
     for node in (prev_node, non_linear_node):
         if fusing_info.is_node_in_fused_op(node):
-            fused_id = fusing_info.get_fused_node_name(node.name)
+            fused_id = fusing_info.get_fused_op_id_for_node(node.name)
             fused_candidates.extend(fusing_info.get_fused_nodes(fused_id))
     fused_candidates.append(add_node)
 
@@ -238,7 +238,7 @@ def update_fused_op_with_add(graph: 'BaseGraph', non_linear_node: 'BaseNode', ad
     # Remove existing fused ops involving prev_node or non_linear_node
     for node in (prev_node, non_linear_node):
         if fusing_info.is_node_in_fused_op(node):
-            fusing_info.remove_fused_operation(fusing_info.get_fused_node_name(node.name))
+            fusing_info.remove_fused_operation(fusing_info.get_fused_op_id_for_node(node.name))
 
     # Register new fused operation
     fused_op_id = fusing_info.generate_fused_op_id(fused_candidates)

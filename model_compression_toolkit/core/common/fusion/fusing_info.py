@@ -147,7 +147,7 @@ class FusingInfo:
         del self.fusing_data[op_id]
         self.fused_op_id_to_quant_config.pop(op_id, None)
 
-    def get_fused_node_name(self, node_name: str) -> Optional[str]:
+    def get_fused_op_id_for_node(self, node_name: str) -> Optional[str]:
         """
         Get the name of the fused node containing the given original node name.
 
