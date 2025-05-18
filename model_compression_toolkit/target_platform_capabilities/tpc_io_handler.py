@@ -12,12 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import json
 from pathlib import Path
 from typing import Union
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import is_tpc_instance, \
-    tpc_to_current_schema_version, tpc_or_str_type
+    tpc_to_current_schema_version, tpc_or_str_type, get_schema_by_version
+
+
+def _get_json_schema(tpc_json_path: str):
+    """
+    Given a TPC json file path, extract the schema version from it, and return schema object matched to that
+    schema version.
+    """
+    with open(tpc_json_path, 'r', encoding='utf-8') as f:
+        schema_version = str(json.load(f)["SCHEMA_VERSION"])
+    return get_schema_by_version(schema_version)
 
 
 def _get_tpc_from_json(tpc_path: str) -> schema.TargetPlatformCapabilities:
@@ -40,7 +51,11 @@ def _get_tpc_from_json(tpc_path: str) -> schema.TargetPlatformCapabilities:
         raise ValueError(f"Error reading the file '{tpc_path}': {e.strerror}.") from e
 
     try:
-        return schema.TargetPlatformCapabilities.parse_raw(data)
+        # json_schema = _get_json_schema(tpc_path)
+        # tpc = json_schema.TargetPlatformCapabilities.parse_raw(data)
+        # return tpc_to_current_schema_version(tpc)
+        tpc = schema.TargetPlatformCapabilities.parse_raw(data)
+        return tpc_to_current_schema_version(tpc)
     except ValueError as e:
         raise ValueError(f"Invalid JSON for loading TargetPlatformCapabilities in '{tpc_path}': {e}.") from e
     except Exception as e:

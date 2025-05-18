@@ -27,7 +27,6 @@ jobs:
           mv temp_requirements.txt requirements.txt
       - name: Install dependencies
         run: |
-          sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
           python -m pip install --upgrade pip
           pip install -r requirements.txt          
           pip install torch==${{ inputs.torch-version }} torchvision onnx onnxruntime "onnxruntime-extensions<0.14"
@@ -35,7 +34,7 @@ jobs:
           pip check
       - name: Run pytest
         run: |
-          pytest tests_pytest/pytorch_tests
+          pytest tests_pytest/pytorch_tests -s
       - name: Run unittests
         run: |
           python -m unittest discover tests/pytorch_tests -v

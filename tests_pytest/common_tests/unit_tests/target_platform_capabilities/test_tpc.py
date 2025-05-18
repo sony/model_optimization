@@ -16,10 +16,12 @@ import os
 import pytest
 from pydantic import ValidationError
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as current_schema
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v1
+import model_compression_toolkit.target_platform_capabilities.schema.v2 as schema_v2
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS, \
-    all_tpc_types, FUTURE_SCHEMA_VERSIONS
+    all_tpc_types, FUTURE_SCHEMA_VERSIONS, _schema_v1_to_v2
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import get_config_options_by_operators_set, is_opset_in_model
 from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities, \
     export_target_platform_capabilities
@@ -117,7 +119,40 @@ class TestTPModelInitialization:
         Test tpc initialization for all supported schemas & future schemas (i.e. schema with newer version
         than current schema). Test goal is to validate new (not in use yet) schemas are covered by Coverage test
         """
+        tpc_by_schema = tpc_by_future_schema_version
+
+
+class TestSchemaCompatability:
+
+    def test_schema_compatibility(self, tpc_by_schema_version):
+        """Tests that tpc of any schema version is supported and can be converted into current schema version"""
         tpc_by_schema = tpc_by_schema_version
+        result = load_target_platform_capabilities(tpc_by_schema)
+        assert isinstance(result, current_schema.TargetPlatformCapabilities), \
+            f"Make sure all schema versions can be converted into current schema version"
+
+    def test_schema_v1_to_schema_v2_compatability(self):
+        """
+        Test that tpc of schema v1 doesn't have the new fields added in schema v2, and that after converting it to
+        schema v2 the new fields exist with the correct default value.
+        """
+        tpc_schema_v1 = get_tpc(schema_v1)
+        with pytest.raises(AttributeError, match="'TargetPlatformCapabilities' object has no attribute 'insert_preserving_quantizers'"):
+            tpc_schema_v1.insert_preserving_quantizers
+        with pytest.raises(AttributeError, match="'Fusing' object has no attribute 'fuse_op_quantization_config'"):
+            tpc_schema_v1.fusing_patterns[0].fuse_op_quantization_config
+        tpc_schema_v2 = _schema_v1_to_v2(tpc_schema_v1)
+        assert isinstance(tpc_schema_v2, schema_v2.TargetPlatformCapabilities)
+        assert tpc_schema_v2.insert_preserving_quantizers is False
+        assert tpc_schema_v2.fusing_patterns[0].fuse_op_quantization_config.enable_activation_quantization is False
+
+    def test_json_schema_compatibility(self, tpc, valid_export_path):
+        """Tests that a tpc exported using schema v1 is imported as current schema tpc."""
+        tpc_schema_v1 = get_tpc(schema_v1)
+        assert isinstance(tpc_schema_v1, schema_v1.TargetPlatformCapabilities)
+        export_target_platform_capabilities(tpc_schema_v1, str(valid_export_path))
+        imported_model = load_target_platform_capabilities(str(valid_export_path))
+        assert isinstance(imported_model, current_schema.TargetPlatformCapabilities)
 
 
 class TestTPModelInputOutput:
@@ -129,13 +164,6 @@ class TestTPModelInputOutput:
     def test_new_schema(self, tpc):
         """Tests that current schema is in all schemas list. This test validates new schema was added properly."""
         assert type(tpc) in all_tpc_types, "Current schema need to be added to ALL_SCHEMA_VERSIONS"
-
-    def test_schema_compatibility(self, tpc_by_schema_version):
-        """Tests that tpc of any schema version is supported and can be converted into current schema version"""
-        tpc_by_schema = tpc_by_schema_version
-        result = load_target_platform_capabilities(tpc_by_schema)
-        assert isinstance(result, current_schema.TargetPlatformCapabilities), \
-            f"Make sure all schema versions can be converted into current schema version"
 
     def test_invalid_json_parsing(self, tmp_invalid_json):
         """Tests that invalid JSON content raises a ValueError."""
@@ -212,7 +240,6 @@ class TestTargetPlatformModeling:
         # Expecting a TypeError or AttributeError due to immutability
         with pytest.raises(ValidationError , match="Instance is frozen"):
             model.operator_set = tuple()
-
 
     def test_default_options_more_than_single_qc(self):
         """Tests that creating a TargetPlatformCapabilities with default_qco containing more than one configuration raises an exception."""
