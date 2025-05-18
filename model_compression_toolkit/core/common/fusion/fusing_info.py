@@ -396,8 +396,11 @@ class FusingInfoGenerator:
                     fused_nodes.extend(fusing_nodes)
 
         for manual_names in self._manual_fused_ops:
-            manual_nodes = [graph.find_node_by_name(n)[0] for n in manual_names]
-            assert len(manual_names) == len(manual_nodes)
+            manual_nodes = [graph.find_node_by_name(n) for n in manual_names]
+            for n in manual_nodes:
+                if len(n) != 1:
+                    raise ValueError(f"Expected exactly one node, but got {len(n)}")
+            manual_nodes = [n[0] for n in manual_nodes]
 
             # Remove any existing fused ops containing any of the manual nodes
             fused_ids_to_remove = {
