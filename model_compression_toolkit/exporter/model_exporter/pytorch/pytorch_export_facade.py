@@ -30,6 +30,8 @@ if FOUND_TORCH:
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import FakelyQuantONNXPyTorchExporter
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import FakelyQuantTorchScriptPyTorchExporter
     from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
+    from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import \
+        find_and_assign_metadata_attr
 
     if version.parse(torch.__version__) >= version.parse("2.4"):
         DEFAULT_ONNX_OPSET_VERSION = 20
@@ -65,6 +67,8 @@ if FOUND_TORCH:
             onnx_opset_version: ONNX opset version to use for exported ONNX model.
 
         """
+        # Ensure 'metadata' is available directly on the model, if present in submodules
+        find_and_assign_metadata_attr(model)
 
         if serialization_format == PytorchExportSerializationFormat.TORCHSCRIPT:
             if quantization_format in supported_serialization_quantization_export_dict[serialization_format]:

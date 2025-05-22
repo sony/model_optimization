@@ -19,7 +19,41 @@ import torch.nn
 
 from mct_quantizers import PytorchQuantizationWrapper
 from mct_quantizers.common.constants import LAYER, WEIGHTS_QUANTIZERS
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.exporter import Exporter
+
+def find_and_assign_metadata_attr(model: torch.nn.Module, attr_name: str = 'metadata'):
+    """
+    Searches for a given attribute in the model and its submodules.
+    If found, assigns the first occurrence to the top-level model under the same attribute name.
+    Warn if the attribute is not found or found in multiple places.
+
+    Args:
+        model (torch.nn.Module): The model to search.
+        attr_name (str): The name of the attribute to look for. Default is 'metadata'.
+    """
+    found_attrs = []
+
+    def _search(m):
+        """Recursively search the model and its submodules for the attribute."""
+        if hasattr(m, attr_name):
+            found_attrs.append(getattr(m, attr_name))
+        for child in m.children():
+            _search(child)
+
+    _search(model)
+
+    if not found_attrs:
+        # Warn if the attribute was not found anywhere
+        Logger.warning(f"Attribute '{attr_name}' not found in the model or its submodules.")
+    else:
+        setattr(model, attr_name, found_attrs[0])
+
+        if len(found_attrs) > 1:
+            # Warn if the attribute was found in multiple places
+            Logger.warning(
+                f"Attribute '{attr_name}' found in {len(found_attrs)} places. "
+                f"Only the first one was assigned to 'model.metadata'.")
 
 
 def _set_quantized_weights_in_wrapper(layer:PytorchQuantizationWrapper):
