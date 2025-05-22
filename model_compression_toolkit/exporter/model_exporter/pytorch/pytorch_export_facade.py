@@ -15,8 +15,6 @@
 from typing import Callable
 from packaging import version
 
-from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import \
-    find_and_assign_metadata_attr
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.quantization_format import QuantizationFormat
 from model_compression_toolkit.exporter.model_exporter.pytorch.export_serialization_format import \
@@ -32,6 +30,8 @@ if FOUND_TORCH:
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import FakelyQuantONNXPyTorchExporter
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import FakelyQuantTorchScriptPyTorchExporter
     from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
+    from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import \
+        find_and_assign_metadata_attr
 
     if version.parse(torch.__version__) >= version.parse("2.4"):
         DEFAULT_ONNX_OPSET_VERSION = 20
