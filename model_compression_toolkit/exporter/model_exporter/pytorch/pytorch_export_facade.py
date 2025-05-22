@@ -67,7 +67,9 @@ if FOUND_TORCH:
             onnx_opset_version: ONNX opset version to use for exported ONNX model.
 
         """
+        # Ensure 'metadata' is available directly on the model, if present in submodules
         find_and_assign_metadata_attr(model)
+
         if serialization_format == PytorchExportSerializationFormat.TORCHSCRIPT:
             if quantization_format in supported_serialization_quantization_export_dict[serialization_format]:
                 exporter = FakelyQuantTorchScriptPyTorchExporter(model,
