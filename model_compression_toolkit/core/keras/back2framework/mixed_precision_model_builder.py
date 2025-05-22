@@ -67,6 +67,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                          wrapper=self.mixed_precision_wrapper,
                          get_activation_quantizer_holder_fn=self.mixed_precision_activation_holder)
 
+        self.act_holder2node_mapping = {}
+
     def mixed_precision_wrapper(self,
                                 n: common.BaseNode,
                                 layer: Layer) -> Union[KerasQuantizationWrapper, Layer]:
@@ -160,7 +162,13 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
-            return KerasActivationQuantizationHolder(activation_quantizers[0])
+            holder = KerasActivationQuantizationHolder(activation_quantizers[0])
+            if n.reuse:
+                # If node is reused then its full name would not appear in the representative layer, so in order to
+                # set its correct activation quantization holder layer for the mixed precision search, we need to be
+                # able to restore the matching holder instance based on the node's na
+                self.act_holder2node_mapping[n.name] = holder
+            return holder
 
         Logger.critical(f"'KerasActivationQuantizationHolder' supports only one quantizer, but found {len(activation_quantizers)} for node {n}")# pragma: no cover
 
@@ -197,10 +205,10 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         Returns: A list of layers that responsible for the node's weights quantization.
 
         """
-        return [_l for _l in layers_list if isinstance(_l, KerasQuantizationWrapper) and _l.layer.name == n.name]
+        return [_l for _l in layers_list if isinstance(_l, KerasQuantizationWrapper) and
+                (_l.layer.name == n.name or (n.reuse and _l.layer.name == n.reuse_group))]
 
-    @staticmethod
-    def _get_activation_quant_layers(n: BaseNode, layers_list: List[Layer]) -> List[KerasActivationQuantizationHolder]:
+    def _get_activation_quant_layers(self, n: BaseNode, layers_list: List[Layer]) -> List[KerasActivationQuantizationHolder]:
         """
         Filters KerasActivationQuantizationHolder layers from an MP model that are matching to the given graph node.
 
@@ -211,6 +219,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         Returns: A list of layers that responsible for the node's activation quantization.
 
         """
+        if n.reuse:
+            return [self.act_holder2node_mapping[n.name]]
         return [_l for _l in layers_list if isinstance(_l, KerasActivationQuantizationHolder)
                 and (_l.inbound_nodes[0].inbound_layers.name == n.name or
                      (isinstance(_l.inbound_nodes[0].inbound_layers, KerasQuantizationWrapper) and

@@ -58,6 +58,8 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                          wrapper=self.mixed_precision_wrapper,
                          get_activation_quantizer_holder_fn=self.mixed_precision_activation_holder)
 
+        self.act_holder2node_mapping = {}
+
     def mixed_precision_wrapper(self,
                                 n: common.BaseNode,
                                 layer: torch.nn.Module) -> Union[PytorchQuantizationWrapper, torch.nn.Module]:
@@ -161,7 +163,13 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         # thus we make sure this is the only possible case (unless it's a node with no activation
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
-            return holder_type(activation_quantizers[0])
+            holder = holder_type(activation_quantizers[0])
+            if n.reuse:
+                # If node is reused then its full name would not appear in the representative layer, so in order to
+                # set its correct activation quantization holder layer for the mixed precision search, we need to be
+                # able to restore the matching holder instance based on the node's name.
+                self.act_holder2node_mapping[n.name] = holder
+            return holder
 
         Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover
 
@@ -182,8 +190,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         return model, user_info, conf_node2layers
 
 
-    @staticmethod
-    def _get_weights_quant_layers(n: BaseNode, named_layers: Dict[str, torch.nn.Module]) \
+    def _get_weights_quant_layers(self, n: BaseNode, named_layers: Dict[str, torch.nn.Module]) \
             -> List[PytorchQuantizationWrapper]:
         """
         Filters PytorchQuantizationWrapper layers from an MP model that are matching to the given graph node.
@@ -196,10 +203,10 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         """
         return [module for m_name, module in named_layers.items() if isinstance(module, PytorchQuantizationWrapper)
-                and m_name == n.name]
+                and (m_name == n.name or (n.reuse and m_name == n.reuse_group))]
 
-    @staticmethod
-    def _get_activation_quant_layers(n: BaseNode, named_layers: Dict[str, torch.nn.Module]) \
+
+    def _get_activation_quant_layers(self, n: BaseNode, named_layers: Dict[str, torch.nn.Module]) \
             -> List[PytorchActivationQuantizationHolder]:
         """
         Filters PytorchActivationQuantizationHolder layers from an MP model that are matching to the given graph node.
@@ -211,6 +218,8 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         Returns: A list of layers that responsible for the node's activation quantization.
 
         """
+        if n.reuse:
+            return [self.act_holder2node_mapping[n.name]]
         return [module for m_name, module in named_layers.items()
                 if isinstance(module, PytorchActivationQuantizationHolder) and
                 m_name.replace(f"_{ACTIVATION_HOLDER_QUANTIZER}", '') == n.name]
