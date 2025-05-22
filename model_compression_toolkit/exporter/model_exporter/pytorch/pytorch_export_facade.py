@@ -15,6 +15,8 @@
 from typing import Callable
 from packaging import version
 
+from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import \
+    find_and_assign_metadata_attr
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.quantization_format import QuantizationFormat
 from model_compression_toolkit.exporter.model_exporter.pytorch.export_serialization_format import \
@@ -65,7 +67,7 @@ if FOUND_TORCH:
             onnx_opset_version: ONNX opset version to use for exported ONNX model.
 
         """
-
+        find_and_assign_metadata_attr(model)
         if serialization_format == PytorchExportSerializationFormat.TORCHSCRIPT:
             if quantization_format in supported_serialization_quantization_export_dict[serialization_format]:
                 exporter = FakelyQuantTorchScriptPyTorchExporter(model,
