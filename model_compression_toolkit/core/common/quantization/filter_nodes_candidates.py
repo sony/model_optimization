@@ -91,7 +91,7 @@ def filter_node_candidates(node: BaseNode, fw_info: FrameworkInfo, op_cfg: OpQua
     Args:
         node: Node to set its quantization configurations.
         fw_info: FrameworkInfo object with information about the specific framework's model.
-		op_cfg:OpQuantizationConfig to set.
+        op_cfg:OpQuantizationConfig to set.
     """
 
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
