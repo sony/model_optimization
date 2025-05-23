@@ -135,6 +135,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     def quantization_preserving(self):
         return self.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT
 
+    @property
     def fln_quantization(self):
         return self.quant_mode == ActivationQuantizationMode.FLN_QUANT
 
