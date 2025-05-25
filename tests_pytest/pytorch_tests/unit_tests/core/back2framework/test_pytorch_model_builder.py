@@ -16,17 +16,23 @@ import pytest
 from unittest.mock import Mock
 from typing import List
 import torch
+
+from model_compression_toolkit.core.pytorch.back2framework.mixed_precision_model_builder import \
+    MixedPrecisionPyTorchModelBuilder
+from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
+    ConfigurableWeightsQuantizer
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_activation_quantizer_holder, fully_quantized_wrapper
-from mct_quantizers import PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder
+from mct_quantizers import PytorchActivationQuantizationHolder, PytorchPreservingActivationQuantizationHolder, \
+    PytorchQuantizationWrapper
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common import BaseNode
-from tests_pytest._test_util.graph_builder_utils import DummyLayer
+from tests_pytest._test_util.graph_builder_utils import DummyLayer, build_node as util_build_node, build_nbits_qc
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
-    NodeActivationQuantizationConfig
+    NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig, ActivationQuantizationMode
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
     Signedness
 from model_compression_toolkit.core import QuantizationConfig
@@ -36,10 +42,19 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
     FrameworkQuantizationCapabilities
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 
-def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizationConfig] = None,
-               input_shape=(4, 5, 6), output_shape=(4, 5, 6), weights = {},
-               layer_class=DummyLayer, reuse=False):
 
+@pytest.fixture
+def graph_mock():
+    """ Basic Graph mock with basic retrieve_preserved_quantization_node operation for handling non
+    quantization preserving nodes. """
+    return Mock(spec_set=Graph, nodes=[], retrieve_preserved_quantization_node=lambda x: x)
+
+
+def build_node(name='node', framework_attr: dict={}, qcs: List[CandidateNodeQuantizationConfig] = None,
+               input_shape=(4, 5, 6), output_shape=(4, 5, 6), weights={},
+               layer_class: type = None, reuse=False, set_final_act_config=True):
+
+    assert layer_class is not None
     node = BaseNode(name=name,
                     framework_attr=framework_attr,
                     input_shape=input_shape,
@@ -50,8 +65,10 @@ def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizati
     if qcs:
         assert isinstance(qcs, list)
         node.candidates_quantization_cfg = qcs
-        node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
+        if set_final_act_config:
+            node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
     return node
+
 
 def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
     op_cfg = OpQuantizationConfig(
@@ -71,6 +88,7 @@ def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
         a_qcfg.set_activation_quantization_param(aq_params)
     qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg)
     return qc
+
 
 def get_tpc():
     base_config = schema.OpQuantizationConfig(
@@ -161,6 +179,7 @@ def get_inferable_quantizers_mock(node):
     
     return {}, [activation_quantizers]
 
+
 class TestPyTorchModelBuilder():
 
     # test case for PyTorchModelBuilder
@@ -219,3 +238,153 @@ class TestPyTorchModelBuilder():
         assert fc2_activation_holder_quantizer.activation_holder_quantizer.num_bits == 4
         assert fc2_activation_holder_quantizer.activation_holder_quantizer.signed == False
         assert fc2_activation_holder_quantizer.activation_holder_quantizer.threshold_np == 4.0
+
+
+
+class TestPytorchMixedPrecisionModelBuilder:
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        weights_attr_cfg_mock_8 = Mock()
+        weights_attr_cfg_mock_8.weights_n_bits = 8
+        weights_attr_cfg_mock_8.enable_weights_quantization = True
+        weights_attr_cfg_mock_8.weights_channels_axis = [1]
+        weights_attr_cfg_mock_8.weights_quantization_fn.return_value = torch.randn(1)
+        weights_attr_cfg_mock_4 = Mock()
+        weights_attr_cfg_mock_4.weights_n_bits = 4
+        weights_attr_cfg_mock_4.enable_weights_quantization = True
+        weights_attr_cfg_mock_4.weights_channels_axis = [1]
+        weights_attr_cfg_mock_4.weights_quantization_fn.return_value = torch.randn(1)
+        weights_attr_cfg_mock_2 = Mock()
+        weights_attr_cfg_mock_2.weights_n_bits = 2
+        weights_attr_cfg_mock_2.enable_weights_quantization = True
+        weights_attr_cfg_mock_2.weights_channels_axis = [1]
+        weights_attr_cfg_mock_2.weights_quantization_fn.return_value = torch.randn(1)
+
+        a_qc_mock8 = Mock(spec=NodeActivationQuantizationConfig)
+        a_qc_mock8.activation_n_bits = 8
+        a_qc_mock8.quant_mode = ActivationQuantizationMode.QUANT
+        a_qc_mock4 = Mock(spec=NodeActivationQuantizationConfig)
+        a_qc_mock4.activation_n_bits = 4
+        a_qc_mock4.quant_mode = ActivationQuantizationMode.QUANT
+
+        w_qc_mock8 = Mock(spec=NodeWeightsQuantizationConfig)
+        w_qc_mock8.get_attr_config.return_value = weights_attr_cfg_mock_8
+
+        # activation 8
+        self.qc_88 = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock8,
+                                                     weights_quantization_cfg=w_qc_mock8)
+        w_qc_mock8.enable_weights_quantization = False
+        self.qc_act_only = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock8,
+                                                           weights_quantization_cfg=w_qc_mock8)
+
+        self.no_quant = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock8,
+                                                           weights_quantization_cfg=w_qc_mock8)
+        w_qc_mock4 = Mock(spec=NodeWeightsQuantizationConfig)
+        w_qc_mock4.get_attr_config.return_value = weights_attr_cfg_mock_4
+        self.qc_48 = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock8,
+                                                     weights_quantization_cfg=w_qc_mock4)
+        w_qc_mock2 = Mock(spec=NodeWeightsQuantizationConfig)
+        w_qc_mock2.get_attr_config.return_value = weights_attr_cfg_mock_2
+        self.qc_28 = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock8,
+                                                     weights_quantization_cfg=w_qc_mock2)
+
+        # activation 4
+        w_qc_mock8 = Mock(spec=NodeWeightsQuantizationConfig)
+        w_qc_mock8.get_attr_config.return_value = weights_attr_cfg_mock_8
+        self.qc_84 = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock4,
+                                                     weights_quantization_cfg=w_qc_mock8)
+        self.qc_44 = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock4,
+                                                     weights_quantization_cfg=w_qc_mock4)
+        self.qc_24 = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qc_mock4,
+                                                     weights_quantization_cfg=w_qc_mock2)
+
+
+
+    def test_model_builder_with_configurable_weights_reused_nodes(self):
+
+        mp_candidautes = [self.qc_88, self.qc_48, self.qc_28]
+        mp = build_node('mp', qcs=mp_candidautes, output_shape=(None, 5, 10), layer_class=torch.nn.Conv2d, framework_attr={'in_channels': 3, 'out_channels': 3, 'kernel_size': 3}, set_final_act_config=False)
+        mp.reuse_group = 'mp'
+        mp_reuse = build_node('mp_reuse', qcs=mp_candidautes, output_shape=(None, 24), reuse=True, layer_class=torch.nn.Conv2d, framework_attr={'in_channels': 3, 'out_channels': 3, 'kernel_size': 3}, set_final_act_config=False)
+        mp_reuse.reuse_group = 'mp'
+
+        sp = build_node('sp', qcs=[self.qc_act_only], output_shape=(None, 20, 10), layer_class=torch.nn.ReLU, set_final_act_config=False)
+        out = build_node('out', qcs=[self.qc_act_only], output_shape=(None, 17), layer_class=torch.nn.ReLU, set_final_act_config=False)
+
+        nodes = [mp, mp_reuse, sp, out]
+        for n in nodes:
+            n.find_max_candidate_index = lambda: 0
+            n.is_activation_quantization_enabled = lambda: False
+            n.is_quantization_preserving = lambda: False
+
+        graph = Graph('g', input_nodes=[mp], nodes=nodes, output_nodes=[out],
+                      edge_list=[Edge(mp, sp, 0, 0),
+                                 Edge(sp, mp_reuse, 0, 0), Edge(mp_reuse, out, 0, 0)])
+        graph.fqc = Mock()
+
+        mp_builder = MixedPrecisionPyTorchModelBuilder(graph)
+        model, user_info, conf_node2layers = mp_builder.build_model()
+        
+        assert 'mp_reuse' not in conf_node2layers
+        assert isinstance(model, torch.nn.Module)
+
+        reuse_layer_instance = model.__getattr__('mp_reuse')
+        assert isinstance(reuse_layer_instance, PytorchQuantizationWrapper)
+        conf_quantizer = reuse_layer_instance.weights_quantizers['weight']
+        assert isinstance(conf_quantizer, ConfigurableWeightsQuantizer)
+        assert len(conf_quantizer.node_q_cfg) == 3
+
+
+    def test_model_builder_with_configurable_weights_activation_reused_nodes(self):
+
+        mp_candidautes = [self.qc_88, self.qc_48, self.qc_28, self.qc_84, self.qc_44, self.qc_24]
+        mp = build_node('mp', qcs=mp_candidautes, output_shape=(None, 5, 10), layer_class=torch.nn.Conv2d, framework_attr={'in_channels': 3, 'out_channels': 3, 'kernel_size': 3}, set_final_act_config=False)
+        mp.reuse_group = 'mp'
+        mp_reuse = build_node('mp_reuse', qcs=mp_candidautes, output_shape=(None, 24), reuse=True, layer_class=torch.nn.Conv2d, framework_attr={'in_channels': 3, 'out_channels': 3, 'kernel_size': 3}, set_final_act_config=False)
+        mp_reuse.reuse_group = 'mp'
+
+        sp = build_node('sp', qcs=[self.qc_act_only], output_shape=(None, 20, 10), layer_class=torch.nn.ReLU, set_final_act_config=False)
+        mp2 = build_node('mp2', qcs=mp_candidautes, output_shape=(None, 150), layer_class=torch.nn.Conv2d, framework_attr={'in_channels': 3, 'out_channels': 3, 'kernel_size': 3}, set_final_act_config=False)
+        out = build_node('out', qcs=[self.qc_act_only], output_shape=(None, 17), layer_class=torch.nn.ReLU, set_final_act_config=False)
+
+        nodes = [mp, mp_reuse, sp, mp2, out]
+        for n in nodes:
+            n.find_max_candidate_index = lambda: 0
+            if n.name in ['sp', 'out']:
+                n.is_activation_quantization_enabled = lambda: False
+            else:
+                n.is_activation_quantization_enabled = lambda: True
+            n.is_quantization_preserving = lambda: False
+
+        graph = Graph('g', input_nodes=[mp], nodes=nodes, output_nodes=[out],
+                      edge_list=[Edge(mp, sp, 0, 0),
+                                 Edge(sp, mp_reuse, 0, 0), Edge(mp_reuse, mp2, 0, 0),
+                                 Edge(mp2, out, 0, 0)])
+        graph.fqc = Mock()
+
+        mp_builder = MixedPrecisionPyTorchModelBuilder(graph)
+        model, user_info, conf_node2layers = mp_builder.build_model()
+
+        assert isinstance(model, torch.nn.Module)
+        assert 'mp_reuse' in conf_node2layers
+        assert len(conf_node2layers['mp_reuse']) == 2, ("'mp_reuse' node should have 2 configurable layers in the mixed "
+                                                        "precision model-one for weights (PytorchQuantizationWrapper) "
+                                                        "and one for activations (PytorchActivationQuantizationHolder).")
+
+        # Verify reused layer weights configurable quantizer
+        reuse_layer_instance = model.__getattr__('mp_reuse')
+        assert isinstance(reuse_layer_instance, PytorchQuantizationWrapper)
+        conf_quantizer = reuse_layer_instance.weights_quantizers['weight']
+        assert isinstance(conf_quantizer, ConfigurableWeightsQuantizer)
+
+        # Verify reused layer activation configurable quantizer
+
+        conf_holder_layer = [x for x in conf_node2layers['mp_reuse'] if isinstance(x, PytorchActivationQuantizationHolder)]
+        assert len(conf_holder_layer) == 1
+        conf_holder_layer = conf_holder_layer[0]
+        
+        # Note that due to the test setup with mock quantization candidates, the holder layer have duplicate quantizers
+        # for candidates with same activation bit but different weight, so we just want to make sure there are at least
+        # two, which means that the reused node is set in the mp model as a activation configurable.  
+        assert len(conf_holder_layer.activation_holder_quantizer.activation_quantizers) > 1

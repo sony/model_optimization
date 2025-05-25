@@ -174,7 +174,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover
 
     def build_model(self) -> Tuple[torch.nn.Module, UserInformation,
-                                   Dict[str, Union[PytorchQuantizationWrapper, PytorchActivationQuantizationHolder]]]:
+                                   Dict[str, List[Union[PytorchQuantizationWrapper, PytorchActivationQuantizationHolder]]]]:
         """
         Build a PyTorch float model and return it.
         Returns: Float PyTorch model and user information.
