@@ -106,6 +106,10 @@ class BaseActivationBiasCorrectionTest(BasePytorchFeatureNetworkTest):
     def create_networks(self):
         return self.model
 
+    def get_tpc(self):
+        from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import get_tpc
+        return get_tpc()
+
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         bias = float_model.linear_layer.bias.cpu().detach().numpy()
         bias_after_activation_bias_correction = quantized_model.linear_layer.layer.bias.cpu().detach().numpy()
