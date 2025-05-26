@@ -368,9 +368,7 @@ class TestPytorchMixedPrecisionModelBuilder:
 
         assert isinstance(model, torch.nn.Module)
         assert 'mp_reuse' in conf_node2layers
-        assert len(conf_node2layers['mp_reuse']) == 2, ("'mp_reuse' node should have 2 configurable layers in the mixed "
-                                                        "precision model-one for weights (PytorchQuantizationWrapper) "
-                                                        "and one for activations (PytorchActivationQuantizationHolder).")
+        assert len(conf_node2layers['mp_reuse']) == 1
 
         # Verify reused layer weights configurable quantizer
         reuse_layer_instance = model.__getattr__('mp_reuse')
