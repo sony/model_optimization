@@ -32,7 +32,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
     MixedPrecisionSearchManager, ConfigReconstructionHelper
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import SensitivityEvaluation
 from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc, DummyLayer
 
 

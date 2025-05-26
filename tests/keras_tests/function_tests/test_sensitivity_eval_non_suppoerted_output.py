@@ -18,7 +18,7 @@ import tensorflow as tf
 
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
@@ -94,13 +94,9 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
 
         # Reducing the default number of samples for Mixed precision Hessian approximation
         # to allow quick execution of the test
-        se = SensitivityEvaluation(graph,
-                                   MixedPrecisionQuantizationConfig(use_hessian_based_scores=True,
-                                                                    num_of_images=2),
-                                   representative_dataset,
-                                   DEFAULT_KERAS_INFO,
-                                   keras_impl,
-                                   hessian_info_service=hessian_info_service)
+        se = SensitivityEvaluation(graph, MixedPrecisionQuantizationConfig(use_hessian_based_scores=True,
+                                                                           num_of_images=2), representative_dataset,
+                                   DEFAULT_KERAS_INFO, keras_impl, hessian_info_service=hessian_info_service)
 
     def test_not_supported_output_argmax(self):
         model = argmax_output_model((8, 8, 3))

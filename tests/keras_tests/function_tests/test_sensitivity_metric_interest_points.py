@@ -18,6 +18,8 @@ import numpy as np
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
 
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.metric_calculators import \
+    DistanceMetricCalculator
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
@@ -31,17 +33,16 @@ else:
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 
 from model_compression_toolkit.constants import AXIS
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import get_mp_interest_points
 from model_compression_toolkit.core import DEFAULTCONFIG, CustomOpsetLayers
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 
@@ -75,9 +76,10 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                                     quant_config=DEFAULTCONFIG,
                                                     mixed_precision_enable=True)
 
-    ips = get_mp_interest_points(graph=graph,
-                                 interest_points_classifier=keras_impl.count_node_for_mixed_precision_interest_points,
-                                 num_ip_factor=mp_qc.num_interest_points_factor)
+    ips = DistanceMetricCalculator.get_mp_interest_points(
+        graph=graph,
+        interest_points_classifier=keras_impl.count_node_for_mixed_precision_interest_points,
+        num_ip_factor=mp_qc.num_interest_points_factor)
 
     return ips, graph, fw_info
 
