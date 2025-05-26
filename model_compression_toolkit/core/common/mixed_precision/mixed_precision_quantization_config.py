@@ -51,6 +51,7 @@ class MixedPrecisionQuantizationConfig:
         metric_epsilon (float | None): ensure minimal distance between the metric for any non-max-bidwidth candidate
           and a max-bitwidth candidate, i.e. metric(non-max-bitwidth) >= metric(max-bitwidth) + epsilon.
           If none, the computed metrics are used as is.
+        exp_distance_weighting_sigma (float): sigma for exponential weighting method.
         custom_metric_fn (Callable): Function to compute a custom metric. As input gets the model_mp and returns a
           float value for metric. If None, uses interest point metric.
 
@@ -67,6 +68,7 @@ class MixedPrecisionQuantizationConfig:
     hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE
     metric_normalization: MpMetricNormalization = MpMetricNormalization.NONE
     metric_epsilon: Optional[float] = 1e-6
+    exp_distance_weighting_sigma: float = None
     custom_metric_fn: Optional[Callable] = None
     _is_mixed_precision_enabled: bool = field(init=False, default=False)
 
@@ -77,6 +79,11 @@ class MixedPrecisionQuantizationConfig:
             "the base set of interest points that are required to be " \
             "used for mixed-precision metric evaluation, " \
             "thus, it should be between 0 to 1"
+        if self.exp_distance_weighting_sigma is not None and self.distance_weighting_method != MpDistanceWeighting.EXP:
+            raise ValueError(f'exp_distance_weighting_sigma can only be passed with distance_weighting_method '
+                             f'{MpDistanceWeighting.EXP.name}')
+        if self.distance_weighting_method == MpDistanceWeighting.EXP and self.exp_distance_weighting_sigma is None:
+            self.exp_distance_weighting_sigma = 1
 
     def set_mixed_precision_enable(self):
         """
