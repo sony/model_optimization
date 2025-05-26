@@ -25,7 +25,7 @@ from mct_quantizers import KerasQuantizationWrapper
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
@@ -152,17 +152,15 @@ class MixedPrecisionSearchTest(MixedPrecisionBaseTest):
 
 
 class MixedPrecisionWithHessianScoresTest(MixedPrecisionBaseTest):
-    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
+    def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=2, num_calibration_iter=10)
-        self.distance_metric = distance_metric
 
     def get_resource_utilization(self):
         return ResourceUtilization(17919)
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=10,
-                                                         distance_weighting_method=self.distance_metric,
-                                                         use_hessian_based_scores=True)
+                                                         distance_weighting_method=MpDistanceWeighting.HESSIAN)
 
     def _compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
