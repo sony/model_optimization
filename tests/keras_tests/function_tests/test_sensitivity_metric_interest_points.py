@@ -36,7 +36,6 @@ from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-# from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import get_mp_interest_points
 from model_compression_toolkit.core import DEFAULTCONFIG, CustomOpsetLayers
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph

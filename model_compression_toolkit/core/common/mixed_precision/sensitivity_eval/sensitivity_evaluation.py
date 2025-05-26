@@ -26,14 +26,12 @@ from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.set_
     set_activation_quant_layer_to_bitwidth, set_weights_quant_layer_to_bitwidth
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 
 
 class SensitivityEvaluation:
     """
-    Class to wrap and manage the computation on distance metric for Mixed-Precision quantization search.
-    It provides a function that evaluates the sensitivity of a bit-width configuration for the MP model.
+    Sensitivity evaluation of a bit-width configuration for Mixed Precision search.
     """
 
     def __init__(self,
@@ -46,16 +44,6 @@ class SensitivityEvaluation:
                  hessian_info_service: HessianInfoService = None
                  ):
         """
-        Initiates all relevant objects to manage a sensitivity evaluation for MP search.
-        Create an object that allows to compute the sensitivity metric of an MP model (the sensitivity
-        is computed based on the similarity of the interest points' outputs between the MP model
-        and the float model).
-        First, we initiate a SensitivityEvaluationManager that handles the components which are necessary for
-        evaluating the sensitivity. It initializes an MP model (a model where layers that can be configured in
-        different bit-widths) and a baseline model (a float model).
-        Then, and based on the outputs of these two models (for some batches from the representative_data_gen),
-        we build a function to measure the sensitivity of a change in a bit-width of a model's layer.
-
         Args:
             graph: Graph to search for its MP configuration.
             fw_info: FrameworkInfo object about the specific framework
@@ -71,17 +59,13 @@ class SensitivityEvaluation:
         self.representative_data_gen = representative_data_gen
         self.fw_info = fw_info
         self.fw_impl = fw_impl
-        if self.mp_config.use_hessian_based_scores:
-            if not isinstance(hessian_info_service, HessianInfoService):    # pragma: no cover
-                Logger.critical(
-                    f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
-            self.hessian_info_service = hessian_info_service
 
         if self.mp_config.custom_metric_fn:
             self.metric_calculator = CustomMetricCalculator(graph, self.mp_config.custom_metric_fn)
         else:
             self.metric_calculator = DistanceMetricCalculator(graph, mp_config, representative_data_gen,
-                                                              fw_info, fw_impl, hessian_info_service)
+                                                              fw_info=fw_info, fw_impl=fw_impl,
+                                                              hessian_info_service=hessian_info_service)
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # Also, returns a mapping between a configurable graph's node and its matching layer(s) in the built MP model.
@@ -90,9 +74,7 @@ class SensitivityEvaluation:
 
     def compute_metric(self, mp_a_cfg: Dict[str, Optional[int]], mp_w_cfg: Dict[str, Optional[int]]) -> float:
         """
-        Compute the sensitivity metric of the MP model for a given configuration (the sensitivity
-        is computed based on the similarity of the interest points' outputs between the MP model
-        and the float model or a custom metric if given).
+        Compute the sensitivity metric of the MP model for a given configuration.
         Quantization for any configurable activation / weight that were not passed is disabled.
 
         Args:
