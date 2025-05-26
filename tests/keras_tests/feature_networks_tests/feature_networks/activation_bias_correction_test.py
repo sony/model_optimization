@@ -20,6 +20,7 @@ import tensorflow as tf
 import numpy as np
 
 from tests.keras_tests.utils import get_layers_from_model_by_type
+from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import get_tpc
 
 keras = tf.keras
 layers = keras.layers
@@ -51,6 +52,10 @@ class BaseActivationBiasCorrectionTest(BaseKerasFeatureNetworkTest):
                                   shift_negative_activation_correction=False,
                                   activation_bias_correction=True,
                                   activation_bias_correction_threshold=self.activation_bias_correction_threshold)
+
+    def get_tpc(self):
+        tpc = get_tpc()
+        return tpc
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
