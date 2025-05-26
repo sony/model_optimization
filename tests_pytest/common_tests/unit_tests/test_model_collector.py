@@ -57,6 +57,7 @@ class TestStatisticsCollectors:
         node.is_activation_quantization_enabled.return_value = True
         node.type = DummyLayer
         node.prior_info = Mock(min_output=-1, max_output=9)
+        node.input_shape = [4, 4]
 
         collector = create_stats_collector_for_node(node, fw_info_mock)
         assert isinstance(collector, StatsCollector)
