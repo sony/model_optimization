@@ -32,7 +32,7 @@ class MetricCalculator(Protocol):
 
     def compute(self, mp_model) -> float:
         """ Compute the metric for the given model. """
-        ...
+        raise NotImplementedError    # pragma: no cover
 
 
 class CustomMetricCalculator(MetricCalculator):

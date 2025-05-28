@@ -202,13 +202,13 @@ class MixedPrecisionSearchManager:
             candidates_sensitivity = ensure_maxbit_minimal_metric(normalized_sensitivity, max_ind)
             layer_to_metrics_mapping[node] = candidates_sensitivity
 
-            if verbose:
+            if verbose:    # pragma: no cover
                 debug_mapping[node] = {'': candidates_sensitivity}
                 if np.any(raw_candidates_sensitivity != candidates_sensitivity):
                     debug_mapping[node]['normalized'] = normalized_sensitivity
                     debug_mapping[node]['raw       '] = raw_candidates_sensitivity
 
-        if verbose:
+        if verbose:    # pragma: no cover
             np.set_printoptions(precision=8, floatmode='maxprec')
             name_len = max(len(n.name) for n in debug_mapping)
             s = '\nMETRIC BEGIN'
@@ -381,7 +381,7 @@ class ConfigReconstructionHelper:
             w_candidates = orig_nodes_w_candidates[orig_node]
             # find the common candidate
             common_candidates = set(a_candidates).intersection(set(w_candidates))
-            if len(common_candidates) != 1:
+            if len(common_candidates) != 1:    # pragma: no cover
                 raise ValueError(f'Expected to find exactly one candidate with the required activation and weights '
                                  f'quantization configuration for node {orig_node}. Found {len(common_candidates)}')
             # in theory it's possible that original non-configurable node gets split and each part is combined
