@@ -19,14 +19,11 @@ from unittest.mock import Mock
 
 from model_compression_toolkit.constants import THRESHOLD
 
-from model_compression_toolkit.core import QuantizationConfig, CoreConfig, MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
-    VirtualSplitActivationNode, VirtualSplitWeightsNode
+from model_compression_toolkit.core import QuantizationConfig, CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ResourceUtilizationCalculator, TargetInclusionCriterion, BitwidthMode
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig, \
     OpQuantizationConfig, QuantizationConfigOptions, Signedness, OperatorSetNames, TargetPlatformCapabilities, Fusing, OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
