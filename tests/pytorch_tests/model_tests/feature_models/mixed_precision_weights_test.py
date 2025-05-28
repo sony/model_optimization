@@ -73,10 +73,8 @@ class MixedPrecisionBaseTest(BasePytorchTest):
 
 
 class MixedPrecisionWithHessianScores(MixedPrecisionBaseTest):
-    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
+    def __init__(self, unit_test):
         super().__init__(unit_test, num_calibration_iter=10)
-
-        self.distance_metric = distance_metric
 
     def generate_inputs(self, input_shapes):
         return [np.random.random(in_shape) for in_shape in input_shapes]
@@ -89,8 +87,7 @@ class MixedPrecisionWithHessianScores(MixedPrecisionBaseTest):
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                          input_scaling=False, activation_channel_equalization=False)
         mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=10,
-                                                        distance_weighting_method=self.distance_metric,
-                                                        use_hessian_based_scores=True)
+                                                        distance_weighting_method=MpDistanceWeighting.HESSIAN)
 
         return {"mixed_precision_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 

@@ -518,7 +518,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search with Hessian-based scores.
         """
-        MixedPrecisionWithHessianScores(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionWithHessianScores(self).run_test()
 
     def test_reshape_net(self):
         """
