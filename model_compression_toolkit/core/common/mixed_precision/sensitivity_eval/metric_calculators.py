@@ -15,7 +15,7 @@
 import numpy as np
 from typing import runtime_checkable, Protocol, Callable, Any, List, Tuple
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, FrameworkInfo
+from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig, MpDistanceWeighting
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
@@ -32,7 +32,7 @@ class MetricCalculator(Protocol):
 
     def compute(self, mp_model) -> float:
         """ Compute the metric for the given model. """
-        ...
+        raise NotImplementedError    # pragma: no cover
 
 
 class CustomMetricCalculator(MetricCalculator):
@@ -66,16 +66,6 @@ class DistanceMetricCalculator(MetricCalculator):
                  fw_impl: Any,
                  hessian_info_service: HessianInfoService = None):
         """
-        Initiates all relevant objects to manage a sensitivity evaluation for MP search.
-        Create an object that allows to compute the sensitivity metric of an MP model (the sensitivity
-        is computed based on the similarity of the interest points' outputs between the MP model
-        and the float model).
-        First, we initiate a SensitivityEvaluationManager that handles the components which are necessary for
-        evaluating the sensitivity. It initializes an MP model (a model where layers that can be configured in
-        different bit-widths) and a baseline model (a float model).
-        Then, and based on the outputs of these two models (for some batches from the representative_data_gen),
-        we build a function to measure the sensitivity of a change in a bit-width of a model's layer.
-
         Args:
             graph: Graph to search for its MP configuration.
             mp_config: MP Quantization configuration for how the graph should be quantized.
@@ -91,11 +81,9 @@ class DistanceMetricCalculator(MetricCalculator):
         self.fw_info = fw_info
         self.fw_impl = fw_impl
 
-        if self.mp_config.use_hessian_based_scores:
-            if not isinstance(hessian_info_service, HessianInfoService):  # pragma: no cover
-                Logger.critical(
-                    f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
-            self.hessian_info_service = hessian_info_service
+        if self.mp_config.distance_weighting_method == MpDistanceWeighting.HESSIAN:
+            assert hessian_info_service is not None, ('Expected HessianInfoService object to be passed with Hessian '
+                                                      'distance weighting')
 
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
 
@@ -104,17 +92,12 @@ class DistanceMetricCalculator(MetricCalculator):
         self.interest_points = self.get_mp_interest_points(graph,
                                                            fw_impl.count_node_for_mixed_precision_interest_points,
                                                            mp_config.num_interest_points_factor)
-
-        # We use normalized MSE when not running hessian-based. For Hessian-based normalized MSE is not needed
-        # because hessian weights already do normalization.
-        use_normalized_mse = self.mp_config.use_hessian_based_scores is False
-        self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points,
-                                                                              use_normalized_mse)
-
+        # exponential weighing assumes normalized distances, we only store it to be able to catch any changes
+        self.use_normalized_mse = True
+        self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points)
         output_points = self.get_output_nodes_for_metric(graph)
         self.all_interest_points = self.interest_points + output_points
-        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(output_points,
-                                                                                    use_normalized_mse)
+        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(output_points)
 
         self.ref_model, _ = fw_impl.model_builder(graph, mode=ModelBuilderMode.FLOAT,
                                                   append2output=self.all_interest_points)
@@ -135,12 +118,10 @@ class DistanceMetricCalculator(MetricCalculator):
         # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
         self.baseline_tensors_list = self._init_baseline_tensors_list()
 
-        # Computing Hessian-based scores for weighted average distance metric computation (only if requested),
-        # and assigning distance_weighting method accordingly.
+        # Hessian-based scores for weighted average distance metric computation
         self.interest_points_hessians = None
-        if self.mp_config.use_hessian_based_scores is True:
-            self.interest_points_hessians = self._compute_hessian_based_scores()
-            self.mp_config.distance_weighting_method = lambda d: self.interest_points_hessians
+        if self.mp_config.distance_weighting_method == MpDistanceWeighting.HESSIAN:
+            self.interest_points_hessians = self._compute_hessian_based_scores(hessian_info_service)
 
     def compute(self, mp_model) -> float:
         """
@@ -153,13 +134,11 @@ class DistanceMetricCalculator(MetricCalculator):
             Computed metric.
         """
         ipts_distances, out_pts_distances = self._compute_distance(mp_model)
-        sensitivity_metric = self._compute_mp_distance_measure(ipts_distances, out_pts_distances,
-                                                               self.mp_config.distance_weighting_method)
+        sensitivity_metric = self._compute_mp_distance_measure(ipts_distances, out_pts_distances)
         return sensitivity_metric
 
     def _init_metric_points_lists(self,
-                                  points: List[BaseNode],
-                                  norm_mse: bool = False) -> Tuple[List[Callable], List[int]]:
+                                  points: List[BaseNode]) -> Tuple[List[Callable], List[int]]:
         """
         Initiates required lists for future use when computing the sensitivity metric.
         Each point on which the metric is computed uses a dedicated distance function based on its type.
@@ -167,7 +146,6 @@ class DistanceMetricCalculator(MetricCalculator):
 
         Args:
             points: The set of nodes in the graph for which we need to initiate the lists.
-            norm_mse: whether to normalize mse distance function.
 
         Returns: A lists with distance functions and an axis list for each node.
 
@@ -177,7 +155,7 @@ class DistanceMetricCalculator(MetricCalculator):
         for n in points:
             distance_fn, axis = self.fw_impl.get_mp_node_distance_fn(n,
                                                                      compute_distance_fn=self.mp_config.compute_distance_fn,
-                                                                     norm_mse=norm_mse)
+                                                                     norm_mse=self.use_normalized_mse)
             distance_fns_list.append(distance_fn)
             # Axis is needed only for KL Divergence calculation, otherwise we use per-tensor computation
             axis_list.append(axis if distance_fn == compute_kl_divergence else None)
@@ -190,12 +168,14 @@ class DistanceMetricCalculator(MetricCalculator):
         return [self.fw_impl.to_numpy(self.fw_impl.sensitivity_eval_inference(self.ref_model, images))
                 for images in self.images_batches]
 
-    def _compute_hessian_based_scores(self) -> np.ndarray:
+    def _compute_hessian_based_scores(self, hessian_info_service: HessianInfoService) -> np.ndarray:
         """
         Compute Hessian-based scores for each interest point.
+        Args:
+            hessian_info_service: Hessian service.
 
-        Returns: A vector of scores, one for each interest point,
-         to be used for the distance metric weighted average computation.
+        Returns:
+            A vector of scores, one for each interest point, to be used for the distance metric weighted average computation.
 
         """
         # Create a request for Hessian approximation scores with specific configurations
@@ -209,12 +189,16 @@ class DistanceMetricCalculator(MetricCalculator):
                                                     n_samples=self.mp_config.num_of_images)
 
         # Fetch the Hessian approximation scores for the current interest point
-        nodes_approximations = self.hessian_info_service.fetch_hessian(request=hessian_info_request)
+        nodes_approximations = hessian_info_service.fetch_hessian(request=hessian_info_request)
         approx_by_image = np.stack([nodes_approximations[n.name] for n in self.interest_points],
                                    axis=1)  # samples X nodes
 
         # Return the mean approximation value across all images for each interest point
-        return np.mean(approx_by_image, axis=0)
+        scores = np.mean(approx_by_image, axis=0)
+        if scores.ndim == 2 and scores.shape[1] == 1:
+            scores = np.squeeze(scores, 1)
+        assert scores.ndim == 1, f'Expected a vector of hessians, got tensor of shape {scores.shape}'
+        return scores
 
     def _compute_points_distance(self,
                                  baseline_tensors: List[Any],
@@ -282,39 +266,58 @@ class DistanceMetricCalculator(MetricCalculator):
 
         return ipts_distances, out_pts_distances
 
-    @staticmethod
-    def _compute_mp_distance_measure(ipts_distances: np.ndarray,
-                                     out_pts_distances: np.ndarray,
-                                     metrics_weights_fn: Callable) -> float:
+    def _compute_mp_distance_measure(self, ipts_distances: np.ndarray, out_pts_distances: np.ndarray) -> float:
         """
         Computes the final distance value out of a distance matrix.
 
         Args:
-            ipts_distances: A matrix that contains the distances between the baseline and MP models
-                for each interest point.
-            out_pts_distances: A matrix that contains the distances between the baseline and MP models
-                for each output point.
-            metrics_weights_fn: A callable that produces the scores to compute weighted distance for interest points.
+            ipts_distances: A matrix that contains the distances between the reference and MP models
+                for each interest point, of shape (num interest points, num samples,).
+            out_pts_distances: A matrix that contains the distances between the reference and MP models
+                for each output point, of shape (num output points, num samples,).
 
-        Returns: Distance value.
+        Returns:
+            Distance value.
         """
-        mean_ipts_distance = 0
-        if len(ipts_distances) > 0:
-            mean_distance_per_layer = ipts_distances.mean(axis=1)
+        assert ipts_distances.size + out_pts_distances.size, 'Both interest and output points distances are empty.'
 
-            # Use weights such that every layer's distance is weighted differently (possibly).
-            weight_scores = metrics_weights_fn(ipts_distances)
-            weight_scores = np.asarray(weight_scores) if isinstance(weight_scores, List) else weight_scores
-            weight_scores = weight_scores.flatten()
+        ipts_metric = self._compute_ipts_distance_measure(ipts_distances) if ipts_distances.size else 0
 
-            mean_ipts_distance = np.average(mean_distance_per_layer, weights=weight_scores)
+        out_pts_metric = out_pts_distances.mean() if out_pts_distances.size else 0
 
-        mean_output_distance = 0
-        if len(out_pts_distances) > 0:
-            mean_distance_per_output = out_pts_distances.mean(axis=1)
-            mean_output_distance = np.average(mean_distance_per_output)
+        return ipts_metric + out_pts_metric
 
-        return mean_output_distance + mean_ipts_distance
+    def _compute_ipts_distance_measure(self, ipts_distances: np.ndarray) -> float:
+        """
+        Compute distance measure for interest points.
+
+        Args:
+            ipts_distances: a matrix of shape (num interest points, num samples,).
+
+        Returns:
+            Distance measure.
+        """
+        assert ipts_distances.ndim == 2, (f'Expected ipts_distances of shape shape (num interest points, num samples), '
+                                          f'got {ipts_distances.shape}')
+        method = self.mp_config.distance_weighting_method
+        if method == MpDistanceWeighting.AVG:
+            return ipts_distances.mean()
+        if method == MpDistanceWeighting.LAST_LAYER:
+            return ipts_distances[-1, :].mean()
+        if method == MpDistanceWeighting.HESSIAN:
+            return np.average(ipts_distances.mean(axis=1), weights=self.interest_points_hessians)
+        if method == MpDistanceWeighting.EXP:
+            assert self.use_normalized_mse
+            ipts_mean_distances = ipts_distances.mean(axis=1)
+            weights = 1 - np.exp(-ipts_mean_distances / self.mp_config.exp_distance_weighting_sigma)
+            if np.any(weights):
+                return np.average(ipts_mean_distances, weights=weights)
+            else:
+                Logger.warning('All weights for interest points are 0. If distances are very small, you might need to '
+                               'pass a smaller exp_distance_weighting_sigma.')
+                return 0
+
+        raise ValueError(f'Unexpected MpDistanceWeighting {method}')  # pragma: no cover
 
     def _get_images_batches(self, num_of_images: int) -> List[Any]:
         """

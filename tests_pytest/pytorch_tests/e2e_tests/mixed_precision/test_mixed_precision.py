@@ -193,7 +193,7 @@ class TestMixedPrecisionPTQ(BaseTorchIntegrationTest):
         for layer_name, exp_nbit in exp_a_res.items():
             self._validate_activation_nbits(qmodel, layer_name, exp_nbit)
 
-    @pytest.mark.parametrize('dist', list(MpDistanceWeighting))
+    @pytest.mark.parametrize('dist', set(MpDistanceWeighting) - {MpDistanceWeighting.HESSIAN})
     def test_bops_with_distance_metric(self, model, datagen, dist):
         """ Sanity test for bops with all distance metrics. """
         mp_cfg = MixedPrecisionQuantizationConfig(distance_weighting_method=dist)

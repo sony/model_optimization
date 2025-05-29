@@ -171,8 +171,6 @@ class MixedPrecisionSearchManager:
             else:  # pragma: no cover
                 raise ValueError(f'Unexpected MpMetricNormalization mode {norm_method}')
             normalized_metrics = node_candidates_metrics / node_candidates_metrics[ref_ind]
-            if verbose and not np.array_equal(normalized_metrics, node_candidates_metrics):
-                print(f'{"normalized metric:":25}', candidates_sensitivity)
             return normalized_metrics
 
         def ensure_maxbit_minimal_metric(node_candidates_metrics, max_ind):
@@ -183,30 +181,41 @@ class MixedPrecisionSearchManager:
             max_val = node_candidates_metrics[max_ind]
             metrics = np.maximum(node_candidates_metrics, max_val + eps)
             metrics[max_ind] = max_val
-            if verbose and not np.array_equal(metrics, node_candidates_metrics):
-                print(f'{"eps-adjusted metric:":25}', candidates_sensitivity)
             return metrics
 
-        layer_to_metrics_mapping = defaultdict(list)
+        layer_to_metrics_mapping = {}
+        debug_mapping = {}
         for node_idx, node in tqdm(enumerate(self.mp_topo_configurable_nodes)):
-            candidates_sensitivity = np.empty(len(node.candidates_quantization_cfg))
+            raw_candidates_sensitivity = np.empty(len(node.candidates_quantization_cfg))
             for bitwidth_idx, _ in enumerate(node.candidates_quantization_cfg):
                 if self.using_virtual_graph:
                     a_cfg, w_cfg = self.config_reconstructor.reconstruct_separate_aw_configs({node: bitwidth_idx})
                 else:
                     a_cfg = {node: bitwidth_idx} if node.has_configurable_activation() else {}
                     w_cfg = {node: bitwidth_idx} if node.has_any_configurable_weight() else {}
-                candidates_sensitivity[bitwidth_idx] = self.sensitivity_evaluator.compute_metric(
+                raw_candidates_sensitivity[bitwidth_idx] = self.sensitivity_evaluator.compute_metric(
                     mp_a_cfg={n.name: ind for n, ind in a_cfg.items()},
                     mp_w_cfg={n.name: ind for n, ind in w_cfg.items()}
                 )
-            if verbose:
-                print(f'{node.name}\n{"raw metric:":25}', candidates_sensitivity)
             max_ind = node.find_max_candidate_index()
-            candidates_sensitivity = normalize(candidates_sensitivity, max_ind)
-            candidates_sensitivity = ensure_maxbit_minimal_metric(candidates_sensitivity, max_ind)
+            normalized_sensitivity = normalize(raw_candidates_sensitivity, max_ind)
+            candidates_sensitivity = ensure_maxbit_minimal_metric(normalized_sensitivity, max_ind)
             layer_to_metrics_mapping[node] = candidates_sensitivity
 
+            if verbose:    # pragma: no cover
+                debug_mapping[node] = {'': candidates_sensitivity}
+                if np.any(raw_candidates_sensitivity != candidates_sensitivity):
+                    debug_mapping[node]['normalized'] = normalized_sensitivity
+                    debug_mapping[node]['raw       '] = raw_candidates_sensitivity
+
+        if verbose:    # pragma: no cover
+            np.set_printoptions(precision=8, floatmode='maxprec')
+            name_len = max(len(n.name) for n in debug_mapping)
+            s = '\nMETRIC BEGIN'
+            for n, d in debug_mapping.items():
+                s += (f'\n{n.name:{name_len}}' + f'\n{" ":{name_len-10}}'.join([f'{k} {v}' for k, v in d.items()]))
+            s += '\nMETRIC END'
+            Logger.info(s)
         # Finalize distance metric mapping
         self._finalize_distance_metric(layer_to_metrics_mapping)
 
@@ -372,7 +381,7 @@ class ConfigReconstructionHelper:
             w_candidates = orig_nodes_w_candidates[orig_node]
             # find the common candidate
             common_candidates = set(a_candidates).intersection(set(w_candidates))
-            if len(common_candidates) != 1:
+            if len(common_candidates) != 1:    # pragma: no cover
                 raise ValueError(f'Expected to find exactly one candidate with the required activation and weights '
                                  f'quantization configuration for node {orig_node}. Found {len(common_candidates)}')
             # in theory it's possible that original non-configurable node gets split and each part is combined

@@ -21,7 +21,7 @@ from tensorflow.keras.layers import PReLU, ELU
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core import QuantizationErrorMethod
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision import MpDistanceWeighting
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.gptq.keras.gptq_loss import sample_layer_attention_loss
 from model_compression_toolkit.gptq import RoundingType
@@ -236,7 +236,7 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_search(self):
         MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
         MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
-        MixedPrecisionWithHessianScoresTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionWithHessianScoresTest(self).run_test()
 
     def test_mixed_precision_weights_only_activation_conf(self):
         MixedPrecisionWeightsOnlyConfigurableActivationsTest(self).run_test()
