@@ -26,7 +26,8 @@ class MpDistanceWeighting(Enum):
 
     AVG - take the average distance over all interest points.
     LAST_LAYER - take only the distance of the last interest point.
-    EXP - weighted average with weights based on exponent of negative distance.
+    EXP - weighted average with weights based on exponent of negative distances between activations of the quantized
+      and the float models.
     HESSIAN - weighted average with Hessians as weights.
     """
     AVG = auto()
@@ -58,7 +59,7 @@ class MixedPrecisionQuantizationConfig:
         configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
         num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
         use_hessian_based_scores (bool): Whether to use Hessian-based scores for weighted average distance metric
-          computation. This flag is going to be deprecated, use distance_weighting_method.HESSIAN instead.
+          computation. This is identical to passing distance_weighting_method=MpDistanceWeighting.HESSIAN.
         norm_scores (bool): Whether to normalize the returned scores for the weighted distance metric (to get values between 0 and 1).
         refine_mp_solution (bool): Whether to try to improve the final mixed-precision configuration using a greedy algorithm that searches layers to increase their bit-width, or not.
         metric_normalization_threshold (float): A threshold for checking the mixed precision distance metric values, In case of values larger than this threshold, the metric will be scaled to prevent numerical issues.
