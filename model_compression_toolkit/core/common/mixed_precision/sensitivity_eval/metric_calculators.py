@@ -92,17 +92,12 @@ class DistanceMetricCalculator(MetricCalculator):
         self.interest_points = self.get_mp_interest_points(graph,
                                                            fw_impl.count_node_for_mixed_precision_interest_points,
                                                            mp_config.num_interest_points_factor)
-
-        # We use normalized MSE when not running hessian-based. For Hessian-based normalized MSE is not needed
-        # because hessian weights already do normalization.
-        use_normalized_mse = self.mp_config.use_hessian_based_scores is False
-        self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points,
-                                                                              use_normalized_mse)
-
+        # exponential weighing assumes normalized distances, we only store it to be able to catch any changes
+        self.use_normalized_mse = True
+        self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points)
         output_points = self.get_output_nodes_for_metric(graph)
         self.all_interest_points = self.interest_points + output_points
-        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(output_points,
-                                                                                    use_normalized_mse)
+        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(output_points)
 
         self.ref_model, _ = fw_impl.model_builder(graph, mode=ModelBuilderMode.FLOAT,
                                                   append2output=self.all_interest_points)
@@ -143,8 +138,7 @@ class DistanceMetricCalculator(MetricCalculator):
         return sensitivity_metric
 
     def _init_metric_points_lists(self,
-                                  points: List[BaseNode],
-                                  norm_mse: bool = False) -> Tuple[List[Callable], List[int]]:
+                                  points: List[BaseNode]) -> Tuple[List[Callable], List[int]]:
         """
         Initiates required lists for future use when computing the sensitivity metric.
         Each point on which the metric is computed uses a dedicated distance function based on its type.
@@ -152,7 +146,6 @@ class DistanceMetricCalculator(MetricCalculator):
 
         Args:
             points: The set of nodes in the graph for which we need to initiate the lists.
-            norm_mse: whether to normalize mse distance function.
 
         Returns: A lists with distance functions and an axis list for each node.
 
@@ -162,7 +155,7 @@ class DistanceMetricCalculator(MetricCalculator):
         for n in points:
             distance_fn, axis = self.fw_impl.get_mp_node_distance_fn(n,
                                                                      compute_distance_fn=self.mp_config.compute_distance_fn,
-                                                                     norm_mse=norm_mse)
+                                                                     norm_mse=self.use_normalized_mse)
             distance_fns_list.append(distance_fn)
             # Axis is needed only for KL Divergence calculation, otherwise we use per-tensor computation
             axis_list.append(axis if distance_fn == compute_kl_divergence else None)
@@ -314,6 +307,7 @@ class DistanceMetricCalculator(MetricCalculator):
         if method == MpDistanceWeighting.HESSIAN:
             return np.average(ipts_distances.mean(axis=1), weights=self.interest_points_hessians)
         if method == MpDistanceWeighting.EXP:
+            assert self.use_normalized_mse
             ipts_mean_distances = ipts_distances.mean(axis=1)
             weights = 1 - np.exp(-ipts_mean_distances / self.mp_config.exp_distance_weighting_sigma)
             if np.any(weights):

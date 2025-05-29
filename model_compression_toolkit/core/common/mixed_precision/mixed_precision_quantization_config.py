@@ -102,6 +102,8 @@ class MixedPrecisionQuantizationConfig:
             self.distance_weighting_method = MpDistanceWeighting.HESSIAN
         elif self.distance_weighting_method is None and self.custom_metric_fn is None:
             self.distance_weighting_method = MpDistanceWeighting.AVG
+        assert self.exp_distance_weighting_sigma > 0, (f'exp_distance_weighting_sigma should be positive, but got '
+                                                       f'{self.exp_distance_weighting_sigma}')
 
     def set_mixed_precision_enable(self):
         """
