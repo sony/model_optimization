@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 
 from model_compression_toolkit.core.keras import constants
 from tests_pytest._fw_tests_common_base.base_sensitivity_eval_integ_test import BaseSensitivityEvaluationIntegTester
@@ -59,5 +60,7 @@ class TestSensitivityEvaluation(BaseSensitivityEvaluationIntegTester, KerasFwMix
     def test_configure_mp_model_errors(self):
         super().test_configure_mp_model_errors()
 
-    def test_compute_metric_method(self):
-        super().test_compute_metric_method()
+    @pytest.mark.parametrize('custom', [False, True])
+    def test_compute_metric_method(self, custom, mocker):
+        super()._run_test_compute_metric_method(custom, mocker)
+

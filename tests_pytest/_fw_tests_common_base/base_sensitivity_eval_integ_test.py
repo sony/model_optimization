@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from unittest.mock import Mock
+
 import abc
 from typing import Dict, Optional, Type, Callable, Tuple
 
@@ -21,7 +23,9 @@ import pytest
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, QuantizationConfig, \
     FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.metric_calculators import \
+    DistanceMetricCalculator, CustomMetricCalculator
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
     Signedness, QuantizationConfigOptions, OperatorSetNames, TargetPlatformCapabilities, QuantizationMethod
@@ -102,24 +106,25 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
     def repr_datagen(self):
         yield [np.random.rand(*self.input_shape)]
 
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.model = self.build_model(self.input_shape)
+    def setup(self, mp_config=None):
+        model = self.build_model(self.input_shape)
         tpc = build_tpc(w_nbits=(8, 4, 2), a_nbits=(16, 8))
+        mp_config = mp_config or MixedPrecisionQuantizationConfig()
         core_config = CoreConfig(quantization_config=QuantizationConfig(),
-                                 mixed_precision_config=MixedPrecisionQuantizationConfig())
-        g = self.run_graph_preparation(self.model, self.repr_datagen, tpc=tpc,
+                                 mixed_precision_config=mp_config)
+        g = self.run_graph_preparation(model, self.repr_datagen, tpc=tpc,
                                        quant_config=core_config.quantization_config, mp=True)
-        self.g = quantization_preparation_runner(g, self.repr_datagen, core_config=core_config,
-                                                 fw_info=self.fw_info, fw_impl=self.fw_impl, hessian_info_service=None)
-        self.se = SensitivityEvaluation(g, core_config.mixed_precision_config, self.repr_datagen,
-                                        fw_info=self.fw_info, fw_impl=self.fw_impl,
-                                        disable_activation_for_metric=False, hessian_info_service=None)
+        g = quantization_preparation_runner(g, self.repr_datagen, core_config=core_config,
+                                            fw_info=self.fw_info, fw_impl=self.fw_impl, hessian_info_service=None)
+        se = SensitivityEvaluation(g, core_config.mixed_precision_config, self.repr_datagen, fw_info=self.fw_info,
+                                   fw_impl=self.fw_impl, disable_activation_for_metric=False,
+                                   hessian_info_service=None)
+        return model, g, se
 
     def test_build_models(self):
         """ Test quant layers and quantizers are built and configured correctly for the mp model,
             and the mapping from nodes to configurable quant layers is correct. """
-        model, g, se = self.model, self.g, self.se
+        model, g, se = self.setup()
         # sanity check that we set up the configuration we intended, and it was correctly configured
         conf_a_nodes = [n for n in g.get_topo_sorted_nodes() if n.has_configurable_activation()]
         assert [n.layer_class for n in conf_a_nodes] == [self.conv_cls, self.relu_cls, self.convtr_cls]
@@ -130,12 +135,12 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
 
         # only configurable activations / weights should have quantization layers
         # and all quantizers should be disabled. They will be turned on one by one per candidate.
-        activation_holders = self.fetch_model_layers_by_cls(se.model_mp, self.fw_impl.activation_quant_layer_cls)
+        activation_holders = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.activation_quant_layer_cls)
         assert len(activation_holders) == len(conf_a_nodes)
         for ah in activation_holders:
             assert isinstance(ah.activation_holder_quantizer, self.fw_impl.configurable_activation_quantizer_cls)
             assert ah.activation_holder_quantizer.active_quantization_config_index is None
-        weight_wrappers = self.fetch_model_layers_by_cls(se.model_mp, self.fw_impl.weights_quant_layer_cls)
+        weight_wrappers = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.weights_quant_layer_cls)
         for ww in weight_wrappers:
             # bias should not have quantizer
             assert len(ww.weights_quantizers) == 1
@@ -153,32 +158,31 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
         assert len(se.conf_node2layers[fc.name]) == 1 and se.conf_node2layers[fc.name][0] == weight_wrappers[1]
 
         # baseline float model doesn't contain any quant layers
-        activation_holders = self.fetch_model_layers_by_cls(se.baseline_model, self.fw_impl.activation_quant_layer_cls)
-        weight_wrappers = self.fetch_model_layers_by_cls(se.baseline_model, self.fw_impl.weights_quant_layer_cls)
+        activation_holders = self.fetch_model_layers_by_cls(se.metric_calculator.ref_model, self.fw_impl.activation_quant_layer_cls)
+        weight_wrappers = self.fetch_model_layers_by_cls(se.metric_calculator.ref_model, self.fw_impl.weights_quant_layer_cls)
         assert not activation_holders and not weight_wrappers
 
         # sanity check that initial mp model is indeed un-quantized (identical to original model)
         x = next(self.repr_datagen())[0]
-        y, y_mp = self.infer_models(model, se.model_mp, x)
+        y, y_mp = self.infer_models(model, se.mp_model, x)
         assert np.array_equal(y, y_mp)
         # sanity check that baseline model is identical to original model
-        _, y_float = self.infer_models(model, se.baseline_model, x)
+        _, y_float = self.infer_models(model, se.metric_calculator.ref_model, x)
         assert np.array_equal(y, y_float)
 
     def test_build_models_disable_activations(self):
         """ Test mp model with disabled activation flag. """
-        model, g = self.model, self.g
-        se = SensitivityEvaluation(g, MixedPrecisionQuantizationConfig(), self.repr_datagen,
-                                   fw_info=self.fw_info, fw_impl=self.fw_impl,
-                                   disable_activation_for_metric=True, hessian_info_service=None)
-        activation_holders = self.fetch_model_layers_by_cls(se.model_mp, self.fw_impl.activation_quant_layer_cls)
+        model, g, _ = self.setup()
+        se = SensitivityEvaluation(g, MixedPrecisionQuantizationConfig(), self.repr_datagen, fw_info=self.fw_info,
+                                   fw_impl=self.fw_impl, disable_activation_for_metric=True, hessian_info_service=None)
+        activation_holders = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.activation_quant_layer_cls)
         assert not activation_holders
-        weight_wrappers = self.fetch_model_layers_by_cls(se.model_mp, self.fw_impl.weights_quant_layer_cls)
+        weight_wrappers = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.weights_quant_layer_cls)
         assert len(weight_wrappers) == 2
 
     def test_configure_mp_model(self):
         """ Test mp model configuration. """
-        model, g, se = self.model, self.g, self.se
+        model, g, se = self.setup()
         # a x w: conv 2x2, relu 2, conv_tr 2x1, fc 1x2
         conv, relu, conv_tr = [n.name for n in g.get_topo_sorted_nodes() if n.has_configurable_activation()]
         conv_, fc = [n.name for n in g.get_topo_sorted_nodes() if n.has_any_configurable_weight()]
@@ -187,7 +191,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
         with se._configured_mp_model(mp_a_cfg={conv: 2}, mp_w_cfg={conv: 1}):
             self._validate_mpmodel_quant_layers(se, {conv: 2, relu: None, conv_tr: None}, {conv: 1, fc: None})
             # sanity test that model was indeed quantized
-            y, y_mp = self.infer_models(model, se.model_mp, next(self.repr_datagen())[0])
+            y, y_mp = self.infer_models(model, se.mp_model, next(self.repr_datagen())[0])
             assert not np.allclose(y, y_mp)
 
         # restored to un-quantized
@@ -207,7 +211,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
 
     def test_configure_mp_model_errors(self):
         """ Test errors during model configuration. """
-        model, g, se = self.model, self.g, self.se
+        model, g, se = self.setup()
         with pytest.raises(ValueError, match='Requested configuration is either empty or contain only None values'):
             with se._configured_mp_model({}, {}):
                 pass
@@ -226,21 +230,26 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
             with se._configured_mp_model({conv: 1, fc: 0}, {conv: 0}):
                 pass
 
-    def test_compute_metric_method(self):
+    def _run_test_compute_metric_method(self, custom, mocker):
         """ Test compute_metric method (not the metric computation itself) """
-        model, g, se = self.model, self.g, self.se
+
+        mp_config = MixedPrecisionQuantizationConfig(custom_metric_fn=Mock()) if custom else None
+        model, g, se = self.setup(mp_config)
         conv, relu, conv_tr = [n.name for n in g.get_topo_sorted_nodes() if n.has_configurable_activation()]
         conv_, fc = [n.name for n in g.get_topo_sorted_nodes() if n.has_any_configurable_weight()]
-        # initial model is un-quantized
-        self._validate_mpmodel_quant_layers(se, {conv: None, relu: None, conv_tr: None}, {conv: None, fc: None})
-        mp_a_cfg = {conv: 2, relu: 0}
-        mp_w_cfg = {fc: 1}
 
         def mock_compute_metric(*args):
             # validate correct configuration inside compute metric
             self._validate_mpmodel_quant_layers(se, {conv: 2, relu: 0, conv_tr: None}, {conv: None, fc: 1})
             return 5
-        se._compute_metric = mock_compute_metric
+
+        calc_cls = CustomMetricCalculator if custom else DistanceMetricCalculator
+        mocker.patch.object(calc_cls, 'compute', mock_compute_metric)
+
+        # initial model is un-quantized
+        self._validate_mpmodel_quant_layers(se, {conv: None, relu: None, conv_tr: None}, {conv: None, fc: None})
+        mp_a_cfg = {conv: 2, relu: 0}
+        mp_w_cfg = {fc: 1}
 
         res = se.compute_metric(mp_a_cfg, mp_w_cfg)
         assert res == 5
@@ -259,7 +268,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
             assert len(layers) == 1
             exp_a_layer_indicies[layers[0]] = ind
 
-        activation_holders = self.fetch_model_layers_by_cls(se.model_mp, self.fw_impl.activation_quant_layer_cls)
+        activation_holders = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.activation_quant_layer_cls)
         for ah in activation_holders:
             assert ah.activation_holder_quantizer.active_quantization_config_index == exp_a_layer_indicies[ah]
 
@@ -270,6 +279,6 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
             assert len(layers) == 1
             exp_w_layer_indicies[layers[0]] = ind
 
-        weight_wrappers = self.fetch_model_layers_by_cls(se.model_mp, self.fw_impl.configurable_weights_quantizer_cls)
+        weight_wrappers = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.configurable_weights_quantizer_cls)
         for ww in weight_wrappers:
             assert ww.weights_quantizers[self.KERNEL].active_quantization_config_index == exp_w_layer_indicies[ww]

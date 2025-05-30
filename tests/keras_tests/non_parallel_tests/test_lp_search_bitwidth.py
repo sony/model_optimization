@@ -18,14 +18,14 @@ import unittest
 
 import keras
 from model_compression_toolkit.core import DEFAULTCONFIG
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
@@ -97,10 +97,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         calculate_quantization_params(graph, fw_impl=keras_impl, repr_data_gen_fn=representative_data_gen)
 
-        SensitivityEvaluation(graph,
-                              core_config.mixed_precision_config,
-                              representative_data_gen,
-                              fw_info=fw_info,
+        SensitivityEvaluation(graph, core_config.mixed_precision_config, representative_data_gen, fw_info=fw_info,
                               fw_impl=keras_impl)
 
         cfg = search_bit_width(graph=graph,

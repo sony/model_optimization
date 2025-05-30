@@ -42,13 +42,9 @@ def get_previous_node_with_activation_quantization(linear_node: BaseNode,
 
     prev_node = prev_nodes[0]
 
-    activation_quantization_config = prev_node.final_activation_quantization_cfg
+    prev_quant_node = graph.retrieve_preserved_quantization_node(prev_node)
 
-    # Search for node with activation quantization
-    if activation_quantization_config.enable_activation_quantization:
-        return prev_node
-    else:
-        return get_previous_node_with_activation_quantization(prev_node, graph)
+    return prev_quant_node if prev_quant_node.is_activation_quantization_enabled() else None
 
 
 def calculate_bin_centers(bin_edges: np.ndarray) -> np.ndarray:

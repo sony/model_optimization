@@ -173,8 +173,9 @@ By emphasizing a loss function that places greater importance on enhancing the m
 This feature is particularly suggested after an initial mixed precision run reveals a tendency towards reducing the bit-width of the last layer.
 
 **Solution:**
+
 ```python
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision import MpDistanceWeighting
 
 mp_config = mct.core.MixedPrecisionQuantizationConfig(distance_weighting_method=MpDistanceWeighting.LAST_LAYER)
 core_config = mct.core.CoreConfig(mixed_precision_config=mp_config)

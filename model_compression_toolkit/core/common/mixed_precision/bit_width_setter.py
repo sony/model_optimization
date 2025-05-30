@@ -76,7 +76,8 @@ def set_bit_widths(mixed_precision_enable: bool,
         for n in graph.nodes:
             assert len(n.candidates_quantization_cfg) == 1
             n.final_weights_quantization_cfg = copy.deepcopy(n.candidates_quantization_cfg[0].weights_quantization_cfg)
-            n.final_activation_quantization_cfg = copy.deepcopy(n.candidates_quantization_cfg[0].activation_quantization_cfg)
+            if not n.is_quantization_preserving():
+                n.final_activation_quantization_cfg = copy.deepcopy(n.candidates_quantization_cfg[0].activation_quantization_cfg)
 
     return graph
 

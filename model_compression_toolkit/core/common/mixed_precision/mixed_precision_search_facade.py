@@ -14,10 +14,10 @@
 # ==============================================================================
 
 from enum import Enum
-from typing import List, Callable, Dict
+from typing import List, Callable
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.hessian import HessianInfoService
@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
     ResourceUtilization
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.solution_refinement_procedure import \
     greedy_solution_refinement_procedure
 
@@ -79,14 +79,9 @@ def search_bit_width(graph: Graph,
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS utilization computation purposes)
-    se = SensitivityEvaluation(
-        graph,
-        mp_config,
-        representative_data_gen=representative_data_gen,
-        fw_info=fw_info,
-        fw_impl=fw_impl,
-        disable_activation_for_metric=disable_activation_for_metric,
-        hessian_info_service=hessian_info_service)
+    se = SensitivityEvaluation(graph, mp_config, representative_data_gen=representative_data_gen, fw_info=fw_info,
+                               fw_impl=fw_impl, disable_activation_for_metric=disable_activation_for_metric,
+                               hessian_info_service=hessian_info_service)
 
     if search_method != BitWidthSearchMethod.INTEGER_PROGRAMMING:
         raise NotImplementedError()
