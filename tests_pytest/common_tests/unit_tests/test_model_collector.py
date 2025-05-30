@@ -55,7 +55,6 @@ class TestStatisticsCollectors:
         # Set up a fake node with activation quantization enabled and prior_info attributes.
         node = Mock()
         node.is_activation_quantization_enabled.return_value = True
-        node.is_quantization_preserving.return_value = False
         node.is_fln_quantization.return_value = False
         node.type = DummyLayer
         node.prior_info = Mock(min_output=-1, max_output=9)
@@ -70,7 +69,6 @@ class TestStatisticsCollectors:
         """
         node = Mock()
         node.is_activation_quantization_enabled.return_value = False
-        node.is_quantization_preserving.return_value = False
         node.is_fln_quantization.return_value = False
         node.type = DummyLayer
         # Even if prior_info exists, it should not be used.
@@ -89,13 +87,48 @@ class TestStatisticsCollectors:
         # Set up a fake node with activation quantization enabled and prior_info attributes.
         node = Mock()
         node.is_activation_quantization_enabled.return_value = False
-        node.is_quantization_preserving.return_value = False
         node.is_fln_quantization.return_value = True
         node.type = DummyLayer
         node.prior_info = Mock(min_output=-8, max_output=9)
 
         collector = create_stats_collector_for_node(node, fw_info_mock)
         assert isinstance(collector, StatsCollector)
+        assert collector.mpcc.init_min_value == -8
+        assert collector.mpcc.init_max_value == 9
+
+    def test_create_stats_collector_for_node_fln_activation_enabled_no_prior_info(self, fw_info_mock):
+        """
+        Verify that for nodes with fln quantization enabled, make sure create_stats_collector_for_node
+        returns a StatsCollector instance even if prior_info is None.
+        """
+        # Set up a fake node with activation quantization enabled and prior_info attributes.
+        node = Mock()
+        node.is_activation_quantization_enabled.return_value = False
+        node.is_fln_quantization.return_value = True
+        node.type = DummyLayer
+        node.prior_info = None
+
+        collector = create_stats_collector_for_node(node, fw_info_mock)
+        assert isinstance(collector, StatsCollector)
+        assert collector.mpcc.init_min_value is None
+        assert collector.mpcc.init_max_value is None
+
+    def test_create_stats_collector_for_node_fln_activation_enabled_no_prior_info_mock(self, fw_info_mock):
+        """
+        Verify that for nodes with fln quantization enabled, make sure create_stats_collector_for_node
+        returns a StatsCollector instance even if prior_info is None.
+        """
+        # Set up a fake node with activation quantization enabled and prior_info attributes.
+        node = Mock()
+        node.is_activation_quantization_enabled.return_value = False
+        node.is_fln_quantization.return_value = True
+        node.type = DummyLayer
+        node.prior_info = Mock(min_output=None, max_output=None)
+
+        collector = create_stats_collector_for_node(node, fw_info_mock)
+        assert isinstance(collector, StatsCollector)
+        assert collector.mpcc.init_min_value is None
+        assert collector.mpcc.init_max_value is None
 
     def test_create_tensor2node_assigns_stats_collector(self, fw_info_mock):
         """
@@ -135,7 +168,6 @@ class TestModelCollectorInit:
         mock_nodes_list = [node1, node2, node3]
         for node in mock_nodes_list:
             node.is_fln_quantization = Mock(return_value=False)
-            node.is_quantization_preserving = Mock(return_value=False)
 
         # Build a graph connecting the nodes.
         graph = Graph('g',
@@ -182,7 +214,6 @@ class TestModelCollectorInit:
         mock_nodes_list = [node1, node2, node3]
         for node in mock_nodes_list:
             node.is_fln_quantization = Mock(return_value=False)
-            node.is_quantization_preserving = Mock(return_value=False)
 
         # Build a graph connecting the nodes.
         graph = Graph('g',
@@ -225,7 +256,6 @@ class TestModelCollectorInit:
         mock_nodes_list = [node1, node2, node3]
         for node in mock_nodes_list:
             node.is_activation_quantization_enabled = Mock(return_value=False)
-            node.is_quantization_preserving = Mock(return_value=False)
 
         # Build a graph connecting the nodes.
         graph = Graph('g',
@@ -275,7 +305,6 @@ class TestModelCollectorInfer:
         mock_nodes_list = [self.node1, self.node2, self.node3]
         for node in mock_nodes_list:
             node.is_fln_quantization = Mock(return_value=False)
-            node.is_quantization_preserving = Mock(return_value=False)
 
         self.graph = Graph('g',
                            input_nodes=[self.node1],
@@ -384,8 +413,6 @@ class TestFLNModelCollectorInfer:
         self.node4.is_fln_quantization = Mock(return_value=True)
 
         mock_nodes_list = [self.node1, self.node2, self.node3, self.node4]
-        for node in mock_nodes_list:
-            node.is_quantization_preserving = Mock(return_value=False)
 
         self.graph = Graph('g',
                            input_nodes=[self.node1],
@@ -413,7 +440,7 @@ class TestFLNModelCollectorInfer:
         self.qc = DEFAULTCONFIG
         self.infer_input = [np.random.randn(*input_shape)]
 
-    def test_infer_without_hessian_in_FLN(self, fw_impl_mock, fw_info_mock):
+    def test_infer_without_hessian_in_fln(self, fw_impl_mock, fw_info_mock):
         """
         In FLN node,verify that ModelCollector.infer calls run_model_inference without fetching hessian data
         when activation_error_method is not HMSE.
@@ -427,7 +454,7 @@ class TestFLNModelCollectorInfer:
         # Confirm that the Hessian service is not used.
         mc.hessian_service.fetch_hessian.assert_not_called()
 
-    def test_infer_with_hessian_in_FLN(self, fw_impl_mock, fw_info_mock):
+    def test_infer_with_hessian_in_fln(self, fw_impl_mock, fw_info_mock):
         """
         In FLN node,verify that ModelCollector.infer fetches hessian data when activation_error_method is HMSE.
         """
@@ -440,7 +467,7 @@ class TestFLNModelCollectorInfer:
         # Confirm that the Hessian data is fetched.
         mc.hessian_service.fetch_hessian.assert_called_once()
 
-    def test_update_statistics_called_in_FLN(self, fw_impl_mock, fw_info_mock):
+    def test_update_statistics_called_in_fln(self, fw_impl_mock, fw_info_mock):
         """
         In FLN node,verify that update_statistics is called for each statistics container during inference.
         """
