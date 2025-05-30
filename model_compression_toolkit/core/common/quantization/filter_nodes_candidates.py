@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+
 
 def filter_nodes_candidates(graph: Graph):
     """
@@ -71,7 +71,7 @@ def _filter_bit_method_dups(candidates: List[CandidateNodeQuantizationConfig],
     return final_candidates
 
 
-def filter_node_candidates(node: BaseNode, fw_info: FrameworkInfo, op_cfg: OpQuantizationConfig) -> List[CandidateNodeQuantizationConfig]:
+def filter_node_candidates(node: BaseNode, fw_info) -> List[CandidateNodeQuantizationConfig]:
     """
     Updates a node's candidates configuration list.
     If the node's weights quantization is disabled (or it only has activations to quantize), then the updated list
@@ -82,6 +82,7 @@ def filter_node_candidates(node: BaseNode, fw_info: FrameworkInfo, op_cfg: OpQua
     Args:
         node: Node to set its quantization configurations.
         fw_info: FrameworkInfo object with information about the specific framework's model.
+
     """
 
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
