@@ -26,8 +26,7 @@ class MpDistanceWeighting(Enum):
 
     AVG - take the average distance over all interest points.
     LAST_LAYER - take only the distance of the last interest point.
-    EXP - weighted average with weights based on exponent of negative distances between activations of the quantized
-      and the float models.
+    EXP - weighted average with weights based on exponent of negative distances between activations of the quantized and the float models.
     HESSIAN - weighted average with Hessians as weights.
     """
     AVG = auto()
