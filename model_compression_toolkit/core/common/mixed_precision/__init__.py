@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from .sensitivity_eval.distance_weighting import MpDistanceWeighting
+from .mixed_precision_quantization_config import MpDistanceWeighting, MpMetricNormalization
