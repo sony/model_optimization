@@ -20,7 +20,7 @@ import torch
 from torch import nn
 
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision import MpDistanceWeighting
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
@@ -518,7 +518,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search with Hessian-based scores.
         """
-        MixedPrecisionWithHessianScores(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionWithHessianScores(self).run_test()
 
     def test_reshape_net(self):
         """
