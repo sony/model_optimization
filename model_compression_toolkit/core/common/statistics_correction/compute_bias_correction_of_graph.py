@@ -115,7 +115,8 @@ def _compute_bias_correction(kernel: np.ndarray,
                              quantized_kernel: np.ndarray,
                              in_statistics_container: BaseStatsCollector,
                              output_channels_axis: int,
-                             input_channels_axis: int) -> Any:
+                             input_channels_axis: int,
+                             node_name: str) -> Any:
     """
     Compute the bias correction term for the bias in the error on the layer’s output,
     that is introduced by the weights quantization.
@@ -154,14 +155,14 @@ def _compute_bias_correction(kernel: np.ndarray,
 
     # Sanity validation
     if is_non_positive_integer(num_groups) or is_non_positive_integer(num_out_channels / num_groups):
-        Logger.warning("Skipping bias correction due to valiation problem.")
+        Logger.warning(f"Skipping bias correction due to validation problem in node {node_name}.")
         return correction_term
 
     num_out_channels_per_group = int(num_out_channels / num_groups)
 
     # In Pytorch the output of group conv is separated into respective groups is
     # viewed as follows: (batch, channel, ngroups, h, w),
-    # i.e each group is consistently viewed one after the other
+    # i.e. each group is consistently viewed one after the other
     # For an example, check out: https://discuss.pytorch.org/t/group-convolution-output-order/88258
     mu_split = np.split(mu, num_groups)
     eps_split = np.split(eps, num_groups, 0)
@@ -205,5 +206,6 @@ def _get_bias_correction_term_of_node(input_channels_axis: int,
                                           quantized_kernel,
                                           node_in_stats_collector,
                                           output_channels_axis,
-                                          input_channels_axis)
+                                          input_channels_axis,
+                                          n.name)
     return correction
