@@ -162,7 +162,7 @@ def _compute_bias_correction(kernel: np.ndarray,
 
     # In Pytorch the output of group conv is separated into respective groups is
     # viewed as follows: (batch, channel, ngroups, h, w),
-    # i.e each group is consistently viewed one after the other
+    # i.e. each group is consistently viewed one after the other
     # For an example, check out: https://discuss.pytorch.org/t/group-convolution-output-order/88258
     mu_split = np.split(mu, num_groups)
     eps_split = np.split(eps, num_groups, 0)
