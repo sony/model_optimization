@@ -22,12 +22,17 @@ from model_compression_toolkit.constants import MP_DEFAULT_NUM_SAMPLES, ACT_HESS
 
 class MpDistanceWeighting(Enum):
     """
+
     Defines interest points distances weighting methods.
 
     AVG - take the average distance over all interest points.
+
     LAST_LAYER - take only the distance of the last interest point.
+
     EXP - weighted average with weights based on exponent of negative distances between activations of the quantized and the float models.
+
     HESSIAN - weighted average with Hessians as weights.
+
     """
     AVG = auto()
     LAST_LAYER = auto()
@@ -37,9 +42,13 @@ class MpDistanceWeighting(Enum):
 
 class MpMetricNormalization(Enum):
     """
+
     MAXBIT: normalize sensitivity metrics of layer candidates by max-bitwidth candidate (of that layer).
+
     MINBIT: normalize sensitivity metrics of layer candidates by min-bitwidth candidate (of that layer).
+
     NONE: no normalization.
+
     """
     MAXBIT = 'MAXBIT'
     MINBIT = 'MINBIT'
