@@ -31,6 +31,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
+from tests_pytest.common_tests.unit_tests.core.test_fusion_info import create_mock_base_node
 from tests_pytest._test_util.graph_builder_utils import build_nbits_qc as build_qc
 
 # Setup TEST_QC and TEST_QCO for testing.
@@ -56,27 +57,17 @@ def fusing_info_generator_with_qconfig(fusing_patterns_with_qconfig):
     return FusingInfoGenerator(fusing_patterns_with_qconfig)
 
 
-def create_mock_base_node(name: str, layer_class: str,
-                          is_weights_quantization_enabled: bool = False,
-                          is_activation_quantization_enabled: bool = False,
-                          is_fln_quantization: bool = False,
-                          is_quantization_preserving: bool = False,
-                          candidates_quantization_cfg: CandidateNodeQuantizationConfig = None):
+def create_mock_node(name: str, layer_class: str,
+                     is_weights_quantization_enabled: bool = False,
+                     is_activation_quantization_enabled: bool = False,
+                     is_fln_quantization: bool = False,
+                     is_quantization_preserving: bool = False,
+                     candidates_quantization_cfg: CandidateNodeQuantizationConfig = None):
     """
     Function for creating the mock nodes required for a simple neural network structure.
     """
 
-    dummy_initalize = {'framework_attr': {},
-                       'input_shape': (),
-                       'output_shape': (),
-                       'weights': {}}
-
-    real_node = BaseNode(name=name, layer_class=layer_class, **dummy_initalize)
-
-    node = Mock(spec=real_node)
-    node.is_match_type = real_node.is_match_type
-    node.layer_class = layer_class
-    node.name = name
+    node = create_mock_base_node(name=name, layer_class=layer_class)
 
     node.candidates_quantization_cfg = candidates_quantization_cfg
 
@@ -112,28 +103,28 @@ class TestFilterNodesCandidates:
 
         # Create Test Nodes
         mock_nodes_list = []
-        mock_nodes_list.append(create_mock_base_node(name='conv_1', layer_class='Conv2d', 
+        mock_nodes_list.append(create_mock_node(name='conv_1', layer_class='Conv2d', 
                                                     is_weights_quantization_enabled=True, is_fln_quantization=True,
                                                     candidates_quantization_cfg=candidate_single))
-        mock_nodes_list.append(create_mock_base_node(name='relu_1', layer_class='ReLU', 
+        mock_nodes_list.append(create_mock_node(name='relu_1', layer_class='ReLU', 
                                                     is_activation_quantization_enabled=True,
                                                     candidates_quantization_cfg=candidate_single))
-        mock_nodes_list.append(create_mock_base_node(name='conv_2', layer_class='Conv2d', 
+        mock_nodes_list.append(create_mock_node(name='conv_2', layer_class='Conv2d', 
                                                     is_weights_quantization_enabled=True, is_fln_quantization=True,
                                                     candidates_quantization_cfg=candidate_single))
-        mock_nodes_list.append(create_mock_base_node(name='tanh', layer_class='Tanh', 
+        mock_nodes_list.append(create_mock_node(name='tanh', layer_class='Tanh', 
                                                     is_activation_quantization_enabled=True,
                                                     candidates_quantization_cfg=candidate_single))
-        mock_nodes_list.append(create_mock_base_node(name='conv_3', layer_class='Conv2d', 
+        mock_nodes_list.append(create_mock_node(name='conv_3', layer_class='Conv2d', 
                                                     is_weights_quantization_enabled=True, is_fln_quantization=True,
                                                     candidates_quantization_cfg=candidates_multiple))
-        mock_nodes_list.append(create_mock_base_node(name='relu_2', layer_class='ReLU', 
+        mock_nodes_list.append(create_mock_node(name='relu_2', layer_class='ReLU', 
                                                     is_activation_quantization_enabled=True,
                                                     candidates_quantization_cfg=candidates_multiple))
-        mock_nodes_list.append(create_mock_base_node(name='flatten', layer_class='Flatten', 
+        mock_nodes_list.append(create_mock_node(name='flatten', layer_class='Flatten', 
                                                     is_quantization_preserving=True,
                                                     candidates_quantization_cfg=candidate_single))
-        mock_nodes_list.append(create_mock_base_node(name='linear', layer_class='Linear', 
+        mock_nodes_list.append(create_mock_node(name='linear', layer_class='Linear', 
                                                     is_weights_quantization_enabled=True, is_activation_quantization_enabled=True,
                                                     candidates_quantization_cfg=candidates_multiple))
         self.mock_node = mock_nodes_list
