@@ -15,11 +15,10 @@
 from copy import deepcopy 
 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.core import QuantizationErrorMethod
-from model_compression_toolkit.core.common import DEFAULTCONFIG, Graph, BaseNode
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
@@ -257,5 +256,5 @@ class TestFilterNodesCandidates:
         output_graph = filter_nodes_candidates(graph)
 
         ### Check if the ActivationQuantization settings set on the graph nodes match the expected values
-        for node, exp_qc in zip(list(graph.nodes), self.exp_filter_nodes_candidates):
+        for node, exp_qc in zip(list(output_graph.nodes), self.exp_filter_nodes_candidates):
             self.check_candidates_activation_qcfg(node.candidates_quantization_cfg, exp_qc)
