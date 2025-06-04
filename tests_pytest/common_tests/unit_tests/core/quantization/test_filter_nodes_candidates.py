@@ -104,29 +104,29 @@ class TestFilterNodesCandidates:
         # Create Test Nodes
         mock_nodes_list = []
         mock_nodes_list.append(create_mock_node(name='conv_1', layer_class='Conv2d', 
-                                                    is_weights_quantization_enabled=True, is_fln_quantization=True,
-                                                    candidates_quantization_cfg=candidate_single))
+                                                is_weights_quantization_enabled=True, is_fln_quantization=True,
+                                                candidates_quantization_cfg=candidate_single))
         mock_nodes_list.append(create_mock_node(name='relu_1', layer_class='ReLU', 
-                                                    is_activation_quantization_enabled=True,
-                                                    candidates_quantization_cfg=candidate_single))
+                                                is_activation_quantization_enabled=True,
+                                                candidates_quantization_cfg=candidate_single))
         mock_nodes_list.append(create_mock_node(name='conv_2', layer_class='Conv2d', 
-                                                    is_weights_quantization_enabled=True, is_fln_quantization=True,
-                                                    candidates_quantization_cfg=candidate_single))
+                                                is_weights_quantization_enabled=True, is_fln_quantization=True,
+                                                candidates_quantization_cfg=candidate_single))
         mock_nodes_list.append(create_mock_node(name='tanh', layer_class='Tanh', 
-                                                    is_activation_quantization_enabled=True,
-                                                    candidates_quantization_cfg=candidate_single))
+                                                is_activation_quantization_enabled=True,
+                                                candidates_quantization_cfg=candidate_single))
         mock_nodes_list.append(create_mock_node(name='conv_3', layer_class='Conv2d', 
-                                                    is_weights_quantization_enabled=True, is_fln_quantization=True,
-                                                    candidates_quantization_cfg=candidates_multiple))
+                                                is_weights_quantization_enabled=True, is_fln_quantization=True,
+                                                candidates_quantization_cfg=candidates_multiple))
         mock_nodes_list.append(create_mock_node(name='relu_2', layer_class='ReLU', 
-                                                    is_activation_quantization_enabled=True,
-                                                    candidates_quantization_cfg=candidates_multiple))
+                                                is_activation_quantization_enabled=True,
+                                                candidates_quantization_cfg=candidates_multiple))
         mock_nodes_list.append(create_mock_node(name='flatten', layer_class='Flatten', 
-                                                    is_quantization_preserving=True,
-                                                    candidates_quantization_cfg=candidate_single))
+                                                is_quantization_preserving=True,
+                                                candidates_quantization_cfg=candidate_single))
         mock_nodes_list.append(create_mock_node(name='linear', layer_class='Linear', 
-                                                    is_weights_quantization_enabled=True, is_activation_quantization_enabled=True,
-                                                    candidates_quantization_cfg=candidates_multiple))
+                                                is_weights_quantization_enabled=True, is_activation_quantization_enabled=True,
+                                                candidates_quantization_cfg=candidates_multiple))
         self.mock_node = mock_nodes_list
 
         edges_list = []
