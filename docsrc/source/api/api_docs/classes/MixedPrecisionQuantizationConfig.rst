@@ -9,3 +9,19 @@ MixedPrecisionQuantizationConfig
 
 .. autoclass:: model_compression_toolkit.core.MixedPrecisionQuantizationConfig
 
+
+=================================
+MpDistanceWeighting
+=================================
+
+.. autoclass:: model_compression_toolkit.core.MpDistanceWeighting
+    :members:
+
+
+=================================
+MpMetricNormalization
+=================================
+
+.. autoclass:: model_compression_toolkit.core.MpMetricNormalization
+    :members:
+
