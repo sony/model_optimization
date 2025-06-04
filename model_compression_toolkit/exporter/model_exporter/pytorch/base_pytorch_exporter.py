@@ -84,6 +84,11 @@ def _set_quantized_weights_in_wrapper(layer:PytorchQuantizationWrapper):
             # If the name is not a string, it must be an integer representing a positional weight
             assert isinstance(name, int)
             attr_name = f'{QUANTIZED_POSITIONAL_WEIGHT}_{name}'
+
+            # Note: This naming scheme is used to mimic the behavior expected in
+            # the PytorchQuantizationWrapper's forward method, which looks for attributes
+            # like 'quantized_pos_weight_0', 'quantized_pos_weight_1', etc.
+
             if hasattr(layer, attr_name):
                 delattr(layer, attr_name)
 
