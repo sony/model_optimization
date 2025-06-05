@@ -74,7 +74,7 @@ if FOUND_ONNX:
                 Fake-quant PyTorch model.
             """
             # List all activation quantization holders with num_bits>8 and replace them with Identity, because
-            # ONNX doesn't support quantization of mote than 8 bits for torch.fake_quantize_per_tensor_affine.
+            # ONNX doesn't support quantization of more than 8 bits for torch.fake_quantize_per_tensor_affine.
             act_holder_list = [n for n, m in self.model.named_modules()
                                if isinstance(m, PytorchActivationQuantizationHolder) and
                                m.activation_holder_quantizer.num_bits > 8]
