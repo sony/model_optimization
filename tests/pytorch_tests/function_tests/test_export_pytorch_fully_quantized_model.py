@@ -98,7 +98,7 @@ class TestPyTorch2BitONNXExporter(unittest.TestCase):
             return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
         # get onnx conv weight
-        conv_weight_name = 'conv1.weight'
+        conv_weight_name = 'conv1.layer.weight'
         from onnx import numpy_helper
         INTIALIZERS = self.exported_model_onnx.graph.initializer
         Weight = []

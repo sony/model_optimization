@@ -56,7 +56,7 @@ def find_and_assign_metadata_attr(model: torch.nn.Module, attr_name: str = 'meta
                 f"Only the first one was assigned to 'model.metadata'.")
 
 
-def _set_quantized_weights_in_wrapper(layer:PytorchQuantizationWrapper):
+def _set_quantized_weights_in_wrapper(layer: PytorchQuantizationWrapper):
     """
        Sets the quantized weights in the provided PytorchQuantizationWrapper layer.
        Replaces the original weights in the layer with the quantized weights.
@@ -124,7 +124,7 @@ class BasePyTorchExporter(Exporter):
         self.model = copy.deepcopy(self.model)
         self.repr_dataset = repr_dataset
 
-    def _substitute_fully_quantized_model(self):
+    def _substitute_fully_quantized_model(self, replace_wrapped=True):
         """
         Substitution for pytorch "fully-quantized" models. It first uses the weight quantizers
         in PytorchQuantizationWrapper layers to quantize the weights and set them in the layer.
@@ -136,8 +136,9 @@ class BasePyTorchExporter(Exporter):
             if isinstance(layer, PytorchQuantizationWrapper):
                 _set_quantized_weights_in_wrapper(layer)
 
-        # Replace PytorchQuantizationWrapper layers with their internal layers
-        self._replace_wrapped_with_unwrapped()
+        if replace_wrapped:
+            # Replace PytorchQuantizationWrapper layers with their internal layers
+            self._replace_wrapped_with_unwrapped()
 
     def _replace_wrapped_with_unwrapped(self):
         """
@@ -148,3 +149,4 @@ class BasePyTorchExporter(Exporter):
         for name, module in self.model.named_children():
             if isinstance(module, PytorchQuantizationWrapper):
                 setattr(self.model, name, module.layer)
+
