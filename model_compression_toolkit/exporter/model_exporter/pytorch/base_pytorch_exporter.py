@@ -135,16 +135,3 @@ class BasePyTorchExporter(Exporter):
         for layer in self.model.modules():
             if isinstance(layer, PytorchQuantizationWrapper):
                 _set_quantized_weights_in_wrapper(layer)
-
-        # Replace PytorchQuantizationWrapper layers with their internal layers
-        self._replace_wrapped_with_unwrapped()
-
-    def _replace_wrapped_with_unwrapped(self):
-        """
-        Replaces the PytorchQuantizationWrapper modules in the model with their underlying wrapped modules.
-        Iterates through the model's children and replaces the PytorchQuantizationWrapper instances with their
-        internal layers.
-        """
-        for name, module in self.model.named_children():
-            if isinstance(module, PytorchQuantizationWrapper):
-                setattr(self.model, name, module.layer)
