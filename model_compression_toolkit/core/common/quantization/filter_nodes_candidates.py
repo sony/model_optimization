@@ -104,7 +104,7 @@ def filter_node_candidates(node: BaseNode,
         # but for some reason the node has multiple candidates then replace it with a single dummy candidate with
         # default bit-width values.
         single_dummy_candidate = filtered_candidates[0]
-        _update_activation_quantization_cfg(node, single_dummy_candidate, op_cfg)
+        _update_activation_quantization_cfg(node, single_dummy_candidate, fw_info, op_cfg)
 
         if kernel_attr is not None:
             kernel_config = single_dummy_candidate.weights_quantization_cfg.get_attr_config(kernel_attr)
@@ -122,7 +122,7 @@ def filter_node_candidates(node: BaseNode,
                                and not seen_candidates.add(candidate.weights_quantization_cfg)]
 
         for c in filtered_candidates:
-            _update_activation_quantization_cfg(node, c, op_cfg)
+            _update_activation_quantization_cfg(node, c, fw_info, op_cfg)
 
         final_candidates = _filter_bit_method_dups(filtered_candidates, kernel_attr)
 
@@ -149,6 +149,7 @@ def filter_node_candidates(node: BaseNode,
 
 def _update_activation_quantization_cfg(node: BaseNode,
                                         candidate: CandidateNodeQuantizationConfig,
+                                        fw_info: FrameworkInfo,
                                         op_cfg: OpQuantizationConfig = None):
     """
     Updates the activation quantization configuration of a candidate node.
@@ -157,6 +158,7 @@ def _update_activation_quantization_cfg(node: BaseNode,
     Args:
         node: Node to set its quantization configurations.
         candidate: CandidateNodeQuantizationConfig to update.
+        fw_info: FrameworkInfo object with information about the specific framework's model.
         op_cfg: OpQuantizationConfig of the fln node with quantizers types to use when creating fln node quantization configuration.
     """
     if node.is_fln_quantization() and op_cfg is not None:
@@ -168,10 +170,8 @@ def _update_activation_quantization_cfg(node: BaseNode,
         signedness = candidate.activation_quantization_cfg.signedness
         activation_quantization_method = QuantizationMethod.POWER_OF_TWO
 
-    activation_quantization_fn = get_activation_quantization_params_fn(activation_quantization_method)
-
     candidate.activation_quantization_cfg.activation_n_bits = activation_n_bits
     candidate.activation_quantization_cfg.signedness = signedness
     candidate.activation_quantization_cfg.activation_quantization_method = activation_quantization_method
-    candidate.activation_quantization_cfg.activation_quantization_fn = activation_quantization_fn
-    candidate.activation_quantization_cfg.activation_quantization_params_fn = activation_quantization_fn
+    candidate.activation_quantization_cfg.activation_quantization_fn = fw_info.activation_quantizer_mapping.get(activation_quantization_method)
+    candidate.activation_quantization_cfg.activation_quantization_params_fn = get_activation_quantization_params_fn(activation_quantization_method)

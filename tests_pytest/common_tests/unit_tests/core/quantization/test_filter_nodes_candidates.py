@@ -28,6 +28,8 @@ from model_compression_toolkit.constants import FUSED_LAYER_PATTERN, FUSED_OP_QU
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import lut_kmeans_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import symmetric_selection_histogram
+from model_compression_toolkit.core.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, symmetric_quantization, uniform_quantization
+from model_compression_toolkit.core.pytorch.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
@@ -79,6 +81,17 @@ def create_mock_node(name: str, layer_class: str,
     return node
 
 
+def get_activation_quantizer_mapping() -> dict:
+    """
+    Returns a mapping of activation quantization methods to their corresponding quantization functions.
+    """
+    activation_quantizer_mapping = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
+                                    QuantizationMethod.SYMMETRIC: symmetric_quantization,
+                                    QuantizationMethod.UNIFORM: uniform_quantization,
+                                    QuantizationMethod.LUT_POT_QUANTIZER: activation_lut_kmean_quantizer}
+    return activation_quantizer_mapping
+
+
 class TestFilterNodesCandidates:
     @pytest.fixture(autouse=True)
     def setup_mock_graph_and_nodes(self):
@@ -91,12 +104,14 @@ class TestFilterNodesCandidates:
         """
 
         self.fw_info = Mock()
+        self.fw_info.get_kernel_op_attributes.return_value = ['weight']
+        self.fw_info.activation_quantizer_mapping = get_activation_quantizer_mapping()
 
         candidate1 = build_qc(a_nbits=8, a_enable=True, w_attr={'weight': (8, True)}, q_preserving=False,
-                            activation_quantization_fn=symmetric_selection_histogram,
+                            activation_quantization_fn=symmetric_quantization,
                             activation_quantization_method=QuantizationMethod.SYMMETRIC)
         candidate2 = build_qc(a_nbits=4, a_enable=True, w_attr={'weight': (4, True)}, q_preserving=False,
-                            activation_quantization_fn=symmetric_selection_histogram,
+                            activation_quantization_fn=symmetric_quantization,
                             activation_quantization_method=QuantizationMethod.SYMMETRIC)
         candidate_single  = [candidate1]
         candidates_multiple = [candidate1, candidate2]
@@ -145,12 +160,12 @@ class TestFilterNodesCandidates:
         """
         Set up and create expected values and candidates for tests related to the filter_nodes_candidates modules.
         """
-        def create_exp_candidate_cfg(candidate, n_bits, actq_params_fn, actq_method, signedness=None):
+        def create_exp_candidate_cfg(candidate, n_bits, actq_params_fn, actq_method, actq_fn, signedness=None):
             ret_candidate = deepcopy(candidate)
             ret_c_actq_cfg = ret_candidate.activation_quantization_cfg
 
             ret_c_actq_cfg.activation_n_bits = n_bits
-            ret_c_actq_cfg.activation_quantization_fn = actq_params_fn   ### same as the activation_quantization_params_fn
+            ret_c_actq_cfg.activation_quantization_fn = actq_fn
             ret_c_actq_cfg.activation_quantization_method = actq_method
             ret_c_actq_cfg.activation_quantization_params_fn = actq_params_fn
             if signedness is not None:
@@ -160,18 +175,20 @@ class TestFilterNodesCandidates:
 
         ### expected is test_filter_nodes_candidates 
         exp_candidate_base1 = build_qc(a_nbits=8, a_enable=True, w_attr={'weight': (8, True)},
-                                        activation_quantization_fn=symmetric_selection_histogram,
+                                        activation_quantization_fn=symmetric_quantization,
                                         activation_quantization_method=QuantizationMethod.SYMMETRIC)
         exp_candidate_base2 = build_qc(a_nbits=4, a_enable=True, w_attr={'weight': (4, True)},
-                                        activation_quantization_fn=symmetric_selection_histogram,
+                                        activation_quantization_fn=symmetric_quantization,
                                         activation_quantization_method=QuantizationMethod.SYMMETRIC)
         
         exp_actq_cfg_params_dict1 = {'n_bits': 4,
                                      'actq_params_fn': lut_kmeans_histogram,
                                      'actq_method': QuantizationMethod.LUT_POT_QUANTIZER,
+                                     'actq_fn': activation_lut_kmean_quantizer,
                                      'signedness': Signedness.AUTO}
         exp_actq_cfg_params_dict2 = {'n_bits': FLOAT_BITWIDTH,
                                      'actq_params_fn': power_of_two_selection_histogram,
+                                     'actq_fn': power_of_two_quantization,
                                      'actq_method': QuantizationMethod.POWER_OF_TWO}
 
         ### Expected candidates when transformed by the qcfg of FusingInfo
@@ -225,7 +242,6 @@ class TestFilterNodesCandidates:
         """
         nodes = self.mock_node
         fw_info = self.fw_info
-        fw_info.get_kernel_op_attributes.return_value = ['weight']
 
         output_candidates = filter_node_candidates(nodes[idx], fw_info, op_cfg)
         exp_candidates = self.exp_filter_nodes_candidates[idx]
@@ -239,7 +255,6 @@ class TestFilterNodesCandidates:
         """
         graph = self.graph
         fw_info = self.fw_info
-        fw_info.get_kernel_op_attributes.return_value = ['weight']
         
         graph.fw_info = fw_info
         graph.fusing_info = fusing_info_generator_with_qconfig.generate_fusing_info(graph)
