@@ -198,9 +198,9 @@ class FusingInfo:
         """
         return self.fusing_data.get(op_id)
 
-    def get_nodes_to_disable_activation_quantization(self) -> List['BaseNode']:
+    def get_inner_fln_nodes(self) -> List['BaseNode']:
         """
-        Returns a list of the nodes that their activation quantization is disabled due to fusing.
+        Returns a list of the nodes that are part but not the last node of an FLN.
         """
         return [node for nodes in self.get_all_fused_operations().values() for node in nodes[:-1]]
 
@@ -227,6 +227,22 @@ class FusingInfo:
             bool: True if the node is in any fused operation, False otherwise.
         """
         return any(node in nodes for nodes in self.fusing_data.values())
+
+    def is_quantized_node_in_fln(self, node: 'BaseNode') -> bool:
+        """
+        Check whether a node inside an FLN and should be quantized.
+
+        Args:
+            node (BaseNode): The node to check.
+
+        Returns:
+            bool: True if the node is in any fused operation and should be quantized.
+        """
+        if self.is_node_in_fused_op(node):
+            node_q_cfg = self.fused_op_id_to_quant_config[node.name]
+            return node_q_cfg.enable_activation_quantization
+
+        return False
 
     def get_all_fused_operations(self) -> Dict[str, Tuple['BaseNode']]:
         """
