@@ -239,8 +239,8 @@ class FusingInfo:
             bool: True if the node is in any fused operation and should be quantized.
         """
         if self.is_node_in_fused_op(node):
-            node_q_cfg = self.fused_op_id_to_quant_config[node.name]
-            return node_q_cfg.enable_activation_quantization
+            node_q_cfg = self.fused_op_id_to_quant_config[self.node_to_fused_node_map[node.name]]
+            return node_q_cfg is not None and node_q_cfg.enable_activation_quantization
 
         return False
 
