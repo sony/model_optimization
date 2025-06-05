@@ -98,7 +98,7 @@ if FOUND_ONNX:
             if self._use_onnx_custom_quantizer_ops:
                 self._enable_onnx_custom_ops_export()
             else:
-                self._substitute_fully_quantized_model()
+                self._substitute_fully_quantized_model(replace_wrapped=False)
 
             if self._use_onnx_custom_quantizer_ops:
                 Logger.info(f"Exporting onnx model with MCTQ quantizers: {self.save_model_path}")
