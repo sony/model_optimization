@@ -78,7 +78,7 @@ if FOUND_ONNX:
             act_holder_list = [n for n, m in self.model.named_modules()
                                if isinstance(m, PytorchActivationQuantizationHolder) and
                                m.activation_holder_quantizer.num_bits > 8]
-            for act_holder in act_holder_list:
+            for act_holder in act_holder_list:  # pragma: no cover
                 delattr(self.model, act_holder)
                 setattr(self.model, act_holder, torch.nn.Identity())
 
@@ -175,6 +175,6 @@ if FOUND_ONNX:
                         wq.enable_custom_impl()
 
 else:
-    def FakelyQuantONNXPyTorchExporter(*args, **kwargs):
+    def FakelyQuantONNXPyTorchExporter(*args, **kwargs):  # pragma: no cover
         Logger.critical("ONNX must be installed to use 'FakelyQuantONNXPyTorchExporter'. "
-                        "The 'onnx' package is missing.")  # pragma: no cover
+                        "The 'onnx' package is missing.")
