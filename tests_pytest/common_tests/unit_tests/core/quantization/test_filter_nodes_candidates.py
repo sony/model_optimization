@@ -18,7 +18,7 @@ import pytest
 from unittest.mock import Mock
 
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
