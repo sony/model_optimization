@@ -28,8 +28,7 @@ from model_compression_toolkit.constants import FUSED_LAYER_PATTERN, FUSED_OP_QU
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import lut_kmeans_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import symmetric_selection_histogram
-from model_compression_toolkit.core.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, symmetric_quantization, uniform_quantization
-from model_compression_toolkit.core.pytorch.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import uniform_selection_histogram
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
@@ -40,6 +39,13 @@ from tests_pytest._test_util.graph_builder_utils import build_nbits_qc as build_
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs(),
                               activation_n_bits=4,
                               activation_quantization_method=QuantizationMethod.LUT_POT_QUANTIZER)
+
+# Setup test activation_quantization_fn
+# Note: For the purpose of these tests, the histogram-related functions are temporarily set as dummy　functions.
+power_of_two_quantization = power_of_two_selection_histogram
+symmetric_quantization = symmetric_selection_histogram
+uniform_quantization = uniform_selection_histogram
+activation_lut_kmean_quantizer = lut_kmeans_histogram
 
 
 @pytest.fixture
