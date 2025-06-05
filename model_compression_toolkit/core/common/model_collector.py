@@ -30,7 +30,8 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 
 
 def create_stats_collector_for_node(node: common.BaseNode,
-                                    fw_info: FrameworkInfo) -> BaseStatsCollector:
+                                    fw_info: FrameworkInfo,
+                                    quant_node_in_fln: bool) -> BaseStatsCollector:
     """
     Gets a node and a groups list and create and return a statistics collector for a node
     according to whether its statistics should be collected and the prior information we
@@ -44,7 +45,7 @@ def create_stats_collector_for_node(node: common.BaseNode,
         Statistics collector for statistics collection for the node.
     """
 
-    if node.is_activation_quantization_enabled() or node.is_fln_quantization():
+    if node.is_activation_quantization_enabled() or quant_node_in_fln:
         min_output = getattr(node.prior_info, 'min_output', None)
         max_output = getattr(node.prior_info, 'max_output', None)
         stats_collector = common.StatsCollector(out_channel_axis=fw_info.out_channel_axis_mapping.get(node.type),
@@ -160,7 +161,8 @@ class ModelCollector:
 
         # Assign statistics collectors to nodes
         for n in graph.get_topo_sorted_nodes():
-            sc = create_stats_collector_for_node(n, fw_info=fw_info)  # Get static collector for the node
+            quant_node_in_fln = n.is_fln_quantization() and graph.fusing_info.is_quantized_node_in_fln(n)
+            sc = create_stats_collector_for_node(n, fw_info=fw_info, quant_node_in_fln=quant_node_in_fln)  # Get static collector for the node
             # If we use bias correction, and the node has kernel weights to quantize, we need to make sure
             # its previous nodes' tensors are consistent with this node.
             kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
