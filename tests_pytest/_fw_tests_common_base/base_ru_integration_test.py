@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import abc
-import copy
 from typing import  Generator
 from unittest.mock import Mock
 
@@ -245,7 +244,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
                                  f"{layer_names['act2']}": f"FusedNode_{layer_names['conv2']}_{layer_names['act2']}",
                                  f"{layer_names['conv3']}": f"FusedNode_{layer_names['conv3']}_{layer_names['act3']}",
                                  f"{layer_names['act3']}": f"FusedNode_{layer_names['conv3']}_{layer_names['act3']}"}
-        assert graph.fusing_info.node_to_fused_node_map == expected_node_fuse_op
+        assert graph.fusing_info.node_name_to_fused_op_id == expected_node_fuse_op
 
         ru_calculator = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
         ru_before_snc, detailed_ru_before_snc = ru_calculator.compute_resource_utilization(
@@ -277,7 +276,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
                                  f"{layer_names['conv3']}_pre_pad": f"FusedNode_{layer_names['conv3']}_pre_pad_{layer_names['conv3']}_{layer_names['act3']}",
                                  f"{layer_names['conv3']}": f"FusedNode_{layer_names['conv3']}_pre_pad_{layer_names['conv3']}_{layer_names['act3']}",
                                  f"{layer_names['act3']}": f"FusedNode_{layer_names['conv3']}_pre_pad_{layer_names['conv3']}_{layer_names['act3']}"}
-        assert graph.fusing_info.node_to_fused_node_map == expected_node_fuse_op
+        assert graph.fusing_info.node_name_to_fused_op_id == expected_node_fuse_op
 
         linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits
 
