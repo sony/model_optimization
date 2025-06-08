@@ -118,7 +118,7 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
 
     def test_expected_fusing_info(self, graph_with_fusion_metadata):
         actual_fi = graph_with_fusion_metadata.fusing_info
-        assert self.expected_fi.node_to_fused_node_map == actual_fi.node_to_fused_node_map
+        assert self.expected_fi.node_name_to_fused_op_id == actual_fi.node_name_to_fused_op_id
 
     def test_expected_fused_graph(self, fused_graph):
         expected_fused_nodes = self.expected_fi.fusing_data
