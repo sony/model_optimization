@@ -87,8 +87,10 @@ if FOUND_ONNX:
                     delattr(obj, attrs[-1])
                     setattr(obj, attrs[-1], torch.nn.Identity())
                 else:
-                    Logger.info(f"Failed to delete activation quantization holder {act_holder}, "
-                                f"could not locate one or more attributes in the path.")
+                    Logger.info(f"During removal of activation quantization of a quantizer (with bits > 8) in ONNX FQ "
+                                f"export, deletion of activation holder '{act_holder}' failed — could not locate one or"
+                                f"more intermediate attributes in the path.")
+
             for layer in self.model.children():
                 self.is_layer_exportable_fn(layer)
                 # Set reuse for weight quantizers if quantizer is reused
