@@ -78,10 +78,17 @@ if FOUND_ONNX:
             act_holder_list = [n for n, m in self.model.named_modules()
                                if isinstance(m, PytorchActivationQuantizationHolder) and
                                m.activation_holder_quantizer.num_bits > 8]
-            for act_holder in act_holder_list:  # pragma: no cover
-                delattr(self.model, act_holder)
-                setattr(self.model, act_holder, torch.nn.Identity())
-
+            for act_holder in act_holder_list: # pragma: no cover
+                obj = self.model
+                attrs = act_holder.split(".")
+                for a in attrs[:-1]:
+                    obj = getattr(obj, a)
+                if hasattr(obj, attrs[-1]):
+                    delattr(obj, attrs[-1])
+                    setattr(obj, attrs[-1], torch.nn.Identity())
+                else:
+                    Logger.info(f"Failed to delete activation quantization holder {act_holder}, "
+                                f"could not locate one or more attributes in the path.")
             for layer in self.model.children():
                 self.is_layer_exportable_fn(layer)
                 # Set reuse for weight quantizers if quantizer is reused
