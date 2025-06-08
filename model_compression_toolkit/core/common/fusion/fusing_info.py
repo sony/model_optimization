@@ -39,13 +39,13 @@ class FusingInfo:
     - 'fusing_patterns': The patterns to generate the fused operators from.
     - 'manual_fused_ops': List of sequence of node names to handle as fused ops (even if they are not part of the fusing patterns).
     - `fusing_data`: A dictionary mapping fused operation IDs to lists of nodes that belong to that operation.
-    - `node_to_fused_node_map`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
+    - `node_name_to_fused_op_id`: A dictionary mapping each node name to the ID of the fused operation it belongs to.
 
     """
     fusing_patterns: List[list[any]] = None
     manual_fused_ops: List[List[str]] = None
     fusing_data: Dict[str, Tuple['BaseNode']] = field(default_factory=dict)
-    node_to_fused_node_map: Dict[str, str] = field(init=False, default_factory=dict)
+    node_name_to_fused_op_id: Dict[str, str] = field(init=False, default_factory=dict)
     fused_op_id_to_quant_config: Dict[str, OpQuantizationConfig] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -64,10 +64,10 @@ class FusingInfo:
         """
         Init the node-to-fused-node mapping based on the initial fusing data.
         """
-        self.node_to_fused_node_map.clear()
+        self.node_name_to_fused_op_id.clear()
         for op_id, nodes in self.fusing_data.items():
             for node in nodes:
-                self.node_to_fused_node_map[node.name] = op_id
+                self.node_name_to_fused_op_id[node.name] = op_id
 
     def get_manual_nodes_to_fuse(self) -> List[List[str]]:
         """
@@ -115,7 +115,7 @@ class FusingInfo:
         self.fusing_data[op_id] = nodes
         # Update the mapping for these nodes
         for node in nodes:
-            self.node_to_fused_node_map[node.name] = op_id
+            self.node_name_to_fused_op_id[node.name] = op_id
 
         # Update the quantization config mapping for this operation
         if self.fusing_patterns is not None:
@@ -152,7 +152,7 @@ class FusingInfo:
             self._manual_fused_ops.remove(node_names)
 
         for node in nodes:
-            self.node_to_fused_node_map.pop(node.name, None)
+            self.node_name_to_fused_op_id.pop(node.name, None)
         del self.fusing_data[op_id]
         self.fused_op_id_to_quant_config.pop(op_id, None)
 
@@ -166,7 +166,7 @@ class FusingInfo:
         Returns:
             The name of the fused node containing this node, or None if not fused.
         """
-        return self.node_to_fused_node_map.get(node_name)
+        return self.node_name_to_fused_op_id.get(node_name)
 
     def get_node_to_fused_node_map(self) -> Dict[str, str]:
         """
@@ -175,7 +175,7 @@ class FusingInfo:
         Returns:
             A dictionary mapping each original node name to its fused node name.
         """
-        return self.node_to_fused_node_map.copy()
+        return self.node_name_to_fused_op_id.copy()
 
     def get_fusing_quantization_config_map(self) -> Dict[str, OpQuantizationConfig]:
         """
@@ -198,10 +198,12 @@ class FusingInfo:
         """
         return self.fusing_data.get(op_id)
 
-    def get_nodes_to_disable_activation_quantization(self) -> List['BaseNode']:
+    def get_inner_fln_nodes(self) -> List['BaseNode']:
         """
-        Returns a list of the nodes that their activation quantization is disabled due to fusing.
+        Returns a list of the nodes that are part but not the last node of an FLN.
         """
+        # TODO: the order of the nodes is not gurenteed when returned as dict from get_all_fused_operations -
+        #  then, removing the last one can cause issues
         return [node for nodes in self.get_all_fused_operations().values() for node in nodes[:-1]]
 
     def get_fused_op_quantization_config(self, op_id: str) -> OpQuantizationConfig:
@@ -227,6 +229,22 @@ class FusingInfo:
             bool: True if the node is in any fused operation, False otherwise.
         """
         return any(node in nodes for nodes in self.fusing_data.values())
+
+    def is_quantized_node_in_fln(self, node: 'BaseNode') -> bool:
+        """
+        Check whether a node inside an FLN and should be quantized.
+
+        Args:
+            node (BaseNode): The node to check.
+
+        Returns:
+            bool: True if the node is in any fused operation and should be quantized.
+        """
+        if self.is_node_in_fused_op(node):
+            node_q_cfg = self.fused_op_id_to_quant_config[self.node_name_to_fused_op_id[node.name]]
+            return node_q_cfg is not None and node_q_cfg.enable_activation_quantization
+
+        return False
 
     def get_all_fused_operations(self) -> Dict[str, Tuple['BaseNode']]:
         """
@@ -340,7 +358,7 @@ class FusingInfo:
             for op_id, nodes in self.fusing_data.items()
         )
         mapping_repr = ", ".join(
-            f"{node} -> {op_id}" for node, op_id in self.node_to_fused_node_map.items()
+            f"{node} -> {op_id}" for node, op_id in self.node_name_to_fused_op_id.items()
         )
         return (
             f"FusingInfo(\n"

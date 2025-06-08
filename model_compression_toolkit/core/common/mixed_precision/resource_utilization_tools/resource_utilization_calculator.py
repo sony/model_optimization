@@ -677,7 +677,7 @@ class ResourceUtilizationCalculator:
         elif target_criterion == TargetInclusionCriterion.AnyQuantizedNonFused:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled() or n.is_quantization_preserving()]
             # remove fused nodes (due to SNC, where the non-linear is quantized, even though it should not be quantized)
-            nodes = [n for n in nodes if n not in self.graph.fusing_info.get_nodes_to_disable_activation_quantization()]
+            nodes = [n for n in nodes if n not in self.graph.fusing_info.get_inner_fln_nodes()]
         elif target_criterion == TargetInclusionCriterion.QNonConfigurable:
             nodes = [n for n in nodes if n.is_activation_quantization_enabled() and not n.has_configurable_activation()]
         elif target_criterion != TargetInclusionCriterion.Any:    # pragma: no cover
