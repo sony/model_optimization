@@ -202,6 +202,8 @@ class FusingInfo:
         """
         Returns a list of the nodes that are part but not the last node of an FLN.
         """
+        # TODO: the order of the nodes is not gurenteed when returned as dict from get_all_fused_operations -
+        #  then, removing the last one can cause issues
         return [node for nodes in self.get_all_fused_operations().values() for node in nodes[:-1]]
 
     def get_fused_op_quantization_config(self, op_id: str) -> OpQuantizationConfig:
