@@ -73,6 +73,15 @@ if FOUND_ONNX:
             Returns:
                 Fake-quant PyTorch model.
             """
+            # List all activation quantization holders with num_bits>8 and replace them with Identity, because
+            # ONNX doesn't support quantization of more than 8 bits for torch.fake_quantize_per_tensor_affine.
+            act_holder_list = [n for n, m in self.model.named_modules()
+                               if isinstance(m, PytorchActivationQuantizationHolder) and
+                               m.activation_holder_quantizer.num_bits > 8]
+            for act_holder in act_holder_list:  # pragma: no cover
+                delattr(self.model, act_holder)
+                setattr(self.model, act_holder, torch.nn.Identity())
+
             for layer in self.model.children():
                 self.is_layer_exportable_fn(layer)
                 # Set reuse for weight quantizers if quantizer is reused
@@ -89,7 +98,7 @@ if FOUND_ONNX:
             if self._use_onnx_custom_quantizer_ops:
                 self._enable_onnx_custom_ops_export()
             else:
-                self._substitute_fully_quantized_model()
+                self._substitute_fully_quantized_model(replace_wrapped=False)
 
             if self._use_onnx_custom_quantizer_ops:
                 Logger.info(f"Exporting onnx model with MCTQ quantizers: {self.save_model_path}")
@@ -166,6 +175,6 @@ if FOUND_ONNX:
                         wq.enable_custom_impl()
 
 else:
-    def FakelyQuantONNXPyTorchExporter(*args, **kwargs):
+    def FakelyQuantONNXPyTorchExporter(*args, **kwargs):  # pragma: no cover
         Logger.critical("ONNX must be installed to use 'FakelyQuantONNXPyTorchExporter'. "
-                        "The 'onnx' package is missing.")  # pragma: no cover
+                        "The 'onnx' package is missing.")
