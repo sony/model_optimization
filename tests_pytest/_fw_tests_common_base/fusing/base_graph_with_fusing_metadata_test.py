@@ -106,7 +106,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         actual_fi = graph_with_fusion_metadata.fusing_info
         assert len(actual_fi.get_all_fused_operations()) == 2
         assert sorted(actual_fi.get_all_fused_operations().keys()) == ['FusedNode_conv_relu', 'FusedNode_linear_softmax']
-        assert actual_fi.node_to_fused_node_map == {'conv': 'FusedNode_conv_relu',
+        assert actual_fi.node_name_to_fused_op_id == {'conv': 'FusedNode_conv_relu',
                                                     'relu': 'FusedNode_conv_relu',
                                                     'linear': 'FusedNode_linear_softmax',
                                                     'softmax': 'FusedNode_linear_softmax'}

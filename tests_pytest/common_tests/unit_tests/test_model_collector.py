@@ -59,7 +59,7 @@ class TestStatisticsCollectors:
         node.type = DummyLayer
         node.prior_info = Mock(min_output=-1, max_output=9)
 
-        collector = create_stats_collector_for_node(node, fw_info_mock)
+        collector = create_stats_collector_for_node(node, fw_info_mock, False)
         assert isinstance(collector, StatsCollector)
 
     def test_create_stats_collector_for_node_activation_disabled(self, fw_info_mock):
@@ -74,7 +74,7 @@ class TestStatisticsCollectors:
         # Even if prior_info exists, it should not be used.
         node.prior_info = Mock(min_output=None, max_output=None)
 
-        collector = create_stats_collector_for_node(node, fw_info_mock)
+        collector = create_stats_collector_for_node(node, fw_info_mock, False)
         assert isinstance(collector, NoStatsCollector)
 
     def test_create_stats_collector_for_node_fln_activation_enabled(self, fw_info_mock):
@@ -91,7 +91,7 @@ class TestStatisticsCollectors:
         node.type = DummyLayer
         node.prior_info = Mock(min_output=-8, max_output=9)
 
-        collector = create_stats_collector_for_node(node, fw_info_mock)
+        collector = create_stats_collector_for_node(node, fw_info_mock, True)
         assert isinstance(collector, StatsCollector)
         assert collector.mpcc.init_min_value == -8
         assert collector.mpcc.init_max_value == 9
@@ -108,7 +108,7 @@ class TestStatisticsCollectors:
         node.type = DummyLayer
         node.prior_info = None
 
-        collector = create_stats_collector_for_node(node, fw_info_mock)
+        collector = create_stats_collector_for_node(node, fw_info_mock, True)
         assert isinstance(collector, StatsCollector)
         assert collector.mpcc.init_min_value is None
         assert collector.mpcc.init_max_value is None
@@ -125,7 +125,7 @@ class TestStatisticsCollectors:
         node.type = DummyLayer
         node.prior_info = Mock(min_output=None, max_output=None)
 
-        collector = create_stats_collector_for_node(node, fw_info_mock)
+        collector = create_stats_collector_for_node(node, fw_info_mock, True)
         assert isinstance(collector, StatsCollector)
         assert collector.mpcc.init_min_value is None
         assert collector.mpcc.init_max_value is None
@@ -264,6 +264,7 @@ class TestModelCollectorInit:
                       output_nodes=[OutTensor(node3, 0)],
                       edge_list=[Edge(node1, node2, 0, 0), Edge(node2, node3, 0, 0)])
         graph.set_out_stats_collector_to_node = Mock(wraps=graph.set_out_stats_collector_to_node)
+        graph.fusing_info.is_quantized_node_in_fln = lambda n: n.is_fln_quantization
 
         # Simulate kernel attribute retrieval.
         fw_info_mock.get_kernel_op_attributes.return_value = [None]
