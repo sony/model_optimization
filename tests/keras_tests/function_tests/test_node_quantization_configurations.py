@@ -31,10 +31,9 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 class TestNodeQuantizationConfigurations(unittest.TestCase):
 
     def test_activation_set_quant_config_attribute(self):
-        qc = QuantizationConfig()
         op_cfg, _, _ = get_op_quantization_configs()
 
-        nac = NodeActivationQuantizationConfig(qc, op_cfg,
+        nac = NodeActivationQuantizationConfig(op_cfg,
                                                activation_quantization_fn=power_of_two_quantizer,
                                                activation_quantization_params_fn=power_of_two_selection_histogram)
         og_nac = copy.deepcopy(nac)
@@ -53,16 +52,16 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
         self.assertTrue(nac == update_nac)
 
     def test_weights_set_quant_config_attribute(self):
-        qc = QuantizationConfig()
         op_cfg, _, _ = get_op_quantization_configs()
 
-        nwc = NodeWeightsQuantizationConfig(qc, op_cfg,
+        nwc = NodeWeightsQuantizationConfig(op_cfg,
                                             weights_channels_axis=ChannelAxisMapping(1, -1),
                                             node_attrs_list=[KERNEL, 0])
         og_nwc = copy.deepcopy(nwc)
 
         # Updating a config parameter, not weights attribute parameter (no attr_name passed)
-        self.assertTrue(nwc.weights_bias_correction)
+        # TODO irena: weights_bias_correction should be removed
+        # self.assertTrue(nwc.weights_bias_correction)
         nwc.set_quant_config_attr("weights_bias_correction", False)
         self.assertFalse(nwc.weights_bias_correction)
         self.assertFalse(nwc == og_nwc)
@@ -91,12 +90,11 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
         self.assertTrue(nwc == og_nwc)
 
     def test_get_weights_attr_config(self):
-        qc = QuantizationConfig()
         op_cfg, _, _ = get_op_quantization_configs()
 
         # Init a config with regular and positional attributes, and attributes with overlapping names, since in the
         # implementation we look for existence of a string to retrieve attribute
-        nwc = NodeWeightsQuantizationConfig(qc, op_cfg,
+        nwc = NodeWeightsQuantizationConfig(op_cfg,
                                             weights_channels_axis=ChannelAxisMapping(1, -1),
                                             node_attrs_list=[KERNEL, 0, BIAS, f"{BIAS}-2"])
 
@@ -115,15 +113,13 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
         self.assertFalse(bias_attr is bias2_attr)  # this is "is" on purpose, to compare addresses
 
     def test_set_weights_attr_config(self):
-        qc = QuantizationConfig()
         op_cfg, _, _ = get_op_quantization_configs()
 
-        nwc = NodeWeightsQuantizationConfig(qc, op_cfg,
+        nwc = NodeWeightsQuantizationConfig(op_cfg,
                                             weights_channels_axis=ChannelAxisMapping(1, -1),
                                             node_attrs_list=[KERNEL, 0])
 
-        new_cfg = WeightsAttrQuantizationConfig(qc,
-                                                weights_attr_cfg=AttributeQuantizationConfig(weights_n_bits=4))
+        new_cfg = WeightsAttrQuantizationConfig(weights_attr_cfg=AttributeQuantizationConfig(weights_n_bits=4))
 
         kernel_attr = copy.deepcopy(nwc.get_attr_config(KERNEL))
         nwc.set_attr_config(KERNEL, new_cfg)

@@ -883,8 +883,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         nodes_to_disable = self.fusing_info.get_inner_fln_nodes()
         for node in nodes_to_disable:
-            for qc in node.candidates_quantization_cfg:
-                qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
+            node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.FLN_QUANT)
 
     def validate(self):
         """

@@ -230,9 +230,9 @@ def test_is_node_in_fused_op_returns_false_for_absent_node(mock_graph, fusing_in
     assert not fi.is_node_in_fused_op(unrelated)
 
 
-def create_mock_base_node(name: str, layer_class: str):
+def create_node(name: str, layer_class: str):
     """
-    Function for creating the mock nodes required for a simple neural network structure.
+    Function for creating the nodes required for a simple neural network structure.
     Enables node name, layer class, type, and type checking method.
     """
 
@@ -240,15 +240,9 @@ def create_mock_base_node(name: str, layer_class: str):
                        'input_shape': (),
                        'output_shape': (),
                        'weights': {}}
-
-    real_node = BaseNode(name=name, layer_class=layer_class, **dummy_initalize)
-
-    node = Mock(spec=real_node)
-    node.is_match_type = real_node.is_match_type
-    node.layer_class = layer_class
-    node.name = name
-
+    node = BaseNode(name=name, layer_class=layer_class, **dummy_initalize)
     return node
+
 
 @pytest.fixture
 def fusing_patterns_with_qconfig():
@@ -274,17 +268,17 @@ def mock_qconfig_set_nodes():
     - Nodes: Conv2D, ReLU, Conv2D, Tanh, Linear, Softmax.
     """
     mock_node_list = []
-    mock_node_list.append(create_mock_base_node(name='conv_1', layer_class='Conv2d'))
-    mock_node_list.append(create_mock_base_node(name='relu_1', layer_class='ReLU'))
-    mock_node_list.append(create_mock_base_node(name='conv_2', layer_class='Conv2d'))
-    mock_node_list.append(create_mock_base_node(name='relu_2', layer_class='ReLU'))
-    mock_node_list.append(create_mock_base_node(name='conv_3', layer_class='Conv2d'))
-    mock_node_list.append(create_mock_base_node(name='tanh', layer_class='Tanh'))
-    mock_node_list.append(create_mock_base_node(name='conv_4', layer_class='Conv2d'))
-    mock_node_list.append(create_mock_base_node(name='bn', layer_class='BatchNorm2d'))
-    mock_node_list.append(create_mock_base_node(name='relu6', layer_class='ReLU6'))
-    mock_node_list.append(create_mock_base_node(name='linear', layer_class='Linear'))
-    mock_node_list.append(create_mock_base_node(name='softmax', layer_class='Softmax'))
+    mock_node_list.append(create_node(name='conv_1', layer_class='Conv2d'))
+    mock_node_list.append(create_node(name='relu_1', layer_class='ReLU'))
+    mock_node_list.append(create_node(name='conv_2', layer_class='Conv2d'))
+    mock_node_list.append(create_node(name='relu_2', layer_class='ReLU'))
+    mock_node_list.append(create_node(name='conv_3', layer_class='Conv2d'))
+    mock_node_list.append(create_node(name='tanh', layer_class='Tanh'))
+    mock_node_list.append(create_node(name='conv_4', layer_class='Conv2d'))
+    mock_node_list.append(create_node(name='bn', layer_class='BatchNorm2d'))
+    mock_node_list.append(create_node(name='relu6', layer_class='ReLU6'))
+    mock_node_list.append(create_node(name='linear', layer_class='Linear'))
+    mock_node_list.append(create_node(name='softmax', layer_class='Softmax'))
 
     return mock_node_list
 
@@ -366,8 +360,8 @@ def test_add_fused_operation_adds_data_and_qconfig(mock_qconfig_set_graph, fusin
     ### Checking the number of mappings before addition
     assert len(fi_qconfig_map) == 5
 
-    node1 = create_mock_base_node(name='conv_a', layer_class='Conv2d')
-    node2 = create_mock_base_node(name='relu_b', layer_class='ReLU')
+    node1 = create_node(name='conv_a', layer_class='Conv2d')
+    node2 = create_node(name='relu_b', layer_class='ReLU')
 
     op_id = f"{FUSED_OP_ID_PREFIX}conv_a_relu_b"
     fi.add_fused_operation(op_id, (node1, node2))

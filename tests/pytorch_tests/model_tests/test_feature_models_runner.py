@@ -736,13 +736,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul'), 16).run_test()
 
         # This "mul" cannot be configured to 16 bit
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValueError) as context:
             Manual16BitTest(self, NodeNameFilter('mul_1'), 16).run_test()
         # Check that the correct exception message was raised
         self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")
 
         # This "mul" cannot be configured to 16 bit
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValueError) as context:
             Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul_1'), 16).run_test()
         # Check that the correct exception message was raised
         self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")

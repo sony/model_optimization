@@ -211,8 +211,8 @@ class ChangeQuantizationParamFunction(BaseAction):
                 nqc.activation_quantization_cfg.set_activation_quantization_params_fn(
                     self.activation_quantization_params_fn)
             if self.weights_quantization_params_fn is not None:
-                (nqc.weights_quantization_cfg.get_attr_config(self.attr_name)
-                 .set_weights_quantization_params_fn(self.weights_quantization_params_fn))
+                attr_config = nqc.weights_quantization_cfg.get_attr_config(self.attr_name)
+                attr_config.override_weights_quantization_params_fn(self.weights_quantization_params_fn)
 
 
 class ChangeFinalActivationQuantizationMethod(BaseAction):
@@ -326,16 +326,16 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
 
             weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method)
 
-            (node.final_weights_quantization_cfg.get_attr_config(self.attr_name)
-             .set_weights_quantization_params_fn(weights_quantization_params_fn))
+            attr_config = node.final_weights_quantization_cfg.get_attr_config(self.attr_name)
+            attr_config.override_weights_quantization_params_fn(weights_quantization_params_fn)
 
             weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
             if weights_quantization_fn is None:
                 Logger.critical('Unknown weights quantization method specified.')  # pragma: no cover
 
-            (node.final_weights_quantization_cfg.get_attr_config(self.attr_name)
-             .set_weights_quantization_fn(weights_quantization_fn))
+            attr_config = node.final_weights_quantization_cfg.get_attr_config(self.attr_name)
+            attr_config.override_weights_quantization_fn(weights_quantization_fn)
             node.final_weights_quantization_cfg.get_attr_config(self.attr_name).weights_quantization_method = \
                 self.weights_quantization_method
 
@@ -374,14 +374,14 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
                 weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method)
 
                 attr_qc = qc.weights_quantization_cfg.get_attr_config(self.attr_name)
-                attr_qc.set_weights_quantization_params_fn(weights_quantization_params_fn)
+                attr_qc.override_weights_quantization_params_fn(weights_quantization_params_fn)
 
                 weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
                 if weights_quantization_fn is None:
                     Logger.critical('Unknown weights quantization method specified.')  # pragma: no cover
 
-                attr_qc.set_weights_quantization_fn(weights_quantization_fn)
+                attr_qc.override_weights_quantization_fn(weights_quantization_fn)
                 attr_qc.weights_quantization_method = self.weights_quantization_method
 
 

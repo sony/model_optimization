@@ -742,13 +742,12 @@ class TestWeightUtilizationMethods:
 
     def test_get_w_nbits(self, graph_mock, fw_impl_mock):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock)
-        node = build_node(canonical_weights={'mp': 1, 'sp': 2, 'noq': 3})
-        node.candidates_quantization_cfg = [
+        qcs = [
             build_qc(1, w_attr={'mp': (2, True), 'sp': (5, True), 'noq': (12, False)}, pos_attr=(6, True, [2])),
             build_qc(10, w_attr={'mp': (4, True), 'sp': (5, True), 'noq': (1, False)}, pos_attr=(6, True, [2])),
             build_qc(8, False, w_attr={'mp': (7, True), 'sp': (5, True), 'noq': (2, False)}, pos_attr=(6, True, [2]))
         ]
-
+        node = build_node(canonical_weights={'mp': 1, 'sp': 2, 'noq': 3}, qcs=qcs)
         # configurable attr
         assert ru_calc._get_weight_nbits(node, 'mp', BM.Float, w_qc=None) == FLOAT_BITWIDTH
         assert ru_calc._get_weight_nbits(node, 'mp', BM.QMinBit, w_qc=None) == 2

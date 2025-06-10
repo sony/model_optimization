@@ -67,10 +67,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
 
     fqc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
 
-    graph.set_fqc(fqc)
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=DEFAULTCONFIG,
-                                                    mixed_precision_enable=True)
+    graph = set_quantization_configuration_to_graph(graph=graph, fqc=fqc)
 
     ips = DistanceMetricCalculator.get_mp_interest_points(
         graph=graph,

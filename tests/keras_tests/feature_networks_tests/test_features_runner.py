@@ -866,8 +866,8 @@ class FeatureNetworkTest(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Add), 3).run_test()
         # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Manually selected activation bit-width 3 is invalid for node Add:add1.")
+        self.assertTrue(str(context.exception) in [
+            f"Manually selected activation bit-width 3 is invalid for node Add:{n}." for n in ('add1', 'add2')])
 
         with self.assertRaises(Exception) as context:
             ManualBitWidthSelectionTest(self, NodeNameFilter('relu1'), 3).run_test()

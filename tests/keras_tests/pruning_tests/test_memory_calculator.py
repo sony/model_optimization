@@ -51,20 +51,17 @@ class TestParameterCounter(unittest.TestCase):
         fw_impl = PruningKerasImplementation()
         tpc = mct.get_target_platform_capabilities('tensorflow', 'imx500')
 
-        tpc = AttachTpcToKeras().attach(tpc)
+        fqc = AttachTpcToKeras().attach(tpc)
 
         # Convert the original Keras model to an internal graph representation.
         float_graph = read_model_to_graph(model,
                                           self.representative_dataset,
-                                          tpc,
+                                          fqc,
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
         # as it prepares the graph for the pruning process.
-        float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
-                                                                                      quant_config=mct.core.DEFAULTCONFIG,
-                                                                                      mixed_precision_enable=False)
-
+        float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph, fqc)
 
         self.memory_calculator = MemoryCalculator(graph=float_graph_with_compression_config,
                                                   fw_impl=fw_impl)

@@ -117,20 +117,19 @@ if FOUND_TF:
 
         target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
         # Attach tpc model to framework
-        attach2keras = AttachTpcToKeras()
-        target_platform_capabilities = attach2keras.attach(target_platform_capabilities)
+        framework_platform_capabilities = AttachTpcToKeras().attach(target_platform_capabilities)
 
         # Convert the original Keras model to an internal graph representation.
         float_graph = read_model_to_graph(model,
                                           representative_data_gen,
                                           target_platform_capabilities,
+                                          DEFAULT_KERAS_INFO,
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
         # as it prepares the graph for the pruning process.
         float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
-                                                                                      quant_config=DEFAULTCONFIG,
-                                                                                      mixed_precision_enable=False)
+                                                                                      framework_platform_capabilities)
 
         # Create a Pruner object with the graph and configuration.
         pruner = Pruner(float_graph_with_compression_config,
@@ -138,7 +137,7 @@ if FOUND_TF:
                         target_resource_utilization,
                         representative_data_gen,
                         pruning_config,
-                        target_platform_capabilities)
+                        framework_platform_capabilities)
 
         # Apply the pruning process.
         pruned_graph = pruner.prune_graph()

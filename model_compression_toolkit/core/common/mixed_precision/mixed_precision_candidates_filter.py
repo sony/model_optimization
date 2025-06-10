@@ -52,7 +52,7 @@ def filter_candidates_for_mixed_precision(graph: Graph,
                              c.activation_quantization_cfg.enable_activation_quantization and
                              c.activation_quantization_cfg.activation_n_bits == base_cfg_nbits]
 
-            n.candidates_quantization_cfg = filtered_conf
+            n.tpc_quantization_info.candidates_quantization_cfg = filtered_conf
 
     elif tru.activation_restricted() and not tru.weight_restricted():
         # Running mixed precision for activation compression only -
@@ -63,4 +63,4 @@ def filter_candidates_for_mixed_precision(graph: Graph,
             filtered_conf = [c for c in n.candidates_quantization_cfg if
                              c.weights_quantization_cfg.get_attr_config(n.kernel_attr).enable_weights_quantization and
                              c.weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_n_bits == base_cfg_nbits]
-            n.candidates_quantization_cfg = filtered_conf
+            n.tpc_quantization_info.candidates_quantization_cfg = filtered_conf

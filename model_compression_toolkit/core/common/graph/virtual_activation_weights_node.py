@@ -19,7 +19,7 @@ from model_compression_toolkit.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_
     VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig
+    CandidateNodeQuantizationConfig, TPCQuantizationInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTE
 
@@ -76,8 +76,11 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
 
         self.name = origin_node.name + VIRTUAL_WEIGHTS_SUFFIX
 
-        self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates(kernel_attr)
-        for c in self.candidates_quantization_cfg:
+        self.tpc_quantization_info = TPCQuantizationInfo(
+            candidates_quantization_cfg=origin_node.get_unique_weights_candidates(kernel_attr),
+            base_quantization_cfg=None, validate=False
+        )
+        for c in self.tpc_quantization_info.candidates_quantization_cfg:
             c.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
             c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
 
@@ -106,10 +109,10 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         self.weights = {}
         self.layer_class = activation_class
 
-        self.candidates_quantization_cfg = origin_node.get_unique_activation_candidates()
-        for c in self.candidates_quantization_cfg:
-            c.weights_quantization_cfg.enable_weights_quantization = False
-            c.weights_quantization_cfg.weights_n_bits = FLOAT_BITWIDTH
+        # We disable all weights quantization so we just use base cfg of activation as base cfg. It shouldn't be used in MP anyway.
+        self.tpc_quantization_info = TPCQuantizationInfo(candidates_quantization_cfg=origin_node.get_unique_activation_candidates(),
+                                                         base_quantization_cfg=None, validate=False)
+        self.tpc_quantization_info.disable_weights_quantization()
 
 
 class VirtualActivationWeightsNode(VirtualNode):
@@ -200,4 +203,5 @@ class VirtualActivationWeightsNode(VirtualNode):
         v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(weights_node.kernel_attr).weights_n_bits,
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
-        self.candidates_quantization_cfg = v_candidates
+        self.tpc_quantization_info = TPCQuantizationInfo(candidates_quantization_cfg=v_candidates,
+                                                         base_quantization_cfg=None, validate=False)

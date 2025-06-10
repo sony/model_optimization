@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import pytest
 from unittest.mock import Mock
 from typing import List
 import torch
@@ -24,17 +23,17 @@ from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common import BaseNode
 from tests_pytest._test_util.graph_builder_utils import DummyLayer
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig
+    CandidateNodeQuantizationConfig, TPCQuantizationInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
     Signedness
-from model_compression_toolkit.core import QuantizationConfig
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+
 
 def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizationConfig] = None,
                input_shape=(4, 5, 6), output_shape=(4, 5, 6), weights = {},
@@ -49,9 +48,10 @@ def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizati
                     reuse=reuse)
     if qcs:
         assert isinstance(qcs, list)
-        node.candidates_quantization_cfg = qcs
+        node.tpc_quantization_info = TPCQuantizationInfo(candidates_quantization_cfg = qcs, base_quantization_cfg=qcs[0])
         node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
     return node
+
 
 def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
     op_cfg = OpQuantizationConfig(
@@ -64,13 +64,14 @@ def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
         supported_input_activation_n_bits=8,
         signedness=Signedness.AUTO
     )
-    a_qcfg = NodeActivationQuantizationConfig(qc=QuantizationConfig(), op_cfg=op_cfg,
+    a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg,
                                               activation_quantization_fn=None,
                                               activation_quantization_params_fn=None)
     if len(aq_params) != 0:
         a_qcfg.set_activation_quantization_param(aq_params)
     qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg)
     return qc
+
 
 def get_tpc():
     base_config = schema.OpQuantizationConfig(
@@ -112,6 +113,7 @@ def get_tpc():
         insert_preserving_quantizers=True)
     return tpc
 
+
 # test graph
 def get_test_graph():
 
@@ -138,6 +140,7 @@ def get_test_graph():
 
     return graph
 
+
 def get_inferable_quantizers_mock(node):
     if node.name == 'conv':
         activation_quantizers = Mock()
@@ -160,6 +163,7 @@ def get_inferable_quantizers_mock(node):
         return {}, []
     
     return {}, [activation_quantizers]
+
 
 class TestPyTorchModelBuilder():
 

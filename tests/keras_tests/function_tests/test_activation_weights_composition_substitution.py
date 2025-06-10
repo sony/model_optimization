@@ -110,17 +110,13 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     attach2keras = AttachTpcToKeras()
     fqc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
 
-    graph.set_fqc(fqc)
-
     # Standard graph substitutions
     graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
     for node in graph.nodes:
         node.prior_info = keras_impl.get_node_prior_info(node=node, graph=graph)
     graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
 
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=qc,
-                                                    mixed_precision_enable=True)
+    graph = set_quantization_configuration_to_graph(graph=graph, fqc=fqc)
 
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
     graph.fusing_info = fusing_info

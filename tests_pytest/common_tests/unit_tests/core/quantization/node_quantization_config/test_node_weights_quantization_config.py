@@ -102,8 +102,7 @@ class TestPositionalWeightsAttrQuantizationConfig:
         assert op_cfg.default_weight_attr_config.weights_n_bits != op_cfg.attr_weights_configs_mapping[
             POS_ATTR].weights_n_bits
 
-        weights_quant_cfg = NodeWeightsQuantizationConfig(qc=Mock(),
-                                                          op_cfg=op_cfg,
+        weights_quant_cfg = NodeWeightsQuantizationConfig(op_cfg=op_cfg,
                                                           weights_channels_axis=Mock(),
                                                           node_attrs_list=[positional_weight_attr])
 
@@ -123,8 +122,7 @@ class TestPositionalWeightsAttrQuantizationConfig:
         assert op_cfg.default_weight_attr_config.weights_n_bits != op_cfg.attr_weights_configs_mapping[
             str(positional_weight_attr)].weights_n_bits
 
-        weights_quant_cfg = NodeWeightsQuantizationConfig(qc=Mock(),
-                                                          op_cfg=op_cfg,
+        weights_quant_cfg = NodeWeightsQuantizationConfig(op_cfg=op_cfg,
                                                           weights_channels_axis=Mock(),
                                                           node_attrs_list=[positional_weight_attr])
 
@@ -160,7 +158,5 @@ class TestPositionalWeightsAttrQuantizationConfig:
         with pytest.raises(ValueError, match='Found multiple attribute in FQC OpConfig that are contained in the '
                                              'attribute name \'0\'.Please fix the FQC attribute names mapping such '
                                              'that each operator\'s attribute would have a unique matching name.'):
-            weights_quant_cfg = NodeWeightsQuantizationConfig(qc=Mock(),
-                                                              op_cfg=op_cfg,
-                                                              weights_channels_axis=Mock(),
-                                                              node_attrs_list=[positional_weight_attr])
+            NodeWeightsQuantizationConfig(op_cfg=op_cfg, weights_channels_axis=Mock(),
+                                          node_attrs_list=[positional_weight_attr])

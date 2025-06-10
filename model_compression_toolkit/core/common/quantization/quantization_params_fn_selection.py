@@ -52,6 +52,16 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     return params_fn
 
 
+weights_quant_params_fns = {
+    QuantizationMethod.POWER_OF_TWO: power_of_two_selection_tensor,
+    QuantizationMethod.SYMMETRIC: symmetric_selection_tensor,
+    QuantizationMethod.UNIFORM: uniform_selection_tensor,
+    # instantiate partial once so that equality works between containing classes
+    QuantizationMethod.LUT_POT_QUANTIZER: partial(lut_kmeans_tensor, is_symmetric=False),
+    QuantizationMethod.LUT_SYM_QUANTIZER: partial(lut_kmeans_tensor, is_symmetric=True)
+}
+
+
 def get_weights_quantization_params_fn(weights_quantization_method: QuantizationMethod) -> Callable:
     """
     Generate a function for finding weights quantization parameters.
@@ -62,17 +72,8 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
         A function to find the quantization parameters.
 
     """
-    if weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
-        params_fn = power_of_two_selection_tensor
-    elif weights_quantization_method == QuantizationMethod.SYMMETRIC:
-        params_fn = symmetric_selection_tensor
-    elif weights_quantization_method == QuantizationMethod.UNIFORM:
-        params_fn = uniform_selection_tensor
-    elif weights_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
-        params_fn = partial(lut_kmeans_tensor, is_symmetric=False)
-    elif weights_quantization_method == QuantizationMethod.LUT_SYM_QUANTIZER:
-        params_fn = partial(lut_kmeans_tensor, is_symmetric=True)
-    else:
+    params_fn = weights_quant_params_fns.get(weights_quantization_method)
+    if not params_fn:
         Logger.critical(
             f"No parameter function found for the specified quantization method: {weights_quantization_method}")  # pragma: no cover
     return params_fn

@@ -19,7 +19,7 @@ from model_compression_toolkit.core import QuantizationConfig
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig
+    CandidateNodeQuantizationConfig, TPCQuantizationInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
@@ -33,13 +33,16 @@ class DummyLayer:
 
 def build_node(name='node', canonical_weights: dict = None, final_weights: dict = None,
                qcs: List[CandidateNodeQuantizationConfig] = None,
+               sp_qc: CandidateNodeQuantizationConfig = None,
                input_shape=(4, 5, 6), output_shape=(4, 5, 6),
                layer_class=DummyLayer, reuse=False):
     """ Build a node for tests.
         Either 'canonical_weights' (to be used by default) or 'final_weights' should be passed.
           Canonical weights are converted into full unique names, that contain the canonical name as a substring.
           Final weights are used as is.
-        candidate_quantization_cfg is set is qcs is passed."""
+        If qcs or sp_qc is passed, candidate_quantization_cfg and sp_quantization_cfg are both set.
+        If only qcs is passed, sp_qc is set to first qc. If only sp_qc is passed, qcs is set to [sp_qc].
+    """
     assert canonical_weights is None or final_weights is None
     if canonical_weights:
         weights = {k if isinstance(k, int) else full_attr_name(k): w for k, w in canonical_weights.items()}
@@ -52,9 +55,12 @@ def build_node(name='node', canonical_weights: dict = None, final_weights: dict 
                     weights=weights,
                     layer_class=layer_class,
                     reuse=reuse)
-    if qcs:
-        assert isinstance(qcs, list)
-        node.candidates_quantization_cfg = qcs
+
+    if qcs or sp_qc:
+        assert isinstance(qcs, (list, type(None)))
+        qcs = qcs or [sp_qc]
+        sp_qc = sp_qc or qcs[0]
+        node.tpc_quantization_info = TPCQuantizationInfo(base_quantization_cfg=sp_qc, candidates_quantization_cfg=qcs)
     return node
 
 
@@ -96,7 +102,6 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
         k: AttributeQuantizationConfig(weights_n_bits=v[0], enable_weights_quantization=v[1])
         for k, v in w_attr.items()
     }
-    qc = QuantizationConfig()
     # positional attrs are set via default weight config (so all pos attrs have the same q config)
     op_cfg = OpQuantizationConfig(
         # canonical names (as 'kernel')
@@ -113,14 +118,14 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
         simd_size=None,
         signedness=Signedness.AUTO
     )
-    a_qcfg = NodeActivationQuantizationConfig(qc=qc, op_cfg=op_cfg,
+    a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg,
                                               activation_quantization_fn=activation_quantization_fn,
                                               activation_quantization_params_fn=None)
     # full names from the layers
     attr_names = list(w_attr.keys())
     if convert_canonical_attr:
         attr_names = [full_attr_name(k) for k in w_attr.keys()]
-    w_qcfg = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg,
+    w_qcfg = NodeWeightsQuantizationConfig(op_cfg=op_cfg,
                                            weights_channels_axis=None,
                                            node_attrs_list=attr_names + list(pos_attr[2]))
     qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg,

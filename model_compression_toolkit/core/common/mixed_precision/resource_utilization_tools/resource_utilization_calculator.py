@@ -707,7 +707,8 @@ class ResourceUtilizationCalculator:
             return FLOAT_BITWIDTH
 
         if bitwidth_mode in self._bitwidth_mode_fn:
-            candidates_nbits = [c.activation_quantization_cfg.activation_n_bits for c in n.candidates_quantization_cfg]
+            candidates_nbits = [c.activation_quantization_cfg.activation_n_bits
+                                for c in n.tpc_quantization_info.candidates_quantization_cfg]
             return self._bitwidth_mode_fn[bitwidth_mode](candidates_nbits)
 
         if bitwidth_mode in [BitwidthMode.QCustom, BitwidthMode.QDefaultSP]:
