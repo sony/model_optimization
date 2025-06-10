@@ -31,7 +31,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
 from tests.common_tests.helpers.tpcs_for_tests.v4.tpc import generate_tpc
 
-INPUT_SHAPE = (224, 224, 3)
+INPUT_SHAPE = (24, 24, 3)
 NUM_CHANNELS = {layers.Conv2D: 2, layers.Dense: 10}
 
 
