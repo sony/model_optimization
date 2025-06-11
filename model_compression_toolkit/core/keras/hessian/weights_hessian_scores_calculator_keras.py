@@ -22,7 +22,6 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresGranularity
 from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.hessian.hessian_scores_calculator_keras import HessianScoresCalculatorKeras
 from model_compression_toolkit.logger import Logger
 
@@ -100,7 +99,7 @@ class WeightsHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                                         f"{ipt_node.type} layers.")  # pragma: no cover
 
                     # Get the weight attributes for the target node type
-                    weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(ipt_node.type)
+                    weight_attributes = ipt_node.kernel_atts
 
                     # Get the weight tensor for the target node
                     if len(weight_attributes) != 1:  # pragma: no cover
@@ -116,7 +115,7 @@ class WeightsHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                         tensors_original_shape.append(weight_tensor.shape)
 
                     # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-                    output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(ipt_node.type)
+                    output_channel_axis, _ = ipt_node.channel_axis
 
                     # Get number of scores that should be calculated by the granularity.
                     num_of_scores = self._get_num_scores_by_granularity(weight_tensor,

@@ -20,7 +20,7 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
     AttachTpcToPytorch
 
 from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
@@ -39,7 +39,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         Args:
             report_dir: Logging dir path.
         """
-        fw_info = DEFAULT_PYTORCH_INFO
+        fw_info = PyTorchInfo
         fw_impl = PytorchImplementation()
         # Set the default Target Platform Capabilities (TPC) for PyTorch.
         default_tpc = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)

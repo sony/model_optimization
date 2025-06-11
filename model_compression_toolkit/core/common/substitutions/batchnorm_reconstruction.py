@@ -97,7 +97,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         # This feature disabled for models with weights quantization method of Power of 2
         for qc in source_node.candidates_quantization_cfg:
             # this feature is relevant only for layers with kernel op
-            kernel_attr = graph.fw_info.get_kernel_op_attributes(source_node.type)
+            kernel_attr = source_node.kernel_atts
             if kernel_attr is None:
                 Logger.error(f"Can't preform BatchNorm reconstruction on a node {source_node.name} without a kernel op.")
             if (qc.weights_quantization_cfg.get_attr_config(kernel_attr[0]).weights_quantization_method

@@ -15,7 +15,7 @@
 import copy
 from typing import Callable, Any
 
-from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization, CoreConfig, QuantizationErrorMethod
+from model_compression_toolkit.core import ResourceUtilization, CoreConfig, QuantizationErrorMethod
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
     ResourceUtilizationCalculator, BitwidthMode, TargetInclusionCriterion
@@ -27,7 +27,6 @@ def compute_resource_utilization_data(in_model: Any,
                                       representative_data_gen: Callable,
                                       core_config: CoreConfig,
                                       fqc: FrameworkQuantizationCapabilities,
-                                      fw_info: FrameworkInfo,
                                       fw_impl: FrameworkImplementation) -> ResourceUtilization:
     """
     Compute Resource Utilization of a model with the default single precision quantization.
@@ -39,7 +38,6 @@ def compute_resource_utilization_data(in_model: Any,
         core_config: CoreConfig containing parameters of how the model should be quantized.
         fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
-        fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
@@ -55,12 +53,11 @@ def compute_resource_utilization_data(in_model: Any,
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen=representative_data_gen,
                                                  quantization_config=core_config.quantization_config,
-                                                 fw_info=fw_info,
                                                  fw_impl=fw_impl,
                                                  fqc=fqc,
                                                  bit_width_config=core_config.bit_width_config,
                                                  mixed_precision_enable=False,
                                                  running_gptq=False)
 
-    ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl, fw_info)
+    ru_calculator = ResourceUtilizationCalculator(transformed_graph, fw_impl)
     return ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantizedNonFused, BitwidthMode.QDefaultSP)

@@ -17,7 +17,6 @@ import tensorflow as tf
 from typing import Tuple, List
 from model_compression_toolkit.core.keras.constants import USE_BIAS
 from tensorflow.keras.models import Model
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
@@ -44,8 +43,7 @@ def get_gptq_trainable_parameters(fxp_model: Model,
 
     for layer in fxp_model.layers:
         if isinstance(layer, KerasTrainableQuantizationWrapper):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_KERAS_INFO)
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer))
 
             # collect trainable weights per quantizer
             if kernel_attribute not in layer.weights_quantizers:

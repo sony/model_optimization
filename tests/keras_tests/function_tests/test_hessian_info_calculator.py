@@ -26,7 +26,6 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.core.common.hessian as hessian_common
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -110,7 +109,6 @@ class TestHessianInfoCalculatorBase(unittest.TestCase):
                                           input_shape=input_shape)
         graph = prepare_graph_with_configs(in_model,
                                            keras_impl,
-                                           DEFAULT_KERAS_INFO,
                                            _repr_dataset,
                                            generate_keras_tpc,
                                            attach2fw=AttachTpcToKeras())

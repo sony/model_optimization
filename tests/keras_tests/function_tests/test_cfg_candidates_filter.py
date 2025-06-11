@@ -25,7 +25,6 @@ from model_compression_toolkit.core.common.quantization.filter_nodes_candidates 
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.keras.constants import KERNEL
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -46,7 +45,6 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
                                            name="candidates_filter_test",
                                            default_config=default_config)
 
-    fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
     graph = keras_impl.model_reader(in_model, None)  # model reading
 
@@ -54,7 +52,6 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     fqc = attach2keras.attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
 
     graph.set_fqc(fqc)
-    graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
@@ -103,7 +100,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
 
         # checking that layers with activation only (input and relu) have filtered configurations list,
         # that they have a configuration for each of the original bitwidth options
@@ -132,7 +129,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
 
         # checking that layers with weights (conv2d) have filtered activation configurations list
         # when weights quantization is disabled
@@ -161,7 +158,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
 
         # checking that layers with weights (conv2d) have filtered weights configurations list
         # when activation quantization is disabled

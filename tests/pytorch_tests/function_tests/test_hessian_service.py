@@ -19,7 +19,7 @@ import numpy as np
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
@@ -114,7 +114,7 @@ class FetchActivationHessianTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=self.attach2fw)
@@ -138,7 +138,7 @@ class FetchWeightsHessianTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=self.attach2fw)
@@ -162,7 +162,7 @@ class FetchHessianNotEnoughSamplesThrowTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=self.attach2fw)
@@ -190,7 +190,7 @@ class FetchHessianNotEnoughSamplesSmallBatchThrowTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=self.attach2fw)
@@ -220,7 +220,7 @@ class FetchComputeBatchLargerThanReprBatchTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=self.attach2fw)
@@ -247,7 +247,7 @@ class FetchHessianRequiredZeroTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=AttachTpcToPytorch())
@@ -271,7 +271,7 @@ class FetchHessianMultipleNodesTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=self.attach2fw)
@@ -296,7 +296,7 @@ class DoubleFetchHessianTest(BaseHessianServiceTest):
     def run_test(self, seed=0):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.pytorch_impl,
-                                                DEFAULT_PYTORCH_INFO,
+                                                PyTorchInfo,
                                                 representative_dataset,
                                                 generate_pytorch_tpc,
                                                 attach2fw=self.attach2fw)

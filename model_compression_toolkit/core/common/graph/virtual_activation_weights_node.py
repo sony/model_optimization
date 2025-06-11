@@ -128,18 +128,16 @@ class VirtualActivationWeightsNode(VirtualNode):
 
     def __init__(self,
                  act_node: BaseNode,
-                 weights_node: BaseNode,
-                 fw_info: FrameworkInfo):
+                 weights_node: BaseNode):
         """
         Init a VirtualActivationWeightsNode object.
 
         Args:
             act_node: The original activation node.
             weights_node: The original weights node.
-            fw_info: A FrameworkInfo object with framework specific information.
         """
         # Validate weights node
-        kernel_attrs = fw_info.get_kernel_op_attributes(weights_node.type)
+        kernel_attrs = weights_node.kernel_atts
         assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, f'Expected exactly one kernel attr, {kernel_attrs}'
         kernel_attr = kernel_attrs[0]
         conf_weights = [attr for attr in weights_node.weights if weights_node.is_configurable_weight(attr)]
@@ -149,7 +147,7 @@ class VirtualActivationWeightsNode(VirtualNode):
         weights = weights_node.weights.copy()
         act_node_w_rename = {}
         if act_node.weights:
-            if fw_info.get_kernel_op_attributes(act_node) != DEFAULT_KERNEL_ATTRIBUTES:
+            if act_node.kernel_atts != DEFAULT_KERNEL_ATTRIBUTES:
                 raise NotImplementedError(f'Node {act_node} with kernel cannot be used as activation for '
                                           f'VirtualActivationWeightsNode.')
             if act_node.has_any_configurable_weight():

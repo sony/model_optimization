@@ -214,15 +214,13 @@ def is_padding_node_and_node_has_padding(pad_node_to_consider: BaseNode,
 
 
 def pytorch_apply_shift_negative_correction(graph: Graph,
-                                            core_config: CoreConfig,
-                                            fw_info: FrameworkInfo) -> Graph:
+                                            core_config: CoreConfig) -> Graph:
     """
     Apply shift negative correction (SNC) on a graph built from a Pytorch model.
 
     Args:
         graph: Graph to apply SNC on.
         core_config: Quantization configuration.
-        fw_info: FrameworkInfo object with information about the specific framework's module.
 
     Returns:
         Graph after SNC.
@@ -230,7 +228,6 @@ def pytorch_apply_shift_negative_correction(graph: Graph,
     snc_node, linear_node, bypass_node, pad_node = shift_negative_activation_node_matchers()
     return apply_shift_negative_correction(graph,
                                            core_config,
-                                           fw_info,
                                            snc_node,
                                            linear_node,
                                            bypass_node,

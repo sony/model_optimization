@@ -16,7 +16,6 @@ from typing import List, Tuple
 
 import numpy as np
 
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -24,7 +23,6 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 
 class KerasFwMixin:
     """ Mixin helper class containing keras-specific definitions. """
-    fw_info = DEFAULT_KERAS_INFO
     fw_impl = KerasImplementation()
     attach_to_fw_func = AttachTpcToKeras().attach
 

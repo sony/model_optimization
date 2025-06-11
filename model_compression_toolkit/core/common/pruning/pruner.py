@@ -40,7 +40,6 @@ class Pruner:
     """
     def __init__(self,
                  float_graph: Graph,
-                 fw_info: FrameworkInfo,
                  fw_impl: PruningFrameworkImplementation,
                  target_resource_utilization: ResourceUtilization,
                  representative_data_gen: Callable,
@@ -49,7 +48,6 @@ class Pruner:
         """
         Args:
             float_graph (Graph): The floating-point representation of the model's computation graph.
-            fw_info (FrameworkInfo): Contains metadata and helper functions for the framework.
             fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
             target_resource_utilization (ResourceUtilization): The target resource utilization to be achieved after pruning.
             representative_data_gen (Callable): Generator function for representative dataset used in pruning analysis.
@@ -57,7 +55,6 @@ class Pruner:
             target_platform_capabilities (FrameworkQuantizationCapabilities): Object encapsulating the capabilities of the target hardware platform.
         """
         self.float_graph = float_graph
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
         self.target_resource_utilization = target_resource_utilization
         self.representative_data_gen = representative_data_gen
@@ -84,7 +81,6 @@ class Pruner:
         # Apply Greedy strategy to compute masks based on importance scores.
         if self.pruning_config.channels_filtering_strategy == ChannelsFilteringStrategy.GREEDY:
             mask_calculator = GreedyMaskCalculator(entry_nodes,
-                                                   self.fw_info,
                                                    self.simd_scores,
                                                    self.target_resource_utilization,
                                                    self.float_graph,
@@ -99,7 +95,6 @@ class Pruner:
         Logger.info("Start pruning graph...")
         _pruned_graph = build_pruned_graph(self.float_graph,
                                            self.per_oc_mask,
-                                           self.fw_info,
                                            self.fw_impl)
         return _pruned_graph
 
@@ -116,7 +111,7 @@ class Pruner:
         # Retrieve and initialize the importance metric.
         im = get_importance_metric(self.pruning_config.importance_metric, graph=self.float_graph,
                                    representative_data_gen=self.representative_data_gen, fw_impl=self.fw_impl,
-                                   pruning_config=self.pruning_config, fw_info=self.fw_info)
+                                   pruning_config=self.pruning_config)
         entry_node_to_simd_score, simd_groups_indices = im.get_entry_node_to_simd_score(entry_nodes)
         return entry_node_to_simd_score, simd_groups_indices
 

@@ -18,6 +18,7 @@ from typing import Dict, Any, Tuple, List, Type, Union
 
 import numpy as np
 
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
@@ -38,7 +39,6 @@ class BaseNode:
     """
     Class to represent a node in a graph that represents the model.
     """
-
     def __init__(self,
                  name: str,
                  framework_attr: Dict[str, Any],
@@ -88,6 +88,11 @@ class BaseNode:
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
+        fw_info = get_fw_info()
+        self.channel_axis = None if fw_info is None else fw_info.kernel_channels_mapping.get(layer_class)
+        self.out_channel_axis = None if fw_info is None else fw_info.out_channel_axis_mapping.get(layer_class)
+        self.minmax = None if fw_info is None else fw_info.get_layer_min_max(layer_class, framework_attr)
+        self.kernel_atts = None if fw_info is None else fw_info.get_kernel_op_attributes(layer_class)
 
     @property
     def type(self):
@@ -298,13 +303,10 @@ class BaseNode:
 
         return input_tensors
 
-    def get_num_parameters(self, fw_info) -> Tuple[int,int]:
+    def get_num_parameters(self) -> Tuple[int,int]:
         """
         Compute the number of parameters the node holds.
         It returns a tuple: Number of quantized parameters, number of float parameters.
-
-        Args:
-            fw_info: Framework info to decide which attributes should be quantized.
 
         Returns:
             A tuple of (Number of quantized parameters, number of float parameters).
@@ -314,7 +316,7 @@ class BaseNode:
 
         q_node_num_params = 0
 
-        for attr in fw_info.get_kernel_op_attributes(self.type):
+        for attr in self.kernel_atts:
             if attr is not None:
                 w = self.get_weights_by_keys(attr)
                 if w is not None:
@@ -326,22 +328,19 @@ class BaseNode:
         assert int(f_node_num_params) == f_node_num_params
         return int(q_node_num_params), int(f_node_num_params)
 
-    def get_memory_bytes(self, fw_info) -> float:
+    def get_memory_bytes(self) -> float:
         """
         Compute the number of bytes the node's memory requires.
-
-        Args:
-            fw_info: Framework info to decide which attributes should be quantized.
 
         Returns: Number of bytes the node's memory requires.
 
         """
         # TODO: this method is used for tensorboard only. If we want to enable logging of other attributes memory
         #  then it needs to be modified. But, it might be better to remove this method from the BaseNode completely.
-        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        kernel_attr = self.kernel_atts[0]
         if kernel_attr is None:
             return 0
-        q_params, f_params = self.get_num_parameters(fw_info)
+        q_params, f_params = self.get_num_parameters()
         if self.final_weights_quantization_cfg is None:  # float coefficients
             memory = (f_params+q_params) * FP32_BYTES_PER_PARAMETER
         else:
@@ -351,15 +350,12 @@ class BaseNode:
 
         return memory
 
-    def get_unified_weights_candidates_dict(self, fw_info) -> Dict[str, Any]:
+    def get_unified_weights_candidates_dict(self) -> Dict[str, Any]:
         """
         In Mixed-Precision, a node's kernel can have multiple candidates for weights quantization configuration.
         In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
         to create a single dictionary from all candidates.
-        This method is aimed to build such an unified dictionary for a node.
-
-        Args:
-            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+        This method is aimed to build such a unified dictionary for a node.
 
         Returns: A dictionary containing information from node's weight quantization configuration candidates.
 
@@ -369,7 +365,7 @@ class BaseNode:
         # We assume that only the kernel attribute have more than one candidate, since we only allow to
         # quantize the kernel using mixed precision
         # TODO: need to modify if we want to present a unified config for other attributes
-        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        kernel_attr = self.kernel_atts[0]
         if kernel_attr is None:
             # This node doesn't have a kernel attribute
             return {}
@@ -446,7 +442,7 @@ class BaseNode:
 
         Returns: Whether the node has weights that need to be quantized.
         """
-        attrs = fw_info.get_kernel_op_attributes(self.type)
+        attrs = self.kernel_atts
         for attr in attrs:
             if attr and self.get_weights_by_keys(attr) is not None:
                 return True
@@ -724,7 +720,7 @@ class BaseNode:
             Logger.critical(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
 
-    def sort_node_candidates(self, fw_info):
+    def sort_node_candidates(self):
         """
         Sorts the node candidates.
         We assume that the candidates are ordered in the following way (for mixed precision purposes):
@@ -733,13 +729,9 @@ class BaseNode:
             - If the node doesn't have a kernel we only consider the candidate activation number of bits to sort
             the candidates in descending order.
         The operation is done inplace.
-
-        Args:
-            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-
         """
         if self.candidates_quantization_cfg is not None:
-            kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+            kernel_attr = self.kernel_atts[0]
             if kernel_attr is not None:
                 self.candidates_quantization_cfg.sort(
                     key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,

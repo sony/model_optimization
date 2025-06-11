@@ -23,7 +23,6 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -72,7 +71,6 @@ class TestHessianService(unittest.TestCase):
         self.keras_impl = KerasImplementation()
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.keras_impl,
-                                                DEFAULT_KERAS_INFO,
                                                 get_representative_dataset_fn(),
                                                 generate_keras_tpc,
                                                 attach2fw=AttachTpcToKeras())
@@ -163,7 +161,6 @@ class TestHessianService(unittest.TestCase):
         self.keras_impl = KerasImplementation()
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.keras_impl,
-                                                DEFAULT_KERAS_INFO,
                                                 get_representative_dataset_fn(),
                                                 generate_keras_tpc,
                                                 attach2fw=AttachTpcToKeras())

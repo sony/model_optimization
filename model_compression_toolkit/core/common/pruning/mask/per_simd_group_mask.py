@@ -24,10 +24,10 @@ from model_compression_toolkit.core.common.pruning.memory_calculator import Memo
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.logger import Logger
 
+
 class PerSIMDGroupMask:
     def __init__(self,
                  prunable_nodes: List[BaseNode],
-                 fw_info: FrameworkInfo,
                  simd_groups_indices: Dict[BaseNode, List[List[int]]]):
         """
         Initializes a mask calculator for SIMD groups in prunable nodes.
@@ -35,13 +35,11 @@ class PerSIMDGroupMask:
 
         Args:
             prunable_nodes: List of nodes that can be pruned.
-            fw_info: Framework-specific information.
             simd_groups_indices: A dictionary mapping each node to its SIMD groups' indices.
         """
         # Initialize the per-channel mask
-        self.per_channel_mask = PerChannelMask(prunable_nodes=prunable_nodes, fw_info=fw_info)
+        self.per_channel_mask = PerChannelMask(prunable_nodes=prunable_nodes)
         self.prunable_nodes = prunable_nodes
-        self.fw_info = fw_info
         self.simd_groups_indices = simd_groups_indices
         self._mask_simd = None  # Initialize the SIMD group mask dictionary
         self._init_masks()  # Initialize masks for each prunable node

@@ -30,7 +30,7 @@ from model_compression_toolkit.core.common.statistics_correction.apply_second_mo
     quantized_model_builder_for_second_moment_correction
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.core.keras.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
 from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
@@ -75,7 +75,7 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
         return mct.core.QuantizationConfig(weights_second_moment_correction=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = KerasInfo.get_kernel_op_attributes(self.linear_layer)[0]
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -235,7 +235,6 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
             tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
                                                                           self.representative_data_gen,
                                                                           quant_config=qc,
-                                                                          fw_info=self.get_fw_info(),
                                                                           network_editor=dc.network_editor,
                                                                           target_platform_capabilities=self.get_tpc())
             for node in graph_after_second_moment_correction.nodes:

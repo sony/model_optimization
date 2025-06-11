@@ -19,7 +19,7 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
 
@@ -66,7 +66,7 @@ def test_get_mac(minimal_tpc):
     Model()(next(data_gen())[0])
 
     fw_impl = PytorchImplementation()
-    fw_info = DEFAULT_PYTORCH_INFO
+    fw_info = PyTorchInfo
     model = Model()
 
     graph = graph_preparation_runner(model,

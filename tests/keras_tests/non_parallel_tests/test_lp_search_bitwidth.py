@@ -32,7 +32,6 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
@@ -56,7 +55,6 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                                 in mixed_precision_cfg_list],
                                             name="bitwidth_cfg_test")
 
-        fw_info = DEFAULT_KERAS_INFO
         input_shape = (1, 8, 8, 3)
         input_tensor = keras.layers.Input(shape=input_shape[1:])
         conv = keras.layers.Conv2D(3, 3)(input_tensor)
@@ -72,7 +70,6 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         fqc = AttachTpcToKeras().attach(tpc)
 
-        graph.set_fw_info(fw_info)
         graph.set_fqc(fqc)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=core_config.quantization_config,
@@ -80,11 +77,9 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                             fw_info=fw_info,
                                                              graph=graph)
 
         mi = ModelCollector(graph,
-                            fw_info=DEFAULT_KERAS_INFO,
                             fw_impl=keras_impl,
                             qc=core_config.quantization_config)
 
@@ -96,11 +91,10 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         calculate_quantization_params(graph, fw_impl=keras_impl, repr_data_gen_fn=representative_data_gen)
 
-        SensitivityEvaluation(graph, core_config.mixed_precision_config, representative_data_gen, fw_info=fw_info,
+        SensitivityEvaluation(graph, core_config.mixed_precision_config, representative_data_gen,
                               fw_impl=keras_impl)
 
         cfg = search_bit_width(graph=graph,
-                               fw_info=DEFAULT_KERAS_INFO,
                                fw_impl=keras_impl,
                                target_resource_utilization=ResourceUtilization(weights_memory=100),
                                mp_config=core_config.mixed_precision_config,

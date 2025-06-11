@@ -33,7 +33,6 @@ import numpy as np
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualSplitWeightsNode
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -85,7 +84,7 @@ def get_tpc(mixed_precision_candidates_list):
 
 
 def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
-    graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
+    graph = prepare_graph_with_configs(in_model, keras_impl, representative_dataset,
                                        lambda name, _tp: get_tpc(mixed_precision_candidates_list),
                                        mixed_precision_enabled=True,
                                        attach2fw=AttachTpcToKeras(),
