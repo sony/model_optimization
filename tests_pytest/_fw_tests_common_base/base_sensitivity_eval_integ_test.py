@@ -115,8 +115,8 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
         g = self.run_graph_preparation(model, self.repr_datagen, tpc=tpc,
                                        quant_config=core_config.quantization_config, mp=True)
         g = quantization_preparation_runner(g, self.repr_datagen, core_config=core_config,
-                                            fw_info=self.fw_info, fw_impl=self.fw_impl, hessian_info_service=None)
-        se = SensitivityEvaluation(g, core_config.mixed_precision_config, self.repr_datagen, fw_info=self.fw_info,
+                                            fw_impl=self.fw_impl, hessian_info_service=None)
+        se = SensitivityEvaluation(g, core_config.mixed_precision_config, self.repr_datagen,
                                    fw_impl=self.fw_impl, disable_activation_for_metric=False,
                                    hessian_info_service=None)
         return model, g, se
@@ -173,7 +173,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
     def test_build_models_disable_activations(self):
         """ Test mp model with disabled activation flag. """
         model, g, _ = self.setup()
-        se = SensitivityEvaluation(g, MixedPrecisionQuantizationConfig(), self.repr_datagen, fw_info=self.fw_info,
+        se = SensitivityEvaluation(g, MixedPrecisionQuantizationConfig(), self.repr_datagen,
                                    fw_impl=self.fw_impl, disable_activation_for_metric=True, hessian_info_service=None)
         activation_holders = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.activation_quant_layer_cls)
         assert not activation_holders
