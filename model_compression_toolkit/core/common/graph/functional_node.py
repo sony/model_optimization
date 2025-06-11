@@ -15,6 +15,7 @@
 
 from typing import Dict, Any, Tuple, Type, List, Union
 
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
@@ -78,6 +79,12 @@ class FunctionalNode(BaseNode):
         self.op_call_args = list(op_call_args)
         self.functional_op = functional_op
         self.tensor_input_allocs = [] if tensor_input_allocs is None else tensor_input_allocs
+
+        fw_info = get_fw_info()
+        self.channel_axis = None if fw_info is None else fw_info.kernel_channels_mapping.get(functional_op)
+        self.out_channel_axis = None if fw_info is None else fw_info.out_channel_axis_mapping.get(functional_op)
+        self.minmax = None if fw_info is None else fw_info.get_layer_min_max(functional_op, framework_attr)
+        self.kernel_atts = None if fw_info is None else fw_info.get_kernel_op_attributes(functional_op)
 
     @property
     def type(self):

@@ -20,6 +20,8 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
@@ -130,6 +132,8 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
 
 
 class TestActivationWeightsComposition(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
 
     def _verify_two_conv_with_split_test(self, graph, v_graph, num_weights_candidates, num_activation_candidates):
         self.assertTrue(len(v_graph.nodes) == len(graph.nodes),

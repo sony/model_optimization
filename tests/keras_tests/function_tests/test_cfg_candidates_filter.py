@@ -25,6 +25,8 @@ from model_compression_toolkit.core.common.quantization.filter_nodes_candidates 
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -84,6 +86,8 @@ def create_model_conv2d_relu(input_shape):
 
 
 class TestCfgCandidatesFilter(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
 
     def test_cfg_filter_activation_only_nodes(self):
         input_shape = (8, 8, 3)

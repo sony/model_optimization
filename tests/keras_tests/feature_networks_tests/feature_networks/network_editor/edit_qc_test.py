@@ -122,8 +122,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     ######################################
     if core_config.quantization_config.shift_negative_activation_correction:
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
-                                                              core_config,
-                                                              fw_info)
+                                                              core_config)
         if tb_w is not None:
             tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')
             tb_w.add_all_statistics(transformed_graph, 'after_shift_negative_correction')
@@ -196,7 +195,6 @@ class BaseChangeQuantConfigAttrTest(BaseKerasFeatureNetworkTest):
                                                 representative_data_gen=
                                                 self.representative_data_gen_experimental,
                                                 core_config=core_config,
-                                                fw_info=self.get_fw_info(),
                                                 fw_impl=self.get_fw_impl(),
                                                 target_resource_utilization=self.get_resource_utilization(),
                                                 tpc=self.get_tpc())
@@ -284,7 +282,6 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
                                                 representative_data_gen=
                                                 self.representative_data_gen_experimental,
                                                 core_config=core_config,
-                                                fw_info=self.get_fw_info(),
                                                 fw_impl=self.get_fw_impl(),
                                                 target_resource_utilization=self.get_resource_utilization(),
                                                 tpc=self.get_tpc())

@@ -23,7 +23,8 @@ import model_compression_toolkit as mct
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
+from model_compression_toolkit.core.common.framework_info import get_fw_info
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG, DebugConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.network_editors import EditRule
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
@@ -263,21 +264,19 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                       in_model: Model,
                       representative_data_gen: Callable,
                       quant_config: QuantizationConfig = DEFAULTCONFIG,
-                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                       network_editor: List[EditRule] = [],
                       analyze_similarity: bool = False,
                       target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
             Tuple[Graph, Graph]:
 
-        KerasModelValidation(model=in_model,
-                             fw_info=fw_info).validate()
+        KerasModelValidation(model=in_model).validate()
 
         core_config = CoreConfig(quantization_config=quant_config,
                                  debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                           network_editor=network_editor)
                                  )
 
-        tb_w = init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer()
 
         fw_impl = KerasImplementation()
 
@@ -288,13 +287,12 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
                                                   representative_data_gen=representative_data_gen,
                                                   core_config=core_config,
-                                                  fw_info=fw_info,
                                                   fw_impl=fw_impl,
                                                   fqc=framework_quantization_capabilities,
                                                   tb_w=tb_w)
         graph_to_apply_second_moment = copy.deepcopy(tg)
         semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph_to_apply_second_moment,
-                                                                                    fw_info, fw_impl)
+                                                                                    fw_impl)
         keras_apply_second_moment_correction(semi_quantized_model, core_config, representative_data_gen,
                                              graph_to_apply_second_moment)
 
@@ -349,7 +347,7 @@ class POTSecondMomentTest(BaseSecondMomentTest):
         self.unit_test.assertTrue(any(warn_msg in s for s in cm.output))
 
         # Check that the SMC feature is not working
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -391,7 +389,7 @@ class NoBNSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -429,7 +427,7 @@ class ReusedConvSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -468,7 +466,7 @@ class UniformSecondMomentTest(BaseSecondMomentTest):
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]

@@ -18,6 +18,8 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, Sep
 from tensorflow import initializers
 import numpy as np
 
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
@@ -137,6 +139,8 @@ def prepare_graph(in_model):
 
 
 class TestBNInfoCollection(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
 
     def test_conv2d_bn_info_collection(self):
         input_shape = (8, 8, 3)

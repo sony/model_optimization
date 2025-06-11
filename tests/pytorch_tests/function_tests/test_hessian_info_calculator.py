@@ -221,7 +221,7 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
     def _setup(self):
         model_float = self.model()
         pytorch_impl = PytorchImplementation()
-        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), PyTorchInfo,
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(),
                                            self.representative_data_gen, generate_pytorch_tpc,
                                            attach2fw=AttachTpcToPytorch())
 

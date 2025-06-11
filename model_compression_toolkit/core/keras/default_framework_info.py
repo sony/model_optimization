@@ -61,7 +61,7 @@ class KerasInfo(FrameworkInfo):
                                             DepthwiseConv2D: -1,
                                             Dense: -1,
                                             Conv2DTranspose: -1},
-                                           None)
+                                           -1)
 
     """
     Map from an activation function to its min/max output values (if known).
@@ -79,7 +79,7 @@ class KerasInfo(FrameworkInfo):
                                   }
 
     """
-    Map from an Pytorch module to its min/max output values (if known).
+    Map from an Keras module to its min/max output values (if known).
     The values are used for tensor min/max values initialization.
     """
     layer_min_max_mapping = {Softmax: (0, SOFTMAX_THRESHOLD),
@@ -119,7 +119,7 @@ class KerasInfo(FrameworkInfo):
 
         if cls.layers_has_min_max(layer):
             return cls.layer_min_max_mapping[layer]
-        elif layer.is_match_type(Activation) and cls.activation_has_min_max(layer.framework_attr[ACTIVATION]):
-            return cls.activation_min_max_mapping[layer.framework_attr[ACTIVATION]]
+        elif isinstance(layer, Activation) and cls.activation_has_min_max(fw_attrs[ACTIVATION]):
+            return cls.activation_min_max_mapping[fw_attrs[ACTIVATION]]
         else:
             return None, None
