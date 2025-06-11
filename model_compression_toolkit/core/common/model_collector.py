@@ -38,6 +38,7 @@ def create_stats_collector_for_node(node: common.BaseNode,
 
     Args:
         node: Node to create its statistics collector.
+        quant_node_in_fln: Whether the node should be quantized as part of an FLN.
 
     Returns:
         Statistics collector for statistics collection for the node.
