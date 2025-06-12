@@ -206,7 +206,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
             activation_params: Dictionary that contains weight quantization params.
 
         """
-        assert self.quant_mode == ActivationQuantizationMode.QUANT
+        assert self.quant_mode == ActivationQuantizationMode.QUANT or self.quant_mode == ActivationQuantizationMode.FLN_QUANT
         for param_name, param_value in activation_params.items():
             self.activation_quantization_params[param_name] = param_value
 
