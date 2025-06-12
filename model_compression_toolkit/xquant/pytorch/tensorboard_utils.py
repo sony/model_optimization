@@ -41,18 +41,15 @@ class PytorchTensorboardUtils(TensorboardUtils):
 
     def __init__(self,
                  report_dir: str,
-                 fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation):
         """
         Initialize the PytorchTensorboardUtils instance.
 
         Args:
             report_dir: Directory where the reports are stored.
-            fw_info: Information about the framework being used.
             fw_impl: Implementation methods for the framework.
         """
         super().__init__(report_dir,
-                         fw_info,
                          fw_impl)
 
     def get_graph_for_tensorboard_display(self,

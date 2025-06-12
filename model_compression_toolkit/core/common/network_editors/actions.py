@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.logger import Logger
 
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
@@ -64,15 +64,13 @@ class BaseAction(ABC):
     """
 
     @abstractmethod
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         """
         Apply an action on the node after matching the node with a node filter.
 
         Args:
             node: Node to apply the action on.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
 
         Returns:
             Node after action is applied.
@@ -95,15 +93,13 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
         self.kwargs = kwargs
         self.attr_name = attr_name
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         """
         Change the attribute 'attr_name' in weights quantization config candidates with 'attr_value'.
 
         Args:
             node: Node object to change its quant_config.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
         Returns:
             The node after its weights' quantization config candidates have been modified.
         """
@@ -128,7 +124,7 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
         self.kwargs = kwargs
         self.attr_name = attr_name
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         if node.final_weights_quantization_cfg is not None:
             for parameter_name, parameter_value in self.kwargs.items():
                 node.final_weights_quantization_cfg.set_quant_config_attr(parameter_name, parameter_value,
@@ -147,17 +143,13 @@ class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
         """
         self.kwargs = kwargs
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         """
         Change the attribute 'attr_name' in activation quantization configuration candidates with 'attr_value'.
 
         Args:
             node: Node object to change its quant_config.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
-        Returns:q
-            The node after its activation quantization configuration candidates have been modified.
         """
         for nqc in node.candidates_quantization_cfg:
             for parameter_name, parameter_value in self.kwargs.items():
@@ -176,7 +168,7 @@ class ChangeFinalActivationQuantConfigAttr(BaseAction):
         """
         self.kwargs = kwargs
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         if node.final_activation_quantization_cfg is not None:
             for parameter_name, parameter_value in self.kwargs.items():
                 node.final_activation_quantization_cfg.set_quant_config_attr(parameter_name, parameter_value)
@@ -203,15 +195,13 @@ class ChangeQuantizationParamFunction(BaseAction):
         self.weights_quantization_params_fn = weights_quantization_params_fn
         self.attr_name = attr_name
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         """
         Change the node's weights/activations quantization params function.
 
         Args:
             node: Node object to change its quantization params function.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
 
         Returns:
             The node after its quantization params function has been modified.
@@ -240,15 +230,13 @@ class ChangeFinalActivationQuantizationMethod(BaseAction):
 
         self.activation_quantization_method = activation_quantization_method
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         """
         Change the node's activations quantization function.
 
         Args:
             node: Node object to change its threshold selection function.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
 
         Returns:
             The node after its quantization function has been modified.
@@ -262,7 +250,7 @@ class ChangeFinalActivationQuantizationMethod(BaseAction):
             node.final_activation_quantization_cfg.set_activation_quantization_params_fn(
                 activation_quantization_params_fn)
 
-            activation_quantization_fn = fw_info.activation_quantizer_mapping.get(self.activation_quantization_method)
+            activation_quantization_fn = get_fw_info().activation_quantizer_mapping.get(self.activation_quantization_method)
 
             node.final_activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
             node.final_activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
@@ -282,18 +270,14 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
         """
         self.activation_quantization_method = activation_quantization_method
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         """
         Change the node's activations quantization function.
 
         Args:
             node: Node object to change its threshold selection function.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
 
-        Returns:
-            The node after its quantization function has been modified.
         """
         if self.activation_quantization_method is not None:
             for qc in node.candidates_quantization_cfg:
@@ -301,7 +285,7 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
                     self.activation_quantization_method)
 
                 qc.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
-                activation_quantization_fn = fw_info.activation_quantizer_mapping.get(
+                activation_quantization_fn = get_fw_info().activation_quantizer_mapping.get(
                     self.activation_quantization_method)
 
                 if activation_quantization_fn is None:
@@ -328,18 +312,14 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
         self.weights_quantization_method = weights_quantization_method
         self.attr_name = attr_name
 
-    def apply(self, node: BaseNode, graph, fw_info):
+    def apply(self, node: BaseNode, graph):
         """
         Change the node's weights quantization function.
 
         Args:
             node: Node object to change its threshold selection function.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
 
-        Returns:
-            The node after its quantization function has been modified.
         """
 
         if self.weights_quantization_method is not None and node.final_weights_quantization_cfg is not None:
@@ -376,15 +356,13 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
         self.weights_quantization_method = weights_quantization_method
         self.attr_name = attr_name
 
-    def apply(self, node: BaseNode, graph: Graph, fw_info: FrameworkInfo):
+    def apply(self, node: BaseNode, graph: Graph):
         """
         Change the node's weights quantization function.
 
         Args:
             node: Node object to change its threshold selection function.
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
 
         Returns:
             The node after its quantization function has been modified.
@@ -422,15 +400,13 @@ class ReplaceLayer(BaseAction):
         self.layer_type = layer_type
         self.get_params_and_weights_fn = get_params_and_weights_fn
 
-    def apply(self, node: BaseNode, graph: Graph, fw_info: FrameworkInfo):
+    def apply(self, node: BaseNode, graph: Graph):
         """
         Replacing node's layer type and configurations
 
         Args:
             node: Node object to replace or modify
             graph: Graph to apply the action on.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-                     groups of layers by how they should be quantized, etc.)
 
         Returns:
             The node after its layer functionality has been modified.

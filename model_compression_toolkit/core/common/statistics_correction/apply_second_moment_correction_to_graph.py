@@ -32,7 +32,6 @@ from model_compression_toolkit.core.common.substitutions.apply_substitutions imp
 def _collect_and_assign_act_threshold(graph: Graph,
                                       representative_data_gen: Callable,
                                       core_config: CoreConfig,
-                                      fw_info: FrameworkInfo,
                                       fw_impl: FrameworkImplementation):
     """
     Collect statistics after second moment correction and assign new thresholds to activations.
@@ -41,14 +40,12 @@ def _collect_and_assign_act_threshold(graph: Graph,
         representative_data_gen (Callable): Dataset used for calibration.
         core_config (CoreConfig): Configuration object containing parameters of how the model should be
          quantized, including mixed precision parameters.
-        fw_info: FrameworkInfo object with information about the specific framework's model.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
      """
 
     mi = ModelCollector(graph,
                         fw_impl,
-                        fw_info,
-                        core_config.quantization_config) # Mark points for statistics collection
+                        core_config.quantization_config)  # Mark points for statistics collection
 
     for _data in tqdm(representative_data_gen()):
         mi.infer(_data)
@@ -63,14 +60,12 @@ def _collect_and_assign_act_threshold(graph: Graph,
 
 
 def quantized_model_builder_for_second_moment_correction(graph: common.Graph,
-                                                         fw_info: FrameworkInfo,
                                                          fw_impl: Any):
     """
     Build a framework model from a graph for second moment correction.
 
     Args:
-        graph: Graph to build the from.
-        fw_info: FrameworkInfo object with information about the specific framework's model.
+        graph: Graph to build from.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
@@ -79,15 +74,13 @@ def quantized_model_builder_for_second_moment_correction(graph: common.Graph,
     quantized_tg = quantize_graph_weights(graph)
 
     quantized_model, user_info = fw_impl.model_builder(quantized_tg,
-                                                       mode=ModelBuilderMode.FLOAT,
-                                                       fw_info=fw_info)
+                                                       mode=ModelBuilderMode.FLOAT)
     return quantized_model
 
 
 def apply_second_moment_correction_to_graph(graph: Graph,
                                             representative_data_gen: Callable,
                                             core_config: CoreConfig,
-                                            fw_info: FrameworkInfo,
                                             fw_impl: FrameworkImplementation) -> Graph:
     """
      Apply second moment correction on graph.
@@ -96,15 +89,14 @@ def apply_second_moment_correction_to_graph(graph: Graph,
         representative_data_gen (Callable): Dataset used for calibration.
         core_config (CoreConfig): Configuration object containing parameters of how the model should be
          quantized, including mixed precision parameters.
-        fw_info: FrameworkInfo object with information about the specific framework's model.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
      Returns:
          Graph after second moment correction.
      """
-    semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph, fw_info, fw_impl)
+    semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph, fw_impl)
     fw_impl.apply_second_moment_correction(semi_quantized_model, core_config, representative_data_gen, graph)
     graph = substitute(graph, fw_impl.get_substitutions_after_second_moment_correction(core_config.quantization_config))
-    _collect_and_assign_act_threshold(graph, representative_data_gen, core_config, fw_info, fw_impl)
+    _collect_and_assign_act_threshold(graph, representative_data_gen, core_config, fw_impl)
 
     return graph

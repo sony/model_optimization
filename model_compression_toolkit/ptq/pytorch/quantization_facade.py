@@ -34,7 +34,8 @@ from model_compression_toolkit.core.common.quantization.quantize_graph_weights i
 from model_compression_toolkit.metadata import create_model_metadata
 
 if FOUND_TORCH:
-    from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+    from model_compression_toolkit.core.common.framework_info import set_fw_info
+    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
@@ -102,7 +103,7 @@ if FOUND_TORCH:
         if core_config.debug_config.bypass:
             return in_module, None
 
-        fw_info = DEFAULT_PYTORCH_INFO
+        set_fw_info(PyTorchInfo)
 
         if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
@@ -111,7 +112,7 @@ if FOUND_TORCH:
                                 "pytorch_post_training_quantization API, or pass a valid mixed precision "
                                 "configuration.")  # pragma: no cover
 
-        tb_w = init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer()
 
         fw_impl = PytorchImplementation()
 
@@ -125,7 +126,6 @@ if FOUND_TORCH:
         tg, bit_widths_config, _, scheduling_info = core_runner(in_model=in_module,
                                                                 representative_data_gen=representative_data_gen,
                                                                 core_config=core_config,
-                                                                fw_info=fw_info,
                                                                 fw_impl=fw_impl,
                                                                 fqc=framework_platform_capabilities,
                                                                 target_resource_utilization=target_resource_utilization,
@@ -141,7 +141,6 @@ if FOUND_TORCH:
         graph_with_stats_correction = ptq_runner(tg,
                                                  representative_data_gen,
                                                  core_config,
-                                                 fw_info,
                                                  fw_impl,
                                                  tb_w)
 
@@ -151,8 +150,7 @@ if FOUND_TORCH:
                                         tb_w,
                                         similarity_baseline_graph,
                                         quantized_graph,
-                                        fw_impl,
-                                        fw_info)
+                                        fw_impl)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_with_stats_correction)
         if framework_platform_capabilities.tpc.add_metadata:

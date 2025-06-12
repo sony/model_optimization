@@ -59,22 +59,19 @@ class NNVisualizer:
     def __init__(self,
                  graph_float: Graph,
                  graph_quantized: Graph,
-                 fw_impl: FrameworkImplementation,
-                 fw_info: FrameworkInfo):
+                 fw_impl: FrameworkImplementation):
         """
         Initialize a NNVisualizer object.
         Args:
             graph_float: Float version of the graph.
             graph_quantized: Quantized version of the graph.
             fw_impl: Framework implementation with framework-specific methods implementation.
-            fw_info: Framework info with framework-specific information.
 
         """
 
         self.graph_float = graph_float
         self.graph_quantized = graph_quantized
         self.fw_impl = fw_impl
-        self.fw_info = fw_info
 
         # Get compare points of two graphs.
         self.compare_points, self.compare_points_name = _get_compare_points(self.graph_quantized)
@@ -92,13 +89,11 @@ class NNVisualizer:
 
         self.quantized_model, _ = self.fw_impl.model_builder(self.graph_quantized,
                                                              mode=ModelBuilderMode.QUANTIZED,
-                                                             append2output=self.compare_points,
-                                                             fw_info=self.fw_info)
+                                                             append2output=self.compare_points)
 
         self.float_model, _ = self.fw_impl.model_builder(self.graph_float,
                                                          mode=ModelBuilderMode.FLOAT,
-                                                         append2output=self.compare_points_float,
-                                                         fw_info=self.fw_info)
+                                                         append2output=self.compare_points_float)
 
     def has_compare_points(self) -> bool:
         """

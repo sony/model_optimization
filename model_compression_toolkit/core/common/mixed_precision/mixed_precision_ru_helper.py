@@ -30,11 +30,10 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 class MixedPrecisionRUHelper:
     """ Helper class for resource utilization computations for mixed precision optimization. """
 
-    def __init__(self, graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkImplementation):
+    def __init__(self, graph: Graph, fw_impl: FrameworkImplementation):
         self.graph = graph
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
-        self.ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
+        self.ru_calculator = ResourceUtilizationCalculator(graph, fw_impl)
 
     def compute_utilization(self, ru_targets: Set[RUTarget], mp_cfg: Dict[BaseNode, int]) -> Dict[RUTarget, np.ndarray]:
         """

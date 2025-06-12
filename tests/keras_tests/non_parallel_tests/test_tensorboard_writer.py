@@ -26,7 +26,6 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     ActivationFinalBitwidthConfigVisualizer
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
@@ -154,7 +153,6 @@ class TestFileLogger(unittest.TestCase):
         # compare max tensor size with plotted max tensor size
         tg = prepare_graph_set_bit_widths(in_model=model,
                                           fw_impl=KerasImplementation(),
-                                          fw_info=DEFAULT_KERAS_INFO,
                                           representative_data_gen=random_datagen,
                                           fqc=fqc,
                                           network_editor=[],

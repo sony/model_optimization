@@ -23,23 +23,19 @@ from model_compression_toolkit.core.pytorch.constants import MOVING_MEAN, MOVING
 
 
 def create_node_prior_info(node: BaseNode,
-                           fw_info: FrameworkInfo,
                            graph: Graph):
     """
     Create a NodePriorInfo object for a given node.
 
     Args:
         node: Node to create its prior info.
-        fw_info: Information about a specific framework the node was generated from.
         graph: Graph to check the next node type.
 
     Returns:
         NodePriorInfo object with info about the node.
     """
 
-    min_output, max_output = None, None
-    if fw_info.layers_has_min_max(node.type):
-        min_output, max_output = fw_info.layer_min_max_mapping[node.type]
+    min_output, max_output = node.minmax
     mean_output, std_output = _get_mean_std_outputs(node=node,
                                                     graph=graph)
     return NodePriorInfo(min_output=min_output,

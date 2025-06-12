@@ -44,7 +44,7 @@ def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph) -> List[Ba
     """
     hmse_nodes = []
     for n in nodes_list:
-        kernel_attr_name = graph.fw_info.get_kernel_op_attributes(n.type)
+        kernel_attr_name = n.kernel_atts
         kernel_attr_name = None if kernel_attr_name is None or len(kernel_attr_name) == 0 else kernel_attr_name[0]
 
         if kernel_attr_name is not None and n.is_weights_quantization_enabled(kernel_attr_name) and \
@@ -114,7 +114,7 @@ def calculate_quantization_params(graph: Graph,
                     if attr_cfg.weights_error_method == QuantizationErrorMethod.HMSE:
                         # Although we collected nodes for HMSE before running the loop, we keep this verification to
                         # notify the user in case of HMSE configured for node that is not compatible for this method
-                        kernel_attr_name = graph.fw_info.get_kernel_op_attributes(n.type)
+                        kernel_attr_name = n.kernel_atts
                         if len(kernel_attr_name) > 0:
                             kernel_attr_name = kernel_attr_name[0]
 

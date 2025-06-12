@@ -46,6 +46,8 @@ from model_compression_toolkit.constants import TENSORFLOW, FUSED_LAYER_PATTERN,
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     QNNPACK_TP_MODEL, TFLITE_TP_MODEL, KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS, WEIGHTS_N_BITS
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
@@ -61,6 +63,8 @@ def get_node(layer) -> BaseNode:
 
 
 class TestKerasTPModel(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
 
     def test_keras_layers_with_params(self):
         conv_with_params = LayerFilterParams(Conv2D,
@@ -279,6 +283,9 @@ class TestKerasTPModel(unittest.TestCase):
 
 
 class TestGetKerasTPC(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
+
     def test_get_keras_tpc(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
         input_shape = (1, 8, 8, 3)

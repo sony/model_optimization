@@ -36,7 +36,8 @@ if FOUND_TORCH:
     import torch.nn as nn
     from torch.nn import Module
     from mct_quantizers import PytorchActivationQuantizationHolder
-    from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+    from model_compression_toolkit.core.common.framework_info import set_fw_info
+    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
@@ -62,10 +63,10 @@ if FOUND_TORCH:
         Returns: Wrapped layer
 
         """
-        if is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
+        if is_qat_applicable(n):
             # If we are here, then the node has a kernel attribute to quantize and training during QAT
             weights_quantizers, _ = quantization_builder(n, qat_config,
-                                                         DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(n.type)[0])
+                                                         n.kernel_atts[0])
             if len(weights_quantizers) > 0:
                 return PytorchQuantizationWrapper(module, weights_quantizers)
 
@@ -143,13 +144,15 @@ if FOUND_TORCH:
             f"If you encounter an issue, please open an issue in our GitHub "
             f"project https://github.com/sony/model_optimization")
 
+        set_fw_info(PyTorchInfo)
+
         if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config to mixed-precision facade is not of type "
                                 "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"
                                 "or pass a valid mixed precision configuration.")
 
-        tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
+        tb_w = init_tensorboard_writer()
         fw_impl = PytorchImplementation()
 
         target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)
@@ -162,27 +165,22 @@ if FOUND_TORCH:
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
                                                   representative_data_gen=representative_data_gen,
                                                   core_config=core_config,
-                                                  fw_info=DEFAULT_PYTORCH_INFO,
                                                   fw_impl=fw_impl,
                                                   fqc=framework_platform_capabilities,
                                                   target_resource_utilization=target_resource_utilization,
                                                   tb_w=tb_w)
 
-        tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
+        tg = ptq_runner(tg, representative_data_gen, core_config, fw_impl, tb_w)
 
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
 
         qat_model, user_info = PyTorchModelBuilder(graph=tg,
-                                                   fw_info=DEFAULT_PYTORCH_INFO,
                                                    wrapper=_qat_wrapper,
                                                    get_activation_quantizer_holder_fn=partial(
                                                        get_activation_quantizer_holder,
                                                        qat_config=qat_config)).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
-
-        # Remove fw_info from graph to enable saving the pytorch model (fw_info can not be pickled)
-        delattr(qat_model.graph, 'fw_info')
 
         return qat_model, user_info
 

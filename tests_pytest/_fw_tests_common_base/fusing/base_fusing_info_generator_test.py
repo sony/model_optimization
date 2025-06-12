@@ -94,7 +94,6 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
         """
         assert self._data_gen is not None
         assert self.fw_impl is not None
-        assert self.fw_info is not None
         assert self.attach_to_fw_func is not None
         assert self.expected_fi is not None
         assert self.last_node_activation_nbits is not None
@@ -105,7 +104,6 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
         graph_with_fusion_metadata = graph_preparation_runner(self._get_model(),
                                                               self._data_gen,
                                                               self._get_qc(),
-                                                              fw_info=self.fw_info,
                                                               fw_impl=self.fw_impl,
                                                               fqc=self.fqc,
                                                               mixed_precision_enable=True,

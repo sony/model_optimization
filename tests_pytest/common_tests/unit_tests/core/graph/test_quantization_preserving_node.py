@@ -16,11 +16,15 @@ import pytest
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
+from model_compression_toolkit.core.common.framework_info import set_fw_info
 
 from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc
 
 
 class TestQuantizationPreservingNode:
+    @pytest.fixture(autouse=True)
+    def setup(self, fw_info_mock):
+        set_fw_info(fw_info_mock)
 
     def test_activation_preserving_candidate(self):
         """ Tests that the correct activation quantization candidate is selected. """

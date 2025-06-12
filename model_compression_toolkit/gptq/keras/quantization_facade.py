@@ -41,7 +41,8 @@ from model_compression_toolkit.metadata import create_model_metadata
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+    from model_compression_toolkit.core.common.framework_info import set_fw_info
+    from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
     from model_compression_toolkit.gptq.keras.gptq_keras_implementation import GPTQKerasImplemantation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
@@ -234,8 +235,9 @@ if FOUND_TF:
         if core_config.debug_config.bypass:
             return in_model, None
 
-        KerasModelValidation(model=in_model,
-                             fw_info=DEFAULT_KERAS_INFO).validate()
+        set_fw_info(KerasInfo)
+
+        KerasModelValidation(model=in_model).validate()
 
         if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
@@ -243,7 +245,7 @@ if FOUND_TF:
                                 "Ensure usage of the correct API for keras_post_training_quantization "
                                 "or provide a valid mixed-precision configuration.")  # pragma: no cover
 
-        tb_w = init_tensorboard_writer(DEFAULT_KERAS_INFO)
+        tb_w = init_tensorboard_writer()
 
         fw_impl = GPTQKerasImplemantation()
 
@@ -257,7 +259,6 @@ if FOUND_TF:
         tg, bit_widths_config, hessian_info_service, scheduling_info = core_runner(in_model=in_model,
                                                                                    representative_data_gen=representative_data_gen,
                                                                                    core_config=core_config,
-                                                                                   fw_info=DEFAULT_KERAS_INFO,
                                                                                    fw_impl=fw_impl,
                                                                                    fqc=framework_platform_capabilities,
                                                                                    target_resource_utilization=target_resource_utilization,
@@ -271,7 +272,6 @@ if FOUND_TF:
                               gptq_config,
                               representative_data_gen,
                               gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
-                              DEFAULT_KERAS_INFO,
                               fw_impl,
                               tb_w,
                               hessian_info_service=hessian_info_service)
@@ -283,8 +283,7 @@ if FOUND_TF:
                                         tb_w,
                                         float_graph,
                                         tg_gptq,
-                                        fw_impl,
-                                        DEFAULT_KERAS_INFO)
+                                        fw_impl)
 
         exportable_model, user_info = get_exportable_keras_model(tg_gptq)
         if framework_platform_capabilities.tpc.add_metadata:

@@ -27,7 +27,6 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
         AttachTpcToKeras
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
 
@@ -93,7 +92,6 @@ if FOUND_TF:
                                                  representative_data_gen,
                                                  core_config,
                                                  target_platform_capabilities,
-                                                 DEFAULT_KERAS_INFO,
                                                  fw_impl)
 
 else:

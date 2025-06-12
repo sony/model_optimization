@@ -44,7 +44,6 @@ def test_assert_to_operation(minimal_tpc):
         _ = read_model_to_graph(model,
                                 data_gen,
                                 fqc=TorchFwMixin.attach_to_fw_func(minimal_tpc),
-                                fw_info=TorchFwMixin.fw_info,
                                 fw_impl=TorchFwMixin.fw_impl)
 
 

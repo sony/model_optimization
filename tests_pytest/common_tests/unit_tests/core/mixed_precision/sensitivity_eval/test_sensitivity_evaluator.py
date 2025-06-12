@@ -48,7 +48,8 @@ class TestSensitivityEvaluator:
         kwargs = dict(custom_metric_fn=Mock()) if custom else {}
         mp_config = MixedPrecisionQuantizationConfig(**kwargs)
         hessian_mock = Mock()   # we only check the object is passed to calculator as is
-        se = SensitivityEvaluation(graph_mock, mp_config, repr_datagen, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        _current_framework_info = fw_info_mock
+        se = SensitivityEvaluation(graph_mock, mp_config, repr_datagen, fw_impl=fw_impl_mock,
                                    hessian_info_service=hessian_mock)
 
         # compare exact types in case there is inheritance between calculators
@@ -56,7 +57,7 @@ class TestSensitivityEvaluator:
         if custom:
             init_spy.assert_called_once_with(graph_mock, mp_config.custom_metric_fn)
         else:
-            init_spy.assert_called_once_with(graph_mock, mp_config, repr_datagen, fw_info=fw_info_mock,
+            init_spy.assert_called_once_with(graph_mock, mp_config, repr_datagen,
                                              fw_impl=fw_impl_mock, hessian_info_service=hessian_mock)
 
         build_mp_model_mock.assert_called_with(graph_mock, [1, 2, 3], False)

@@ -20,6 +20,8 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
@@ -37,7 +39,6 @@ from model_compression_toolkit.core.common.graph.virtual_activation_weights_node
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virtual_activation_weights_composition import \
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
@@ -97,7 +98,6 @@ def representative_dataset():
 
 
 def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
-    fw_info = DEFAULT_KERAS_INFO
     qc = mct.core.QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])})
 
     graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
@@ -110,14 +110,12 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     attach2keras = AttachTpcToKeras()
     fqc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
 
-    graph.set_fw_info(fw_info)
     graph.set_fqc(fqc)
 
     # Standard graph substitutions
     graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
     for node in graph.nodes:
-        node.prior_info = keras_impl.get_node_prior_info(node=node,
-                                                         fw_info=fw_info, graph=graph)
+        node.prior_info = keras_impl.get_node_prior_info(node=node, graph=graph)
     graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
 
     graph = set_quantization_configuration_to_graph(graph=graph,
@@ -134,6 +132,8 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
 
 
 class TestActivationWeightsComposition(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
 
     def _verify_two_conv_with_split_test(self, graph, v_graph, num_weights_candidates, num_activation_candidates):
         self.assertTrue(len(v_graph.nodes) == len(graph.nodes),

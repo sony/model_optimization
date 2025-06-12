@@ -32,7 +32,6 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 
 def statistics_correction_runner(transformed_graph: Graph,
                                  core_config: CoreConfig,
-                                 fw_info: FrameworkInfo,
                                  fw_impl: FrameworkImplementation,
                                  tb_w: TensorboardWriter = None, ) -> Graph:
     """
@@ -41,7 +40,6 @@ def statistics_correction_runner(transformed_graph: Graph,
         transformed_graph: Graph to add statistics correction.
         core_config (CoreConfig): Configuration object containing parameters of how the model should be
          quantized, including mixed precision parameters.
-        fw_info: FrameworkInfo object with information about the specific framework's model.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
 
@@ -59,7 +57,6 @@ def statistics_correction_runner(transformed_graph: Graph,
     # Compute bias correction to nodes' config candidates
     ########################################################
     tg_with_bias = compute_bias_correction_of_graph(tg_with_bias,
-                                                    fw_info,
                                                     fw_impl)
 
     if tb_w is not None:
@@ -71,7 +68,6 @@ def statistics_correction_runner(transformed_graph: Graph,
 def apply_statistics_correction(transformed_graph: Graph,
                                 representative_data_gen: Callable,
                                 core_config: CoreConfig,
-                                fw_info: FrameworkInfo,
                                 fw_impl: FrameworkImplementation,
                                 tb_w: TensorboardWriter = None, ) -> Graph:
     """
@@ -81,7 +77,6 @@ def apply_statistics_correction(transformed_graph: Graph,
         representative_data_gen (Callable): Dataset used for calibration.
         core_config (CoreConfig): Configuration object containing parameters of how the model should be
          quantized, including mixed precision parameters.
-        fw_info: FrameworkInfo object with information about the specific framework's model.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
 
@@ -94,7 +89,7 @@ def apply_statistics_correction(transformed_graph: Graph,
     #############################################
     if core_config.quantization_config.weights_second_moment_correction:
         transformed_graph = apply_second_moment_correction_to_graph(transformed_graph, representative_data_gen,
-                                                                    core_config, fw_info, fw_impl)
+                                                                    core_config, fw_impl)
 
     #############################################
     # Apply Bias Correction

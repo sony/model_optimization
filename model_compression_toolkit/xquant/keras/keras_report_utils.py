@@ -15,7 +15,6 @@
 
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -40,7 +39,6 @@ class KerasReportUtils(FrameworkReportUtils):
         Args:
             report_dir: Logging dir path.
         """
-        fw_info = DEFAULT_KERAS_INFO
         fw_impl = KerasImplementation()
 
         # Set the default Target Platform Capabilities (TPC) for Keras.
@@ -49,8 +47,7 @@ class KerasReportUtils(FrameworkReportUtils):
         framework_platform_capabilities = attach2pytorch.attach(default_tpc)
 
         dataset_utils = KerasDatasetUtils()
-        model_folding = ModelFoldingUtils(fw_info=fw_info,
-                                          fw_impl=fw_impl,
+        model_folding = ModelFoldingUtils(fw_impl=fw_impl,
                                           fw_default_fqc=framework_platform_capabilities)
 
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
@@ -59,10 +56,8 @@ class KerasReportUtils(FrameworkReportUtils):
                                                      model_analyzer_utils=KerasModelAnalyzer())
 
         tb_utils = KerasTensorboardUtils(report_dir=report_dir,
-                                         fw_impl=fw_impl,
-                                         fw_info=fw_info)
-        super().__init__(fw_info,
-                         fw_impl,
+                                         fw_impl=fw_impl)
+        super().__init__(fw_impl,
                          similarity_calculator,
                          dataset_utils,
                          model_folding,

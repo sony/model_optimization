@@ -30,7 +30,6 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 
 def prepare_graph_with_configs(in_model,
                                fw_impl,
-                               fw_info,
                                representative_dataset,
                                get_tpc_func,
                                attach2fw,
@@ -51,7 +50,6 @@ def prepare_graph_with_configs(in_model,
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen=representative_dataset,
                                      quantization_config=qc,
-                                     fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      fqc=fqc,
                                      mixed_precision_enable=mixed_precision_enabled,
@@ -62,7 +60,6 @@ def prepare_graph_with_configs(in_model,
 
 def prepare_graph_with_quantization_parameters(in_model,
                                                fw_impl,
-                                               fw_info,
                                                representative_dataset,
                                                get_tpc_func,
                                                input_shape,
@@ -72,7 +69,6 @@ def prepare_graph_with_quantization_parameters(in_model,
 
     graph = prepare_graph_with_configs(in_model,
                                        fw_impl,
-                                       fw_info,
                                        representative_dataset,
                                        get_tpc_func,
                                        attach2fw,
@@ -82,7 +78,6 @@ def prepare_graph_with_quantization_parameters(in_model,
 
     mi = ModelCollector(graph,
                         fw_impl=fw_impl,
-                        fw_info=fw_info,
                         qc=qc)
 
     for i in range(10):
@@ -99,7 +94,6 @@ def prepare_graph_set_bit_widths(in_model,
                                  target_resource_utilization,
                                  n_iter,
                                  quant_config,
-                                 fw_info,
                                  network_editor,
                                  analyze_similarity,
                                  fqc,
@@ -114,7 +108,7 @@ def prepare_graph_set_bit_widths(in_model,
     if target_resource_utilization is not None:
         core_config.mixed_precision_config.set_mixed_precision_enable()
 
-    tb_w = init_tensorboard_writer(fw_info)
+    tb_w = init_tensorboard_writer()
 
     # convert old representative dataset generation to a generator
     def _representative_data_gen():
@@ -124,7 +118,6 @@ def prepare_graph_set_bit_widths(in_model,
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen=_representative_data_gen,
                                      quantization_config=quant_config,
-                                     fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      fqc=fqc,
                                      bit_width_config=core_config.bit_width_config,
@@ -133,7 +126,6 @@ def prepare_graph_set_bit_widths(in_model,
     tg = quantization_preparation_runner(graph,
                                          _representative_data_gen,
                                          core_config,
-                                         fw_info,
                                          fw_impl,
                                          tb_w)
 
@@ -145,7 +137,6 @@ def prepare_graph_set_bit_widths(in_model,
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg,
-                                                 fw_info,
                                                  fw_impl,
                                                  target_resource_utilization,
                                                  core_config.mixed_precision_config,

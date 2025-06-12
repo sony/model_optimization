@@ -53,7 +53,6 @@ class MixedPrecisionSearchManager:
 
     def __init__(self,
                  graph: Graph,
-                 fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
                  target_resource_utilization: ResourceUtilization,
@@ -62,14 +61,12 @@ class MixedPrecisionSearchManager:
 
         Args:
             graph: Graph to search for its MP configuration.
-            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
             fw_impl: FrameworkImplementation object with specific framework methods implementation.
             sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
                 a bit-width configuration for the MP model.
             target_resource_utilization: Target Resource Utilization to bound our feasible solution space s.t the configuration does not violate it.
         """
 
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
 
         self.original_graph = graph
@@ -81,12 +78,12 @@ class MixedPrecisionSearchManager:
         self.target_resource_utilization = target_resource_utilization
         self.mp_config = mp_config
 
-        self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes(fw_info)
+        self.mp_topo_configurable_nodes = self.mp_graph.get_configurable_sorted_nodes()
 
         self.ru_targets = target_resource_utilization.get_restricted_targets()
-        self.orig_graph_ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_info, fw_impl)
+        self.orig_graph_ru_helper = MixedPrecisionRUHelper(self.original_graph, fw_impl)
 
-        self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config(fw_info)
+        self.min_ru_config: Dict[BaseNode, int] = self.mp_graph.get_min_candidates_config()
 
         self.config_reconstructor = None
         orig_min_config = self.min_ru_config

@@ -20,7 +20,7 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
     AttachTpcToPytorch
 
 from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
@@ -29,6 +29,7 @@ from model_compression_toolkit.xquant.pytorch.model_analyzer import PytorchModel
 from model_compression_toolkit.xquant.pytorch.similarity_functions import PytorchSimilarityFunctions
 from model_compression_toolkit.xquant.pytorch.tensorboard_utils import PytorchTensorboardUtils
 from mct_quantizers.pytorch.metadata import get_metadata
+
 
 class PytorchReportUtils(FrameworkReportUtils):
     """
@@ -39,7 +40,6 @@ class PytorchReportUtils(FrameworkReportUtils):
         Args:
             report_dir: Logging dir path.
         """
-        fw_info = DEFAULT_PYTORCH_INFO
         fw_impl = PytorchImplementation()
         # Set the default Target Platform Capabilities (TPC) for PyTorch.
         default_tpc = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
@@ -47,8 +47,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         framework_quantization_capabilities = attach2pytorch.attach(default_tpc)
 
         dataset_utils = PytorchDatasetUtils()
-        model_folding = ModelFoldingUtils(fw_info=fw_info,
-                                          fw_impl=fw_impl,
+        model_folding = ModelFoldingUtils(fw_impl=fw_impl,
                                           fw_default_fqc=framework_quantization_capabilities)
 
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
@@ -58,11 +57,9 @@ class PytorchReportUtils(FrameworkReportUtils):
                                                      device=get_working_device())
 
         tb_utils = PytorchTensorboardUtils(report_dir=report_dir,
-                                           fw_impl=fw_impl,
-                                           fw_info=fw_info)
+                                           fw_impl=fw_impl)
 
-        super().__init__(fw_info=fw_info,
-                         fw_impl=fw_impl,
+        super().__init__(fw_impl=fw_impl,
                          tb_utils=tb_utils,
                          dataset_utils=dataset_utils,
                          similarity_calculator=similarity_calculator,

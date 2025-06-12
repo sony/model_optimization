@@ -35,8 +35,6 @@ from typing import Any, Dict, List, Tuple, Callable
 from tensorflow.python.util.object_identity import Reference as TFReference
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
@@ -57,7 +55,6 @@ class KerasModelBuilder(BaseModelBuilder):
     def __init__(self,
                  graph: common.Graph,
                  append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                  return_float_outputs: bool = False,
                  wrapper: Callable = None,
                  get_activation_quantizer_holder_fn: Callable=None):
@@ -66,7 +63,6 @@ class KerasModelBuilder(BaseModelBuilder):
         Args:
             graph: Graph to build the model from.
             append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
             wrapper: A function wrapper keras Layers.
             get_activation_quantizer_holder_fn: Function to retrieve a quantization holder for a node.
@@ -75,7 +71,6 @@ class KerasModelBuilder(BaseModelBuilder):
 
         super().__init__(graph,
                          append2output,
-                         fw_info,
                          return_float_outputs)
 
         # Build an OperationHandler to handle conversions from graph nodes to Keras operators.

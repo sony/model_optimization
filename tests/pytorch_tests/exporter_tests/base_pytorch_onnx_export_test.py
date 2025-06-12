@@ -28,6 +28,7 @@ from tests.pytorch_tests.exporter_tests.base_pytorch_export_test import BasePyto
 
 class BasePytorchONNXExportTest(BasePytorchExportTest):
     def __init__(self, onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION):
+        super().__init__()
         self.onnx_opset_version=onnx_opset_version
 
     def get_serialization_format(self):

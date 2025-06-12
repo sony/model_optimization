@@ -36,7 +36,8 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
     from model_compression_toolkit.core.pytorch.pruning.pruning_pytorch_implementation import \
         PruningPytorchImplementation
-    from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+    from model_compression_toolkit.core.common.framework_info import set_fw_info
+    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
     from torch.nn import Module
     from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
         AttachTpcToPytorch
@@ -117,6 +118,8 @@ if FOUND_TORCH:
                        f"If you encounter an issue, please open an issue in our GitHub "
                        f"project https://github.com/sony/model_optimization")
 
+        set_fw_info(PyTorchInfo)
+
         # Instantiate the Pytorch framework implementation.
         fw_impl = PruningPytorchImplementation()
 
@@ -129,7 +132,6 @@ if FOUND_TORCH:
         float_graph = read_model_to_graph(model,
                                           representative_data_gen,
                                           framework_platform_capabilities,
-                                          DEFAULT_PYTORCH_INFO,
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
@@ -140,7 +142,6 @@ if FOUND_TORCH:
 
         # Create a Pruner object with the graph and configuration.
         pruner = Pruner(float_graph_with_compression_config,
-                        DEFAULT_PYTORCH_INFO,
                         fw_impl,
                         target_resource_utilization,
                         representative_data_gen,

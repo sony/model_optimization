@@ -50,7 +50,7 @@ def core_report_generator(float_model: Any,
 
     # Collect histograms on the float model.
     float_graph = fw_report_utils.model_folding_utils.create_float_folded_graph(float_model, repr_dataset)
-    mi = ModelCollector(float_graph, fw_report_utils.fw_impl, fw_report_utils.fw_info)
+    mi = ModelCollector(float_graph, fw_report_utils.fw_impl)
     for _data in tqdm(repr_dataset(), desc="Collecting Histograms"):
         mi.infer(_data)
 

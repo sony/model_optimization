@@ -89,20 +89,18 @@ class TensorboardWriter(object):
     Class to log events to display using Tensorboard such as graphs, histograms, images, etc.
     """
 
-    def __init__(self, dir_path: str, fw_info: FrameworkInfo):
+    def __init__(self, dir_path: str):
         """
         Initialize a TensorboardWriter object.
         
         Args:
             dir_path: Path to save all events to display on Tensorboard.
-            fw_info: FrameworkInfo object (needed for computing nodes' weights memory).
 
         """
         self.dir_path = dir_path
         # we hold EventWriter per tag name, so events can be gathered by tags (like phases during the quantization
         # process).
         self.tag_name_to_event_writer = {}
-        self.fw_info = fw_info
 
     def close(self):
         """
@@ -232,7 +230,7 @@ class TensorboardWriter(object):
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
             elif n.candidates_quantization_cfg is not None:
-                attr.update(n.get_unified_weights_candidates_dict(self.fw_info))
+                attr.update(n.get_unified_weights_candidates_dict())
             return attr
 
         def __get_node_attr(n: BaseNode) -> Dict[str, Any]:
@@ -296,7 +294,7 @@ class TensorboardWriter(object):
 
             return NodeExecStats(node_name=n.name,
                                  memory=[AllocatorMemoryUsed(
-                                     total_bytes=int(n.get_memory_bytes(self.fw_info))
+                                     total_bytes=int(n.get_memory_bytes())
                                  )])
 
         graph_def = GraphDef()  # GraphDef to add to Tensorboard
@@ -526,13 +524,13 @@ class TensorboardWriter(object):
         er.add_event(event)
         er.flush()
 
-def init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
+
+def init_tensorboard_writer() -> TensorboardWriter:
     """
     Create a TensorBoardWriter object initialized with the logger dir path if it was set,
     or None otherwise.
 
     Args:
-        fw_info: FrameworkInfo object.
 
     Returns:
         A TensorBoardWriter object.
@@ -541,7 +539,7 @@ def init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
     if Logger.LOG_PATH is not None:
         tb_log_dir = os.path.join(os.getcwd(), Logger.LOG_PATH, 'tensorboard_logs')
         Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
-        tb_w = TensorboardWriter(tb_log_dir, fw_info)
+        tb_w = TensorboardWriter(tb_log_dir)
     return tb_w
 
 
