@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Any
+
 from torch.nn import Hardsigmoid, ReLU, ReLU6, Softmax, Sigmoid, GELU, SELU, SiLU
 from torch.nn.functional import hardsigmoid, relu, relu6, softmax, gelu, selu, silu
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch import sigmoid
 
-from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo, DEFAULT_KERNEL_ATTRIBUTES
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.pytorch.constants import KERNEL
@@ -32,29 +33,26 @@ class PyTorchInfo(FrameworkInfo):
     Map each layer to a list of its' weights attributes that should get quantized.
     If a layer that is not listed here is queried, [None] is returned.
     """
-    kernel_ops_attributes_mapping = DefaultDict({Conv2d: [KERNEL],
-                                                 ConvTranspose2d: [KERNEL],
-                                                 Linear: [KERNEL]},
-                                                DEFAULT_KERNEL_ATTRIBUTES)
+    kernel_ops_attributes_mapping = {Conv2d: [KERNEL],
+                                     ConvTranspose2d: [KERNEL],
+                                     Linear: [KERNEL]}
 
     """
     Map a layer to its kernel's output and input channels indices.
     Map's values are tuples of (output_channel_index, input_channel_index).
     Default value is returned for layers that are not included.
     """
-    kernel_channels_mapping = DefaultDict({Conv2d: (0, 1),
-                                           Linear: (0, 1),
-                                           ConvTranspose2d: (1, 0)},
-                                          (None, None))
+    kernel_channels_mapping = {Conv2d: (0, 1),
+                               Linear: (0, 1),
+                               ConvTranspose2d: (1, 0)}
 
     """
     Map a layer to its output channel axis.
     Where axis=-1 is the last axis
     """
-    out_channel_axis_mapping = DefaultDict({Conv2d: 1,
-                                            Linear: -1,
-                                            ConvTranspose2d: 1},
-                                           1)
+    out_channel_axis_mapping = {Conv2d: 1,
+                                Linear: -1,
+                                ConvTranspose2d: 1}
 
     """
     Map from an activation function to its min/max output values (if known).
@@ -91,3 +89,29 @@ class PyTorchInfo(FrameworkInfo):
                                     QuantizationMethod.SYMMETRIC: symmetric_quantization,
                                     QuantizationMethod.UNIFORM: uniform_quantization,
                                     QuantizationMethod.LUT_POT_QUANTIZER: activation_lut_kmean_quantizer}
+
+    @classmethod
+    def get_kernel_channels(cls, node_type: Any):
+        """
+        Returns node's channels mapping from kernel_channels_mapping or framework specific default value.
+        Args:
+            node_type: A node type.
+
+        Returns:
+            Node's channels mapping.
+
+        """
+        return cls.kernel_channels_mapping.get(node_type, (None, None))
+
+    @classmethod
+    def get_out_channel_axis(cls, node_type: Any):
+        """
+        Returns node's output channel mapping from out_channel_axis_mapping or framework specific default value.
+        Args:
+            node_type: A node type.
+
+        Returns:
+            Node's output channel axis.
+
+        """
+        return cls.out_channel_axis_mapping.get(node_type, 1)

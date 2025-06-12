@@ -24,8 +24,7 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU, Activation
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU, Activation  # pragma: no cover
-from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo, DEFAULT_KERNEL_ATTRIBUTES
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD, ACTIVATION
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
@@ -38,30 +37,29 @@ class KerasInfo(FrameworkInfo):
     Map each layer to a list of its' weights attributes that should get quantized.
     If a layer that is not listed here is queried, [None] is returned.
     """
-    kernel_ops_attributes_mapping = DefaultDict({Conv2D: [KERNEL],
-                                                 DepthwiseConv2D: [DEPTHWISE_KERNEL],
-                                                 Dense: [KERNEL],
-                                                 Conv2DTranspose: [KERNEL]}, DEFAULT_KERNEL_ATTRIBUTES)
+    kernel_ops_attributes_mapping = {Conv2D: [KERNEL],
+                                     DepthwiseConv2D: [DEPTHWISE_KERNEL],
+                                     Dense: [KERNEL],
+                                     Conv2DTranspose: [KERNEL]}
 
     """
     Map a layer to its kernel's output and input channels indices.
     Map's values are tuples of (output_channel_index, input_channel_index).
     Default value is returned for layers that are not included.
     """
-    kernel_channels_mapping = DefaultDict({Conv2D: (3, 2),
-                                           DepthwiseConv2D: (2, 2),
-                                           Dense: (1, 0),
-                                           Conv2DTranspose: (2, 3)}, (None, None))
+    kernel_channels_mapping = {Conv2D: (3, 2),
+                               DepthwiseConv2D: (2, 2),
+                               Dense: (1, 0),
+                               Conv2DTranspose: (2, 3)}
 
     """
     Map a layer to its output channel axis.
     Where axis=-1 is the last axis
     """
-    out_channel_axis_mapping = DefaultDict({Conv2D: -1,
-                                            DepthwiseConv2D: -1,
-                                            Dense: -1,
-                                            Conv2DTranspose: -1},
-                                           -1)
+    out_channel_axis_mapping = {Conv2D: -1,
+                                DepthwiseConv2D: -1,
+                                Dense: -1,
+                                Conv2DTranspose: -1}
 
     """
     Map from an activation function to its min/max output values (if known).
@@ -123,3 +121,29 @@ class KerasInfo(FrameworkInfo):
             return cls.activation_min_max_mapping[fw_attrs[ACTIVATION]]
         else:
             return None, None
+
+    @classmethod
+    def get_kernel_channels(cls, node_type: Any):
+        """
+        Returns node's channels mapping from kernel_channels_mapping or framework specific default value.
+        Args:
+            node_type: A node type
+
+        Returns:
+            Node's channels mapping.
+
+        """
+        return cls.kernel_channels_mapping.get(node_type, (None, None))
+
+    @classmethod
+    def get_out_channel_axis(cls, node_type: Any):
+        """
+        Returns node's output channel mapping from out_channel_axis_mapping or framework specific default value.
+        Args:
+            node_type: A node type.
+
+        Returns:
+            Node's output channel axis.
+
+        """
+        return cls.out_channel_axis_mapping.get(node_type, -1)

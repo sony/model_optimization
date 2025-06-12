@@ -57,7 +57,6 @@ class TestSetNodeQuantizationConfig:
 
     def test_activation_preserving_with_2_inputs(self, fw_info_mock):
         """ Tests that . """
-        fw_info_mock.kernel_channels_mapping = {DummyLayer: 0}
         fw_info_mock.activation_quantizer_mapping = {QuantizationMethod.POWER_OF_TWO: lambda x: 0}
         fw_info_mock.get_kernel_op_attributes = lambda x: [None]
 
@@ -91,7 +90,6 @@ class TestSetNodeQuantizationConfig:
         """
         Test that node quantization n_bits is unaffected by preserving next node and not-enabled quantization next node.
         """
-        fw_info_mock.kernel_channels_mapping = {DummyLayer: 0}
         fw_info_mock.activation_quantizer_mapping = {QuantizationMethod.POWER_OF_TWO: lambda x: 0}
         fw_info_mock.get_kernel_op_attributes = lambda x: [None]
 

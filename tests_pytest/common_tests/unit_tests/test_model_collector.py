@@ -41,7 +41,6 @@ class TestStatisticsCollectors:
     @pytest.fixture(autouse=True)
     def setup(self, fw_info_mock):
         set_fw_info(fw_info_mock)
-        fw_info_mock.out_channel_axis_mapping = {DummyLayer: 1}
 
     def test_create_stats_collector_for_node_activation_enabled(self, fw_info_mock):
         """
@@ -298,6 +297,8 @@ class TestModelCollectorInfer:
         set_fw_info(fw_info_mock)
         fw_info_mock.get_kernel_op_attributes = Mock()
         fw_info_mock.get_kernel_op_attributes.return_value = [None]
+        fw_info_mock.get_out_channel_axis = Mock()
+        fw_info_mock.get_out_channel_axis.return_value = 1
 
         input_shape = (1, 3, 14)
         self.node1 = build_node('node1', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])

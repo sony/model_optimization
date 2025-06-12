@@ -18,7 +18,6 @@ from typing import Any
 import numpy as np
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_weights_attr_by_qc
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
@@ -41,11 +40,10 @@ def compute_bias_correction_of_graph(graph: Graph,
         for each node.
     """
 
-    fw_info = get_fw_info()
     for n in graph.nodes:
         # Bias correction is computed based on the quantized kernel, so we need to get the specific kernel attribute
         # name out of all the weights attributes of the node.
-        if fw_info.is_kernel_op(n.type):
+        if n.is_kernel_op:
             kernel_attr = n.kernel_atts[0]
             if n.is_weights_quantization_enabled(kernel_attr):
                 # Bias correction is not applied to layers with constant inputs.

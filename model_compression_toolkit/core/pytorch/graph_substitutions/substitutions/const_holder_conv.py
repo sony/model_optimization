@@ -55,7 +55,7 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
         else:
             Logger.critical(f'Substitution filter mismatch. Layer {func_node.type}. Must be {type(Conv2d)} or {type(ConvTranspose2d)}.')  # pragma: no cover
 
-        out_channel_index, in_channel_index = get_fw_info().kernel_channels_mapping.get(new_layer)
+        out_channel_index, in_channel_index = get_fw_info().get_kernel_channels(new_layer)
 
         # Create new node of layer convolution
         if 1 not in func_node.weights:

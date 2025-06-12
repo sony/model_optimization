@@ -19,7 +19,6 @@ from model_compression_toolkit.core.common.pruning.pruning_framework_implementat
     PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.pytorch.constants import BIAS, GROUPS, OUT_CHANNELS, OUT_FEATURES, NUM_FEATURES, \
     IN_CHANNELS, IN_FEATURES, NUM_PARAMETERS
@@ -168,7 +167,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
         """
 
         attributes_with_axis = {}
-        if get_fw_info().is_kernel_op(node.type):
+        if node.is_kernel_op:
             kernel_attributes = node.kernel_atts
             if kernel_attributes is None or len(kernel_attributes) == 0:
                 Logger.critical(f"Expected to find kernel attributes but none were identified for node '{node.name}' of type {node.type}.")

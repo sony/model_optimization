@@ -17,10 +17,9 @@
 from collections.abc import Callable
 from enum import Enum
 from typing import Dict, Any, List, Tuple
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.defaultdict import DefaultDict
 
 
 # Default value to use for ops without kernel.
@@ -55,42 +54,20 @@ class FrameworkInfo(ABC):
 
     Fields:
         activation_quantizer_mapping (Dict[QuantizationMethod, Callable]): A dictionary mapping from QuantizationMethod to a quantization function.
-        kernel_channels_mapping (DefaultDict): Dictionary from a layer to a tuple of its kernel in/out channels indices.
+        kernel_channels_mapping (Dict): Dictionary from a layer to a tuple of its kernel in/out channels indices.
         activation_min_max_mapping (Dict[str, tuple]): Dictionary from an activation function to its min/max output values.
         layer_min_max_mapping (Dict[Any, tuple]): Dictionary from a layer to its min/max output values.
-        kernel_ops_attributes_mapping (DefaultDict): Dictionary from a framework operator to a list of its weights attirbutes to quantize.
-        out_channel_axis_mapping (DefaultDict): Dictionary of output channels of the model's layers (for computing statistics per-channel).
-
-    Examples:
-        When quantizing a Keras model, if we want to quantize the kernels of Conv2D layers only, we can
-        set, and we know it's kernel out/in channel indices are (3, 2) respectivly:
-
-        >>> import tensorflow as tf
-        >>> kernel_ops = [tf.keras.layers.Conv2D]
-        >>> kernel_channels_mapping = DefaultDict({tf.keras.layers.Conv2D: (3,2)})
-
-        Then, we can create a FrameworkInfo object:
-
-        >>> FrameworkInfo(kernel_channels_mapping, {}, {})
-
-        If an activation layer (tf.keras.layers.Activation) should be quantized and we know it's min/max outputs range in advanced, we can add it to activation_min_max_mapping for saving the statistics collection time. For example:
-
-        >>> activation_min_max_mapping = {'softmax': (0, 1)}
-        >>> FrameworkInfo(kernel_channels_mapping, activation_min_max_mapping, {})
-
-        If a layer's activations should be quantized and we know it's min/max outputs range in advanced, we can add it to layer_min_max_mapping for saving the statistics collection time. For example:
-
-        >>> layer_min_max_mapping = {tf.keras.layers.Softmax: (0, 1)}
-        >>> FrameworkInfo(kernel_channels_mapping, activation_min_max_mapping, layer_min_max_mapping)
+        kernel_ops_attributes_mapping (Dict): Dictionary from a framework operator to a list of its weights attirbutes to quantize.
+        out_channel_axis_mapping (Dict): Dictionary of output channels of the model's layers (for computing statistics per-channel).
 
     """
 
     activation_quantizer_mapping: Dict[QuantizationMethod, Callable]
-    kernel_channels_mapping: DefaultDict
+    kernel_channels_mapping: Dict
     activation_min_max_mapping: Dict[str, tuple]
     layer_min_max_mapping: Dict[Any, tuple]
-    kernel_ops_attributes_mapping: DefaultDict
-    out_channel_axis_mapping: DefaultDict
+    kernel_ops_attributes_mapping: Dict
+    out_channel_axis_mapping: Dict
 
     @classmethod
     def get_kernel_op_attributes(cls, node_type: Any) -> List[str]:
@@ -103,8 +80,7 @@ class FrameworkInfo(ABC):
         Returns:
             A list of attributes the layer has and should be quantized.
         """
-        attr_list = cls.kernel_ops_attributes_mapping.get(node_type)
-        return attr_list
+        return cls.kernel_ops_attributes_mapping.get(node_type, DEFAULT_KERNEL_ATTRIBUTES)
 
     @classmethod
     def is_kernel_op(cls, node_type: Any) -> bool:
@@ -117,7 +93,7 @@ class FrameworkInfo(ABC):
         Returns:
             True if node type is a kernel operation, else False.
         """
-        return node_type in cls.kernel_ops_attributes_mapping.keys()
+        return node_type in cls.kernel_ops_attributes_mapping
 
     @classmethod
     def get_layer_min_max(cls, layer: Any, fw_attrs: Dict) -> Tuple[float, float]:
@@ -162,6 +138,33 @@ class FrameworkInfo(ABC):
         """
 
         return activation_name in cls.activation_min_max_mapping
+
+    @classmethod
+    @abstractmethod
+    def get_kernel_channels(cls, node_type: Any):
+        """
+        Returns node's channels mapping from kernel_channels_mapping or framework specific default value.
+        Args:
+            node_type: A node type
+
+        Returns:
+            Node's channels mapping.
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_out_channel_axis(cls, node_type: Any):
+        """
+        Returns node's output channel mapping from out_channel_axis_mapping or framework specific default value.
+        Args:
+            node_type: A node type.
+
+        Returns:
+            Node's output channel axis.
+
+        """
+        pass
 
 
 # Pointer to current FrameworkInfo class.

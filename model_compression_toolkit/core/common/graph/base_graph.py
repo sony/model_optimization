@@ -23,7 +23,6 @@ import numpy as np
 
 from networkx.algorithms.dag import topological_sort
 
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.edge import Edge, convert_to_edge
@@ -579,7 +578,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
         """
         # configurability is only relevant for kernel attribute quantization
-        potential_conf_nodes = [n for n in list(self) if get_fw_info().is_kernel_op(n.type)]
+        potential_conf_nodes = [n for n in list(self) if n.is_kernel_op]
 
         def is_configurable(n):
             return any(n.is_configurable_weight(attr) for attr in n.kernel_atts) and (not n.reuse or include_reused_nodes)

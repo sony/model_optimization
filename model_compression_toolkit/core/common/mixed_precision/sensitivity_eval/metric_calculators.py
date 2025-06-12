@@ -16,7 +16,6 @@ import numpy as np
 from typing import runtime_checkable, Protocol, Callable, Any, List, Tuple
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, MpDistanceWeighting
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
@@ -393,7 +392,7 @@ class DistanceMetricCalculator(MetricCalculator):
         """
 
         return [n.node for n in graph.get_outputs()
-                if (get_fw_info().is_kernel_op(n.node.type) and
+                if (n.node.is_kernel_op and
                     n.node.is_weights_quantization_enabled(n.node.kernel_atts[0])) or
                 n.node.is_activation_quantization_enabled()]
 

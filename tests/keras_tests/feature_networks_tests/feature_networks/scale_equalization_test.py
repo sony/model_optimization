@@ -131,9 +131,9 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
             beta = np.mean(float_model_layer2_weight / quantized_model_layer2_weight)
             scale_factor = np.mean(scale_factor)
         else:
-            first_layer_chn_dim = KerasInfo.kernel_channels_mapping.get(
+            first_layer_chn_dim = KerasInfo.get_kernel_channels(
                 type(quantized_model.layers[q_first_linear_op_index].layer))[0]
-            second_layer_chn_dim = KerasInfo.kernel_channels_mapping.get(
+            second_layer_chn_dim = KerasInfo.get_kernel_channels(
                 type(quantized_model.layers[q_second_linear_op_index].layer))[1]
 
             first_layer_axes = tuple(np.delete(np.arange(quantized_model_layer1_weight.numpy().ndim),

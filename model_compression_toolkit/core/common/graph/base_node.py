@@ -88,11 +88,15 @@ class BaseNode:
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
+        self._set_fw_node_attrs(layer_class, framework_attr)
+
+    def _set_fw_node_attrs(self, node_type, framework_attr):
         fw_info = get_fw_info()
-        self.channel_axis = None if fw_info is None else fw_info.kernel_channels_mapping.get(layer_class)
-        self.out_channel_axis = None if fw_info is None else fw_info.out_channel_axis_mapping.get(layer_class)
-        self.minmax = None if fw_info is None else fw_info.get_layer_min_max(layer_class, framework_attr)
-        self.kernel_atts = None if fw_info is None else fw_info.get_kernel_op_attributes(layer_class)
+        self.channel_axis = None if fw_info is None else fw_info.get_kernel_channels(node_type)
+        self.out_channel_axis = None if fw_info is None else fw_info.get_out_channel_axis(node_type)
+        self.minmax = None if fw_info is None else fw_info.get_layer_min_max(node_type, framework_attr)
+        self.kernel_atts = None if fw_info is None else fw_info.get_kernel_op_attributes(node_type)
+        self.is_kernel_op = fw_info.is_kernel_op(node_type)
 
     @property
     def type(self):

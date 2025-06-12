@@ -32,6 +32,6 @@ class KerasModelValidation(ModelValidation):
         for layer in self.model.layers:
             data_format = layer.get_config().get(CHANNELS_FORMAT)
             if data_format is not None:
-                assert (data_format == CHANNELS_FORMAT_LAST and fw_info.out_channel_axis_mapping.get(layer) == ChannelAxis.NHWC.value
-                        or data_format == CHANNELS_FORMAT_FIRST and fw_info.out_channel_axis_mapping.get(layer) == ChannelAxis.NCHW.value), \
+                assert (data_format == CHANNELS_FORMAT_LAST and fw_info.get_out_channel_axis(layer) == ChannelAxis.NHWC.value
+                        or data_format == CHANNELS_FORMAT_FIRST and fw_info.get_out_channel_axis(layer) == ChannelAxis.NCHW.value), \
                     f'Model can not have layers with different data formats.'

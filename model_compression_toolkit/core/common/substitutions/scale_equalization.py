@@ -20,8 +20,6 @@ import scipy
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 
 
@@ -77,7 +75,6 @@ def fixed_second_moment_after_relu(mu: np.ndarray,
 
 def scale_reshaping(scale: np.ndarray,
                     op2d: common.BaseNode,
-                    kernel_channel_mapping: DefaultDict,
                     kernel_str: str,
                     in_channels: bool = True) -> np.ndarray:
     """
@@ -89,7 +86,6 @@ def scale_reshaping(scale: np.ndarray,
     Args:
         scale: Scale factor to scale the kernel channels by.
         op2d: Node to scale its kernel.
-        kernel_channel_mapping: Mapping from a layer to a tuple of indices of its output/input kernel channels.
         kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
         in_channels: Kernel's index of input channels.
 
@@ -99,7 +95,7 @@ def scale_reshaping(scale: np.ndarray,
 
     op_ndims = op2d.get_weights_by_keys(kernel_str).ndim
     reshape_target = np.ones(op_ndims, dtype=np.int32)
-    reshape_target[kernel_channel_mapping.get(op2d.type)[int(in_channels)]] = -1
+    reshape_target[op2d.channel_axis[int(in_channels)]] = -1
     return np.reshape(scale, reshape_target)
 
 
@@ -123,15 +119,12 @@ def update_linear_nodes(first_op2d_node: BaseNode,
         kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
 
     """
-    fw_info = get_fw_info()
     w2_fixed = second_op2d_node.get_weights_by_keys(kernel_str) / scale_reshaping(scale_factor,
                                                                                   second_op2d_node,
-                                                                                  fw_info.kernel_channels_mapping,
                                                                                   kernel_str)
 
     w1_fixed = first_op2d_node.get_weights_by_keys(kernel_str) * scale_reshaping(scale_factor,
                                                                                  first_op2d_node,
-                                                                                 fw_info.kernel_channels_mapping,
                                                                                  kernel_str,
                                                                                  in_channels=False)
 

@@ -79,12 +79,7 @@ class FunctionalNode(BaseNode):
         self.op_call_args = list(op_call_args)
         self.functional_op = functional_op
         self.tensor_input_allocs = [] if tensor_input_allocs is None else tensor_input_allocs
-
-        fw_info = get_fw_info()
-        self.channel_axis = None if fw_info is None else fw_info.kernel_channels_mapping.get(functional_op)
-        self.out_channel_axis = None if fw_info is None else fw_info.out_channel_axis_mapping.get(functional_op)
-        self.minmax = None if fw_info is None else fw_info.get_layer_min_max(functional_op, framework_attr)
-        self.kernel_atts = None if fw_info is None else fw_info.get_kernel_op_attributes(functional_op)
+        self._set_fw_node_attrs(functional_op, framework_attr)
 
     @property
     def type(self):
