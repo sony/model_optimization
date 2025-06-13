@@ -46,7 +46,7 @@ class ActivationQuantizationMode(Enum):
     FLN_QUANT = auto()
     PRESERVE_QUANT = auto()
     NO_QUANT = auto()
-
+    FLN_NO_QUANT = auto()
 
 class BaseNodeQuantizationConfig(object):
     """
