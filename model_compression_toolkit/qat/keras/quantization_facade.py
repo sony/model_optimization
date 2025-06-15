@@ -40,8 +40,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.core.common.framework_info import set_fw_info
-    from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
+    from model_compression_toolkit.core.keras.default_framework_info import set_keras_info
 
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 
@@ -87,6 +86,7 @@ if FOUND_TF:
         return layer
 
 
+    @set_keras_info
     def keras_quantization_aware_training_init_experimental(in_model: Model,
                                                             representative_data_gen: Callable,
                                                             target_resource_utilization: ResourceUtilization = None,
@@ -174,8 +174,6 @@ if FOUND_TF:
         Logger.warning(f"keras_quantization_aware_training_init_experimental is experimental and is subject to future changes."
                        f"If you encounter an issue, please open an issue in our GitHub "
                        f"project https://github.com/sony/model_optimization")
-
-        set_fw_info(KerasInfo)
 
         KerasModelValidation(model=in_model).validate()
 

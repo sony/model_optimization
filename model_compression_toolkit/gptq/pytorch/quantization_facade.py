@@ -39,8 +39,7 @@ from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 
 if FOUND_TORCH:
-    from model_compression_toolkit.core.common.framework_info import set_fw_info
-    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
+    from model_compression_toolkit.core.pytorch.default_framework_info import set_pytorch_info
     from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss, sample_layer_attention_loss
@@ -143,6 +142,8 @@ if FOUND_TORCH:
                                  gradual_activation_quantization_config=gradual_quant_config,
                                  log_function=log_function)
 
+
+    @set_pytorch_info
     def pytorch_gradient_post_training_quantization(model: Module,
                                                     representative_data_gen: Callable,
                                                     target_resource_utilization: ResourceUtilization = None,
@@ -217,8 +218,6 @@ if FOUND_TORCH:
                 Logger.critical("Given quantization config for mixed-precision is not of type 'MixedPrecisionQuantizationConfig'. "
                                 "Ensure usage of the correct API for 'pytorch_gradient_post_training_quantization' "
                                 "or provide a valid mixed-precision configuration.")
-        set_fw_info(PyTorchInfo)
-
         tb_w = init_tensorboard_writer()
 
         fw_impl = GPTQPytorchImplemantation()

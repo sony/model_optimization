@@ -27,8 +27,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_io_handler impor
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 if FOUND_TORCH:
-    from model_compression_toolkit.core.common.framework_info import set_fw_info
-    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
+    from model_compression_toolkit.core.pytorch.default_framework_info import set_pytorch_info
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from torch.nn import Module
     from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
@@ -39,6 +38,7 @@ if FOUND_TORCH:
     PYTORCH_DEFAULT_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 
+    @set_pytorch_info
     def pytorch_resource_utilization_data(in_model: Module,
                                           representative_data_gen: Callable,
                                           core_config: CoreConfig = CoreConfig(),
@@ -81,7 +81,6 @@ if FOUND_TORCH:
             Logger.critical("Resource utilization data computation requires a MixedPrecisionQuantizationConfig object. "
                             "The provided 'mixed_precision_config' is not of this type.")
 
-        set_fw_info(PyTorchInfo)
         fw_impl = PytorchImplementation()
 
         target_platform_capabilities = load_target_platform_capabilities(target_platform_capabilities)

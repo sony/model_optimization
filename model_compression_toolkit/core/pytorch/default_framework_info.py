@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Any
+from functools import wraps
 
 from torch.nn import Hardsigmoid, ReLU, ReLU6, Softmax, Sigmoid, GELU, SELU, SiLU
 from torch.nn.functional import hardsigmoid, relu, relu6, softmax, gelu, selu, silu
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch import sigmoid
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo, set_fw_info
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.pytorch.constants import KERNEL
@@ -115,3 +116,11 @@ class PyTorchInfo(FrameworkInfo):
 
         """
         return cls.out_channel_axis_mapping.get(node_type, 1)
+
+
+def set_pytorch_info(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        set_fw_info(PyTorchInfo)
+        return func(*args, **kwargs)
+    return wrapper

@@ -35,12 +35,12 @@ if FOUND_TF:
         AttachTpcToKeras
     from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
     from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
-    from model_compression_toolkit.core.common.framework_info import set_fw_info
-    from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
+    from model_compression_toolkit.core.keras.default_framework_info import set_keras_info
     from tensorflow.keras.models import Model
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
+    @set_keras_info
     def keras_pruning_experimental(model: Model,
                                    target_resource_utilization: ResourceUtilization,
                                    representative_data_gen: Callable,
@@ -111,8 +111,6 @@ if FOUND_TF:
         Logger.warning(f"keras_pruning_experimental is experimental and is subject to future changes."
                        f"If you encounter an issue, please open an issue in our GitHub "
                        f"project https://github.com/sony/model_optimization")
-
-        set_fw_info(KerasInfo)
 
         # Instantiate the Keras framework implementation.
         fw_impl = PruningKerasImplementation()

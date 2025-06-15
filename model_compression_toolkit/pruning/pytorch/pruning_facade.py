@@ -36,8 +36,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
     from model_compression_toolkit.core.pytorch.pruning.pruning_pytorch_implementation import \
         PruningPytorchImplementation
-    from model_compression_toolkit.core.common.framework_info import set_fw_info
-    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
+    from model_compression_toolkit.core.pytorch.default_framework_info import set_pytorch_info
     from torch.nn import Module
     from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
         AttachTpcToPytorch
@@ -45,6 +44,7 @@ if FOUND_TORCH:
     # Set the default Target Platform Capabilities (TPC) for PyTorch.
     DEFAULT_PYOTRCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
+    @set_pytorch_info
     def pytorch_pruning_experimental(model: Module,
                                      target_resource_utilization: ResourceUtilization,
                                      representative_data_gen: Callable,
@@ -117,8 +117,6 @@ if FOUND_TORCH:
         Logger.warning(f"pytorch_pruning_experimental is experimental and is subject to future changes."
                        f"If you encounter an issue, please open an issue in our GitHub "
                        f"project https://github.com/sony/model_optimization")
-
-        set_fw_info(PyTorchInfo)
 
         # Instantiate the Pytorch framework implementation.
         fw_impl = PruningPytorchImplementation()

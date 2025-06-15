@@ -41,8 +41,7 @@ from model_compression_toolkit.metadata import create_model_metadata
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.core.common.framework_info import set_fw_info
-    from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
+    from model_compression_toolkit.core.keras.default_framework_info import set_keras_info
     from model_compression_toolkit.gptq.keras.gptq_keras_implementation import GPTQKerasImplemantation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
@@ -153,6 +152,7 @@ if FOUND_TF:
                                  gradual_activation_quantization_config=gradual_quant_config)
 
 
+    @set_keras_info
     def keras_gradient_post_training_quantization(in_model: Model, representative_data_gen: Callable,
                                                   gptq_config: GradientPTQConfig,
                                                   gptq_representative_data_gen: Callable = None,
@@ -234,8 +234,6 @@ if FOUND_TF:
 
         if core_config.debug_config.bypass:
             return in_model, None
-
-        set_fw_info(KerasInfo)
 
         KerasModelValidation(model=in_model).validate()
 

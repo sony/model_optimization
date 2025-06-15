@@ -36,8 +36,7 @@ if FOUND_TORCH:
     import torch.nn as nn
     from torch.nn import Module
     from mct_quantizers import PytorchActivationQuantizationHolder
-    from model_compression_toolkit.core.common.framework_info import set_fw_info
-    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
+    from model_compression_toolkit.core.pytorch.default_framework_info import set_pytorch_info
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
@@ -75,6 +74,7 @@ if FOUND_TORCH:
         return module
 
 
+    @set_pytorch_info
     def pytorch_quantization_aware_training_init_experimental(in_model: Module,
                                                               representative_data_gen: Callable,
                                                               target_resource_utilization: ResourceUtilization = None,
@@ -143,8 +143,6 @@ if FOUND_TORCH:
             f"pytorch_quantization_aware_training_init_experimental is experimental and is subject to future changes."
             f"If you encounter an issue, please open an issue in our GitHub "
             f"project https://github.com/sony/model_optimization")
-
-        set_fw_info(PyTorchInfo)
 
         if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):

@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-
 import tensorflow as tf
 
 from typing import Tuple, Any, Dict
+from functools import wraps
+
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
 from packaging import version
 
@@ -24,7 +25,7 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU, Activation
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU, Activation  # pragma: no cover
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo, set_fw_info
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD, ACTIVATION
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
@@ -147,3 +148,11 @@ class KerasInfo(FrameworkInfo):
 
         """
         return cls.out_channel_axis_mapping.get(node_type, -1)
+
+
+def set_keras_info(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        set_fw_info(KerasInfo)
+        return func(*args, **kwargs)
+    return wrapper
