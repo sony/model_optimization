@@ -26,18 +26,14 @@ class ChannelGrouping:
     based on their importance scores and SIMD group sizes.
     """
 
-    def __init__(self,
-                 prunable_nodes: List[BaseNode],
-                 fw_info: FrameworkInfo):
+    def __init__(self, prunable_nodes: List[BaseNode]):
         """
         Initializes the ChannelGrouping with necessary information.
 
         Args:
             prunable_nodes: List of nodes that can be pruned.
-            fw_info: Framework-specific information and utilities.
         """
         self.prunable_nodes = prunable_nodes
-        self.fw_info = fw_info
         # Store for each node a list of numpy arrays. Each numpy array represents the
         # indices of the channels in an SIMD group.
         self._simd_groups_indices = {}

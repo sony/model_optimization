@@ -18,7 +18,6 @@ import torch
 from torch import nn
 
 from mct_quantizers import PytorchQuantizationWrapper
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 
 
@@ -61,8 +60,7 @@ class SoftQuantizerRegularization:
         b = self.beta_scheduler(self.count_iter)
         reg = 0
         for layer, w in zip(layers, layer_weights):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_PYTORCH_INFO)
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer))
 
             st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
             soft_loss = (1 - torch.pow(torch.abs(st - .5) * 2, b)).sum()

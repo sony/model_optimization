@@ -26,7 +26,8 @@ else:
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.gptq import keras_gradient_post_training_quantization
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.common.framework_info import set_fw_info, get_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 import numpy as np
@@ -69,6 +70,7 @@ class BaseKerasLayerTest(BaseLayerTest):
                          quantization_modes=quantization_modes,
                          is_inputs_a_list=is_inputs_a_list,
                          use_cpu=use_cpu)
+        set_fw_info(KerasInfo)
 
     def get_tpc(self):
         if self.current_mode == LayerTestMode.FLOAT:
@@ -82,7 +84,7 @@ class BaseKerasLayerTest(BaseLayerTest):
             raise NotImplemented
 
     def get_fw_info(self) -> FrameworkInfo:
-        return DEFAULT_KERAS_INFO
+        return get_fw_info()
 
     def get_fw_impl(self) -> FrameworkImplementation:
         return KerasImplementation()

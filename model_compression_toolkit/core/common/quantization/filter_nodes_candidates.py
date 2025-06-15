@@ -34,7 +34,7 @@ def filter_nodes_candidates(graph: Graph):
     """
     nodes = list(graph.nodes)
     for n in nodes:
-        n.candidates_quantization_cfg = filter_node_candidates(node=n, fw_info=graph.fw_info)
+        n.candidates_quantization_cfg = filter_node_candidates(node=n)
 
     return graph
 
@@ -71,7 +71,7 @@ def _filter_bit_method_dups(candidates: List[CandidateNodeQuantizationConfig],
     return final_candidates
 
 
-def filter_node_candidates(node: BaseNode, fw_info) -> List[CandidateNodeQuantizationConfig]:
+def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConfig]:
     """
     Updates a node's candidates configuration list.
     If the node's weights quantization is disabled (or it only has activations to quantize), then the updated list
@@ -81,13 +81,12 @@ def filter_node_candidates(node: BaseNode, fw_info) -> List[CandidateNodeQuantiz
 
     Args:
         node: Node to set its quantization configurations.
-        fw_info: FrameworkInfo object with information about the specific framework's model.
 
     """
 
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
     final_candidates = copy.deepcopy(node.candidates_quantization_cfg)
-    kernel_attr = fw_info.get_kernel_op_attributes(node.type)[0]
+    kernel_attr = node.kernel_atts[0]
 
     if (kernel_attr is None or not node.is_weights_quantization_enabled(kernel_attr)) and not node.is_activation_quantization_enabled():
         # If activation quantization is disabled and the node doesn't have a kernel or doesn't quantize the kernel,

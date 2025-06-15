@@ -21,19 +21,18 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import IN_CHANNELS, OUT_CHANNELS, KERNEL_SIZE, KERNEL, BIAS
-from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 
 
 class FunctionalConvSubstitution(common.BaseSubstitution):
     """
     Substitute functional convolutions with Layers
     """
-    def __init__(self, fw_info: FrameworkInfo):
+    def __init__(self):
         """
         Matches a functional conv node
         """
         func_node = NodeOperationMatcher(conv2d) | NodeOperationMatcher(conv_transpose2d)
-        self.fw_info = fw_info
         super().__init__(matcher_instance=func_node)
 
     def substitute(self,
@@ -56,7 +55,7 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
         else:
             Logger.critical(f'Substitution filter mismatch. Layer {func_node.type}. Must be {type(Conv2d)} or {type(ConvTranspose2d)}.')  # pragma: no cover
 
-        out_channel_index, in_channel_index = self.fw_info.kernel_channels_mapping.get(new_layer)
+        out_channel_index, in_channel_index = get_fw_info().get_kernel_channels(new_layer)
 
         # Create new node of layer convolution
         if 1 not in func_node.weights:

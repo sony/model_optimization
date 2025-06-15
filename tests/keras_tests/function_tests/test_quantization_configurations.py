@@ -23,7 +23,6 @@ from tensorflow.keras import layers
 import model_compression_toolkit as mct
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
 

@@ -33,7 +33,6 @@ def activation_bias_correction_node_matchers():
 
 def pytorch_compute_activation_bias_correction_of_graph(graph: Graph,
                                                         quant_config: QuantizationConfig,
-                                                        fw_info: FrameworkInfo,
                                                         fw_impl: FrameworkImplementation) -> Graph:
     """
     Compute the activation bias correction term for graph based on a PyTorch model.
@@ -41,7 +40,6 @@ def pytorch_compute_activation_bias_correction_of_graph(graph: Graph,
     Args:
         graph: Graph with nodes to compute the activation bias correction.
         quant_config: QuantizationConfig of how the model should be quantized.
-        fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
@@ -49,7 +47,6 @@ def pytorch_compute_activation_bias_correction_of_graph(graph: Graph,
     """
     graph = compute_activation_bias_correction_of_graph(graph=graph,
                                                         quant_config=quant_config,
-                                                        fw_info=fw_info,
                                                         fw_impl=fw_impl,
                                                         activation_bias_correction_node_matchers=
                                                         activation_bias_correction_node_matchers,

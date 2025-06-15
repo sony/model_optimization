@@ -37,7 +37,6 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
                 tb_w: TensorboardWriter,
                 tg: Graph,
                 tg_bias: Graph,
-                fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 hessian_info_service: HessianInfoService = None) -> Graph:
     """
@@ -52,7 +51,6 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
         tb_w: TensorBoardWriter object to log events.
         tg: Float Reference Graph.
         tg_bias: Graph of quantized model.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
         fw_impl: Framework implementation per framework
         hessian_info_service: HessianInfoService to fetch information based on the hessian approximation for the float model.
     Returns:
@@ -64,7 +62,6 @@ def _apply_gptq(gptq_config: GradientPTQConfig,
                                 gptq_config,
                                 representative_data_gen,
                                 fw_impl,
-                                fw_info,
                                 hessian_info_service=hessian_info_service)
 
         if tb_w is not None:
@@ -77,7 +74,6 @@ def gptq_runner(tg: Graph,
                 gptq_config: GradientPTQConfig,
                 representative_data_gen: Callable,
                 gptq_representative_data_gen: Callable,
-                fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 tb_w: TensorboardWriter,
                 hessian_info_service: HessianInfoService = None) -> Graph:
@@ -91,7 +87,6 @@ def gptq_runner(tg: Graph,
         gptq_config: GradientPTQConfig with parameters about the tuning process.
         representative_data_gen: Dataset used for calibration.
         gptq_representative_data_gen: Dataset used for GPTQ training
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
         hessian_info_service: HessianScoresService to fetch approximations of the hessian scores for the float model.
@@ -104,7 +99,7 @@ def gptq_runner(tg: Graph,
     #############################################
     # Apply Statistics Correction
     #############################################
-    tg_bias = apply_statistics_correction(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+    tg_bias = apply_statistics_correction(tg, representative_data_gen, core_config, fw_impl, tb_w)
 
     if tb_w is not None:
         tb_w.add_graph(tg_bias, 'after_bias_correction')
@@ -117,7 +112,6 @@ def gptq_runner(tg: Graph,
                           tb_w,
                           tg,
                           tg_bias,
-                          fw_info,
                           fw_impl,
                           hessian_info_service=hessian_info_service)
 

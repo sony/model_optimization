@@ -28,20 +28,17 @@ class BaseModelBuilder(ABC):
     def __init__(self,
                  graph: common.Graph,
                  append2output=None,
-                 fw_info: FrameworkInfo = None,
                  return_float_outputs: bool = False):
         """
 
         Args:
             graph: Graph to build the model from.
             append2output: Nodes of graph to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
         """
 
         self.graph = graph
         self.append2output = append2output
-        self.fw_info = fw_info
         self.return_float_outputs = return_float_outputs
 
     @abstractmethod

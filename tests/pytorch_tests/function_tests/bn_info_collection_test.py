@@ -18,7 +18,6 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 import numpy as np
 
 from model_compression_toolkit.core import DEFAULTCONFIG
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -148,7 +147,6 @@ class BNInfoCollectionTest(BasePytorchTest):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in input_shapes])
 
     def prepare_graph(self, in_model):
-        fw_info = DEFAULT_PYTORCH_INFO
         pytorch_impl = PytorchImplementation()
         input_shapes = self.create_inputs_shape()
         x = self.generate_inputs(input_shapes)
@@ -160,7 +158,6 @@ class BNInfoCollectionTest(BasePytorchTest):
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
         for node in graph.nodes:
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                               fw_info=fw_info,
                                                                graph=graph)
         transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
@@ -197,7 +194,6 @@ class Conv2D2BNInfoCollectionTest(BasePytorchTest):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in input_shapes])
 
     def prepare_graph(self, in_model):
-        fw_info = DEFAULT_PYTORCH_INFO
         pytorch_impl = PytorchImplementation()
         input_shapes = self.create_inputs_shape()
         x = self.generate_inputs(input_shapes)
@@ -209,7 +205,6 @@ class Conv2D2BNInfoCollectionTest(BasePytorchTest):
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
         for node in graph.nodes:
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                               fw_info=fw_info,
                                                                graph=graph)
         transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
@@ -269,7 +264,6 @@ class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in input_shapes])
 
     def prepare_graph(self, in_model):
-        fw_info = DEFAULT_PYTORCH_INFO
         pytorch_impl = PytorchImplementation()
         input_shapes = self.create_inputs_shape()
         x = self.generate_inputs(input_shapes)
@@ -281,7 +275,6 @@ class Conv2DBNChainInfoCollectionTest(BasePytorchTest):
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
         for node in graph.nodes:
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                               fw_info=fw_info,
                                                                graph=graph)
         transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
@@ -329,7 +322,6 @@ class BNChainInfoCollectionTest(BasePytorchTest):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in input_shapes])
 
     def prepare_graph(self, in_model):
-        fw_info = DEFAULT_PYTORCH_INFO
         pytorch_impl = PytorchImplementation()
         input_shapes = self.create_inputs_shape()
         x = self.generate_inputs(input_shapes)
@@ -341,7 +333,6 @@ class BNChainInfoCollectionTest(BasePytorchTest):
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
         for node in graph.nodes:
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                               fw_info=fw_info,
                                                                graph=graph)
         transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
@@ -401,7 +392,6 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in input_shapes])
 
     def prepare_graph(self, in_model):
-        fw_info = DEFAULT_PYTORCH_INFO
         pytorch_impl = PytorchImplementation()
         input_shapes = self.create_inputs_shape()
         x = self.generate_inputs(input_shapes)
@@ -413,7 +403,6 @@ class BNLayerInfoCollectionTest(BasePytorchTest):
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
         for node in graph.nodes:
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                               fw_info=fw_info,
                                                                graph=graph)
         transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph
@@ -509,7 +498,6 @@ class INP2BNInfoCollectionTest(BasePytorchTest):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in input_shapes])
 
     def prepare_graph(self, in_model):
-        fw_info = DEFAULT_PYTORCH_INFO
         pytorch_impl = PytorchImplementation()
         input_shapes = self.create_inputs_shape()
         x = self.generate_inputs(input_shapes)
@@ -521,7 +509,6 @@ class INP2BNInfoCollectionTest(BasePytorchTest):
         graph = substitute(graph, pytorch_impl.get_substitutions_prepare_graph())
         for node in graph.nodes:
             node.prior_info = pytorch_impl.get_node_prior_info(node=node,
-                                                               fw_info=fw_info,
                                                                graph=graph)
         transformed_graph = substitute(graph, pytorch_impl.get_substitutions_pre_statistics_collection(DEFAULTCONFIG))
         return transformed_graph

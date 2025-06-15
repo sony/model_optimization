@@ -550,7 +550,7 @@ class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
     def get_core_config(self):
         return CoreConfig(quantization_config=QuantizationConfig(
             custom_tpc_opset_to_layer={"Softmax": CustomOpsetLayers([layers.Softmax, tf.nn.softmax, softmax,
-                                                    LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
+                                                                     LayerFilterParams(layers.Activation, activation=SOFTMAX)]),
                                        "Input": CustomOpsetLayers([layers.InputLayer])}))
 
     def get_tpc(self):

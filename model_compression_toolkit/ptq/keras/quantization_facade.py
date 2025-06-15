@@ -36,7 +36,7 @@ from model_compression_toolkit.metadata import create_model_metadata
 if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
         AttachTpcToKeras
-    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+    from model_compression_toolkit.core.keras.default_framework_info import set_keras_info
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
@@ -49,6 +49,7 @@ if FOUND_TF:
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
+    @set_keras_info
     def keras_post_training_quantization(in_model: Model,
                                          representative_data_gen: Callable,
                                          target_resource_utilization: ResourceUtilization = None,
@@ -128,10 +129,7 @@ if FOUND_TF:
         if core_config.debug_config.bypass:
             return in_model, None
 
-        fw_info = DEFAULT_KERAS_INFO
-
-        KerasModelValidation(model=in_model,
-                             fw_info=fw_info).validate()
+        KerasModelValidation(model=in_model).validate()
 
         if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
@@ -139,7 +137,7 @@ if FOUND_TF:
                                 "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization "
                                 "API, or pass a valid mixed precision configuration.")  # pragma: no cover
 
-        tb_w = init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer()
 
         fw_impl = KerasImplementation()
 
@@ -153,7 +151,6 @@ if FOUND_TF:
         tg, bit_widths_config, _, scheduling_info = core_runner(in_model=in_model,
                                                                 representative_data_gen=representative_data_gen,
                                                                 core_config=core_config,
-                                                                fw_info=fw_info,
                                                                 fw_impl=fw_impl,
                                                                 fqc=framework_platform_capabilities,
                                                                 target_resource_utilization=target_resource_utilization,
@@ -169,7 +166,6 @@ if FOUND_TF:
         graph_with_stats_correction = ptq_runner(tg,
                                                  representative_data_gen,
                                                  core_config,
-                                                 fw_info,
                                                  fw_impl,
                                                  tb_w)
 
@@ -179,8 +175,7 @@ if FOUND_TF:
                                         tb_w,
                                         similarity_baseline_graph,
                                         quantized_graph,
-                                        fw_impl,
-                                        fw_info)
+                                        fw_impl)
 
         exportable_model, user_info = get_exportable_keras_model(graph_with_stats_correction)
         if framework_platform_capabilities.tpc.add_metadata:

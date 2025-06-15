@@ -42,7 +42,6 @@ class BaseTestFusingInfoGeneratorKeras(BaseFusingInfoGeneratorTest, KerasFwMixin
         return qc
 
 
-
 class TestFusingConvRelu(BaseTestFusingInfoGeneratorKeras):
 
     last_node_activation_nbits, qcs = random_activation_configs()

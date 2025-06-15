@@ -14,20 +14,17 @@
 # ==============================================================================
 from typing import List
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.network_editors import EditRule
 
 
 def edit_network_graph(graph: Graph,
-                       fw_info: FrameworkInfo,
                        network_editor: List[EditRule]):
     """
     Apply a list of edit rules on a graph.
 
     Args:
         graph: The graph to edit.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         network_editor: List of edit rules to apply to the graph.
 
@@ -38,5 +35,5 @@ def edit_network_graph(graph: Graph,
     for edit_rule in network_editor:
         filtered_nodes = graph.filter(edit_rule.filter)
         for node in filtered_nodes:
-            edit_rule.action.apply(node, graph, fw_info)
+            edit_rule.action.apply(node, graph)
     # return graph

@@ -39,7 +39,7 @@ from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 
 if FOUND_TORCH:
-    from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+    from model_compression_toolkit.core.pytorch.default_framework_info import set_pytorch_info
     from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss, sample_layer_attention_loss
@@ -142,6 +142,8 @@ if FOUND_TORCH:
                                  gradual_activation_quantization_config=gradual_quant_config,
                                  log_function=log_function)
 
+
+    @set_pytorch_info
     def pytorch_gradient_post_training_quantization(model: Module,
                                                     representative_data_gen: Callable,
                                                     target_resource_utilization: ResourceUtilization = None,
@@ -216,8 +218,7 @@ if FOUND_TORCH:
                 Logger.critical("Given quantization config for mixed-precision is not of type 'MixedPrecisionQuantizationConfig'. "
                                 "Ensure usage of the correct API for 'pytorch_gradient_post_training_quantization' "
                                 "or provide a valid mixed-precision configuration.")
-
-        tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
+        tb_w = init_tensorboard_writer()
 
         fw_impl = GPTQPytorchImplemantation()
 
@@ -233,7 +234,6 @@ if FOUND_TORCH:
         graph, bit_widths_config, hessian_info_service, scheduling_info = core_runner(in_model=model,
                                                                                       representative_data_gen=representative_data_gen,
                                                                                       core_config=core_config,
-                                                                                      fw_info=DEFAULT_PYTORCH_INFO,
                                                                                       fw_impl=fw_impl,
                                                                                       fqc=framework_quantization_capabilities,
                                                                                       target_resource_utilization=target_resource_utilization,
@@ -250,7 +250,6 @@ if FOUND_TORCH:
                                  gptq_config,
                                  representative_data_gen,
                                  gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
-                                 DEFAULT_PYTORCH_INFO,
                                  fw_impl,
                                  tb_w,
                                  hessian_info_service=hessian_info_service)
@@ -260,8 +259,7 @@ if FOUND_TORCH:
                                         tb_w,
                                         float_graph,
                                         graph_gptq,
-                                        fw_impl,
-                                        DEFAULT_PYTORCH_INFO)
+                                        fw_impl)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_gptq)
         if framework_quantization_capabilities.tpc.add_metadata:

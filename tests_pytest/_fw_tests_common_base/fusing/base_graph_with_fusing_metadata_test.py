@@ -83,7 +83,6 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         """
         assert self._data_gen is not None
         assert self.fw_impl is not None
-        assert self.fw_info is not None
         assert self.attach_to_fw_func is not None
 
         self.fqc = self.attach_to_fw_func(minimal_tpc_with_fusing)
@@ -91,7 +90,6 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         graph_with_fusion_metadata = graph_preparation_runner(self._get_model(),
                                                               self._data_gen,
                                                               QuantizationConfig(),
-                                                              fw_info=self.fw_info,
                                                               fw_impl=self.fw_impl,
                                                               fqc=self.fqc,
                                                               mixed_precision_enable=False,
@@ -107,9 +105,9 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
         assert len(actual_fi.get_all_fused_operations()) == 2
         assert sorted(actual_fi.get_all_fused_operations().keys()) == ['FusedNode_conv_relu', 'FusedNode_linear_softmax']
         assert actual_fi.node_name_to_fused_op_id == {'conv': 'FusedNode_conv_relu',
-                                                    'relu': 'FusedNode_conv_relu',
-                                                    'linear': 'FusedNode_linear_softmax',
-                                                    'softmax': 'FusedNode_linear_softmax'}
+                                                      'relu': 'FusedNode_conv_relu',
+                                                      'linear': 'FusedNode_linear_softmax',
+                                                      'softmax': 'FusedNode_linear_softmax'}
 
     def test_disable_act_quantization(self, graph_with_fusion_metadata: Graph):
         """Tests that the correct nodes have activation quantization disabled after

@@ -42,25 +42,24 @@ class TestResourceUtilizationData:
         prep_runner = mocker.patch('model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.'
                                    'resource_utilization_data.graph_preparation_runner')
 
+        _current_framework_info = fw_info_mock
         compute_resource_utilization_data(model_mock,
                                           data_gen_mock,
                                           core_cfg,
                                           fqc_mock,
-                                          fw_info_mock,
                                           fw_impl_mock)
 
         assert prep_runner.call_args.args == (model_mock,)
         passed_q_cfg = prep_runner.call_args.kwargs.pop('quantization_config')
         assert passed_q_cfg.weights_error_method == QuantizationErrorMethod.MSE
         assert prep_runner.call_args.kwargs == dict(representative_data_gen=data_gen_mock,
-                                                    fw_info=fw_info_mock,
                                                     fw_impl=fw_impl_mock,
                                                     fqc=fqc_mock,
                                                     bit_width_config=core_cfg.bit_width_config,
                                                     mixed_precision_enable=False,
                                                     running_gptq=False)
 
-        ru_calc_cls.assert_called_with(prep_runner.return_value, fw_info=fw_info_mock, fw_impl=fw_impl_mock)
+        ru_calc_cls.assert_called_with(prep_runner.return_value, fw_impl=fw_impl_mock)
         ru_calc_cls.return_value.compute_resource_utilization.assert_called_with(TargetInclusionCriterion.AnyQuantizedNonFused,
                                                                                  BitwidthMode.QDefaultSP)
         # make sure the original config wasn't changed

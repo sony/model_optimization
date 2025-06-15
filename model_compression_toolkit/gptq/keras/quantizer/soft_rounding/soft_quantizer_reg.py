@@ -17,7 +17,6 @@ from typing import List, Callable
 import tensorflow as tf
 from keras import Model
 
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 
@@ -66,8 +65,7 @@ class SoftQuantizerRegularization:
 
         # Compute the regularization term without concatenating
         for i, layer in enumerate(layers):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_KERAS_INFO)
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer))
 
             st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
 

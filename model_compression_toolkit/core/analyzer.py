@@ -32,8 +32,7 @@ def analyzer_model_quantization(representative_data_gen: Callable,
                                 tb_w: TensorboardWriter,
                                 float_graph: Graph,
                                 quantized_graph: Graph,
-                                fw_impl: FrameworkImplementation,
-                                fw_info: FrameworkInfo):
+                                fw_impl: FrameworkImplementation):
     """
     Plot the cosine similarity of different points on the graph between the float and quantized
     graphs. Add them to the passed TensorboardWriter object and close all tensorboard writer open
@@ -45,14 +44,12 @@ def analyzer_model_quantization(representative_data_gen: Callable,
         float_graph: Graph of float model.
         quantized_graph: Graph of quantized model.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        fw_info: Information needed for quantization about the specific framework.
 
     """
     if tb_w is not None:
         visual = NNVisualizer(float_graph,
                               quantized_graph,
-                              fw_impl=fw_impl,
-                              fw_info=fw_info)
+                              fw_impl=fw_impl)
         if not visual.has_compare_points():
             Logger.error(f'No comparing points were found to plot analyze similarity.')
         else:

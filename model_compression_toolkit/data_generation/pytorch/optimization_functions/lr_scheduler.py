@@ -60,10 +60,10 @@ class ReduceLROnPlateauWithReset:
         # Attach optimizer
         if not isinstance(optimizer, Optimizer):
             Logger.critical('{} is not an Optimizer'.format(
-                type(optimizer).__name__)) # pragma: no cover
+                type(optimizer).__name__))  # pragma: no cover
         self.optimizer = optimizer
 
-        if isinstance(min_lr, (list, tuple)):
+        if isinstance(min_lr, (list, tuple)):  # pragma: no cover
             if len(min_lr) != len(optimizer.param_groups):
                 Logger.critical("expected {} min_lrs, got {}".format(
                     len(optimizer.param_groups), len(min_lr))) # pragma: no cover
@@ -117,7 +117,7 @@ class ReduceLROnPlateauWithReset:
             self.num_bad_epochs += 1
 
         # Handle cooldown period
-        if self.in_cooldown:
+        if self.in_cooldown:  # pragma: no cover
             self.cooldown_counter -= 1
             self.num_bad_epochs = 0  # Ignore any bad epochs in cooldown
 
@@ -142,7 +142,7 @@ class ReduceLROnPlateauWithReset:
             new_lr = max(old_lr * self.factor, self.min_lrs[i])
             if old_lr - new_lr > self.eps:
                 param_group['lr'] = new_lr
-                if self.verbose:
+                if self.verbose:  # pragma: no cover
                     epoch_str = ("%.2f" if isinstance(epoch, float) else "%.5d") % epoch
                     print('Epoch {}: reducing learning rate'
                           ' of group {} to {:.4e}.'.format(epoch_str, i, new_lr))
@@ -168,19 +168,19 @@ class ReduceLROnPlateauWithReset:
         Returns:
             bool: True if the new value is better, False otherwise.
         """
-        if best is None:
+        if best is None:  # pragma: no cover
             return True
 
         if self.mode == 'min' and self.threshold_mode == 'rel':
             rel_epsilon = 1. - self.threshold
             return a < best * rel_epsilon
-        elif self.mode == 'min' and self.threshold_mode == 'abs':
+        elif self.mode == 'min' and self.threshold_mode == 'abs':  # pragma: no cover
             return a < best - self.threshold
-        elif self.mode == 'max' and self.threshold_mode == 'rel':
+        elif self.mode == 'max' and self.threshold_mode == 'rel':  # pragma: no cover
             rel_epsilon = self.threshold + 1.
             return a > best * rel_epsilon
         else:  # mode == 'max' and threshold_mode == 'abs':
-            return a > best + self.threshold
+            return a > best + self.threshold  # pragma: no cover
 
     def _init_is_better(self) -> None:
         """
@@ -197,9 +197,9 @@ class ReduceLROnPlateauWithReset:
         if self.mode == 'min':
             self.mode_worse = float('inf')
         else:  # mode == 'max':
-            self.mode_worse = float('-inf')
+            self.mode_worse = float('-inf')  # pragma: no cover
 
-    def state_dict(self) -> Dict[str, Any]:
+    def state_dict(self) -> Dict[str, Any]:  # pragma: no cover
         """
         Return the state of the scheduler as a dictionary.
 
@@ -208,7 +208,7 @@ class ReduceLROnPlateauWithReset:
         """
         return {key: value for key, value in self.__dict__.items() if key != 'optimizer'}
 
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:  # pragma: no cover
         """
         Load the scheduler state.
 

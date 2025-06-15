@@ -37,7 +37,6 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 def graph_preparation_runner(in_model: Any,
                              representative_data_gen: Callable,
                              quantization_config: QuantizationConfig,
-                             fw_info: FrameworkInfo,
                              fw_impl: FrameworkImplementation,
                              fqc: FrameworkQuantizationCapabilities,
                              bit_width_config: BitWidthConfig = None,
@@ -56,8 +55,6 @@ def graph_preparation_runner(in_model: Any,
         in_model (Any): Model to quantize.
         representative_data_gen (Callable): Dataset used for calibration.
         quantization_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
-        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices,
-            groups of layers by how they should be quantized, etc.).
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
         fqc (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities object that models the inference target platform and
             the attached framework operator's information.
@@ -73,7 +70,6 @@ def graph_preparation_runner(in_model: Any,
     graph = read_model_to_graph(in_model,
                                 representative_data_gen,
                                 fqc,
-                                fw_info,
                                 fw_impl)
 
     if tb_w is not None:
@@ -83,7 +79,6 @@ def graph_preparation_runner(in_model: Any,
                                             fqc,
                                             quantization_config,
                                             bit_width_config,
-                                            fw_info,
                                             tb_w,
                                             fw_impl,
                                             mixed_precision_enable=mixed_precision_enable,
@@ -96,7 +91,6 @@ def get_finalized_graph(initial_graph: Graph,
                         fqc: FrameworkQuantizationCapabilities,
                         quant_config: QuantizationConfig = DEFAULTCONFIG,
                         bit_width_config: BitWidthConfig = None,
-                        fw_info: FrameworkInfo = None,
                         tb_w: TensorboardWriter = None,
                         fw_impl: FrameworkImplementation = None,
                         mixed_precision_enable: bool = False,
@@ -111,8 +105,6 @@ def get_finalized_graph(initial_graph: Graph,
         quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
             quantized.
         bit_width_config (BitWidthConfig): Config for bit-width selection. Defaults to None.
-        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-            kernel channels indices, groups of layers by how they should be quantized, etc.)
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
         mixed_precision_enable: is mixed precision enabled.
@@ -124,7 +116,7 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     # Graph substitution (prepare graph)
     ######################################
-    graph = substitute(initial_graph, fw_impl.get_substitutions_prepare_graph(fw_info))
+    graph = substitute(initial_graph, fw_impl.get_substitutions_prepare_graph())
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'after_graph_preparation')
@@ -134,7 +126,6 @@ def get_finalized_graph(initial_graph: Graph,
     ##########################################
     for node in graph.nodes:
         node.prior_info = fw_impl.get_node_prior_info(node=node,
-                                                      fw_info=fw_info,
                                                       graph=graph)
 
     ##################################################
@@ -170,8 +161,7 @@ def get_finalized_graph(initial_graph: Graph,
     # Channel equalization
     ######################################
     transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_channel_equalization(quant_config,
-                                                                                  fw_info))
+                                   fw_impl.get_substitutions_channel_equalization(quant_config))
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_graph_marking')
@@ -190,7 +180,6 @@ def get_finalized_graph(initial_graph: Graph,
 def read_model_to_graph(in_model: Any,
                         representative_data_gen: Callable,
                         fqc: FrameworkQuantizationCapabilities,
-                        fw_info: FrameworkInfo = None,
                         fw_impl: FrameworkImplementation = None) -> Graph:
 
     """
@@ -201,8 +190,6 @@ def read_model_to_graph(in_model: Any,
         representative_data_gen: Dataset used for calibration.
         fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
                       the attached framework operator's information.
-        fw_info: Information needed for quantization about the specific framework (e.g.,
-                kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
@@ -210,6 +197,5 @@ def read_model_to_graph(in_model: Any,
     """
     graph = fw_impl.model_reader(in_model,
                                  representative_data_gen)
-    graph.set_fw_info(fw_info)
     graph.set_fqc(fqc)
     return graph

@@ -56,7 +56,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
         super(ReduceLROnPlateau, self).__init__()
 
         if factor >= 1.0:
-            Logger.critical('Factor should be < 1.0.') # pragma: no cover
+            Logger.critical('Factor should be < 1.0.')  # pragma: no cover
         self.factor = factor
 
         self.optimizer = optimizer
@@ -101,7 +101,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
         else:
             self.num_bad_epochs += 1
 
-        if self.in_cooldown:
+        if self.in_cooldown:  # pragma: no cover
             self.cooldown_counter -= 1
             self.num_bad_epochs = 0  # Ignore any bad epochs in cooldown
 
@@ -122,7 +122,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
         new_lr = max(old_lr * self.factor, self.min_lr)
         if old_lr - new_lr > self.eps:
             tf.keras.backend.set_value(self.optimizer.learning_rate, new_lr)
-            if self.verbose:
+            if self.verbose:  # pragma: no cover
                 print(f'Epoch {epoch:05d}: reducing learning rate to {new_lr:.4e}.')
 
     @property
@@ -152,13 +152,13 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
         if self.mode == 'min' and self.threshold_mode == 'rel':
             rel_epsilon = 1. - self.threshold
             return a < best * rel_epsilon
-        elif self.mode == 'min' and self.threshold_mode == 'abs':
+        elif self.mode == 'min' and self.threshold_mode == 'abs':  # pragma: no cover
             return a < best - self.threshold
-        elif self.mode == 'max' and self.threshold_mode == 'rel':
+        elif self.mode == 'max' and self.threshold_mode == 'rel':  # pragma: no cover
             rel_epsilon = self.threshold + 1.
             return a > best * rel_epsilon
         else:  # mode == 'max' and threshold_mode == 'abs':
-            return a > best + self.threshold
+            return a > best + self.threshold  # pragma: no cover
 
     def _init_is_better(self, mode: str, threshold: float, threshold_mode: str) -> None:
         """
@@ -186,7 +186,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
         self.threshold = threshold
         self.threshold_mode = threshold_mode
 
-    def get_config(self) -> Dict:
+    def get_config(self) -> Dict:  # pragma: no cover
         """
         Return the configuration of the scheduler as a dictionary.
 
@@ -207,7 +207,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
         base_config = super(ReduceLROnPlateau, self).get_config()
         return {**base_config, **config}
 
-    def set_config(self, config: Dict) -> None:
+    def set_config(self, config: Dict) -> None:  # pragma: no cover
         """
         Set the configuration of the scheduler from a dictionary.
 

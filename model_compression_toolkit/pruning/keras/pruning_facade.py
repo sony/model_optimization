@@ -35,11 +35,12 @@ if FOUND_TF:
         AttachTpcToKeras
     from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
     from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
-    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+    from model_compression_toolkit.core.keras.default_framework_info import set_keras_info
     from tensorflow.keras.models import Model
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
+    @set_keras_info
     def keras_pruning_experimental(model: Model,
                                    target_resource_utilization: ResourceUtilization,
                                    representative_data_gen: Callable,
@@ -123,7 +124,6 @@ if FOUND_TF:
         float_graph = read_model_to_graph(model,
                                           representative_data_gen,
                                           target_platform_capabilities,
-                                          DEFAULT_KERAS_INFO,
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
@@ -134,7 +134,6 @@ if FOUND_TF:
 
         # Create a Pruner object with the graph and configuration.
         pruner = Pruner(float_graph_with_compression_config,
-                        DEFAULT_KERAS_INFO,
                         fw_impl,
                         target_resource_utilization,
                         representative_data_gen,

@@ -17,22 +17,19 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 
 
 def create_node_prior_info(node: BaseNode,
-                           fw_info: FrameworkInfo,
                            graph: Graph):
     """
     Create a NodePriorInfo object for a given node.
 
     Args:
         node: Node to create its prior info.
-        fw_info: Information about a specific framework the node was generated from.
         graph: Graph to check the next node type.
 
     Returns:
         NodePriorInfo object with info about the node.
     """
 
-    min_output, max_output = _get_min_max_outputs(node=node,
-                                                  fw_info=fw_info)
+    min_output, max_output = _get_min_max_outputs(node=node)
 
     mean_output, std_output = _get_mean_std_outputs(node=node,
                                                     graph=graph)
@@ -42,14 +39,12 @@ def create_node_prior_info(node: BaseNode,
                          std_output=std_output)
 
 
-def _get_min_max_outputs(node: BaseNode,
-                         fw_info: FrameworkInfo) -> Tuple[Any, Any]:
+def _get_min_max_outputs(node: BaseNode) -> Tuple[Any, Any]:
     """
     Return the min/max output values of a node if known.
     If one of them (or both of them) is unknown - return None instead of a value.
     Args:
         node: Node to create its prior info.
-        fw_info: Information about a specific framework the node was generated from.
 
     Returns:
         Min/max output values if known.
@@ -58,12 +53,8 @@ def _get_min_max_outputs(node: BaseNode,
 
     if node.is_match_type(ReLU):
         min_output = node.framework_attr[THRESHOLD] if node.framework_attr[NEGATIVE_SLOPE] == 0 else None
-
-    elif fw_info.layers_has_min_max(node.type):
-        min_output, max_output = fw_info.layer_min_max_mapping[node.type]
-
-    elif node.is_match_type(Activation) and fw_info.activation_has_min_max(node.framework_attr[ACTIVATION]):
-        min_output, max_output = fw_info.activation_min_max_mapping[node.framework_attr[ACTIVATION]]
+    else:
+        min_output, max_output = node.minmax
 
     return min_output, max_output
 

@@ -39,7 +39,6 @@ from model_compression_toolkit.core import DEFAULTCONFIG, CustomOpsetLayers
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
@@ -50,14 +49,12 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                              MpDistanceWeighting.AVG,
                                              num_of_images=1,
                                              num_interest_points_factor=num_interest_points_factor)
-    fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
 
     def dummy_representative_dataset():
         return None
 
     graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
-    graph.set_fw_info(fw_info)
 
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(enable_activation_quantization=False)
@@ -80,7 +77,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
         interest_points_classifier=keras_impl.count_node_for_mixed_precision_interest_points,
         num_ip_factor=mp_qc.num_interest_points_factor)
 
-    return ips, graph, fw_info
+    return ips, graph
 
 
 def softmax_model(input_shape):
@@ -100,7 +97,7 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
 
     def test_filtered_interest_points_set(self):
         in_model = DenseNet121()
-        ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=0.5)
+        ips, graph = build_ip_list_for_test(in_model, num_interest_points_factor=0.5)
         sorted_nodes = graph.get_topo_sorted_nodes()
         ip_nodes = list(filter(lambda n: KerasImplementation().count_node_for_mixed_precision_interest_points(n),
                                sorted_nodes))
@@ -111,7 +108,7 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
 
     def test_nonfiltered_interest_points_set(self):
         in_model = MobileNetV2()
-        ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=1.0)
+        ips, graph = build_ip_list_for_test(in_model, num_interest_points_factor=1.0)
         sorted_nodes = graph.get_topo_sorted_nodes()
         ip_nodes = list(filter(lambda n: KerasImplementation().count_node_for_mixed_precision_interest_points(n),
                                sorted_nodes))
@@ -126,13 +123,13 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
         in_model = MobileNetV2()
 
         with self.assertRaises(Exception):
-            ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=1.1)
+            ips, graph = build_ip_list_for_test(in_model, num_interest_points_factor=1.1)
         with self.assertRaises(Exception):
-            ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=0)
+            ips, graph = build_ip_list_for_test(in_model, num_interest_points_factor=0)
 
     def test_softmax_interest_point(self):
         in_model = softmax_model((16, 16, 3))
-        ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=1.0)
+        ips, graph = build_ip_list_for_test(in_model, num_interest_points_factor=1.0)
 
         softmax_nodes = [n for n in graph.get_topo_sorted_nodes() if n.layer_class == tf.keras.layers.Softmax or
                          (n.layer_class == TFOpLambda and n.framework_attr['function'] == 'nn.softmax')]

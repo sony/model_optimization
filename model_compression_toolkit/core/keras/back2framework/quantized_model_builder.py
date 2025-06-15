@@ -18,7 +18,6 @@ from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tensorflow.python.util.object_identity import Reference as TFReference
 
 
@@ -30,20 +29,17 @@ class QuantizedKerasModelBuilder(KerasModelBuilder):
     def __init__(self,
                  graph: common.Graph,
                  append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                  return_float_outputs: bool = False):
         """
 
         Args:
             graph: Graph to build the model from.
             append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
         """
 
         super().__init__(graph,
                          append2output,
-                         fw_info,
                          return_float_outputs)
 
     def _quantize_node_activations(self,

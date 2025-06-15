@@ -38,7 +38,6 @@ class GreedyMaskCalculator:
     """
     def __init__(self,
                  prunable_nodes: List[BaseNode],
-                 fw_info: FrameworkInfo,
                  simd_groups_scores: Dict[BaseNode, np.ndarray],
                  target_resource_utilization: ResourceUtilization,
                  graph: Graph,
@@ -48,7 +47,6 @@ class GreedyMaskCalculator:
         """
         Args:
             prunable_nodes (List[BaseNode]): Nodes that are eligible for pruning.
-            fw_info (FrameworkInfo): Framework-specific information and utilities.
             simd_groups_scores (Dict[BaseNode, np.ndarray]): Importance scores for each SIMG group in a prunable node.
             target_resource_utilization (ResourceUtilization): The target resource utilization to achieve.
             graph (Graph): The computational graph of the model.
@@ -57,7 +55,6 @@ class GreedyMaskCalculator:
             simd_groups_indices (Dict[BaseNode, List[List[int]]]): Indices of SIMD groups in each node.
         """
         self.prunable_nodes = prunable_nodes
-        self.fw_info = fw_info
         self.target_resource_utilization = target_resource_utilization
         self.graph = graph
         self.fw_impl = fw_impl
@@ -67,13 +64,10 @@ class GreedyMaskCalculator:
         self.simd_groups_scores = simd_groups_scores
 
         self.oc_pruning_mask = PerSIMDGroupMask(prunable_nodes=prunable_nodes,
-                                                fw_info=fw_info,
                                                 simd_groups_indices=simd_groups_indices)
 
         self.memory_calculator = MemoryCalculator(graph=graph,
-                                                  fw_info=fw_info,
                                                   fw_impl=fw_impl)
-
 
     def get_mask(self) -> Dict[BaseNode, np.ndarray]:
         """

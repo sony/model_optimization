@@ -21,6 +21,8 @@ import model_compression_toolkit as mct
 import torch
 import numpy as np
 
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
@@ -41,6 +43,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         super().__init__(unit_test, val_batch_size=val_batch_size, num_calibration_iter=num_calibration_iter)
         self.float_reconstruction_error = float_reconstruction_error
         self.convert_to_fx = convert_to_fx
+        set_fw_info(PyTorchInfo)
 
     def get_tpc(self):
         return {

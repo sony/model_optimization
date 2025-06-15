@@ -22,9 +22,14 @@ from tensorflow.keras.applications.nasnet import NASNetMobile
 from tensorflow.keras.applications.resnet import ResNet50
 from tensorflow.keras.applications.xception import Xception
 from model_compression_toolkit.core.keras.reader.reader import model_reader
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 
 
 class TestGraphReading(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
+
     def _base_test(self, model_class):
         model = model_class()
         graph = model_reader(model)
