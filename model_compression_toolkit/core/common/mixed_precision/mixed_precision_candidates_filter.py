@@ -59,9 +59,8 @@ def filter_candidates_for_mixed_precision(graph: Graph,
         # filter out candidates weights only configurable node
         weight_configurable_nodes = [n for n in graph.get_weights_configurable_nodes()]
         for n in weight_configurable_nodes:
-            kernel_attr = n.kernel_atts[0]
-            base_cfg_nbits = n.get_qco(fqc).base_config.attr_weights_configs_mapping[kernel_attr].weights_n_bits
+            base_cfg_nbits = n.get_qco(fqc).base_config.attr_weights_configs_mapping[n.kernel_attr].weights_n_bits
             filtered_conf = [c for c in n.candidates_quantization_cfg if
-                             c.weights_quantization_cfg.get_attr_config(kernel_attr).enable_weights_quantization and
-                             c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == base_cfg_nbits]
+                             c.weights_quantization_cfg.get_attr_config(n.kernel_attr).enable_weights_quantization and
+                             c.weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_n_bits == base_cfg_nbits]
             n.candidates_quantization_cfg = filtered_conf

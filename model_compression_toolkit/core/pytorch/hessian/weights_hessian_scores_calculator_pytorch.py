@@ -95,15 +95,7 @@ class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                     Logger.critical(f"Hessian information with respect to weights is not supported for "
                                     f"{ipt_node.type} layers.")  # pragma: no cover
 
-                # Get the weight attributes for the target node type
-                weights_attributes = ipt_node.kernel_atts
-
-                # Get the weight tensor for the target node
-                if len(weights_attributes) != 1:  # pragma: no cover
-                    Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a "
-                                    f"single weight attribute. {len(weights_attributes)} attributes found.")
-
-                weights_tensor = getattr(getattr(model, ipt_node.name), weights_attributes[0])
+                weights_tensor = getattr(getattr(model, ipt_node.name), ipt_node.kernel_attr)
 
                 # Get the output channel index
                 output_channel_axis, _ = ipt_node.channel_axis

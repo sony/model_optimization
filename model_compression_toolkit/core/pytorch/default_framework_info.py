@@ -20,7 +20,7 @@ from torch.nn.functional import hardsigmoid, relu, relu6, softmax, gelu, selu, s
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch import sigmoid
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo, set_fw_info
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo, set_fw_info, ChannelAxisMapping
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.pytorch.constants import KERNEL
@@ -31,21 +31,25 @@ from model_compression_toolkit.core.pytorch.quantizer.lut_fake_quant import acti
 
 class PyTorchInfo(FrameworkInfo):
     """
-    Map each layer to a list of its' weights attributes that should get quantized.
-    If a layer that is not listed here is queried, [None] is returned.
+    Extra field defined to handle Activation layer functions:
     """
-    kernel_ops_attributes_mapping = {Conv2d: [KERNEL],
-                                     ConvTranspose2d: [KERNEL],
-                                     Linear: [KERNEL]}
+
+    """
+    Map each layer to it's weight attribute that should get quantized.
+    If a layer that is not listed here is queried, None is returned.
+    """
+    kernel_ops_attribute_mapping = {Conv2d: KERNEL,
+                                    ConvTranspose2d: KERNEL,
+                                    Linear: KERNEL}
 
     """
     Map a layer to its kernel's output and input channels indices.
     Map's values are tuples of (output_channel_index, input_channel_index).
     Default value is returned for layers that are not included.
     """
-    kernel_channels_mapping = {Conv2d: (0, 1),
-                               Linear: (0, 1),
-                               ConvTranspose2d: (1, 0)}
+    kernel_channels_mapping = {Conv2d: ChannelAxisMapping(0, 1),
+                               Linear: ChannelAxisMapping(0, 1),
+                               ConvTranspose2d: ChannelAxisMapping(1, 0)}
 
     """
     Map a layer to its output channel axis.
@@ -56,32 +60,26 @@ class PyTorchInfo(FrameworkInfo):
                                 ConvTranspose2d: 1}
 
     """
-    Map from an activation function to its min/max output values (if known).
-    The values are used for tensor min/max values initialization.
-    """
-    activation_min_max_mapping = {}  # should be an empty dict in Pytorch
-
-    """
     Map from an Pytorch module to its min/max output values (if known).
     The values are used for tensor min/max values initialization.
     """
-    layer_min_max_mapping = {Softmax: (0, SOFTMAX_THRESHOLD),
-                             softmax: (0, SOFTMAX_THRESHOLD),
-                             Sigmoid: (0, 1),
-                             sigmoid: (0, 1),
-                             Hardsigmoid: (0, 1),
-                             hardsigmoid: (0, 1),
-                             ReLU: (0, None),
-                             relu: (0, None),
-                             ReLU6: (0, None),
-                             relu6: (0, None),
-                             GELU: (-0.17, None),
-                             gelu: (-0.17, None),
-                             SELU: (-1.76, None),
-                             selu: (-1.76, None),
-                             silu: (-0.279, None),
-                             SiLU: (-0.279, None),
-                             }
+    _layer_min_max_mapping = {Softmax: (0, SOFTMAX_THRESHOLD),
+                              softmax: (0, SOFTMAX_THRESHOLD),
+                              Sigmoid: (0, 1),
+                              sigmoid: (0, 1),
+                              Hardsigmoid: (0, 1),
+                              hardsigmoid: (0, 1),
+                              ReLU: (0, None),
+                              relu: (0, None),
+                              ReLU6: (0, None),
+                              relu6: (0, None),
+                              GELU: (-0.17, None),
+                              gelu: (-0.17, None),
+                              SELU: (-1.76, None),
+                              selu: (-1.76, None),
+                              silu: (-0.279, None),
+                              SiLU: (-0.279, None),
+                              }
 
     """
     Mapping from a QuantizationMethod to an activation quantizer function.
@@ -92,7 +90,7 @@ class PyTorchInfo(FrameworkInfo):
                                     QuantizationMethod.LUT_POT_QUANTIZER: activation_lut_kmean_quantizer}
 
     @classmethod
-    def get_kernel_channels(cls, node_type: Any):
+    def get_kernel_channels(cls, node_type: Any) -> ChannelAxisMapping:
         """
         Returns node's channels mapping from kernel_channels_mapping or framework specific default value.
         Args:
@@ -102,7 +100,7 @@ class PyTorchInfo(FrameworkInfo):
             Node's channels mapping.
 
         """
-        return cls.kernel_channels_mapping.get(node_type, (None, None))
+        return cls.kernel_channels_mapping.get(node_type, cls._default_channel_mapping)
 
     @classmethod
     def get_out_channel_axis(cls, node_type: Any):

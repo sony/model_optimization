@@ -581,7 +581,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         potential_conf_nodes = [n for n in list(self) if n.is_kernel_op]
 
         def is_configurable(n):
-            return any(n.is_configurable_weight(attr) for attr in n.kernel_atts) and (not n.reuse or include_reused_nodes)
+            return n.is_configurable_weight(n.kernel_attr) and (not n.reuse or include_reused_nodes)
 
         return [n for n in potential_conf_nodes if is_configurable(n)]
 
@@ -701,7 +701,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
         # a configurable node by definition has a kernel op
-        return [(n, n.final_weights_quantization_cfg.get_attr_config(n.kernel_atts[0]).weights_n_bits)
+        return [(n, n.final_weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_n_bits)
                 for n in sorted_conf_weights]
 
     def get_final_activation_config(self) -> List[Tuple[BaseNode, int]]:

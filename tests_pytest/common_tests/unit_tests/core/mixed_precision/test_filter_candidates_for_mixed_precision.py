@@ -56,14 +56,14 @@ def setup_mocks(fw_info_mock):
     weight_candidate2.weights_quantization_cfg.get_attr_config = lambda attr: MagicMock(
         enable_weights_quantization=True, weights_n_bits=4) if attr == 'kernel' else None
     weight_node.candidates_quantization_cfg = [weight_candidate1, weight_candidate2]
-    weight_node.kernel_atts = ['kernel']
+    weight_node.kernel_attr = 'kernel'
     weight_node.get_qco.return_value = MagicMock(
         base_config=MagicMock(attr_weights_configs_mapping={'kernel': MagicMock(weights_n_bits=8)}))
 
     graph.get_activation_configurable_nodes.return_value = [act_node]
     graph.get_weights_configurable_nodes.return_value = [weight_node]
-    fw_info.get_kernel_op_attributes = MagicMock()
-    fw_info.get_kernel_op_attributes.return_value = ['kernel']
+    fw_info.get_kernel_op_attribute = MagicMock()
+    fw_info.get_kernel_op_attribute.return_value = 'kernel'
 
     return tru, graph, fqc, act_node, weight_node
 

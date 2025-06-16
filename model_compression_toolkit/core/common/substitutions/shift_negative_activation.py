@@ -74,7 +74,7 @@ def op2d_bias_correction(op2d_node: BaseNode,
     # Each node adds a different noise due to the shifting. It depends on the
     # dimensions of the kernel, thus the correction term is a function of
     # the layer type.
-    kernel = op2d_node.get_weights_by_keys(op2d_node.kernel_atts[0])
+    kernel = op2d_node.get_weights_by_keys(op2d_node.kernel_attr)
     if kernel is not None:
         output_channel_index, input_channel_index = op2d_node.channel_axis
         axis_not_output_channel = list(range(len(kernel.shape)))

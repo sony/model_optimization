@@ -25,7 +25,7 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU, Activation
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU, Activation  # pragma: no cover
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo, set_fw_info
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo, set_fw_info, ChannelAxisMapping
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD, ACTIVATION
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
@@ -35,23 +35,30 @@ from model_compression_toolkit.core.keras.quantizer.fake_quant_builder import po
 
 class KerasInfo(FrameworkInfo):
     """
-    Map each layer to a list of its' weights attributes that should get quantized.
-    If a layer that is not listed here is queried, [None] is returned.
+    Extra field defined to handle Activation layer functions:
+
+        _activation_min_max_mapping (Dict[str, tuple]): Dictionary from an activation function to its min/max output values.
+
     """
-    kernel_ops_attributes_mapping = {Conv2D: [KERNEL],
-                                     DepthwiseConv2D: [DEPTHWISE_KERNEL],
-                                     Dense: [KERNEL],
-                                     Conv2DTranspose: [KERNEL]}
+
+    """
+    Map each layer to it's weight attribute that should get quantized.
+    If a layer that is not listed here is queried, None is returned.
+    """
+    kernel_ops_attribute_mapping = {Conv2D: KERNEL,
+                                    DepthwiseConv2D: DEPTHWISE_KERNEL,
+                                    Dense: KERNEL,
+                                    Conv2DTranspose: KERNEL}
 
     """
     Map a layer to its kernel's output and input channels indices.
     Map's values are tuples of (output_channel_index, input_channel_index).
     Default value is returned for layers that are not included.
     """
-    kernel_channels_mapping = {Conv2D: (3, 2),
-                               DepthwiseConv2D: (2, 2),
-                               Dense: (1, 0),
-                               Conv2DTranspose: (2, 3)}
+    kernel_channels_mapping = {Conv2D: ChannelAxisMapping(3, 2),
+                               DepthwiseConv2D: ChannelAxisMapping(2, 2),
+                               Dense: ChannelAxisMapping(1, 0),
+                               Conv2DTranspose: ChannelAxisMapping(2, 3)}
 
     """
     Map a layer to its output channel axis.
@@ -63,38 +70,38 @@ class KerasInfo(FrameworkInfo):
                                 Conv2DTranspose: -1}
 
     """
-    Map from an activation function to its min/max output values (if known).
+    Map from an activation function name to its min/max output values (if known).
     The values are used for tensor min/max values initialization.
     """
-    activation_min_max_mapping = {SOFTMAX: (0, SOFTMAX_THRESHOLD),
-                                  SIGMOID: (0, 1),
-                                  LINEAR: (None, None),
-                                  IDENTITY: (None, None),
-                                  TANH: (-1, 1),
-                                  SWISH: (-0.279, None),
-                                  RELU: (0, None),
-                                  SELU: (-1.76, None),
-                                  GELU: (-0.17, None),
-                                  }
+    _activation_min_max_mapping = {SOFTMAX: (0, SOFTMAX_THRESHOLD),
+                                   SIGMOID: (0, 1),
+                                   LINEAR: (None, None),
+                                   IDENTITY: (None, None),
+                                   TANH: (-1, 1),
+                                   SWISH: (-0.279, None),
+                                   RELU: (0, None),
+                                   SELU: (-1.76, None),
+                                   GELU: (-0.17, None),
+                                   }
 
     """
     Map from an Keras module to its min/max output values (if known).
     The values are used for tensor min/max values initialization.
     """
-    layer_min_max_mapping = {Softmax: (0, SOFTMAX_THRESHOLD),
-                             ELU: (-1, None),
-                             tf.nn.silu: (-0.279, None),
-                             tf.nn.swish: (-0.279, None),
-                             tf.nn.sigmoid: (0, 1),
-                             tf.nn.tanh: (-1, 1),
-                             tf.nn.relu: (0, None),
-                             tf.nn.relu6: (0, None),
-                             tf.nn.gelu: (-0.17, None),
-                             tf.nn.elu: (-1, None),
-                             tf.nn.selu: (-1.76, None),
-                             tf.nn.softplus: (0, None),
-                             tf.nn.softmax: (0, SOFTMAX_THRESHOLD),
-                             }
+    _layer_min_max_mapping = {Softmax: (0, SOFTMAX_THRESHOLD),
+                              ELU: (-1, None),
+                              tf.nn.silu: (-0.279, None),
+                              tf.nn.swish: (-0.279, None),
+                              tf.nn.sigmoid: (0, 1),
+                              tf.nn.tanh: (-1, 1),
+                              tf.nn.relu: (0, None),
+                              tf.nn.relu6: (0, None),
+                              tf.nn.gelu: (-0.17, None),
+                              tf.nn.elu: (-1, None),
+                              tf.nn.selu: (-1.76, None),
+                              tf.nn.softplus: (0, None),
+                              tf.nn.softmax: (0, SOFTMAX_THRESHOLD),
+                              }
 
     """
     Mapping from a QuantizationMethod to an activation quantizer function.
@@ -117,14 +124,14 @@ class KerasInfo(FrameworkInfo):
         """
 
         if cls.layers_has_min_max(layer):
-            return cls.layer_min_max_mapping[layer]
-        elif isinstance(layer, Activation) and cls.activation_has_min_max(fw_attrs[ACTIVATION]):
-            return cls.activation_min_max_mapping[fw_attrs[ACTIVATION]]
+            return cls._layer_min_max_mapping[layer]
+        elif isinstance(layer, Activation) and fw_attrs[ACTIVATION] in cls._activation_min_max_mapping:
+            return cls._activation_min_max_mapping[fw_attrs[ACTIVATION]]
         else:
             return None, None
 
     @classmethod
-    def get_kernel_channels(cls, node_type: Any):
+    def get_kernel_channels(cls, node_type: Any) -> ChannelAxisMapping:
         """
         Returns node's channels mapping from kernel_channels_mapping or framework specific default value.
         Args:
@@ -134,7 +141,7 @@ class KerasInfo(FrameworkInfo):
             Node's channels mapping.
 
         """
-        return cls.kernel_channels_mapping.get(node_type, (None, None))
+        return cls.kernel_channels_mapping.get(node_type, cls._default_channel_mapping)
 
     @classmethod
     def get_out_channel_axis(cls, node_type: Any):

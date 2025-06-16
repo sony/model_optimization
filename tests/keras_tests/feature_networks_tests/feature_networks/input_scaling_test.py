@@ -47,7 +47,7 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
 
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         # If quantized weight has zeros, the division is inf, and we ignore it by masking these values when computing mean
-        attr = KerasInfo.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = KerasInfo.get_kernel_op_attribute(self.linear_layer)
         alpha = np.ma.masked_invalid((float_model.layers[fi].weights[0] / linear_layer.weights_quantizers[attr](linear_layer.weights[0])).numpy()).mean()
         self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-1))
 

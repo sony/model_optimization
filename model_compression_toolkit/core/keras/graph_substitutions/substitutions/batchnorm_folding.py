@@ -76,9 +76,7 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
     else:
         kernel = kernel * weights_scale.reshape((1, 1, 1, -1))
 
-    kernel_name = conv_node.kernel_atts[0]
-
-    return kernel, kernel_name
+    return kernel, conv_node.kernel_attr
 
 
 def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
@@ -107,9 +105,7 @@ def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
         bias_update = (kernel * bias_factor.reshape((1, 1, -1, 1))).sum(2)
         kernel = kernel * weights_scale.reshape((1, 1, -1, 1))
 
-    kernel_name = conv_node.kernel_atts[0]
-
-    return kernel, bias + bias_update.flatten(), kernel_name
+    return kernel, bias + bias_update.flatten(), conv_node.kernel_attr
 
 
 def get_kernel_hw_fn(kernel: np.ndarray) -> [int, int]:

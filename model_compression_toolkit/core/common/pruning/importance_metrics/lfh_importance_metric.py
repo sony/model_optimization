@@ -245,20 +245,14 @@ class LFHImportanceMetric(BaseImportanceMetric):
         Returns:
             tuple: A tuple containing the kernel attribute, the number of output channels, and the axis of the output channels.
         """
-        kernel_attr = entry_node.kernel_atts
-        # Ensure only one kernel attribute exists for the given node.
-        if len(kernel_attr) != 1:
-            Logger.critical(f"Expected a single attribute but found multiple attributes ({len(kernel_attr)}) for node {entry_node}.")
-        kernel_attr = kernel_attr[0]
-
         # Retrieve and validate the axis index for the output channels.
         oc_axis, _ = entry_node.channel_axis
         if oc_axis is None or int(oc_axis) != oc_axis:
             Logger.critical(f"Invalid output channel axis type for node {entry_node}: expected integer but got {oc_axis}.")
 
         # Get the number of output channels based on the kernel attribute and axis.
-        num_oc = entry_node.get_weights_by_keys(kernel_attr[0]).shape[oc_axis]
-        return kernel_attr, num_oc, oc_axis
+        num_oc = entry_node.get_weights_by_keys(entry_node.kernel_attr).shape[oc_axis]
+        return entry_node.kernel_attr, num_oc, oc_axis
 
     def _concatenate_tensors_by_indices(self,
                                         channels: List[np.ndarray],

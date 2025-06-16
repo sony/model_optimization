@@ -44,11 +44,8 @@ def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph) -> List[Ba
     """
     hmse_nodes = []
     for n in nodes_list:
-        kernel_attr_name = n.kernel_atts
-        kernel_attr_name = None if kernel_attr_name is None or len(kernel_attr_name) == 0 else kernel_attr_name[0]
-
-        if kernel_attr_name is not None and n.is_weights_quantization_enabled(kernel_attr_name) and \
-            all([c.weights_quantization_cfg.get_attr_config(kernel_attr_name).weights_error_method ==
+        if n.kernel_attr is not None and n.is_weights_quantization_enabled(n.kernel_attr) and \
+            all([c.weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_error_method ==
                  QuantizationErrorMethod.HMSE for c in n.candidates_quantization_cfg]):
             hmse_nodes.append(n)
 
@@ -114,11 +111,7 @@ def calculate_quantization_params(graph: Graph,
                     if attr_cfg.weights_error_method == QuantizationErrorMethod.HMSE:
                         # Although we collected nodes for HMSE before running the loop, we keep this verification to
                         # notify the user in case of HMSE configured for node that is not compatible for this method
-                        kernel_attr_name = n.kernel_atts
-                        if len(kernel_attr_name) > 0:
-                            kernel_attr_name = kernel_attr_name[0]
-
-                        if kernel_attr_name is None or kernel_attr_name not in attr:
+                        if n.kernel_attr is None or n.kernel_attr not in attr:
                             Logger.warning(f"The HMSE error method for parameters selection is only supported for "
                                            f"kernel weights attributes. Running parameters selection for attribute "
                                            f"'{attr}' in node '{n.name}' with the default MSE error method instead.")

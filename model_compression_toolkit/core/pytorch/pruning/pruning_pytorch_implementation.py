@@ -168,12 +168,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
 
         attributes_with_axis = {}
         if node.is_kernel_op:
-            kernel_attributes = node.kernel_atts
-            if kernel_attributes is None or len(kernel_attributes) == 0:
-                Logger.critical(f"Expected to find kernel attributes but none were identified for node '{node.name}' of type {node.type}.")
-
-            for attr in kernel_attributes:
-                attributes_with_axis[attr] = node.channel_axis
+            attributes_with_axis[node.kernel_attr] = node.channel_axis
 
             # Bias is a vector at the length of the number of output channels.
             # For this reason, input channel axis is irrelevant to the bias attribute.
@@ -233,15 +228,14 @@ def _prune_pytorch_edge_node(node: BaseNode,
     """
 
     # Retrieve the kernel attribute and the axes to prune.
-    kernel_attr = node.kernel_atts[0]
     io_axis = node.channel_axis
     axis_to_prune = io_axis[int(is_exit_node)]
-    kernel = node.get_weights_by_keys(kernel_attr)
+    kernel = node.get_weights_by_keys(node.kernel_attr)
     # Convert mask to boolean.
     mask_bool = mask.astype(bool)
 
     pruned_kernel = kernel.compress(mask_bool, axis=axis_to_prune)
-    node.set_weights_by_keys(name=kernel_attr, tensor=pruned_kernel)
+    node.set_weights_by_keys(name=node.kernel_attr, tensor=pruned_kernel)
 
     if not is_exit_node and node.framework_attr[BIAS]:
         # Prune the bias if applicable and it's an entry node.

@@ -25,9 +25,8 @@ from tests_pytest._test_util import tpc_util
 class DummyFrameworkInfo(FrameworkInfo):
     activation_quantizer_mapping = {}
     kernel_channels_mapping = {}
-    activation_min_max_mapping = {}
-    layer_min_max_mapping = {}
-    kernel_ops_attributes_mapping = {}
+    _layer_min_max_mapping = {}
+    kernel_ops_attribute_mapping = {}
     out_channel_axis_mapping = {}
 
 

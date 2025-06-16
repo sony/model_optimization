@@ -44,15 +44,14 @@ def compute_bias_correction_of_graph(graph: Graph,
         # Bias correction is computed based on the quantized kernel, so we need to get the specific kernel attribute
         # name out of all the weights attributes of the node.
         if n.is_kernel_op:
-            kernel_attr = n.kernel_atts[0]
-            if n.is_weights_quantization_enabled(kernel_attr):
+            if n.is_weights_quantization_enabled(n.kernel_attr):
                 # Bias correction is not applied to layers with constant inputs.
                 if n.has_positional_weights:
                     for candidate_qc in n.candidates_quantization_cfg:
                         candidate_qc.weights_quantization_cfg.weights_bias_correction = False
                 else:
                     _compute_bias_correction_per_candidate_qc(n,
-                                                              kernel_attr,
+                                                              n.kernel_attr,
                                                               graph.get_in_stats_collector(n),
                                                               fw_impl=fw_impl)
     return graph

@@ -173,8 +173,7 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
             weights_scale: Weight scale factor in which to multiply the conv node's weight.
         """
         # Conv layer is ensured to have a kernel attribute
-        kernel_attr = conv_bn.kernel_atts[0]
-        conv_bn_kernel_cfg = conv_bn.final_weights_quantization_cfg.get_attr_config(kernel_attr)
+        conv_bn_kernel_cfg = conv_bn.final_weights_quantization_cfg.get_attr_config(conv_bn.kernel_attr)
         # In case of SYMMETRIC weight quantization method, we update the threshold by weights_scale
         if conv_bn_kernel_cfg.weights_quantization_method == QuantizationMethod.SYMMETRIC:
             original_threshold = conv_bn_kernel_cfg.weights_quantization_params[THRESHOLD]

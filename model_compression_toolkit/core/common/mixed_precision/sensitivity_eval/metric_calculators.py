@@ -393,7 +393,7 @@ class DistanceMetricCalculator(MetricCalculator):
 
         return [n.node for n in graph.get_outputs()
                 if (n.node.is_kernel_op and
-                    n.node.is_weights_quantization_enabled(n.node.kernel_atts[0])) or
+                    n.node.is_weights_quantization_enabled(n.node.kernel_attr)) or
                 n.node.is_activation_quantization_enabled()]
 
     @staticmethod

@@ -70,7 +70,7 @@ class TestComputeResourceUtilization:
     """
     @pytest.fixture(autouse=True)
     def setup(self, graph_mock, fw_impl_mock, fw_info_mock):
-        fw_info_mock.get_kernel_op_attributes = Mock(return_value=['foo'])    # for bops
+        fw_info_mock.get_kernel_op_attribute = Mock(return_value='foo')    # for bops
         set_fw_info(fw_info_mock)
         fw_impl_mock.get_node_mac_operations = lambda n: 42 if n == n2 else 0    # for bops
         n1 = build_node('n1', qcs=[build_qc()], output_shape=(None, 5, 10))
@@ -1094,7 +1094,7 @@ class TestBOPSAndVirtualGraph:
         set_fw_info(fw_info_mock)
 
     def test_compute_regular_node_bops(self, fw_impl_mock, fw_info_mock):
-        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_info_mock.get_kernel_op_attribute = lambda node_type: 'foo' if node_type == BOPNode else None
         fw_impl_mock.get_node_mac_operations = lambda n: 42 if n.name == 'n2' else 0
 
         # a quantized, w quantized
@@ -1127,7 +1127,7 @@ class TestBOPSAndVirtualGraph:
         assert ru_calc.compute_node_bops(n2, TIC.Any, BM.QMinBit) == 42 * 32 * 32
 
     def test_compute_regular_node_bops_custom(self, fw_impl_mock, fw_info_mock):
-        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_info_mock.get_kernel_op_attribute = lambda node_type: 'foo' if node_type == BOPNode else None
         fw_impl_mock.get_node_mac_operations = lambda n: 42 if n.name == 'n2' else 0
 
         custom_qc1 = build_qc(3)
@@ -1146,7 +1146,7 @@ class TestBOPSAndVirtualGraph:
                                          act_qcs=a_cfg, w_qc=custom_qc2.weights_quantization_cfg) == 0
 
     def test_compute_node_bops_default_qc(self, fw_impl_mock, fw_info_mock):
-        fw_info_mock.get_kernel_op_attributes = lambda node_type: ['foo'] if node_type == BOPNode else []
+        fw_info_mock.get_kernel_op_attribute = lambda node_type: 'foo' if node_type == BOPNode else None
         fw_impl_mock.get_node_mac_operations = lambda n: 42 if n.name == 'n2' else 0
 
         n1 = build_node('n1', qcs=[build_qc(7)], output_shape=(None, 5, 10))
@@ -1183,7 +1183,7 @@ class TestBOPSAndVirtualGraph:
         class BOPNode2:
             pass
 
-        fw_info_mock.get_kernel_op_attributes = lambda node_type: {BOPNode: ['mp'], BOPNode2: ['sp']}.get(node_type, [])
+        fw_info_mock.get_kernel_op_attribute = lambda node_type: {BOPNode: 'mp', BOPNode2: 'sp'}.get(node_type, None)
 
         n1 = build_node('n1', qcs=[build_qc(16, True)], output_shape=(None, 5, 10))
         n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
@@ -1220,8 +1220,8 @@ class TestBOPSAndVirtualGraph:
     def test_multi_output_input_activation(self, fw_impl_mock, fw_info_mock):
         """ No bops should be calculated for weight node if its input activation has multiple outputs. """
         def get_kernel_attr(node_type):
-            return {BOPNode: ['foo']}.get(node_type) or []
-        fw_info_mock.get_kernel_op_attributes = get_kernel_attr
+            return {BOPNode: 'foo'}.get(node_type, None)
+        fw_info_mock.get_kernel_op_attribute = get_kernel_attr
         n_in = build_node('in', qcs=[build_qc()], output_shape=(None, 2, 3, 4))
         n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 44),
                         canonical_weights={'foo': np.zeros((3, 14))},

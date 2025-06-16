@@ -86,10 +86,10 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         # In case of DepthwiseConv2D with depth_multiplier != 1, we expected substition of Conv2D
         is_dw_high_mult = isinstance(self.linear_op_to_test, layers.DepthwiseConv2D) and self.linear_op_to_test.depth_multiplier != 1
         if is_dw_high_mult:
-            attr = KerasInfo.get_kernel_op_attributes(layers.Conv2D)[0]
+            attr = KerasInfo.get_kernel_op_attribute(layers.Conv2D)
             linear_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
         else:
-            attr = KerasInfo.get_kernel_op_attributes(type(self.linear_op_to_test))[0]
+            attr = KerasInfo.get_kernel_op_attribute(type(self.linear_op_to_test))
             linear_layer = get_layers_from_model_by_type(quantized_model, type(self.linear_op_to_test))[0]
         q_w, q_b = linear_layer.get_quantized_weights()[attr].numpy(), linear_layer.layer.bias.numpy()
 

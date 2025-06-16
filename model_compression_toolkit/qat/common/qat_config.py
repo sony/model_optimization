@@ -29,9 +29,7 @@ def is_qat_applicable(node: common.BaseNode) -> bool:
     Returns:
         A boolean whether the layer is to be wrapped with a QuantizeWrapper
     """
-
-    kernel_attr = node.kernel_atts[0]
-    return (kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)) \
+    return (node.kernel_attr is not None and node.is_weights_quantization_enabled(node.kernel_attr)) \
             or node.is_activation_quantization_enabled()
 
 

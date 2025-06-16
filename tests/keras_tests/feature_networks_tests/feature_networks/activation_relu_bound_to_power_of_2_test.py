@@ -47,7 +47,7 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         dense_layers = get_layers_from_model_by_type(quantized_model, layers.Dense)
-        attr = KerasInfo.get_kernel_op_attributes(layers.Dense)[0]
+        attr = KerasInfo.get_kernel_op_attribute(layers.Dense)
 
         alpha_1 = (dense_layers[0].get_quantized_weights()[attr] / float_model.layers[1].weights[0]).numpy().mean()
         beta_1 = (dense_layers[1].get_quantized_weights()[attr] / float_model.layers[3].weights[0]).numpy().mean()

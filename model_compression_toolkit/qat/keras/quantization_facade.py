@@ -76,7 +76,7 @@ if FOUND_TF:
             # If we are here, then the node has a kernel attribute to quantize and training during QAT
             weights_quantizers, _ = quantization_builder(n,
                                                          qat_config,
-                                                         n.kernel_atts[0])
+                                                         n.kernel_attr)
             if len(weights_quantizers) > 0:
                 layer.trainable = True
                 return KerasTrainableQuantizationWrapper(layer, weights_quantizers)

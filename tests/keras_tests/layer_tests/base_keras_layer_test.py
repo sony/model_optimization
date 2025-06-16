@@ -151,9 +151,9 @@ class BaseKerasLayerTest(BaseLayerTest):
                     assert len(layer.weights_quantizers) > 0
                     for q in layer.weights_quantizers.values():
                         assert q.get_config()['num_bits'] == 8
-                    for attr in fw_info.get_kernel_op_attributes(type(layer.layer)):
-                        self.unit_test.assertTrue(np.sum(np.abs(
-                            layer.get_quantized_weights()[attr] - getattr(float_model.get_layer(layer.layer.name), attr))) > 0.0)
+                    attr = fw_info.get_kernel_op_attribute(type(layer.layer))
+                    self.unit_test.assertTrue(np.sum(np.abs(
+                        layer.get_quantized_weights()[attr] - getattr(float_model.get_layer(layer.layer.name), attr))) > 0.0)
 
     def __compare_float_mode(self, float_model, quantized_model):
         for layer_index, layer in enumerate(quantized_model.layers):

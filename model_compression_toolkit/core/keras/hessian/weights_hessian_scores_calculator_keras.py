@@ -98,16 +98,7 @@ class WeightsHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                         Logger.critical(f"Hessian information with respect to weights is not supported for "
                                         f"{ipt_node.type} layers.")  # pragma: no cover
 
-                    # Get the weight attributes for the target node type
-                    weight_attributes = ipt_node.kernel_atts
-
-                    # Get the weight tensor for the target node
-                    if len(weight_attributes) != 1:  # pragma: no cover
-                        Logger.critical(
-                            f"Hessian-based scoring with respect to weights is currently supported only for nodes with "
-                            f"a single weight attribute. Found {len(weight_attributes)} attributes.")
-
-                    weight_tensor = getattr(model.get_layer(ipt_node.name), weight_attributes[0])
+                    weight_tensor = getattr(model.get_layer(ipt_node.name), ipt_node.kernel_attr)
 
                     if j == 0:
                         # On the first iteration we store the weight_tensor shape for later reshaping the results

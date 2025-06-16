@@ -202,19 +202,13 @@ class MemoryCalculator:
             if node == section.exit_node:
                 return masks.get(section.entry_node)
 
-        kernel_attr = node.kernel_atts
-        # Ensure only one kernel attribute exists for the given node.
-        if len(kernel_attr) != 1:
-            Logger.critical(f"Expected a single attribute, but found {len(kernel_attr)} attributes for node '{node}'. Ensure the node configuration is correct.")
-        kernel_attr = kernel_attr[0]
-
         # Retrieve and validate the axis index for the output channels.
         _, ic_axis = node.channel_axis
         if ic_axis is None or int(ic_axis) != ic_axis:
             Logger.critical(f"Invalid input channel axis type for node '{node}': expected integer but got '{ic_axis}'.")
 
         # Get the number of output channels based on the kernel attribute and axis.
-        num_ic = node.get_weights_by_keys(kernel_attr).shape[ic_axis]
+        num_ic = node.get_weights_by_keys(node.kernel_attr).shape[ic_axis]
         mask = np.ones(num_ic, dtype=bool)
         return mask
 

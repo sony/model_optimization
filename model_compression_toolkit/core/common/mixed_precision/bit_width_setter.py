@@ -95,15 +95,13 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
         Node quantization configuration if it was found, or None otherwise.
     """
     # only the weights kernel attribute is quantized in weights mixed precision at the moment
-    kernel_attr = node.kernel_atts
-
     if node.is_activation_quantization_enabled():
         qc = node.candidates_quantization_cfg[node_bit_width_cfg]
 
         return qc
 
-    elif kernel_attr is not None:
-        if node.is_weights_quantization_enabled(kernel_attr[0]):
+    elif node.kernel_attr is not None:
+        if node.is_weights_quantization_enabled(node.kernel_attr):
             qc = node.candidates_quantization_cfg[node_bit_width_cfg]
 
             return qc

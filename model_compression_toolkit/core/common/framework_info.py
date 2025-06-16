@@ -16,16 +16,21 @@
 
 from collections.abc import Callable
 from enum import Enum
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, Tuple, Union, TYPE_CHECKING, NamedTuple
 from abc import ABC, abstractmethod
 
 from mct_quantizers import QuantizationMethod
 
 
+if TYPE_CHECKING:
+    from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
+    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
+
+
 # Default value to use for ops without kernel.
 # This is a weird default, but it's used all over the place, so for now only extract it to const so that it can be
 # referenced by variable instead of hard-coded.
-DEFAULT_KERNEL_ATTRIBUTES = [None]
+DEFAULT_KERNEL_ATTRIBUTE = None
 
 
 class ChannelAxis(Enum):
@@ -42,6 +47,11 @@ class ChannelAxis(Enum):
     NCHW = 1
 
 
+class ChannelAxisMapping(NamedTuple):
+    output: int
+    input: int
+
+
 class FrameworkInfo(ABC):
     """
     A class to wrap all information about a specific framework the library needs to quantize a model.
@@ -55,32 +65,33 @@ class FrameworkInfo(ABC):
     Fields:
         activation_quantizer_mapping (Dict[QuantizationMethod, Callable]): A dictionary mapping from QuantizationMethod to a quantization function.
         kernel_channels_mapping (Dict): Dictionary from a layer to a tuple of its kernel in/out channels indices.
-        activation_min_max_mapping (Dict[str, tuple]): Dictionary from an activation function to its min/max output values.
-        layer_min_max_mapping (Dict[Any, tuple]): Dictionary from a layer to its min/max output values.
-        kernel_ops_attributes_mapping (Dict): Dictionary from a framework operator to a list of its weights attirbutes to quantize.
+        kernel_ops_attribute_mapping (Dict): Dictionary from a framework operator to its weight attribute to quantize.
         out_channel_axis_mapping (Dict): Dictionary of output channels of the model's layers (for computing statistics per-channel).
+        _layer_min_max_mapping (Dict[Any, tuple]): Dictionary from a layer to its min/max output values.
 
     """
 
     activation_quantizer_mapping: Dict[QuantizationMethod, Callable]
-    kernel_channels_mapping: Dict
-    activation_min_max_mapping: Dict[str, tuple]
-    layer_min_max_mapping: Dict[Any, tuple]
-    kernel_ops_attributes_mapping: Dict
-    out_channel_axis_mapping: Dict
+    kernel_channels_mapping: Dict[Any, ChannelAxisMapping]
+    kernel_ops_attribute_mapping: Dict[Any, str]
+    out_channel_axis_mapping: Dict[Any, int]
+    _activation_min_max_mapping: Dict[str, tuple]
+    _layer_min_max_mapping: Dict[Any, tuple]
+
+    _default_channel_mapping = ChannelAxisMapping(None, None)
 
     @classmethod
-    def get_kernel_op_attributes(cls, node_type: Any) -> List[str]:
+    def get_kernel_op_attribute(cls, node_type: Any) -> str:
         """
-        Get a list of attributes of a layer's weights to quantize.
+        Get attribute of a layer's weight to quantize.
 
         Args:
-            node_type: Layer to get its attributes.
+            node_type: Layer to get its attribute.
 
         Returns:
-            A list of attributes the layer has and should be quantized.
+            Attribute the layer has and should be quantized.
         """
-        return cls.kernel_ops_attributes_mapping.get(node_type, DEFAULT_KERNEL_ATTRIBUTES)
+        return cls.kernel_ops_attribute_mapping.get(node_type, DEFAULT_KERNEL_ATTRIBUTE)
 
     @classmethod
     def is_kernel_op(cls, node_type: Any) -> bool:
@@ -93,7 +104,7 @@ class FrameworkInfo(ABC):
         Returns:
             True if node type is a kernel operation, else False.
         """
-        return node_type in cls.kernel_ops_attributes_mapping
+        return node_type in cls.kernel_ops_attribute_mapping
 
     @classmethod
     def get_layer_min_max(cls, layer: Any, fw_attrs: Dict) -> Tuple[float, float]:
@@ -108,7 +119,7 @@ class FrameworkInfo(ABC):
         """
 
         if cls.layers_has_min_max(layer):
-            return cls.layer_min_max_mapping[layer]
+            return cls._layer_min_max_mapping[layer]
         else:
             return None, None
 
@@ -123,25 +134,11 @@ class FrameworkInfo(ABC):
             Whether a layer has a min/max known values or not.
         """
 
-        return layer in cls.layer_min_max_mapping
-
-    @classmethod
-    def activation_has_min_max(cls, activation_name: str) -> bool:
-        """
-        Check if an activation layer has a min/max mapping.
-
-        Args:
-            activation_name: String of the activation function to check for its min/max values.
-
-        Returns:
-            Whether an activation layer has a min/max known values or not.
-        """
-
-        return activation_name in cls.activation_min_max_mapping
+        return layer in cls._layer_min_max_mapping
 
     @classmethod
     @abstractmethod
-    def get_kernel_channels(cls, node_type: Any):
+    def get_kernel_channels(cls, node_type: Any) -> ChannelAxisMapping:
         """
         Returns node's channels mapping from kernel_channels_mapping or framework specific default value.
         Args:
@@ -168,7 +165,7 @@ class FrameworkInfo(ABC):
 
 
 # Pointer to current FrameworkInfo class.
-_current_framework_info: Any = None
+_current_framework_info: Union[type['PyTorchInfo'], type['KerasInfo']] = None
 
 
 def get_fw_info():
@@ -182,9 +179,12 @@ def get_fw_info():
     return _current_framework_info
 
 
-def set_fw_info(fw_info):
+def set_fw_info(fw_info: Union[type['PyTorchInfo'], type['KerasInfo']]):
     """
     A common function to set the current FrameworkInfo class. Raises an error if fw_info doesn't inherit from FrameworkInfo.
+
+    Args:
+        fw_info: Framework specific object implementing the FrameworkInfo.
     """
     global _current_framework_info
     assert _current_framework_info in [None, _current_framework_info], "FrameworkInfo already initialized."

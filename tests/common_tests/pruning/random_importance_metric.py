@@ -51,7 +51,7 @@ class RandomImportanceMetric(BaseImportanceMetric):
     def _get_entry_node_to_score(self, sections_input_nodes: List[BaseNode]):
         random_scores = []
         for node in sections_input_nodes:
-            weight_attr = sections_input_nodes[0].kernel_atts[0]
+            weight_attr = sections_input_nodes[0].kernel_attr
             channel_mapping = node.channel_axis[0]
             random_scores.append(np.random.random(node.get_weights_by_keys(weight_attr).shape[channel_mapping]))
         entry_node_to_score = {node: scores for node, scores in zip(sections_input_nodes, random_scores)}

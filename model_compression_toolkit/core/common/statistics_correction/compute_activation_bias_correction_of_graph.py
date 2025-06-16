@@ -125,7 +125,7 @@ def compute_activation_bias_correction(graph: Graph,
     if normalized_bias < quant_config.activation_bias_correction_threshold:
         return graph
 
-    kernel = linear_node.get_weights_by_keys(linear_node.kernel_atts[0])
+    kernel = linear_node.get_weights_by_keys(linear_node.kernel_attr)
 
     # Compute the activation bias correction by applying the quantization error to the kernel, resulting in an output
     # size matching the number of output channels.

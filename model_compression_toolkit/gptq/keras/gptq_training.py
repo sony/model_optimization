@@ -207,8 +207,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns:
             A boolean whether the layer is to be wrapped with a QuantizeWrapper
         """
-        kernel_attr = node.kernel_atts[0]
-        return kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)
+        return node.kernel_attr is not None and node.is_weights_quantization_enabled(node.kernel_attr)
 
     def gptq_wrapper(self,
                      n: common.BaseNode,
@@ -227,7 +226,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             # If we are here, then the node has a kernel attribute to quantize and training during GPTQ
             weights_quantizers, _ = quantization_builder(n,
                                                          self.gptq_config,  # TODO: split quantizers building into two functions: for weights and activations
-                                                         n.kernel_atts[0])
+                                                         n.kernel_attr)
             if len(weights_quantizers) > 0:
                 return KerasTrainableQuantizationWrapper(layer,
                                                          weights_quantizers=weights_quantizers)

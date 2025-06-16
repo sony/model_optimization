@@ -35,7 +35,7 @@ class TestVirtualActivationWeightsNode:
         # Each node has a unique weight attr and a unique positional weights. In addition, both nodes have
         # an identical canonical attribute (but different full name), and an identical positional weight.
         # All weights have different quantization.
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['weight'] if nt is DummyLayerWKernel else [None]
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'weight' if nt is DummyLayerWKernel else None
 
         a_node = build_node('a', layer_class=DummyLayer,
                             final_weights={'aaweightaa': np.ones((3, 14)), 'foo': np.ones(15),
@@ -90,7 +90,7 @@ class TestVirtualActivationWeightsNode:
         }
 
     def test_invalid_configurable_w_node_weight(self, fw_info_mock):
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['kernel'] if nt is DummyLayerWKernel else [None]
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'kernel' if nt is DummyLayerWKernel else None
 
         w_node = build_node('w', layer_class=DummyLayerWKernel,
                             canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)},
@@ -104,7 +104,7 @@ class TestVirtualActivationWeightsNode:
             VirtualActivationWeightsNode(a_node, w_node)
 
     def test_invalid_a_node_configurable_weight(self, fw_info_mock):
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['kernel'] if nt is DummyLayerWKernel else [None]
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'kernel' if nt is DummyLayerWKernel else None
 
         w_node = build_node('w', layer_class=DummyLayerWKernel,
                             canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)},
@@ -122,7 +122,7 @@ class TestVirtualActivationWeightsNode:
             VirtualActivationWeightsNode(a_node, w_node)
 
     def test_invalid_a_node_kernel(self, fw_info_mock):
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['weight'] if nt is DummyLayerWKernel else ['kernel']
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'weight' if nt is DummyLayerWKernel else 'kernel'
         w_node = build_node('w', layer_class=DummyLayerWKernel, canonical_weights={'weight': np.ones(3)},
                             qcs=[build_nbits_qc(w_attr={'weight': (8, True)})])
         a_node = build_node('aaa', canonical_weights={'kernel': np.ones(3)},

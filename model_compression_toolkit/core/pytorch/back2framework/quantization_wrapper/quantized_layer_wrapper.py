@@ -92,7 +92,7 @@ class QuantizedLayerWrapper(torch.nn.Module):
             self.layer = n.type(**framework_attr)
             self.layer.load_state_dict({k: torch.Tensor(v) for k, v in n.weights.items()}, strict=False)
 
-    def _quantize_weights(self, n:BaseNode):
+    def _quantize_weights(self, n: BaseNode):
         """
         Quantize node's weights and load them as the layer's weights.
 
@@ -103,7 +103,7 @@ class QuantizedLayerWrapper(torch.nn.Module):
             None.
         """
 
-        self.weight_attrs = n.kernel_atts
+        self.weight_attrs = [n.kernel_attr]
 
         # float_weights is a list of weights for each attribute that we want to quantize.
         float_weights = [n.get_weights_by_keys(attr) for attr in self.weight_attrs]

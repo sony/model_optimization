@@ -157,8 +157,8 @@ class TestModelCollectorInit:
         Verify that ModelCollector.__init__ assigns appropriate statistics collectors to nodes in the graph.
         """
         # Simulate kernel attribute retrieval.
-        fw_info_mock.get_kernel_op_attributes = Mock()
-        fw_info_mock.get_kernel_op_attributes.return_value = [None]
+        fw_info_mock.get_kernel_op_attribute = Mock()
+        fw_info_mock.get_kernel_op_attribute.return_value = None
 
         # Create nodes with different activation quantization settings.
         node1 = build_node('node1', output_shape=(None, 3, 14))
@@ -201,8 +201,8 @@ class TestModelCollectorInit:
         create_tensor2node is invoked for each incoming node.
         """
         # Return a kernel attribute to trigger bias correction.
-        fw_info_mock.get_kernel_op_attributes = Mock()
-        fw_info_mock.get_kernel_op_attributes.return_value = ['kernel']
+        fw_info_mock.get_kernel_op_attribute = Mock()
+        fw_info_mock.get_kernel_op_attribute.return_value = 'kernel'
 
         # Set up nodes with quantization configurations for both activations and weights.
         node1 = build_node('node1', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(2)])
@@ -247,8 +247,8 @@ class TestModelCollectorInit:
         Verify that ModelCollector.__init__ assigns appropriate statistics collectors to FLN_QUANT nodes in the graph.
         """
         # Simulate kernel attribute retrieval.
-        fw_info_mock.get_kernel_op_attributes = Mock()
-        fw_info_mock.get_kernel_op_attributes.return_value = [None]
+        fw_info_mock.get_kernel_op_attribute = Mock()
+        fw_info_mock.get_kernel_op_attribute.return_value = None
 
         # Create nodes with different fln quantization settings.
         node1 = build_node('node1', output_shape=(None, 3, 14))
@@ -295,8 +295,8 @@ class TestModelCollectorInfer:
         and a fake Hessian service for subsequent inference tests.
         """
         set_fw_info(fw_info_mock)
-        fw_info_mock.get_kernel_op_attributes = Mock()
-        fw_info_mock.get_kernel_op_attributes.return_value = [None]
+        fw_info_mock.get_kernel_op_attribute = Mock()
+        fw_info_mock.get_kernel_op_attribute.return_value = None
         fw_info_mock.get_out_channel_axis = Mock()
         fw_info_mock.get_out_channel_axis.return_value = 1
 
@@ -399,8 +399,8 @@ class TestFLNModelCollectorInfer:
         node4 is a FLN node, the other nodes are not.
         """
         set_fw_info(fw_info_mock)
-        fw_info_mock.get_kernel_op_attributes = Mock()
-        fw_info_mock.get_kernel_op_attributes.return_value = [None]
+        fw_info_mock.get_kernel_op_attribute = Mock()
+        fw_info_mock.get_kernel_op_attribute.return_value = None
 
         input_shape = (1, 3, 14)
         self.node1 = build_node('node1', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])

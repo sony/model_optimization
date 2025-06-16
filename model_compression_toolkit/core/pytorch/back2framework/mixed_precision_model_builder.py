@@ -73,17 +73,16 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
             ValueError: if kernel attribute is quantized but not configurable.
         """
 
-        kernel_attr = n.kernel_atts[0]
-        if kernel_attr is None or not n.is_weights_quantization_enabled(kernel_attr):
+        if n.kernel_attr is None or not n.is_weights_quantization_enabled(n.kernel_attr):
             return layer
-        if not n.is_configurable_weight(kernel_attr):  # pragma: no cover
+        if not n.is_configurable_weight(n.kernel_attr):  # pragma: no cover
             raise ValueError(f'Weight wrapper is not expected to be created for non-configurable weight of node {n}.')
         return PytorchQuantizationWrapper(layer,
                                           weights_quantizers={
-                                              kernel_attr: ConfigurableWeightsQuantizer(
+                                              n.kernel_attr: ConfigurableWeightsQuantizer(
                                                   **self._get_weights_configurable_quantizer_kwargs(n,
-                                                                                                    kernel_attr),
-                                                  kernel_attr=kernel_attr)})
+                                                                                                    n.kernel_attr),
+                                                  kernel_attr=n.kernel_attr)})
 
     def _get_weights_configurable_quantizer_kwargs(self, n: BaseNode, attr: str) -> Dict[str, Any]:
         """
@@ -147,10 +146,9 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         max_candidate_idx = n.find_max_candidate_index()
 
-        kernel_attr = n.kernel_atts[0]
         activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
                                                                     'max_candidate_idx': max_candidate_idx,
-                                                                    'kernel_attr': kernel_attr})] \
+                                                                    'kernel_attr': n.kernel_attr})] \
                                 * num_of_outputs
 
         # Holder by definition uses a single quantizer for the activation quantization
@@ -226,8 +224,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         """
         # Only layers with kernel op are considered weights configurable
-        kernel_attr = n.kernel_atts[0]
-        weights_quant = False if kernel_attr is None else n.is_weights_quantization_enabled(kernel_attr)
+        weights_quant = False if n.kernel_attr is None else n.is_weights_quantization_enabled(n.kernel_attr)
         act_quant = n.is_activation_quantization_enabled()
 
         if weights_quant and not act_quant:

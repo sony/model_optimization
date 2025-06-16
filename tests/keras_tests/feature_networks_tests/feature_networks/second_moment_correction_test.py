@@ -76,7 +76,7 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
         return mct.core.QuantizationConfig(weights_second_moment_correction=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        attr = KerasInfo.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = KerasInfo.get_kernel_op_attribute(self.linear_layer)
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -347,7 +347,7 @@ class POTSecondMomentTest(BaseSecondMomentTest):
         self.unit_test.assertTrue(any(warn_msg in s for s in cm.output))
 
         # Check that the SMC feature is not working
-        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attribute(self.linear_layer)
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -389,7 +389,7 @@ class NoBNSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attribute(self.linear_layer)
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -427,7 +427,7 @@ class ReusedConvSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attribute(self.linear_layer)
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]
@@ -466,7 +466,7 @@ class UniformSecondMomentTest(BaseSecondMomentTest):
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        attr = get_fw_info().get_kernel_op_attributes(self.linear_layer)[0]
+        attr = get_fw_info().get_kernel_op_attribute(self.linear_layer)
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
         quantized_model_bias = linear_layer.weights[2]

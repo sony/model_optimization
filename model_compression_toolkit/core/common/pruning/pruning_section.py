@@ -112,10 +112,7 @@ class PruningSection:
         _, exit_input_channel_axis = exit_node.channel_axis
         entry_output_channel_axis, _ = corresponding_entry_node.channel_axis
 
-        exit_node_attr = exit_node.kernel_atts[0]
-        entry_node_attr = corresponding_entry_node.kernel_atts[0]
-
-        exit_input_channels = exit_node.get_weights_by_keys(exit_node_attr).shape[exit_input_channel_axis]
-        entry_output_channels = corresponding_entry_node.get_weights_by_keys(entry_node_attr).shape[entry_output_channel_axis]
+        exit_input_channels = exit_node.get_weights_by_keys(exit_node.kernel_attr).shape[exit_input_channel_axis]
+        entry_output_channels = corresponding_entry_node.get_weights_by_keys(corresponding_entry_node.kernel_attr).shape[entry_output_channel_axis]
 
         return exit_input_channels == entry_output_channels

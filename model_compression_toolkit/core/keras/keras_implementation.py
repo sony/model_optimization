@@ -524,12 +524,10 @@ class KerasImplementation(FrameworkImplementation):
 
         Returns: The MAC count og the operation
         """
-        kernels = node.kernel_atts
-        if not kernels or kernels[0] is None:
+        if node.kernel_attr is None:
             return 0
 
-        assert len(kernels) == 1
-        kernel_shape = node.get_weights_by_keys(kernels[0]).shape
+        kernel_shape = node.get_weights_by_keys(node.kernel_attr).shape
 
         if node.is_match_type(Conv2D) or node.is_match_type(Conv2DTranspose) or node.is_match_type(DepthwiseConv2D):
             h, w = node.get_output_shapes_list()[0][-3:-1]

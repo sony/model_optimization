@@ -164,8 +164,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             A boolean whether the layer is to be wrapped with a Quantization Wrapper.
         """
 
-        kernel_attr = node.kernel_atts[0]
-        return kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)
+        return node.kernel_attr is not None and node.is_weights_quantization_enabled(node.kernel_attr)
 
     def gptq_wrapper(self,
                      n: BaseNode,
@@ -184,7 +183,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             # If we are here, then the node has a kernel attribute to quantize and training during GPTQ
             weights_quantizers, _ = quantization_builder(n,
                                                          self.gptq_config,
-                                                         n.kernel_atts[0])
+                                                         n.kernel_attr)
 
             if len(weights_quantizers) > 0:
                 return PytorchQuantizationWrapper(layer,

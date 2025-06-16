@@ -56,9 +56,8 @@ def get_gptq_trainable_parameters(fxp_model: Model,
             trainable_threshold.extend(quantizer_trainable_threshold)
 
             if add_bias:
-                kernel_ops_attrs = get_fw_info().get_kernel_op_attributes(type(layer.layer))
-                use_bias = kernel_ops_attrs is not None and kernel_ops_attrs[0] is not None \
-                           and layer.layer.get_config().get(USE_BIAS)
+                kernel_ops_attr = get_fw_info().get_kernel_op_attribute(type(layer.layer))
+                use_bias = kernel_ops_attr is not None and layer.layer.get_config().get(USE_BIAS)
                 if use_bias is not None and use_bias and layer.layer.bias is not None:
                     bias_weights.append([layer.layer.bias])
 

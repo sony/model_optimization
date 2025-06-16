@@ -86,9 +86,8 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
 
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
     final_candidates = copy.deepcopy(node.candidates_quantization_cfg)
-    kernel_attr = node.kernel_atts[0]
 
-    if (kernel_attr is None or not node.is_weights_quantization_enabled(kernel_attr)) and not node.is_activation_quantization_enabled():
+    if (node.kernel_attr is None or not node.is_weights_quantization_enabled(node.kernel_attr)) and not node.is_activation_quantization_enabled():
         # If activation quantization is disabled and the node doesn't have a kernel or doesn't quantize the kernel,
         # but for some reason the node has multiple candidates then replace it with a single dummy candidate with
         # default bit-width values.
@@ -96,8 +95,8 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
         single_dummy_candidate.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
         single_dummy_candidate.activation_quantization_cfg.activation_quantization_method = QuantizationMethod.POWER_OF_TWO
 
-        if kernel_attr is not None:
-            kernel_config = single_dummy_candidate.weights_quantization_cfg.get_attr_config(kernel_attr)
+        if node.kernel_attr is not None:
+            kernel_config = single_dummy_candidate.weights_quantization_cfg.get_attr_config(node.kernel_attr)
             kernel_config.weights_n_bits = FLOAT_BITWIDTH
             kernel_config.weights_quantization_method = QuantizationMethod.POWER_OF_TWO
 
@@ -115,9 +114,9 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
             c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
             c.activation_quantization_cfg.activation_quantization_method = QuantizationMethod.POWER_OF_TWO
 
-        final_candidates = _filter_bit_method_dups(filtered_candidates, kernel_attr)
+        final_candidates = _filter_bit_method_dups(filtered_candidates, node.kernel_attr)
 
-    elif kernel_attr is None or not node.is_weights_quantization_enabled(kernel_attr):
+    elif node.kernel_attr is None or not node.is_weights_quantization_enabled(node.kernel_attr):
         # TODO:
         #  To allow MP on positional weights we need to modify this to consider all weights not only kernel.
         # Remove candidates that have duplicated activation candidates for node with disabled weights quantization.
@@ -128,11 +127,11 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
                                and not seen_candidates.add(candidate.activation_quantization_cfg)]
 
         for c in filtered_candidates:
-            if kernel_attr is not None:
-                kernel_config = c.weights_quantization_cfg.get_attr_config(kernel_attr)
+            if node.kernel_attr is not None:
+                kernel_config = c.weights_quantization_cfg.get_attr_config(node.kernel_attr)
                 kernel_config.weights_n_bits = FLOAT_BITWIDTH
                 kernel_config.weights_quantization_method = QuantizationMethod.POWER_OF_TWO
 
-        final_candidates = _filter_bit_method_dups(filtered_candidates, kernel_attr)
+        final_candidates = _filter_bit_method_dups(filtered_candidates, node.kernel_attr)
 
     return final_candidates

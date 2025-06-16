@@ -103,8 +103,7 @@ class PerChannelMask:
         Returns:
             int: Number of output channels for the node.
         """
-        kernel_attr = node.kernel_atts[0]
         oc_axis = node.channel_axis[0]
-        num_oc = node.get_weights_by_keys(kernel_attr).shape[oc_axis]
+        num_oc = node.get_weights_by_keys(node.kernel_attr).shape[oc_axis]
         return num_oc
 

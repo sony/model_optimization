@@ -159,9 +159,8 @@ class ModelCollector:
             sc = create_stats_collector_for_node(n, quant_node_in_fln=quant_node_in_fln)  # Get static collector for the node
             # If we use bias correction, and the node has kernel weights to quantize, we need to make sure
             # its previous nodes' tensors are consistent with this node.
-            kernel_attr = n.kernel_atts[0]
-            if qc.weights_bias_correction and kernel_attr is not None and n.is_weights_quantization_enabled(
-                    kernel_attr):
+            if qc.weights_bias_correction and n.kernel_attr is not None and n.is_weights_quantization_enabled(
+                    n.kernel_attr):
                 for ie in graph.incoming_edges(n):
                     input_node = ie.source_node
                     create_tensor2node(graph,
@@ -197,7 +196,6 @@ class ModelCollector:
         # calculation for output nodes that don't collect statistics such as "permute", "transpose" etc.
         # TODO: Add integration test for this case
         append2output = outputs_nodes + [n for n in self.model_outputs if n not in outputs_nodes]
-
 
         # Build a float model and output all layers' outputs
         # (that should be collected) as the model's outputs
