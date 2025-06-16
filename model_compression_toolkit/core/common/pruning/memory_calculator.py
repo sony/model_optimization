@@ -203,7 +203,7 @@ class MemoryCalculator:
                 return masks.get(section.entry_node)
 
         # Retrieve and validate the axis index for the output channels.
-        _, ic_axis = node.channel_axis
+        ic_axis = node.channel_axis.input
         if ic_axis is None or int(ic_axis) != ic_axis:
             Logger.critical(f"Invalid input channel axis type for node '{node}': expected integer but got '{ic_axis}'.")
 

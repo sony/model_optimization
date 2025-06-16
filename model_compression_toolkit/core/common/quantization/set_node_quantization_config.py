@@ -183,9 +183,8 @@ def set_quantization_configs_to_node(node: BaseNode,
         mixed_precision_enable=mixed_precision_enable)
 
     # Create QC candidates for weights and activation combined
-    weight_channel_axis = node.channel_axis
     node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
-                                                                  weight_channel_axis,
+                                                                  node.channel_axis,
                                                                   node_qc_options_list,
                                                                   base_config,
                                                                   node,

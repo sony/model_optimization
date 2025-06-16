@@ -76,12 +76,11 @@ def op2d_bias_correction(op2d_node: BaseNode,
     # the layer type.
     kernel = op2d_node.get_weights_by_keys(op2d_node.kernel_attr)
     if kernel is not None:
-        output_channel_index, input_channel_index = op2d_node.channel_axis
         axis_not_output_channel = list(range(len(kernel.shape)))
-        axis_not_output_channel.remove(output_channel_index)
+        axis_not_output_channel.remove(op2d_node.channel_axis.output)
 
         # special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters
-        if output_channel_index == input_channel_index:
+        if op2d_node.channel_axis.output == op2d_node.channel_axis.input:
             axis_not_output_channel.remove(3)  # 3 is the depth multiplier index
 
         bias_correction = shift_to_correct * np.sum(kernel, axis=tuple(axis_not_output_channel))

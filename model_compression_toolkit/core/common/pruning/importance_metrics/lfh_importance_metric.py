@@ -246,7 +246,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
             tuple: A tuple containing the kernel attribute, the number of output channels, and the axis of the output channels.
         """
         # Retrieve and validate the axis index for the output channels.
-        oc_axis, _ = entry_node.channel_axis
+        oc_axis = entry_node.channel_axis.output
         if oc_axis is None or int(oc_axis) != oc_axis:
             Logger.critical(f"Invalid output channel axis type for node {entry_node}: expected integer but got {oc_axis}.")
 

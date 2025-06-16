@@ -109,8 +109,8 @@ class PruningSection:
         Returns:
             bool: True if the channel counts match, False otherwise.
         """
-        _, exit_input_channel_axis = exit_node.channel_axis
-        entry_output_channel_axis, _ = corresponding_entry_node.channel_axis
+        exit_input_channel_axis = exit_node.channel_axis.input
+        entry_output_channel_axis = corresponding_entry_node.channel_axis.output
 
         exit_input_channels = exit_node.get_weights_by_keys(exit_node.kernel_attr).shape[exit_input_channel_axis]
         entry_output_channels = corresponding_entry_node.get_weights_by_keys(corresponding_entry_node.kernel_attr).shape[entry_output_channel_axis]

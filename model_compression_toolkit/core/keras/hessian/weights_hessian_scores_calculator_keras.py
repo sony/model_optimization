@@ -106,7 +106,7 @@ class WeightsHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                         tensors_original_shape.append(weight_tensor.shape)
 
                     # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-                    output_channel_axis, _ = ipt_node.channel_axis
+                    output_channel_axis = ipt_node.channel_axis.output
 
                     # Get number of scores that should be calculated by the granularity.
                     num_of_scores = self._get_num_scores_by_granularity(weight_tensor,

@@ -481,8 +481,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         if node.is_match_type(Linear):
             # IN * OUT * (all previous dims[:-1])
-            _, input_channel_axis = node.channel_axis
-            return node.get_total_output_params() * kernel_shape[input_channel_axis]
+            return node.get_total_output_params() * kernel_shape[node.channel_axis.input]
 
         return 0
 

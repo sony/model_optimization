@@ -132,12 +132,11 @@ def compute_activation_bias_correction(graph: Graph,
     if kernel is not None:
 
         # Get the axes that are not the output channel.
-        output_channel_index, input_channel_index = linear_node.channel_axis
         axis_not_output_channel = list(range(len(kernel.shape)))
-        axis_not_output_channel.remove(output_channel_index)
+        axis_not_output_channel.remove(linear_node.channel_axis.output)
 
         # Special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters.
-        if output_channel_index == input_channel_index:
+        if linear_node.channel_axis.output == linear_node.channel_axis.input:
             axis_not_output_channel.remove(3)  # 3 is the depth multiplier index.
 
         activation_bias_correction_term = mean_diff * np.sum(kernel, axis=tuple(axis_not_output_channel))

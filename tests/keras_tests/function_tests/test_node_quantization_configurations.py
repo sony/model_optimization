@@ -17,6 +17,7 @@ import unittest
 from mct_quantizers import QuantizationMethod
 
 from model_compression_toolkit.core import QuantizationConfig
+from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig, WeightsAttrQuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import \
@@ -56,7 +57,7 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
         op_cfg, _, _ = get_op_quantization_configs()
 
         nwc = NodeWeightsQuantizationConfig(qc, op_cfg,
-                                            weights_channels_axis=(1, -1),
+                                            weights_channels_axis=ChannelAxisMapping(1, -1),
                                             node_attrs_list=[KERNEL, 0])
         og_nwc = copy.deepcopy(nwc)
 
@@ -96,7 +97,7 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
         # Init a config with regular and positional attributes, and attributes with overlapping names, since in the
         # implementation we look for existence of a string to retrieve attribute
         nwc = NodeWeightsQuantizationConfig(qc, op_cfg,
-                                            weights_channels_axis=(1, -1),
+                                            weights_channels_axis=ChannelAxisMapping(1, -1),
                                             node_attrs_list=[KERNEL, 0, BIAS, f"{BIAS}-2"])
 
         kernel_attr = nwc.get_attr_config(KERNEL)
@@ -118,7 +119,7 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
         op_cfg, _, _ = get_op_quantization_configs()
 
         nwc = NodeWeightsQuantizationConfig(qc, op_cfg,
-                                            weights_channels_axis=(1, -1),
+                                            weights_channels_axis=ChannelAxisMapping(1, -1),
                                             node_attrs_list=[KERNEL, 0])
 
         new_cfg = WeightsAttrQuantizationConfig(qc,

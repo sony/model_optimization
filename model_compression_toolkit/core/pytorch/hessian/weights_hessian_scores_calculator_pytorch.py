@@ -98,7 +98,7 @@ class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                 weights_tensor = getattr(getattr(model, ipt_node.name), ipt_node.kernel_attr)
 
                 # Get the output channel index
-                output_channel_axis, _ = ipt_node.channel_axis
+                output_channel_axis = ipt_node.channel_axis.output
                 shape_channel_axis = [i for i in range(len(weights_tensor.shape))]
                 if self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL:
                     shape_channel_axis.remove(output_channel_axis)

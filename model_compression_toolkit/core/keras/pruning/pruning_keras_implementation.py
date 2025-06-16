@@ -156,7 +156,7 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
 
         attributes_with_axis = {}
         if node.is_kernel_op:
-            attributes_with_axis[node.kernel_attr] = node.channel_axis
+            attributes_with_axis[node.kernel_attr] = (node.channel_axis.output, node.channel_axis.input)
 
             # Bias is a vector at the length of the number of output channels.
             # For this reason, input channel axis is irrelevant to the bias attribute.
@@ -210,8 +210,7 @@ def _prune_keras_edge_node(node: BaseNode,
     """
 
     # Retrieve the kernel attribute and the axes to prune.
-    io_axis = node.channel_axis
-    axis_to_prune = io_axis[int(is_exit_node)]
+    axis_to_prune = node.channel_axis.input if is_exit_node else node.channel_axis.output
     kernel = node.get_weights_by_keys(node.kernel_attr)
     # Convert mask to boolean.
     mask_bool = mask.astype(bool)

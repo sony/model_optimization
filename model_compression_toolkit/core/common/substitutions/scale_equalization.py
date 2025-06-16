@@ -95,7 +95,7 @@ def scale_reshaping(scale: np.ndarray,
 
     op_ndims = op2d.get_weights_by_keys(kernel_str).ndim
     reshape_target = np.ones(op_ndims, dtype=np.int32)
-    reshape_target[op2d.channel_axis[int(in_channels)]] = -1
+    reshape_target[op2d.channel_axis.input if in_channels else op2d.channel_axis.output] = -1
     return np.reshape(scale, reshape_target)
 
 
