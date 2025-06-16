@@ -20,6 +20,7 @@ from typing import List, Callable, Generator
 from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
@@ -125,7 +126,7 @@ def calculate_quantization_params(graph: Graph,
                                                                                node=n,
                                                                                hessian_info_service=hessian_info_service,
                                                                                num_hessian_samples=num_hessian_samples)
-                    attr_cfg.weights_channels_axis = (output_channels_axis, attr_cfg.weights_channels_axis[1])
+                    attr_cfg.weights_channels_axis = ChannelAxisMapping(output_channels_axis, attr_cfg.weights_channels_axis.input)
                     attr_cfg.set_weights_quantization_param(weights_params)
 
             if n.is_activation_quantization_enabled():

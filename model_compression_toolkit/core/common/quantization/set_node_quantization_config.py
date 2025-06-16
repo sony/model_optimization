@@ -20,7 +20,7 @@ from model_compression_toolkit.constants import WEIGHTS, ACTIVATION
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.framework_info import get_fw_info
+from model_compression_toolkit.core.common.framework_info import get_fw_info, ChannelAxisMapping
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
@@ -238,7 +238,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
 
 
 def _create_node_single_candidate_qc(qc: QuantizationConfig,
-                                     weight_channel_axis: Tuple[int, int],
+                                     weight_channel_axis: ChannelAxisMapping,
                                      op_cfg: OpQuantizationConfig,
                                      node_attrs_list: List[str]) -> CandidateNodeQuantizationConfig:
     """
@@ -283,7 +283,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
 
 
 def _create_node_candidates_qc(qc: QuantizationConfig,
-                               weight_channel_axis: Tuple[int, int],
+                               weight_channel_axis: ChannelAxisMapping,
                                node_qc_options_list: List[OpQuantizationConfig],
                                base_config: OpQuantizationConfig,
                                node: BaseNode,
@@ -293,7 +293,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
 
     Args:
         qc (QuantizationConfig): Quantization configuration the quantization process should follow.
-        weight_channel_axis (Tuple[int, int]): (Output, Input) channel index of the node's kernel.
+        weight_channel_axis (ChannelAxisMapping): (Output, Input) channel index of the node's kernel.
         node_qc_options_list (List[OpQuantizationConfig]): List of quantization configs of node.
         base_config (OpQuantizationConfig): Base quantization config for node.
         node (BaseNode): A node to set quantization configuration candidates to.

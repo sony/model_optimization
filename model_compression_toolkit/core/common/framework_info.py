@@ -16,15 +16,10 @@
 
 from collections.abc import Callable
 from enum import Enum
-from typing import Dict, Any, Tuple, Union, TYPE_CHECKING, NamedTuple
+from typing import Dict, Any, Tuple, NamedTuple
 from abc import ABC, abstractmethod
 
 from mct_quantizers import QuantizationMethod
-
-
-if TYPE_CHECKING:
-    from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
-    from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 
 
 # Default value to use for ops without kernel.
@@ -165,7 +160,7 @@ class FrameworkInfo(ABC):
 
 
 # Pointer to current FrameworkInfo class.
-_current_framework_info: Union[type['PyTorchInfo'], type['KerasInfo']] = None
+_current_framework_info: type[FrameworkInfo] = None
 
 
 def get_fw_info():
@@ -179,7 +174,7 @@ def get_fw_info():
     return _current_framework_info
 
 
-def set_fw_info(fw_info: Union[type['PyTorchInfo'], type['KerasInfo']]):
+def set_fw_info(fw_info: type[FrameworkInfo]):
     """
     A common function to set the current FrameworkInfo class. Raises an error if fw_info doesn't inherit from FrameworkInfo.
 
