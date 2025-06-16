@@ -99,11 +99,11 @@ class BaseNode:
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
-        self._set_fw_node_attrs(layer_class, framework_attr)
+        self.node_fw_info = self._set_fw_node_attrs(layer_class, framework_attr)
 
     def _set_fw_node_attrs(self, node_type, framework_attr):
         fw_info = get_fw_info()
-        self.node_fw_info = None if fw_info is None else NodeFrameworkInfo(
+        return None if fw_info is None else NodeFrameworkInfo(
             fw_info.get_kernel_channels(node_type),
             fw_info.get_out_channel_axis(node_type),
             fw_info.get_layer_min_max(node_type, framework_attr),
