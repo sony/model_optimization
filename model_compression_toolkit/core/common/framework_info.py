@@ -70,7 +70,6 @@ class FrameworkInfo(ABC):
     kernel_channels_mapping: Dict[Any, ChannelAxisMapping]
     kernel_ops_attribute_mapping: Dict[Any, str]
     out_channel_axis_mapping: Dict[Any, int]
-    _activation_min_max_mapping: Dict[str, tuple]
     _layer_min_max_mapping: Dict[Any, tuple]
 
     _default_channel_mapping = ChannelAxisMapping(None, None)

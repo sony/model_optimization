@@ -79,7 +79,7 @@ class FunctionalNode(BaseNode):
         self.op_call_args = list(op_call_args)
         self.functional_op = functional_op
         self.tensor_input_allocs = [] if tensor_input_allocs is None else tensor_input_allocs
-        self._set_fw_node_attrs(functional_op, framework_attr)
+        self.node_fw_info = self._get_fw_node_attrs(functional_op, framework_attr)
 
     @property
     def type(self):

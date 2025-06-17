@@ -99,9 +99,9 @@ class BaseNode:
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
-        self.node_fw_info = self._set_fw_node_attrs(layer_class, framework_attr)
+        self.node_fw_info = self._get_fw_node_attrs(layer_class, framework_attr)
 
-    def _set_fw_node_attrs(self, node_type, framework_attr):
+    def _get_fw_node_attrs(self, node_type, framework_attr):
         fw_info = get_fw_info()
         return None if fw_info is None else NodeFrameworkInfo(
             fw_info.get_kernel_channels(node_type),
