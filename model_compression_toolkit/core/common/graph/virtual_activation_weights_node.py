@@ -21,7 +21,6 @@ from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig, TPCQuantizationInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
-from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTE
 
 
 class VirtualNode(BaseNode, abc.ABC):
@@ -146,7 +145,7 @@ class VirtualActivationWeightsNode(VirtualNode):
         weights = weights_node.weights.copy()
         act_node_w_rename = {}
         if act_node.weights:
-            if act_node.kernel_attr != DEFAULT_KERNEL_ATTRIBUTE:
+            if act_node.kernel_attr:
                 raise NotImplementedError(f'Node {act_node} with kernel cannot be used as activation for '
                                           f'VirtualActivationWeightsNode.')
             if act_node.has_any_configurable_weight():

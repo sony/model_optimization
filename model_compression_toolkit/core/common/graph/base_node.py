@@ -44,7 +44,6 @@ class NodeFrameworkInfo(NamedTuple):
     out_channel_axis: int
     minmax: Tuple[float, float]
     kernel_attr: str
-    is_kernel_op: bool
 
 
 class BaseNode:
@@ -109,7 +108,6 @@ class BaseNode:
             fw_info.get_out_channel_axis(node_type),
             fw_info.get_layer_min_max(node_type, framework_attr),
             fw_info.get_kernel_op_attribute(node_type),
-            fw_info.is_kernel_op(node_type)
         )
 
     def _assert_fw_info_exists(self):
@@ -161,17 +159,6 @@ class BaseNode:
         """
         self._assert_fw_info_exists()
         return self.node_fw_info.kernel_attr
-
-    @property
-    def is_kernel_op(self) -> bool:
-        """
-        Check if kernel exists for the node.
-
-        Returns:
-            Whether the node has a kernel or not.
-        """
-        self._assert_fw_info_exists()
-        return self.node_fw_info.is_kernel_op
 
     @property
     def candidates_quantization_cfg(self):

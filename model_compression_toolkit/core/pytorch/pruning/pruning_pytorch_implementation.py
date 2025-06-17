@@ -167,7 +167,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
         """
 
         attributes_with_axis = {}
-        if node.is_kernel_op:
+        if node.kernel_attr:
             attributes_with_axis[node.kernel_attr] = (node.channel_axis.output, node.channel_axis.input)
 
             # Bias is a vector at the length of the number of output channels.

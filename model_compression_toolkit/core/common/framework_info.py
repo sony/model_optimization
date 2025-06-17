@@ -16,16 +16,10 @@
 
 from collections.abc import Callable
 from enum import Enum
-from typing import Dict, Any, Tuple, NamedTuple
+from typing import Dict, Any, Tuple, NamedTuple, Optional
 from abc import ABC, abstractmethod
 
 from mct_quantizers import QuantizationMethod
-
-
-# Default value to use for ops without kernel.
-# This is a weird default, but it's used all over the place, so for now only extract it to const so that it can be
-# referenced by variable instead of hard-coded.
-DEFAULT_KERNEL_ATTRIBUTE = None
 
 
 class ChannelAxis(Enum):
@@ -75,7 +69,7 @@ class FrameworkInfo(ABC):
     _default_channel_mapping = ChannelAxisMapping(None, None)
 
     @classmethod
-    def get_kernel_op_attribute(cls, node_type: Any) -> str:
+    def get_kernel_op_attribute(cls, node_type: Any) -> Optional[str]:
         """
         Get attribute of a layer's weight to quantize.
 
@@ -85,20 +79,7 @@ class FrameworkInfo(ABC):
         Returns:
             Attribute the layer has and should be quantized.
         """
-        return cls.kernel_ops_attribute_mapping.get(node_type, DEFAULT_KERNEL_ATTRIBUTE)
-
-    @classmethod
-    def is_kernel_op(cls, node_type: Any) -> bool:
-        """
-        Check is the node is a kernel operation.
-
-        Args:
-            node_type: Layer to get its attributes.
-
-        Returns:
-            True if node type is a kernel operation, else False.
-        """
-        return node_type in cls.kernel_ops_attribute_mapping
+        return cls.kernel_ops_attribute_mapping.get(node_type)
 
     @classmethod
     def get_layer_min_max(cls, layer: Any, fw_attrs: Dict) -> Tuple[float, float]:

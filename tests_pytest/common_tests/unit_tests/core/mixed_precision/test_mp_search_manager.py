@@ -21,7 +21,7 @@ import numpy as np
 
 from model_compression_toolkit.core import ResourceUtilization, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTE, set_fw_info
+from model_compression_toolkit.core.common.framework_info import set_fw_info
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitActivationNode, VirtualSplitWeightsNode
@@ -53,8 +53,7 @@ def build_graph(fw_info_mock, w_mp: bool, a_mp: bool):
     # n3 qcs: [a4w4, a4w8, a4w2, a8w4, a8w8, a8w2]
     # n4 qcs: [w12, w4, w8]
     op_kernels = {DummyLayer1: 'foo', DummyLayer2: 'bar'}
-    fw_info_mock.get_kernel_op_attribute = lambda nt: op_kernels.get(nt, DEFAULT_KERNEL_ATTRIBUTE)
-    fw_info_mock.is_kernel_op = lambda nt: nt in op_kernels
+    fw_info_mock.get_kernel_op_attribute = lambda nt: op_kernels.get(nt)
 
     n1 = build_node('n1', qcs=[build_nbits_qc(a_nbits=8)], output_shape=(None, 1, 2, 3))
 
@@ -353,8 +352,7 @@ class TestMixedPrecisionSearchManager:
             - check correct configurations (from graph) are passed to mock sensitivity evaluator.
             - final sensitivity is built correctly from mocked computed metrics.
         """
-        fw_info_mock.get_kernel_op_attribute = lambda nt: 'foo' if nt is DummyLayer else DEFAULT_KERNEL_ATTRIBUTE
-        fw_info_mock.is_kernel_op = lambda nt: nt is DummyLayer
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'foo' if nt is DummyLayer else None
 
         a_conf = build_node('a_conf', layer_class=DummyLayer2, qcs=[build_nbits_qc(nb) for nb in (4, 2)])
         a_conf_w = build_node('a_conf_w',
@@ -462,8 +460,7 @@ class TestMixedPrecisionSearchManager:
     ])
     def test_build_sensitivity_mapping_params(self, fw_impl_mock, fw_info_mock, norm, eps, max_thresh, exp1, exp2):
         """ Tests sensitivity normalization method, epsilon and threshold. """
-        fw_info_mock.get_kernel_op_attribute = lambda nt: DEFAULT_KERNEL_ATTRIBUTE
-        fw_info_mock.is_kernel_op = lambda nt: False
+        fw_info_mock.get_kernel_op_attribute = lambda nt: None
 
         ph = build_node('ph', qcs=[build_nbits_qc()])
         n1 = build_node('n1', qcs=[build_nbits_qc(nb) for nb in (4, 2, 16, 8)])
@@ -521,7 +518,7 @@ class TestConfigHelper:
     @pytest.fixture(autouse=True)
     def setup(self, fw_info_mock):
         fw_info_mock.get_kernel_op_attribute = \
-            lambda nt: self.kernel_attr if nt == self.AWLayer else DEFAULT_KERNEL_ATTRIBUTE
+            lambda nt: self.kernel_attr if nt == self.AWLayer else None
         set_fw_info(fw_info_mock)
 
     @staticmethod
