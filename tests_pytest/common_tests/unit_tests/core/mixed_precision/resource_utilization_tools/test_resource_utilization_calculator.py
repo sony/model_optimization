@@ -254,7 +254,7 @@ class TestActivationUtilizationMethods:
         {'qcs': [build_qc(42, w_attr={'foo': (4, True)}), build_qc(42, w_attr={'foo': (2, False)})]}
     ])
     def test_get_a_nbits_nonconfigurable(self, graph_mock, fw_impl_mock, node_params):
-        node = build_node(**node_params)
+        node = build_node(**node_params, disable_tpc_info_validation=True)
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock)
         for bm in set(BitwidthMode) - {BM.Float}:
             assert ru_calc._get_activation_nbits(node, bm, None) == 42
@@ -747,7 +747,7 @@ class TestWeightUtilizationMethods:
             build_qc(10, w_attr={'mp': (4, True), 'sp': (5, True), 'noq': (1, False)}, pos_attr=(6, True, [2])),
             build_qc(8, False, w_attr={'mp': (7, True), 'sp': (5, True), 'noq': (2, False)}, pos_attr=(6, True, [2]))
         ]
-        node = build_node(canonical_weights={'mp': 1, 'sp': 2, 'noq': 3}, qcs=qcs)
+        node = build_node(canonical_weights={'mp': 1, 'sp': 2, 'noq': 3}, qcs=qcs, disable_tpc_info_validation=True)
         # configurable attr
         assert ru_calc._get_weight_nbits(node, 'mp', BM.Float, w_qc=None) == FLOAT_BITWIDTH
         assert ru_calc._get_weight_nbits(node, 'mp', BM.QMinBit, w_qc=None) == 2

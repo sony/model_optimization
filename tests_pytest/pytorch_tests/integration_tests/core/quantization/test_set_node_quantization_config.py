@@ -17,9 +17,6 @@ import pytest
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.core import BitWidthConfig, QuantizationConfig
 
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
-
 import torch
 from torch import nn
 

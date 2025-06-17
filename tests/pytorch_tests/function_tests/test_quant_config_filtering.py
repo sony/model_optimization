@@ -13,11 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 import unittest
+from unittest.mock import patch
+
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.keras.constants import FUNCTION
 
 import torch
 
+from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qco_for_node
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
@@ -30,6 +33,8 @@ from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc
 get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
 
+# TODO irena: this tests node.filter_node_qco_by_graph which is not used anyway. What is actually used is
+#  filter_node_qco_by_graph in set_node_quantization_config which doesn't have unittests.
 class TestTorchQuantConfigFiltering(unittest.TestCase):
 
     @staticmethod
@@ -54,20 +59,21 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
         return tpc
 
     def test_config_filtering(self):
-        node = FunctionalNode('node',{},
-                              [1, 8], [1, 8], {}, torch.multiply,
-                              [], {}, functional_op=torch.multiply)
-        next_node1 = FunctionalNode('next_node',{FUNCTION},
-                              [1, 8], [1, 8], {}, torch.add,
-                              [], {}, functional_op=torch.add)
-        next_node2 = FunctionalNode('next_node',{},
-                              [1, 8], [1, 8], {}, torch.div,
-                              [], {}, functional_op=torch.div)
+        with patch('model_compression_toolkit.core.common.framework_info._current_framework_info'):
+            node = FunctionalNode('node',{},
+                                  [1, 8], [1, 8], {}, torch.multiply,
+                                  [], {}, functional_op=torch.multiply)
+            next_node1 = FunctionalNode('next_node',{FUNCTION},
+                                  [1, 8], [1, 8], {}, torch.add,
+                                  [], {}, functional_op=torch.add)
+            next_node2 = FunctionalNode('next_node',{},
+                                  [1, 8], [1, 8], {}, torch.div,
+                                  [], {}, functional_op=torch.div)
 
         tpc = self.get_tpc_default_16bit()
         tpc = AttachTpcToPytorch().attach(tpc)
 
-        node_qc_options = node.get_qco(tpc)
+        node_qc_options = fetch_qco_for_node(node, tpc)
         self.assertTrue(node_qc_options.base_config.activation_n_bits == 16, "base_config should start with 16 bits.")
 
         # test base_config changed due to next node supported input bits.

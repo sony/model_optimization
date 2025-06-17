@@ -16,6 +16,7 @@ import random
 from typing import Callable, List
 
 import abc
+from unittest.mock import Mock
 
 import pytest
 from mct_quantizers import QuantizationMethod
@@ -26,14 +27,12 @@ from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import \
+    NodeActivationQuantizationConfig, ActivationQuantizationMode
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from tests_pytest._test_util.tpc_util import minimal_cfg_options
 
-
-class MockNodeActivationQuantizationConfig:
-    def __init__(self, n_bits: int):
-        self.activation_n_bits = n_bits
 
 def random_activation_configs():
     num_candidates = random.choice([1, 2, 3])
@@ -41,11 +40,13 @@ def random_activation_configs():
     qcs = [
         CandidateNodeQuantizationConfig(
             weights_quantization_cfg=None,
-            activation_quantization_cfg=MockNodeActivationQuantizationConfig(n_bits=nb)
+            activation_quantization_cfg=Mock(spec=NodeActivationQuantizationConfig,
+                                             activation_n_bits=nb, quant_mode=ActivationQuantizationMode.QUANT)
         )
         for nb in bits_list
     ]
     return bits_list, qcs
+
 
 def get_activation_mp_options(last_node_activation_nbits):
     options = tuple([schema.OpQuantizationConfig(
@@ -64,6 +65,7 @@ def get_activation_mp_options(last_node_activation_nbits):
     cfg_options = schema.QuantizationConfigOptions(quantization_configurations=options, base_config=options[0])
 
     return cfg_options
+
 
 class BaseFusingInfoGeneratorTest(abc.ABC):
 
@@ -85,19 +87,12 @@ class BaseFusingInfoGeneratorTest(abc.ABC):
     def _get_qc(self):
         raise NotImplementedError()
 
-
     @pytest.fixture
     def graph_with_fusion_metadata(self):
         """
         Creates a graph with fusing metadata based on a generated model and a predefined configuration.
         Ensures all required components (framework implementation, framework info, etc.) are present.
         """
-        assert self._data_gen is not None
-        assert self.fw_impl is not None
-        assert self.attach_to_fw_func is not None
-        assert self.expected_fi is not None
-        assert self.last_node_activation_nbits is not None
-
         self.fqc = self.attach_to_fw_func(self._get_tpc(minimal_cfg_options()),
                                           self._get_qc().custom_tpc_opset_to_layer)
 

@@ -297,7 +297,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
     def _get_quantization_config(self, disable_linear_collapse: bool=False):
         return QuantizationConfig(linear_collapsing=False) if disable_linear_collapse else QuantizationConfig()
 
-    def _prepare_graph(self, model, disable_linear_collapse: bool=False, snc_tpc:bool = False):
+    def _prepare_graph(self, model, disable_linear_collapse: bool = False, snc_tpc: bool = False):
         tpc, *nbits = build_snc_tpc() if snc_tpc else build_tpc()
         # If disable_linear_collapse is False we use the default quantization config
         qcfg = self._get_quantization_config(disable_linear_collapse)

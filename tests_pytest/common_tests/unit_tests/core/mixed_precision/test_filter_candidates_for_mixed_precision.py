@@ -17,11 +17,9 @@ import pytest
 from unittest.mock import MagicMock, Mock
 
 from model_compression_toolkit.core import ResourceUtilization
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_candidates_filter import \
     filter_candidates_for_mixed_precision
-from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities, \
-    QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities import QuantizationConfigOptions
 from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc
 
 
@@ -51,8 +49,7 @@ def test_filtering(graph_mock, tru, expected_act_candidates, expected_weight_can
 
     # Weights-configurable node with candidates
     weight_node = build_node(qcs=[build_nbits_qc(w_attr={'kernel': (8, True)}),
-                                  build_nbits_qc(w_attr={'kernel': (4, True)})],
-                             node_fw_info=Mock(kernel_attr='kernel'))
+                                  build_nbits_qc(w_attr={'kernel': (4, True)})])
     qco = Mock(spec=QuantizationConfigOptions,
                base_config=MagicMock(attr_weights_configs_mapping={'kernel': MagicMock(weights_n_bits=8)}))
     weight_node.get_qco = Mock(return_value=qco)
@@ -60,7 +57,7 @@ def test_filtering(graph_mock, tru, expected_act_candidates, expected_weight_can
     graph_mock.get_activation_configurable_nodes.return_value = [act_node]
     graph_mock.get_weights_configurable_nodes.return_value = [weight_node]
 
-    filter_candidates_for_mixed_precision(graph_mock, tru, Mock(spec=FrameworkQuantizationCapabilities))
+    filter_candidates_for_mixed_precision(graph_mock, tru)
 
     assert len(act_node.candidates_quantization_cfg) == expected_act_candidates
     assert len(weight_node.candidates_quantization_cfg) == expected_weight_candidates

@@ -150,7 +150,6 @@ def get_fw_info():
     Returns: FrameworkInfo class.
     """
     assert _current_framework_info is not None, "fw_info isn't initialized."
-    assert issubclass(_current_framework_info, FrameworkInfo), "fw_info isn't initialized to a FrameworkInfo class."
     return _current_framework_info
 
 

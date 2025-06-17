@@ -23,14 +23,14 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import create_node_activation_qc, \
-    set_quantization_configs_to_node
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import z_score_filter
+from model_compression_toolkit.quantization_preparation.load_fqc import set_quantization_configs_to_node, \
+    fetch_qco_for_node
 from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig
 
 """
@@ -443,7 +443,7 @@ def shift_negative_function(graph: Graph,
                     bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    add_node_qco = add_node.get_qco(graph.fqc).quantization_configurations
+    add_node_qco = fetch_qco_for_node(add_node, graph.fqc).quantization_configurations
     add_supported_bitwidths = [c.activation_n_bits for c in add_node_qco]
     if original_non_linear_activation_nbits not in add_supported_bitwidths:
         raise ValueError(
@@ -451,17 +451,16 @@ def shift_negative_function(graph: Graph,
             f"bitwidth is {original_non_linear_activation_nbits}. Consider adapting the TPC so 'Add' will support the "
             f"same bitwidth as {non_linear_node.type} or disable shift negative correction.")
 
-    for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
-        for attr in add_node.get_node_weights_attributes():
-            # TODO: do we not quantize the weights of this 'add' on purpose?
-            candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
+    set_quantization_configs_to_node(add_node, graph, graph.fqc)
+    # TODO: do we not quantize the weights of this 'add' on purpose?
+    add_node.tpc_quantization_info.disable_weights_quantization()
 
-        candidate_qc.activation_quantization_cfg = create_node_activation_qc(add_node_qco[op_qc_idx])
+    def update(c):
+        c.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
+        c.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
+                                                                         SIGNED: False})
 
-        candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
-                                                                                    SIGNED: False})
-
-        candidate_qc.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
+    add_node.tpc_quantization_info.update_all(update)
 
     # Add the new padding node to a fused op with the op2d.
     if pad_node:

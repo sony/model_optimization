@@ -126,21 +126,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Args:
             fqc: FrameworkQuantizationCapabilities object.
         """
-        # validate graph nodes are either from the framework or a custom layer defined in the FQC
-        # Validate graph nodes are either built-in layers from the framework or custom layers defined in the FQC
-        fqc_layers = fqc.op_sets_to_layers.get_layers()
-        fqc_filtered_layers = [layer for layer in fqc_layers if isinstance(layer, LayerFilterParams)]
-        for n in self.nodes:
-            is_node_in_fqc = any([n.is_match_type(_type) for _type in fqc_layers]) or \
-                             any([n.is_match_filter_params(filtered_layer) for filtered_layer in fqc_filtered_layers])
-            if n.is_custom:
-                if not is_node_in_fqc:
-                    Logger.critical(f'MCT does not support optimizing Keras custom layers. Found a layer of type {n.type}. '
-                                    ' Please add the custom layer to Framework Quantization Capabilities (FQC), or file a feature '
-                                    'request or an issue if you believe this should be supported.')  # pragma: no cover
-                if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(fqc).quantization_configurations]):
-                    Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')  # pragma: no cover
-
+        # TODO irena: this is only passed for negative shift activation.
         self.fqc = fqc
 
     def get_topo_sorted_nodes(self):

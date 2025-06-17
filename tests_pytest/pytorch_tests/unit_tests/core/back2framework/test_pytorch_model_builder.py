@@ -69,7 +69,7 @@ def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
                                               activation_quantization_params_fn=None)
     if len(aq_params) != 0:
         a_qcfg.set_activation_quantization_param(aq_params)
-    qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg)
+    qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg, weights_quantization_cfg=None)
     return qc
 
 

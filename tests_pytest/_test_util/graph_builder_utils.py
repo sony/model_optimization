@@ -36,7 +36,7 @@ def build_node(name='node', canonical_weights: dict = None, final_weights: dict 
                qcs: List[CandidateNodeQuantizationConfig] = None,
                sp_qc: CandidateNodeQuantizationConfig = None,
                input_shape=(4, 5, 6), output_shape=(4, 5, 6),
-               layer_class=DummyLayer, reuse=False, node_fw_info: NodeFrameworkInfo = None):
+               layer_class=DummyLayer, reuse=False, disable_tpc_info_validation=False): # , node_fw_info: NodeFrameworkInfo = None): # TODO irena
     """ Build a node for tests.
         Either 'canonical_weights' (to be used by default) or 'final_weights' should be passed.
           Canonical weights are converted into full unique names, that contain the canonical name as a substring.
@@ -56,14 +56,16 @@ def build_node(name='node', canonical_weights: dict = None, final_weights: dict 
                     weights=weights,
                     layer_class=layer_class,
                     reuse=reuse)
-    if node_fw_info:
-        node.node_fw_info = node_fw_info
+    # TODO irena
+    # if node_fw_info:
+    #     node.node_fw_info = node_fw_info
 
     if qcs or sp_qc:
         assert isinstance(qcs, (list, type(None)))
         qcs = qcs or [sp_qc]
         sp_qc = sp_qc or qcs[0]
-        node.tpc_quantization_info = TPCQuantizationInfo(base_quantization_cfg=sp_qc, candidates_quantization_cfg=qcs)
+        node.tpc_quantization_info = TPCQuantizationInfo(base_quantization_cfg=sp_qc, candidates_quantization_cfg=qcs,
+                                                         validate=not disable_tpc_info_validation)
     return node
 
 

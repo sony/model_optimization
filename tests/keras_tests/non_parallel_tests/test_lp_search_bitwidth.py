@@ -29,10 +29,9 @@ from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.quantization_preparation.load_fqc import load_fqc_configuration
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -70,7 +69,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         fqc = AttachTpcToKeras().attach(tpc)
 
-        graph = set_quantization_configuration_to_graph(graph=graph, fqc=fqc)
+        graph = load_fqc_configuration(graph=graph, fqc=fqc)
 
         for node in graph.nodes:
             # TODO irena remove set_qc:
