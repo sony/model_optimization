@@ -65,7 +65,6 @@ class KerasGPTQTrainer(GPTQTrainer):
                  graph_quant: Graph,
                  gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
-                 fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
                  hessian_info_service: HessianInfoService = None):
         """
@@ -79,7 +78,6 @@ class KerasGPTQTrainer(GPTQTrainer):
             graph_quant: Graph to build a quantized networks from.
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-            fw_info: Framework information.
             representative_data_gen: Dataset to use for inputs of the models.
             hessian_info_service: HessianScoresService for fetching and computing Hessian's approximation scores.
 
@@ -94,7 +92,6 @@ class KerasGPTQTrainer(GPTQTrainer):
                          graph_quant,
                          gptq_config,
                          fw_impl,
-                         fw_info,
                          representative_data_gen_fn=representative_data_gen,
                          hessian_info_service=hessian_info_service)
 
@@ -210,8 +207,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns:
             A boolean whether the layer is to be wrapped with a QuantizeWrapper
         """
-        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)[0]
-        return kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)
+        return node.kernel_attr is not None and node.is_weights_quantization_enabled(node.kernel_attr)
 
     def gptq_wrapper(self,
                      n: common.BaseNode,
@@ -230,7 +226,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             # If we are here, then the node has a kernel attribute to quantize and training during GPTQ
             weights_quantizers, _ = quantization_builder(n,
                                                          self.gptq_config,  # TODO: split quantizers building into two functions: for weights and activations
-                                                         self.fw_info.get_kernel_op_attributes(n.type)[0])
+                                                         n.kernel_attr)
             if len(weights_quantizers) > 0:
                 return KerasTrainableQuantizationWrapper(layer,
                                                          weights_quantizers=weights_quantizers)
@@ -271,7 +267,6 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         gptq_model, gptq_user_info = KerasModelBuilder(graph=self.graph_quant,
                                                        append2output=self.compare_points,
-                                                       fw_info=self.fw_info,
                                                        return_float_outputs=True,
                                                        wrapper=self.gptq_wrapper,
                                                        get_activation_quantizer_holder_fn=self.get_activation_quantizer_holder).build_model()
@@ -431,8 +426,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                     Logger.critical(f"Unable to update the GPTQ graph because the layer named '{layer.layer.name}' could not be found. "
                                     f"Verify that the layer names in the GPTQ model match those in the graph.")
                 node = node[0]
-                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
-                                                                      fw_info=self.fw_info)
+                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type)
                 # TODO: only kernel attributes are currently trained in GPTQ, so only the kernel weights need to be updated.
                 #  To enable GPTQ for other attributes, this code needs to be modified.
                 weights, weight_quant_config, activation_quant_config = \

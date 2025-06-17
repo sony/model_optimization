@@ -44,7 +44,6 @@ class GPTQTrainer(ABC):
                  graph_quant: Graph,
                  gptq_config: GradientPTQConfig,
                  fw_impl: GPTQFrameworkImplemantation,
-                 fw_info: FrameworkInfo,
                  representative_data_gen_fn: Callable[[], Generator],
                  hessian_info_service: HessianInfoService = None):
         """
@@ -58,7 +57,6 @@ class GPTQTrainer(ABC):
             graph_quant: Graph to build a quantized networks from.
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: Framework implementation
-            fw_info: Framework information
             representative_data_gen_fn: factory for representative data generator.
             hessian_info_service: HessianInfoService for fetching and computing Hessian-approximation information.
         """
@@ -66,7 +64,6 @@ class GPTQTrainer(ABC):
         self.graph_quant = copy.deepcopy(graph_quant)
         self.gptq_config = gptq_config
         self.fw_impl = fw_impl
-        self.fw_info = fw_info
         self.representative_data_gen_fn = representative_data_gen_fn
 
         def _get_total_grad_steps():
@@ -83,8 +80,7 @@ class GPTQTrainer(ABC):
 
         self.float_model, self.float_user_info = fw_impl.model_builder(self.graph_float,
                                                                        mode=ModelBuilderMode.FLOAT,
-                                                                       append2output=self.compare_points,
-                                                                       fw_info=self.fw_info)
+                                                                       append2output=self.compare_points)
 
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
         if self.gptq_config.hessian_weights_config:
@@ -288,7 +284,6 @@ def gptq_training(graph_float: Graph,
                   gptq_config: GradientPTQConfig,
                   representative_data_gen: Callable,
                   fw_impl: GPTQFrameworkImplemantation,
-                  fw_info: FrameworkInfo,
                   hessian_info_service: HessianInfoService = None) -> Graph:
     """
     GPTQ training process using knowledge distillation with a teacher network (float model) and a student network (quantized model).
@@ -298,7 +293,6 @@ def gptq_training(graph_float: Graph,
         gptq_config: GradientPTQConfig with parameters about the tuning process.
         representative_data_gen: Dataset to use for inputs of the models.
         fw_impl: Framework implementation
-        fw_info: Framework information
         hessian_info_service: HessianInfoService to fetch information based on the Hessian approximation.
 
     Returns:
@@ -312,7 +306,6 @@ def gptq_training(graph_float: Graph,
                                     graph_quant,
                                     gptq_config,
                                     fw_impl,
-                                    fw_info,
                                     representative_data_gen,
                                     hessian_info_service=hessian_info_service)
 

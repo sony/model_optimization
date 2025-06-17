@@ -46,17 +46,15 @@ class ScaleEqualization(BaseScaleEqualization):
     """
 
     def __init__(self,
-                 quant_config: QuantizationConfig,
-                 fw_info: FrameworkInfo):
+                 quant_config: QuantizationConfig):
         """
         Initialize a ScaleEqualization object.
         Args:
             quant_config: Quantization configuration.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
             groups of layers by how they should be quantized, etc.)
         """
 
-        super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER,
+        super().__init__(quant_config=quant_config, matcher_instance=MATCHER,
                          kernel_str=KERNEL, bias_str=BIAS)
 
 
@@ -66,15 +64,13 @@ class ScaleEqualizationWithPad(BaseScaleEqualization):
     """
 
     def __init__(self,
-                 quant_config: QuantizationConfig,
-                 fw_info: FrameworkInfo):
+                 quant_config: QuantizationConfig):
         """
         Initialize a ScaleEqualization object.
         Args:
             quant_config: Quantization configuration.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
             groups of layers by how they should be quantized, etc.)
         """
 
-        super().__init__(quant_config=quant_config, fw_info=fw_info, matcher_instance=MATCHER_WITH_PAD,
+        super().__init__(quant_config=quant_config, matcher_instance=MATCHER_WITH_PAD,
                          kernel_str=KERNEL, bias_str=BIAS)

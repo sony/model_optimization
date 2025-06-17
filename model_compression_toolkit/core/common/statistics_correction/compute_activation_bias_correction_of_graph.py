@@ -64,7 +64,6 @@ def calculate_bin_centers(bin_edges: np.ndarray) -> np.ndarray:
 
 def compute_activation_bias_correction(graph: Graph,
                                        quant_config: QuantizationConfig,
-                                       fw_info: FrameworkInfo,
                                        fw_impl: FrameworkImplementation,
                                        linear_node: BaseNode,
                                        prev_node: BaseNode,
@@ -76,7 +75,6 @@ def compute_activation_bias_correction(graph: Graph,
     Args:
         graph: Graph with nodes to compute the activation bias correction for each node's final activation quantization configuration.
         quant_config: QuantizationConfig of how the model should be quantized.
-        fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         linear_node: Node to compute the activation bias correction for.
         prev_node: Node to compute the activation error caused by his activation quantization.
@@ -127,19 +125,18 @@ def compute_activation_bias_correction(graph: Graph,
     if normalized_bias < quant_config.activation_bias_correction_threshold:
         return graph
 
-    kernel = linear_node.get_weights_by_keys(fw_info.kernel_ops_attributes_mapping.get(linear_node.type)[0])
+    kernel = linear_node.get_weights_by_keys(linear_node.kernel_attr)
 
     # Compute the activation bias correction by applying the quantization error to the kernel, resulting in an output
     # size matching the number of output channels.
     if kernel is not None:
 
         # Get the axes that are not the output channel.
-        output_channel_index, input_channel_index = fw_info.kernel_channels_mapping.get(linear_node.type)
         axis_not_output_channel = list(range(len(kernel.shape)))
-        axis_not_output_channel.remove(output_channel_index)
+        axis_not_output_channel.remove(linear_node.channel_axis.output)
 
         # Special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters.
-        if output_channel_index == input_channel_index:
+        if linear_node.channel_axis.output == linear_node.channel_axis.input:
             axis_not_output_channel.remove(3)  # 3 is the depth multiplier index.
 
         activation_bias_correction_term = mean_diff * np.sum(kernel, axis=tuple(axis_not_output_channel))
@@ -150,7 +147,6 @@ def compute_activation_bias_correction(graph: Graph,
 
 def compute_activation_bias_correction_of_graph(graph: Graph,
                                                 quant_config: QuantizationConfig,
-                                                fw_info: FrameworkInfo,
                                                 fw_impl: FrameworkImplementation,
                                                 activation_bias_correction_node_matchers: Callable,
                                                 kernel_size: str) -> Graph:
@@ -160,7 +156,6 @@ def compute_activation_bias_correction_of_graph(graph: Graph,
     Args:
         graph: Graph with nodes to compute the activation bias correction.
         quant_config: QuantizationConfig of how the model should be quantized.
-        fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         activation_bias_correction_node_matchers: Function to match the layers for activation bias correction.
         kernel_size: The framework specific attribute name of the convolution layer's kernel size.
@@ -177,7 +172,6 @@ def compute_activation_bias_correction_of_graph(graph: Graph,
             if prev_node is not None:
                 graph = compute_activation_bias_correction(graph=graph,
                                                            quant_config=quant_config,
-                                                           fw_info=fw_info,
                                                            fw_impl=fw_impl,
                                                            linear_node=n,
                                                            prev_node=prev_node,

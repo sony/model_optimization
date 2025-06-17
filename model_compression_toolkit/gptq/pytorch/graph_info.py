@@ -16,7 +16,6 @@ import torch
 import torch.nn as nn
 from typing import List
 from model_compression_toolkit.core.pytorch.constants import BIAS
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.logger import Logger
 from mct_quantizers import PytorchQuantizationWrapper
@@ -43,8 +42,7 @@ def get_gptq_trainable_parameters(fxp_model: nn.Module,
 
     for layer in fxp_model.modules():
         if isinstance(layer, PytorchQuantizationWrapper):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_PYTORCH_INFO)
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer))
 
             # collect trainable weights per quantizer
             if kernel_attribute not in layer.weights_quantizers:

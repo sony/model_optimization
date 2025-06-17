@@ -46,7 +46,6 @@ If the linear node pads the input tensor with zeros, we modify the padded value 
 
 def op2d_bias_correction(op2d_node: BaseNode,
                          shift_to_correct: float,
-                         fw_info: FrameworkInfo,
                          bias_str: str,
                          bias_flag_str: str):
     """
@@ -57,7 +56,6 @@ def op2d_bias_correction(op2d_node: BaseNode,
         op2d_node: Node to compute its bias correction term.
         shift_to_correct: Value that was used to shift the output tensor of
         the non-linear node.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         bias_str:
         bias_flag_str: The framework specific attribute name of the bias flag.
     """
@@ -76,14 +74,13 @@ def op2d_bias_correction(op2d_node: BaseNode,
     # Each node adds a different noise due to the shifting. It depends on the
     # dimensions of the kernel, thus the correction term is a function of
     # the layer type.
-    kernel = op2d_node.get_weights_by_keys(fw_info.kernel_ops_attributes_mapping.get(op2d_node.type)[0])
+    kernel = op2d_node.get_weights_by_keys(op2d_node.kernel_attr)
     if kernel is not None:
-        output_channel_index, input_channel_index = fw_info.kernel_channels_mapping.get(op2d_node.type)
         axis_not_output_channel = list(range(len(kernel.shape)))
-        axis_not_output_channel.remove(output_channel_index)
+        axis_not_output_channel.remove(op2d_node.channel_axis.output)
 
         # special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters
-        if output_channel_index == input_channel_index:
+        if op2d_node.channel_axis.output == op2d_node.channel_axis.input:
             axis_not_output_channel.remove(3)  # 3 is the depth multiplier index
 
         bias_correction = shift_to_correct * np.sum(kernel, axis=tuple(axis_not_output_channel))
@@ -250,7 +247,6 @@ def shift_negative_function(graph: Graph,
                             core_config: CoreConfig,
                             non_linear_node: BaseNode,
                             op2d_node: BaseNode,
-                            fw_info: FrameworkInfo,
                             create_add_node: Callable,
                             get_padding_values: Callable,
                             create_pad_node: Callable,
@@ -276,8 +272,6 @@ def shift_negative_function(graph: Graph,
         non_linear_node: Non-linear node with negative values to shift.
         op2d_node: Linear node to correct its bias to overcome the expected error due to
         the shifting.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-        groups of layers by how they should be quantized, etc.)
         create_add_node: Function to create an add node.
         get_padding_values: Function to compute the op2d node's padding values
         create_pad_node: Function to create an pad node.
@@ -298,7 +292,6 @@ def shift_negative_function(graph: Graph,
 
     # all candidates have same activation config, so taking the first candidate for calculations
     non_linear_node_cfg_candidate = non_linear_node.candidates_quantization_cfg[0].activation_quantization_cfg
-
 
     # get the non-linear activation threshold
     activation_threshold = non_linear_node_cfg_candidate.activation_quantization_params.get(THRESHOLD)
@@ -390,7 +383,6 @@ def shift_negative_function(graph: Graph,
                            first_node=non_linear_node)
     op2d_bias_correction(op2d_node,
                          shift_value,
-                         fw_info,
                          bias_str,
                          bias_flag_str)
 
@@ -401,8 +393,7 @@ def shift_negative_function(graph: Graph,
     graph.set_out_stats_collector_to_node(add_node, add_node_stats_collector)
     graph.shift_stats_collector(add_node, np.array(shift_value))
 
-    set_quantization_configs_to_node(fw_info=fw_info,
-                                     node=add_node,
+    set_quantization_configs_to_node(node=add_node,
                                      graph=graph,
                                      quant_config=core_config.quantization_config,
                                      fqc=graph.fqc,
@@ -428,8 +419,7 @@ def shift_negative_function(graph: Graph,
                                 last_node=op2d_node)
 
         # Set quantization configuration to node, even though we do not quantize it:
-        set_quantization_configs_to_node(fw_info=fw_info,
-                                         node=pad_node,
+        set_quantization_configs_to_node(node=pad_node,
                                          graph=graph,
                                          quant_config=core_config.quantization_config,
                                          fqc=graph.fqc,
@@ -472,7 +462,6 @@ def shift_negative_function(graph: Graph,
             candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 
         candidate_qc.activation_quantization_cfg = create_node_activation_qc(core_config.quantization_config,
-                                                                             fw_info,
                                                                              add_node_qco[op_qc_idx])
 
         candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
@@ -573,7 +562,6 @@ def get_next_nodes_to_correct(n: BaseNode,
 
 def apply_shift_negative_correction(graph: Graph,
                                     core_config: CoreConfig,
-                                    fw_info: FrameworkInfo,
                                     snc_node_types: NodeOperationMatcher,
                                     linear_node_types: NodeOperationMatcher,
                                     bypass_node_types: NodeOperationMatcher,
@@ -593,7 +581,6 @@ def apply_shift_negative_correction(graph: Graph,
     Args:
         graph: Graph to apply the substitution on.
         core_config: Quantization configuration to build the substitutions list according to.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         snc_node_types: Types of activation nodes with negative outputs to consider.
         linear_node_types: Types of linear nodes to consider.
@@ -632,7 +619,6 @@ def apply_shift_negative_correction(graph: Graph,
                                                 core_config,
                                                 n,
                                                 linear_node,
-                                                fw_info,
                                                 create_add_node,
                                                 get_padding_values,
                                                 create_pad_node,

@@ -37,7 +37,6 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 def quantization_preparation_runner(graph: Graph,
                                     representative_data_gen: Callable,
                                     core_config: CoreConfig,
-                                    fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation,
                                     tb_w: TensorboardWriter = None,
                                     hessian_info_service: HessianInfoService = None, ) -> Graph:
@@ -53,8 +52,6 @@ def quantization_preparation_runner(graph: Graph,
         graph: A graph representation of the model to be quantized.
         representative_data_gen: Dataset used for calibration.
         core_config: CoreConfig containing parameters of how the model should be quantized
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-            groups of layers by how they should be quantized, etc.).
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w: TensorboardWriter object for logging
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores.
@@ -68,7 +65,6 @@ def quantization_preparation_runner(graph: Graph,
     ######################################
     mi = ModelCollector(graph,
                         fw_impl,
-                        fw_info,
                         hessian_info_service,
                         core_config.quantization_config)  # Mark points for statistics collection
 
@@ -85,7 +81,7 @@ def quantization_preparation_runner(graph: Graph,
     # Notice that not all actions affect at this stage (for example, actions that edit the final configuration as
     # there are no final configurations at this stage of the optimization). For this reason we edit the graph
     # again at the end of the optimization process.
-    edit_network_graph(graph, fw_info, core_config.debug_config.network_editor)
+    edit_network_graph(graph, core_config.debug_config.network_editor)
 
     ######################################
     # Calculate quantization params
@@ -109,8 +105,7 @@ def quantization_preparation_runner(graph: Graph,
     ######################################
     if core_config.quantization_config.shift_negative_activation_correction:
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
-                                                              core_config,
-                                                              fw_info)
+                                                              core_config)
         if tb_w is not None:
             tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')
             tb_w.add_all_statistics(transformed_graph, 'after_shift_negative_correction')
@@ -122,7 +117,7 @@ def quantization_preparation_runner(graph: Graph,
     ######################################
     # Statistics Correction
     ######################################
-    tg_with_bias = statistics_correction_runner(transformed_graph, core_config, fw_info, fw_impl, tb_w)
+    tg_with_bias = statistics_correction_runner(transformed_graph, core_config, fw_impl, tb_w)
 
     for n in tg_with_bias.nodes:
         assert n.final_weights_quantization_cfg is None

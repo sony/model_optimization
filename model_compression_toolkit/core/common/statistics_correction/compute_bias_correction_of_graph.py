@@ -18,7 +18,6 @@ from typing import Any
 import numpy as np
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_weights_attr_by_qc
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
@@ -26,7 +25,6 @@ from model_compression_toolkit.logger import Logger
 
 
 def compute_bias_correction_of_graph(graph: Graph,
-                                     fw_info: FrameworkInfo,
                                      fw_impl: FrameworkImplementation) -> Graph:
     """
     For each node in a graph, and for each candidate weights quantization configuration,
@@ -35,7 +33,6 @@ def compute_bias_correction_of_graph(graph: Graph,
     Args:
         graph: Graph with nodes to compute the bias correction for
         each node's weights quantization configuration candidates.
-        fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
     Returns:
@@ -46,17 +43,15 @@ def compute_bias_correction_of_graph(graph: Graph,
     for n in graph.nodes:
         # Bias correction is computed based on the quantized kernel, so we need to get the specific kernel attribute
         # name out of all the weights attributes of the node.
-        if fw_info.is_kernel_op(n.type):
-            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-            if n.is_weights_quantization_enabled(kernel_attr):
+        if n.is_kernel_op:
+            if n.is_weights_quantization_enabled(n.kernel_attr):
                 # Bias correction is not applied to layers with constant inputs.
                 if n.has_positional_weights:
                     for candidate_qc in n.candidates_quantization_cfg:
                         candidate_qc.weights_quantization_cfg.weights_bias_correction = False
                 else:
                     _compute_bias_correction_per_candidate_qc(n,
-                                                              kernel_attr,
-                                                              fw_info,
+                                                              n.kernel_attr,
                                                               graph.get_in_stats_collector(n),
                                                               fw_impl=fw_impl)
     return graph
@@ -64,7 +59,6 @@ def compute_bias_correction_of_graph(graph: Graph,
 
 def _compute_bias_correction_per_candidate_qc(node: BaseNode,
                                               kernel_attr: str,
-                                              fw_info: FrameworkInfo,
                                               node_in_stats_collector: BaseStatsCollector,
                                               fw_impl: FrameworkImplementation):
     """
@@ -74,7 +68,6 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
     Args:
         node: Node to compute the bias correction for its different candidates.
         kernel_attr: The name of the kernel attribute of the node.
-        fw_info: Framework info like lists of nodes their kernel should quantized.
         node_in_stats_collector: Statistics collector of the node for the mean per-channel.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 

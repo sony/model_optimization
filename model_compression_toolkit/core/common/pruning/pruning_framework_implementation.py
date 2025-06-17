@@ -28,15 +28,13 @@ class PruningFrameworkImplementation(FrameworkImplementation):
     @abstractmethod
     def prune_entry_node(self,
                          node: BaseNode,
-                         output_mask: np.ndarray,
-                         fw_info: FrameworkInfo):
+                         output_mask: np.ndarray):
         """
         Abstract method to prune an entry node in the model.
 
         Args:
             node: The node to be pruned.
             output_mask: A numpy array representing the mask to be applied to the output channels.
-            fw_info: Framework-specific information.
 
         Raises:
             NotImplemented: If the method is not implemented in the subclass.
@@ -48,8 +46,7 @@ class PruningFrameworkImplementation(FrameworkImplementation):
     def prune_intermediate_node(self,
                                 node: BaseNode,
                                 input_mask: np.ndarray,
-                                output_mask: np.ndarray,
-                                fw_info: FrameworkInfo):
+                                output_mask: np.ndarray):
         """
         Abstract method to prune an intermediate node in the model.
 
@@ -57,7 +54,6 @@ class PruningFrameworkImplementation(FrameworkImplementation):
             node: The node to be pruned.
             input_mask: Mask to be applied to the input channels.
             output_mask: Mask to be applied to the output channels.
-            fw_info: Framework-specific information.
 
         Raises:
             NotImplemented: If the method is not implemented in the subclass.
@@ -68,15 +64,13 @@ class PruningFrameworkImplementation(FrameworkImplementation):
     @abstractmethod
     def prune_exit_node(self,
                         node: BaseNode,
-                        input_mask: np.ndarray,
-                        fw_info: FrameworkInfo):
+                        input_mask: np.ndarray):
         """
         Abstract method to prune an exit node in the model.
 
         Args:
             node: The node to be pruned.
             input_mask: Mask to be applied to the input channels.
-            fw_info: Framework-specific information.
 
         Raises:
             NotImplemented: If the method is not implemented in the subclass.
@@ -105,8 +99,7 @@ class PruningFrameworkImplementation(FrameworkImplementation):
     @abstractmethod
     def is_node_exit_node(self,
                           node: BaseNode,
-                          corresponding_entry_node: BaseNode,
-                          fw_info: FrameworkInfo) -> bool:
+                          corresponding_entry_node: BaseNode) -> bool:
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s is_node_exit_node method.')  # pragma: no cover
@@ -129,7 +122,7 @@ class PruningFrameworkImplementation(FrameworkImplementation):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s is_node_intermediate_pruning_section method.')  # pragma: no cover
 
-    def attrs_oi_channels_info_for_pruning(self, node: BaseNode, fw_info: FrameworkInfo) -> Dict[str, Tuple[int, int]]:
+    def attrs_oi_channels_info_for_pruning(self, node: BaseNode) -> Dict[str, Tuple[int, int]]:
         """
         Retrieves the attributes of a given node along with the output/input (OI) channel axis
         for each attribute used to prune these attributes.
@@ -146,7 +139,6 @@ class PruningFrameworkImplementation(FrameworkImplementation):
 
         Args:
             node (BaseNode): The node from the computational graph.
-            fw_info (FrameworkInfo): Contains framework-specific information and utilities.
 
         Returns:
             Dict[str, Tuple[int, int]]: A dictionary where each key is an attribute name (like 'kernel' or 'bias')

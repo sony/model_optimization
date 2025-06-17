@@ -37,7 +37,6 @@ from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
 from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding, pytorch_batchnorm_forward_folding
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_reconstruction import \
@@ -178,7 +177,6 @@ class PytorchImplementation(FrameworkImplementation):
                       graph: Graph,
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
-                      fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                       return_float_outputs: bool = False) -> Tuple:
         """
         Build a Pytorch module from a graph.
@@ -189,7 +187,6 @@ class PytorchImplementation(FrameworkImplementation):
             graph: Graph to build the module from it.
             mode: Mode for how to build the module.
             append2output: List of Nodes to set as the module's outputs.
-            fw_info: FrameworkInfo object with information about the specific framework's module
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
 
         Returns:
@@ -198,7 +195,6 @@ class PytorchImplementation(FrameworkImplementation):
         pytorch_model_builder = get_pytorch_model_builder(mode)
         return pytorch_model_builder(graph=graph,
                                      append2output=append2output,
-                                     fw_info=fw_info,
                                      return_float_outputs=return_float_outputs).build_model()
 
     def run_model_inference(self,
@@ -232,63 +228,55 @@ class PytorchImplementation(FrameworkImplementation):
 
     def shift_negative_correction(self,
                                   graph: Graph,
-                                  core_config: CoreConfig,
-                                  fw_info: FrameworkInfo) -> Graph:
+                                  core_config: CoreConfig) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
 
         Args:
             graph: Graph to apply SNC on.
             core_config: Quantization configuration.
-            fw_info: FrameworkInfo object with information about the specific framework's module.
 
         Returns:
             Graph after SNC.
         """
         return pytorch_apply_shift_negative_correction(graph,
-                                                       core_config,
-                                                       fw_info)
+                                                       core_config)
 
     def compute_activation_bias_correction(self,
                                            graph: Graph,
-                                           quant_config: QuantizationConfig,
-                                           fw_info: FrameworkInfo):
+                                           quant_config: QuantizationConfig):
         """
         Compute activation bias correction on a graph.
 
         Args:
             graph: Graph to apply activation bias correction on.
             quant_config: QuantizationConfig of how the model should be quantized.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             Graph after activation bias correction computing.
         """
         return pytorch_compute_activation_bias_correction_of_graph(graph=graph,
                                                                    quant_config=quant_config,
-                                                                   fw_info=fw_info,
                                                                    fw_impl=self)
 
     def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
-                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
+                                               quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used for channel equalization.
 
         Args:
             quant_config: QuantizationConfig to determine which substitutions to return.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
         substitutions_list = []
         if quant_config.activation_channel_equalization:
-            substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
-                                       ScaleEqualizationWithPad(quant_config, fw_info)])
+            substitutions_list.extend([ScaleEqualization(quant_config),
+                                       ScaleEqualizationWithPad(quant_config)])
         return substitutions_list
 
-    def get_substitutions_prepare_graph(self, fw_info: FrameworkInfo = None) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used before we collect the prior information.
@@ -299,7 +287,7 @@ class PytorchImplementation(FrameworkImplementation):
                 ScaledDotProductDecomposition(),
                 MatMulDecomposition(),
                 TransformFunctionCallMethod(),
-                FunctionalConvSubstitution(fw_info),
+                FunctionalConvSubstitution(),
                 FunctionalBatchNorm(),
                 FunctionalLayerNorm(),
                 FunctionalLinear(),
@@ -401,20 +389,17 @@ class PytorchImplementation(FrameworkImplementation):
 
     def get_node_prior_info(self,
                             node: BaseNode,
-                            fw_info: FrameworkInfo,
                             graph: Graph) -> NodePriorInfo:
         """
         Get a NodePriorInfo object for a node that represents a Pytorch layer.
         Args:
             node: Node to get its prior info.
-            fw_info: Framework specific information needed to create the prior info of the node.
             graph: Graph to check the next node type.
         Returns:
             NodePriorInfo with information about the node.
         """
 
         return create_node_prior_info(node=node,
-                                      fw_info=fw_info,
                                       graph=graph)
 
     def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
@@ -476,23 +461,19 @@ class PytorchImplementation(FrameworkImplementation):
         return node.layer_class not in [argmax, softmax, Softmax]
 
     def get_node_mac_operations(self,
-                                node: BaseNode,
-                                fw_info: FrameworkInfo) -> float:
+                                node: BaseNode) -> float:
         """
         Gets the MAC operation count for a given operation.
 
         Args:
             node: A graph node that wraps the operation for which the MAC count is computed.
-            fw_info: FrameworkInfo object with information about the Pytorch model.
 
         Returns: The MAC count of the operation
         """
-        kernels = fw_info.get_kernel_op_attributes(node.type)
-        if not kernels or kernels[0] is None:
+        if node.kernel_attr is None:
             return 0
 
-        assert len(kernels) == 1
-        kernel_shape = node.get_weights_by_keys(kernels[0]).shape
+        kernel_shape = node.get_weights_by_keys(node.kernel_attr).shape
 
         if node.is_match_type(Conv2d) or node.is_match_type(ConvTranspose2d):
             h, w = node.get_output_shapes_list()[0][-2:]
@@ -500,8 +481,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         if node.is_match_type(Linear):
             # IN * OUT * (all previous dims[:-1])
-            _, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
-            return node.get_total_output_params() * kernel_shape[input_channel_axis]
+            return node.get_total_output_params() * kernel_shape[node.channel_axis.input]
 
         return 0
 

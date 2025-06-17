@@ -19,21 +19,17 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 
 
-def is_qat_applicable(node: common.BaseNode,
-                      fw_info: FrameworkInfo) -> bool:
+def is_qat_applicable(node: common.BaseNode) -> bool:
     """
     A function for deciding if a layer should be fine-tuned during QAT
 
     Args:
         node (BaseNode): Node for quantization decision
-        fw_info (FrameworkInfo): Pytorch quantization information
 
     Returns:
         A boolean whether the layer is to be wrapped with a QuantizeWrapper
     """
-
-    kernel_attr = fw_info.get_kernel_op_attributes(node.type)[0]
-    return (kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)) \
+    return (node.kernel_attr is not None and node.is_weights_quantization_enabled(node.kernel_attr)) \
             or node.is_activation_quantization_enabled()
 
 

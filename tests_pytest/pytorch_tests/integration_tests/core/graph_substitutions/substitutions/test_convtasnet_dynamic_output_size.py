@@ -19,7 +19,8 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
 
@@ -46,14 +47,13 @@ def data_gen():
 def test_convtranspose_dynamic_output_size(minimal_tpc):
     Model()(next(data_gen())[0])
 
+    set_fw_info(PyTorchInfo)
     fw_impl = PytorchImplementation()
-    fw_info = DEFAULT_PYTORCH_INFO
     model = Model()
 
     graph = graph_preparation_runner(model,
                                      data_gen,
                                      QuantizationConfig(),
-                                     fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      fqc=AttachTpcToPytorch().attach(minimal_tpc),
                                      mixed_precision_enable=False,

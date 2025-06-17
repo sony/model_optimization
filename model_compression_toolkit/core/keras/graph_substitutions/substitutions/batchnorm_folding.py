@@ -21,7 +21,6 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core.common.substitutions.batchnorm_folding import BatchNormalizationFolding, BatchNormalizationForwardFolding
 from model_compression_toolkit.core.keras.constants import KERNEL, LINEAR, ACTIVATION, DEPTHWISE_KERNEL, BIAS, GAMMA, BETA, \
     MOVING_MEAN, MOVING_VARIANCE, EPSILON, USE_BIAS, LAYER_NAME, GROUPS
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 
 def batchnorm_folding_node_matchers() -> [BaseNode, BaseNode]:
@@ -77,9 +76,7 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
     else:
         kernel = kernel * weights_scale.reshape((1, 1, 1, -1))
 
-    kernel_name = DEFAULT_KERAS_INFO.get_kernel_op_attributes(conv_node.type)[0]
-
-    return kernel, kernel_name
+    return kernel, conv_node.kernel_attr
 
 
 def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
@@ -108,9 +105,7 @@ def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
         bias_update = (kernel * bias_factor.reshape((1, 1, -1, 1))).sum(2)
         kernel = kernel * weights_scale.reshape((1, 1, -1, 1))
 
-    kernel_name = DEFAULT_KERAS_INFO.get_kernel_op_attributes(conv_node.type)[0]
-
-    return kernel, bias + bias_update.flatten(), kernel_name
+    return kernel, bias + bias_update.flatten(), conv_node.kernel_attr
 
 
 def get_kernel_hw_fn(kernel: np.ndarray) -> [int, int]:

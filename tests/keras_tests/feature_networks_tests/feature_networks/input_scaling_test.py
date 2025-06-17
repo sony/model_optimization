@@ -16,7 +16,7 @@
 import model_compression_toolkit as mct
 import tensorflow as tf
 
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
@@ -47,7 +47,7 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
 
         linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
         # If quantized weight has zeros, the division is inf, and we ignore it by masking these values when computing mean
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        attr = KerasInfo.get_kernel_op_attribute(self.linear_layer)
         alpha = np.ma.masked_invalid((float_model.layers[fi].weights[0] / linear_layer.weights_quantizers[attr](linear_layer.weights[0])).numpy()).mean()
         self.unit_test.assertTrue(np.allclose(alpha, quantization_info.input_scale, atol=1e-1))
 

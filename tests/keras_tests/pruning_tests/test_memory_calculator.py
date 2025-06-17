@@ -18,7 +18,6 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 import unittest
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.pruning.memory_calculator import MemoryCalculator
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 
@@ -49,7 +48,6 @@ class TestParameterCounter(unittest.TestCase):
         x = layers.Conv2D(filters=out_channels, kernel_size=kernel_size, use_bias=use_bias)(inputs)
         model = keras.Model(inputs=inputs, outputs=x)
 
-        fw_info = DEFAULT_KERAS_INFO
         fw_impl = PruningKerasImplementation()
         tpc = mct.get_target_platform_capabilities('tensorflow', 'imx500')
 
@@ -59,7 +57,6 @@ class TestParameterCounter(unittest.TestCase):
         float_graph = read_model_to_graph(model,
                                           self.representative_dataset,
                                           tpc,
-                                          DEFAULT_KERAS_INFO,
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
@@ -70,7 +67,6 @@ class TestParameterCounter(unittest.TestCase):
 
 
         self.memory_calculator = MemoryCalculator(graph=float_graph_with_compression_config,
-                                                  fw_info=fw_info,
                                                   fw_impl=fw_impl)
 
         # masks = {list(float_graph_with_compression_config.nodes)[0]}

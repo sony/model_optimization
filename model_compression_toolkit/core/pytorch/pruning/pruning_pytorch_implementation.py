@@ -19,7 +19,6 @@ from model_compression_toolkit.core.common.pruning.pruning_framework_implementat
     PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.pytorch.constants import BIAS, GROUPS, OUT_CHANNELS, OUT_FEATURES, NUM_FEATURES, \
     IN_CHANNELS, IN_FEATURES, NUM_PARAMETERS
@@ -39,27 +38,23 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
 
     def prune_entry_node(self,
                          node: BaseNode,
-                         output_mask: np.ndarray,
-                         fw_info: FrameworkInfo):
+                         output_mask: np.ndarray):
         """
         Prunes the entry node of a model in Pytorch.
 
         Args:
             node (BaseNode): The entry node to be pruned.
             output_mask (np.ndarray): A numpy array representing the mask to be applied to the output channels.
-            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         return _prune_pytorch_edge_node(node=node,
                                         mask=output_mask,
-                                        fw_info=fw_info,
                                         is_exit_node=False)
 
     def prune_intermediate_node(self,
                                 node: BaseNode,
                                 input_mask: np.ndarray,
-                                output_mask: np.ndarray,
-                                fw_info: FrameworkInfo):
+                                output_mask: np.ndarray):
         """
         Prunes an intermediate node in a Pytorch model.
 
@@ -67,12 +62,11 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
             node (BaseNode): The intermediate node to be pruned.
             input_mask (np.ndarray): A numpy array representing the mask to be applied to the input channels.
             output_mask (np.ndarray): A numpy array representing the mask to be applied to the output channels.
-            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         # TODO (reuvenp/liord): Address handling of node parameters that can be either a single value across all channels or distinct per channel, e.g., PReLU. Consider developing a structured approach.
         pruning_en = True
-        _edit_node_input_shape(node, input_mask, fw_info)
+        _edit_node_input_shape(node, input_mask)
         pruned_parameters = {}
         mask_bool = output_mask.astype(bool)
         node.weights = pruned_parameters
@@ -91,20 +85,17 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
 
     def prune_exit_node(self,
                         node: BaseNode,
-                        input_mask: np.ndarray,
-                        fw_info: FrameworkInfo):
+                        input_mask: np.ndarray):
         """
         Prunes the exit node of a model in Pytorch.
 
         Args:
             node (BaseNode): The exit node to be pruned.
             input_mask (np.ndarray): A numpy array representing the mask to be applied to the input channels.
-            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         return _prune_pytorch_edge_node(node=node,
                                         mask=input_mask,
-                                        fw_info=fw_info,
                                         is_exit_node=True)
 
     def is_node_entry_node(self, node: BaseNode) -> bool:
@@ -121,22 +112,19 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
 
     def is_node_exit_node(self,
                           node: BaseNode,
-                          corresponding_entry_node: BaseNode,
-                          fw_info: FrameworkInfo) -> bool:
+                          corresponding_entry_node: BaseNode) -> bool:
         """
         Determines whether a node is an exit node in a Pytorch model.
 
         Args:
             node (BaseNode): The node to be checked.
             corresponding_entry_node (BaseNode): The entry node of the pruning section that is checked.
-            fw_info (FrameworkInfo) Framework-specific information object.
 
         Returns:
             bool: Boolean indicating if the node is an exit node.
         """
         return _is_pytorch_node_pruning_section_edge(node) and PruningSection.has_matching_channel_count(node,
-                                                                                                         corresponding_entry_node,
-                                                                                                         fw_info)
+                                                                                                         corresponding_entry_node)
 
     def is_node_intermediate_pruning_section(self, node: BaseNode) -> bool:
         """
@@ -155,8 +143,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
                                  torch.nn.Linear]
 
     def attrs_oi_channels_info_for_pruning(self,
-                                           node: BaseNode,
-                                           fw_info: FrameworkInfo) -> Dict[str, Tuple[int, int]]:
+                                           node: BaseNode) -> Dict[str, Tuple[int, int]]:
         """
         Retrieves the attributes of a given node along with the output/input (OI) channel axis
         for each attribute used to prune these attributes.
@@ -173,7 +160,6 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
 
         Args:
             node (BaseNode): The node from the computational graph.
-            fw_info (FrameworkInfo): Contains framework-specific information and utilities.
 
         Returns:
             Dict[str, Tuple[int, int]]: A dictionary where each key is an attribute name (like 'weight' or 'bias')
@@ -181,13 +167,8 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
         """
 
         attributes_with_axis = {}
-        if fw_info.is_kernel_op(node.type):
-            kernel_attributes = fw_info.get_kernel_op_attributes(node.type)
-            if kernel_attributes is None or len(kernel_attributes) == 0:
-                Logger.critical(f"Expected to find kernel attributes but none were identified for node '{node.name}' of type {node.type}.")
-
-            for attr in kernel_attributes:
-                attributes_with_axis[attr] = fw_info.kernel_channels_mapping.get(node.type)
+        if node.is_kernel_op:
+            attributes_with_axis[node.kernel_attr] = (node.channel_axis.output, node.channel_axis.input)
 
             # Bias is a vector at the length of the number of output channels.
             # For this reason, input channel axis is irrelevant to the bias attribute.
@@ -202,7 +183,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
                 # If the number of float parameters is 1 or less - is the case where
                 # we have one parameter for all channels. For this case, we don't
                 # want to prune the parameter.
-                if node.get_num_parameters(fw_info)[1] <= 1:
+                if node.get_num_parameters()[1] <= 1:
                     attributes_with_axis[attr] = (None, None)
                 else:
                     attributes_with_axis[attr] = (-1, None)
@@ -234,7 +215,6 @@ def _is_pytorch_node_pruning_section_edge(node: BaseNode) -> bool:
 
 def _prune_pytorch_edge_node(node: BaseNode,
                              mask: np.ndarray,
-                             fw_info: FrameworkInfo,
                              is_exit_node: bool):
     """
     Prunes the given Pytorch node by applying the mask to the node's weights (weights and biases).
@@ -243,21 +223,18 @@ def _prune_pytorch_edge_node(node: BaseNode,
     Args:
         node (BaseNode): The node to be pruned.
         mask (np.ndarray): The pruning mask to be applied.
-        fw_info (FrameworkInfo): Framework-specific information object.
         is_exit_node (bool): A boolean indicating whether the node is an exit node.
 
     """
 
     # Retrieve the kernel attribute and the axes to prune.
-    kernel_attr = fw_info.get_kernel_op_attributes(node.type)[0]
-    io_axis = fw_info.kernel_channels_mapping.get(node.type)
-    axis_to_prune = io_axis[int(is_exit_node)]
-    kernel = node.get_weights_by_keys(kernel_attr)
+    axis_to_prune = node.channel_axis.input if is_exit_node else node.channel_axis.output
+    kernel = node.get_weights_by_keys(node.kernel_attr)
     # Convert mask to boolean.
     mask_bool = mask.astype(bool)
 
     pruned_kernel = kernel.compress(mask_bool, axis=axis_to_prune)
-    node.set_weights_by_keys(name=kernel_attr, tensor=pruned_kernel)
+    node.set_weights_by_keys(name=node.kernel_attr, tensor=pruned_kernel)
 
     if not is_exit_node and node.framework_attr[BIAS]:
         # Prune the bias if applicable and it's an entry node.
@@ -285,12 +262,11 @@ def _prune_pytorch_edge_node(node: BaseNode,
             Logger.critical(f"{node.type} is currently not supported"
                              f"as an edge node in a pruning section")
         # Adjust the input shape for the last node in the section.
-        _edit_node_input_shape(node, mask_bool, fw_info)
+        _edit_node_input_shape(node, mask_bool)
 
 
 def _edit_node_input_shape(node: BaseNode,
-                           input_mask: np.ndarray,
-                           fw_info: FrameworkInfo):
+                           input_mask: np.ndarray):
     """
     Adjusts the input shape of a node based on the given input mask.
 
@@ -301,14 +277,13 @@ def _edit_node_input_shape(node: BaseNode,
     Args:
         node (BaseNode): The node whose input shape needs to be adjusted.
         input_mask (np.ndarray): A binary array where 1 indicates the channel is kept and 0 means pruned.
-        fw_info (FrameworkInfo): Framework-specific information object.
     """
     # Start with the current input shape of the node.
     new_input_shape = list(node.input_shape)
 
     # Adjust the last dimension of the shape to match the number of unpruned (retained) channels.
     # This is done by summing the mask, as each '1' in the mask represents a retained channel.
-    channel_axis = fw_info.out_channel_axis_mapping.get(node.type)
+    channel_axis = node.out_channel_axis
     new_input_shape[0][channel_axis] = int(np.sum(input_mask))
 
     # Update the node's input shape with the new dimensions.

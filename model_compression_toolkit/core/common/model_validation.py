@@ -10,17 +10,14 @@ class ModelValidation:
     """
 
     def __init__(self,
-                 model: Any,
-                 fw_info:FrameworkInfo):
+                 model: Any):
         """
         Initialize a ModelValidation object.
 
         Args:
             model: Model to check its validity.
-            fw_info: Information about the specific framework of the model.
         """
         self.model = model
-        self.fw_info = fw_info
 
     @abstractmethod
     def validate_output_channel_consistency(self):

@@ -17,8 +17,9 @@
 import unittest
 import torch
 import numpy as np
-from model_compression_toolkit.core.pytorch import pytorch_implementation
 
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.reader.reader import fx_graph_module_generation
 from model_compression_toolkit.core.pytorch.pytorch_implementation import to_torch_tensor, PytorchImplementation
 
@@ -43,6 +44,9 @@ def data_gen():
 
 
 class TestGraphReading(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(PyTorchInfo)
+
     def test_fx_tracer_error(self):
         model = BadFxModel()
 

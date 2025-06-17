@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from model_compression_toolkit.core import QuantizationConfig
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import tensorflow as tf
@@ -47,7 +47,7 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         dense_layers = get_layers_from_model_by_type(quantized_model, layers.Dense)
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(layers.Dense)[0]
+        attr = KerasInfo.get_kernel_op_attribute(layers.Dense)
 
         alpha_1 = (dense_layers[0].get_quantized_weights()[attr] / float_model.layers[1].weights[0]).numpy().mean()
         beta_1 = (dense_layers[1].get_quantized_weights()[attr] / float_model.layers[3].weights[0]).numpy().mean()

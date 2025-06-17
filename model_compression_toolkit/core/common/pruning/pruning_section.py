@@ -76,34 +76,28 @@ class PruningSection:
 
     def apply_inner_section_mask(self,
                                  pruning_section_mask: PruningSectionMask,
-                                 fw_impl: Any,
-                                 fw_info: FrameworkInfo):
+                                 fw_impl: Any):
         """
         Apply the provided pruning section mask to all nodes within the pruning section.
 
         Args:
             pruning_section_mask (PruningSectionMask): The mask to be applied to the pruning section.
             fw_impl (PruningFrameworkImplementation): Framework-specific implementation for applying the mask.
-            fw_info (FrameworkInfo): Framework-specific information needed to apply the mask.
         """
         fw_impl.prune_entry_node(node=self.entry_node,
-                                 output_mask=pruning_section_mask.entry_node_oc_mask,
-                                 fw_info=fw_info)
+                                 output_mask=pruning_section_mask.entry_node_oc_mask)
 
         for inter_node in self.intermediate_nodes:
             fw_impl.prune_intermediate_node(node=inter_node,
                                             input_mask=pruning_section_mask.entry_node_oc_mask,
-                                            output_mask=pruning_section_mask.entry_node_oc_mask,
-                                            fw_info=fw_info)
+                                            output_mask=pruning_section_mask.entry_node_oc_mask)
 
         fw_impl.prune_exit_node(self.exit_node,
-                                input_mask=pruning_section_mask.exit_node_ic_mask,
-                                fw_info=fw_info)
+                                input_mask=pruning_section_mask.exit_node_ic_mask)
 
     @staticmethod
     def has_matching_channel_count(exit_node: BaseNode,
-                                   corresponding_entry_node: BaseNode,
-                                   fw_info: FrameworkInfo) -> bool:
+                                   corresponding_entry_node: BaseNode) -> bool:
         """
         Checks if the number of input channels of the exit node matches the number of output channels
         of its corresponding entry node.
@@ -115,13 +109,10 @@ class PruningSection:
         Returns:
             bool: True if the channel counts match, False otherwise.
         """
-        _, exit_input_channel_axis = fw_info.kernel_channels_mapping.get(exit_node.type)
-        entry_output_channel_axis, _ = fw_info.kernel_channels_mapping.get(corresponding_entry_node.type)
+        exit_input_channel_axis = exit_node.channel_axis.input
+        entry_output_channel_axis = corresponding_entry_node.channel_axis.output
 
-        exit_node_attr = fw_info.get_kernel_op_attributes(exit_node.type)[0]
-        entry_node_attr = fw_info.get_kernel_op_attributes(corresponding_entry_node.type)[0]
-
-        exit_input_channels = exit_node.get_weights_by_keys(exit_node_attr).shape[exit_input_channel_axis]
-        entry_output_channels = corresponding_entry_node.get_weights_by_keys(entry_node_attr).shape[entry_output_channel_axis]
+        exit_input_channels = exit_node.get_weights_by_keys(exit_node.kernel_attr).shape[exit_input_channel_axis]
+        entry_output_channels = corresponding_entry_node.get_weights_by_keys(corresponding_entry_node.kernel_attr).shape[entry_output_channel_axis]
 
         return exit_input_channels == entry_output_channels

@@ -38,7 +38,6 @@ class SensitivityEvaluation:
                  graph: Graph,
                  mp_config: MixedPrecisionQuantizationConfig,
                  representative_data_gen: Callable,
-                 fw_info: FrameworkInfo,
                  fw_impl: Any,
                  disable_activation_for_metric: bool = False,
                  hessian_info_service: HessianInfoService = None
@@ -46,8 +45,6 @@ class SensitivityEvaluation:
         """
         Args:
             graph: Graph to search for its MP configuration.
-            fw_info: FrameworkInfo object about the specific framework
-                (e.g., attributes of different layers' weights to quantize).
             mp_config: MP Quantization configuration for how the graph should be quantized.
             representative_data_gen: Dataset used for getting batches for inference.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -57,14 +54,13 @@ class SensitivityEvaluation:
         """
         self.mp_config = mp_config
         self.representative_data_gen = representative_data_gen
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
 
         if self.mp_config.custom_metric_fn:
             self.metric_calculator = CustomMetricCalculator(graph, self.mp_config.custom_metric_fn)
         else:
             self.metric_calculator = DistanceMetricCalculator(graph, mp_config, representative_data_gen,
-                                                              fw_info=fw_info, fw_impl=fw_impl,
+                                                              fw_impl=fw_impl,
                                                               hessian_info_service=hessian_info_service)
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
@@ -111,8 +107,7 @@ class SensitivityEvaluation:
 
         model_mp, _, conf_node2layers = self.fw_impl.model_builder(evaluation_graph,
                                                                    mode=ModelBuilderMode.MIXEDPRECISION,
-                                                                   append2output=outputs,
-                                                                   fw_info=self.fw_info)
+                                                                   append2output=outputs)
 
         # Disable all configurable quantizers. They will be activated one at a time during sensitivity evaluation.
         for layer in itertools.chain(*conf_node2layers.values()):

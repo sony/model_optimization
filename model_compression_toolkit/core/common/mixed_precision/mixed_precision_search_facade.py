@@ -35,7 +35,6 @@ class BitWidthSearchMethod(Enum):
 
 
 def search_bit_width(graph: Graph,
-                     fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation,
                      target_resource_utilization: ResourceUtilization,
                      mp_config: MixedPrecisionQuantizationConfig,
@@ -52,7 +51,6 @@ def search_bit_width(graph: Graph,
 
     Args:
         graph: Graph to search a MP configuration for.
-        fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
         target_resource_utilization: Target Resource Utilization to bound our feasible solution space s.t the configuration does not violate it.
         mp_config: Mixed-precision quantization configuration.
@@ -79,7 +77,7 @@ def search_bit_width(graph: Graph,
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS utilization computation purposes)
-    se = SensitivityEvaluation(graph, mp_config, representative_data_gen=representative_data_gen, fw_info=fw_info,
+    se = SensitivityEvaluation(graph, mp_config, representative_data_gen=representative_data_gen,
                                fw_impl=fw_impl, disable_activation_for_metric=disable_activation_for_metric,
                                hessian_info_service=hessian_info_service)
 
@@ -93,7 +91,6 @@ def search_bit_width(graph: Graph,
 
     # Search manager and LP are highly coupled, so LP search method was moved inside search manager.
     search_manager = MixedPrecisionSearchManager(graph,
-                                                 fw_info=fw_info,
                                                  fw_impl=fw_impl,
                                                  sensitivity_evaluator=se,
                                                  target_resource_utilization=target_resource_utilization,
@@ -105,6 +102,6 @@ def search_bit_width(graph: Graph,
     if mp_config.refine_mp_solution:
         nodes_bit_cfg = greedy_solution_refinement_procedure(nodes_bit_cfg, search_manager, target_resource_utilization)
 
-    topo_bit_cfg = [nodes_bit_cfg[n] for n in graph.get_configurable_sorted_nodes(fw_info)]
+    topo_bit_cfg = [nodes_bit_cfg[n] for n in graph.get_configurable_sorted_nodes()]
     assert len(topo_bit_cfg) == len(nodes_bit_cfg)
     return topo_bit_cfg

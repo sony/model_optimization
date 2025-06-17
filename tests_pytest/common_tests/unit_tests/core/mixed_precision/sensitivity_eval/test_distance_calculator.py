@@ -17,6 +17,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
+from model_compression_toolkit.core.common.framework_info import set_fw_info
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, MpDistanceWeighting
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.metric_calculators import \
@@ -34,11 +35,11 @@ class TestDistanceWeighting:
 
     @pytest.fixture
     def setup(self, mocker, graph_mock, fw_info_mock, fw_impl_mock):
+        set_fw_info(fw_info_mock)
         mocker.patch.object(DistanceMetricCalculator, 'get_mp_interest_points', return_value=[None, None])
         mocker.patch.object(DistanceMetricCalculator, 'get_output_nodes_for_metric', return_value=[None])
         mocker.patch.object(DistanceMetricCalculator, '_init_metric_points_lists', return_value=(None, None))
         self.graph_mock = graph_mock
-        self.fw_info_mock = fw_info_mock
         fw_impl_mock.model_builder = Mock(return_value=(None, None))
         self.fw_impl_mock = fw_impl_mock
 
@@ -90,7 +91,7 @@ class TestDistanceWeighting:
     def _run_test(self, ipts, out_pts, mp_cfg, exp_metric, calc_kwargs=None):
         mp_model = Mock()
         with patch.object(DistanceMetricCalculator, '_compute_distance', return_value=(ipts, out_pts)) as comp_dist_mock:
-            calc = DistanceMetricCalculator(self.graph_mock, mp_cfg, repr_datagen, self.fw_info_mock, self.fw_impl_mock,
+            calc = DistanceMetricCalculator(self.graph_mock, mp_cfg, repr_datagen, self.fw_impl_mock,
                                             **(calc_kwargs or {}))
             metric = calc.compute(mp_model)
         comp_dist_mock.assert_called_once_with(mp_model)

@@ -21,7 +21,6 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.wrapper_quantize_config import \
     WrapperQuantizeConfig
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.utils import set_model, to_torch_tensor
 
 
@@ -93,7 +92,7 @@ class QuantizedLayerWrapper(torch.nn.Module):
             self.layer = n.type(**framework_attr)
             self.layer.load_state_dict({k: torch.Tensor(v) for k, v in n.weights.items()}, strict=False)
 
-    def _quantize_weights(self, n:BaseNode):
+    def _quantize_weights(self, n: BaseNode):
         """
         Quantize node's weights and load them as the layer's weights.
 
@@ -104,7 +103,7 @@ class QuantizedLayerWrapper(torch.nn.Module):
             None.
         """
 
-        self.weight_attrs = DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(n.type)
+        self.weight_attrs = [n.kernel_attr]
 
         # float_weights is a list of weights for each attribute that we want to quantize.
         float_weights = [n.get_weights_by_keys(attr) for attr in self.weight_attrs]

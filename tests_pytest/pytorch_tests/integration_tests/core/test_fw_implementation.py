@@ -19,7 +19,8 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
 
@@ -66,13 +67,12 @@ def test_get_mac(minimal_tpc):
     Model()(next(data_gen())[0])
 
     fw_impl = PytorchImplementation()
-    fw_info = DEFAULT_PYTORCH_INFO
+    set_fw_info(PyTorchInfo)
     model = Model()
 
     graph = graph_preparation_runner(model,
                                      data_gen,
                                      QuantizationConfig(linear_collapsing=False),
-                                     fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      fqc=AttachTpcToPytorch().attach(minimal_tpc),
                                      mixed_precision_enable=False,
@@ -80,21 +80,21 @@ def test_get_mac(minimal_tpc):
 
     nodes = graph.get_topo_sorted_nodes()
     # assert len(nodes) == 14, nodes
-    assert fw_impl.get_node_mac_operations(nodes[0], fw_info) == 0
-    assert fw_impl.get_node_mac_operations(nodes[1], fw_info) == (10*20*5*4)*24*29
-    assert fw_impl.get_node_mac_operations(nodes[2], fw_info) == (4*3*4*6)*5*21*24
-    assert fw_impl.get_node_mac_operations(nodes[3], fw_info) == (15*8*3*3)*10*11
-    assert fw_impl.get_node_mac_operations(nodes[4], fw_info) == (8*12*3*3)*6*7
-    assert fw_impl.get_node_mac_operations(nodes[5], fw_info) == (12*20*5*3)*10*9
-    assert fw_impl.get_node_mac_operations(nodes[6], fw_info) == (20*10*3*3)*21*19
-    assert fw_impl.get_node_mac_operations(nodes[7], fw_info) == (10*5*3*3)*25*23
-    assert fw_impl.get_node_mac_operations(nodes[8], fw_info) == (5*2*3*4)*24*21
-    assert fw_impl.get_node_mac_operations(nodes[9], fw_info) == (10*3*3*4)*8*7
-    assert fw_impl.get_node_mac_operations(nodes[10], fw_info) == (40*3*3*2)*4*3
-    assert fw_impl.get_node_mac_operations(nodes[10], fw_info) == (40*3*3*2)*4*3
-    assert fw_impl.get_node_mac_operations(nodes[11], fw_info) == 0
-    assert fw_impl.get_node_mac_operations(nodes[12], fw_info) == 4*3*(80*10)
-    assert fw_impl.get_node_mac_operations(nodes[13], fw_info) == 0
-    assert fw_impl.get_node_mac_operations(nodes[14], fw_info) == (4*3*10)*5
+    assert fw_impl.get_node_mac_operations(nodes[0]) == 0
+    assert fw_impl.get_node_mac_operations(nodes[1]) == (10*20*5*4)*24*29
+    assert fw_impl.get_node_mac_operations(nodes[2]) == (4*3*4*6)*5*21*24
+    assert fw_impl.get_node_mac_operations(nodes[3]) == (15*8*3*3)*10*11
+    assert fw_impl.get_node_mac_operations(nodes[4]) == (8*12*3*3)*6*7
+    assert fw_impl.get_node_mac_operations(nodes[5]) == (12*20*5*3)*10*9
+    assert fw_impl.get_node_mac_operations(nodes[6]) == (20*10*3*3)*21*19
+    assert fw_impl.get_node_mac_operations(nodes[7]) == (10*5*3*3)*25*23
+    assert fw_impl.get_node_mac_operations(nodes[8]) == (5*2*3*4)*24*21
+    assert fw_impl.get_node_mac_operations(nodes[9]) == (10*3*3*4)*8*7
+    assert fw_impl.get_node_mac_operations(nodes[10]) == (40*3*3*2)*4*3
+    assert fw_impl.get_node_mac_operations(nodes[10]) == (40*3*3*2)*4*3
+    assert fw_impl.get_node_mac_operations(nodes[11]) == 0
+    assert fw_impl.get_node_mac_operations(nodes[12]) == 4*3*(80*10)
+    assert fw_impl.get_node_mac_operations(nodes[13]) == 0
+    assert fw_impl.get_node_mac_operations(nodes[14]) == (4*3*10)*5
 
 
