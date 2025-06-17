@@ -106,7 +106,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
     def repr_datagen(self):
         yield [np.random.rand(*self.input_shape)]
 
-    def setup(self, mp_config=None):
+    def _setup(self, mp_config=None):
         model = self.build_model(self.input_shape)
         tpc = build_tpc(w_nbits=(8, 4, 2), a_nbits=(16, 8))
         mp_config = mp_config or MixedPrecisionQuantizationConfig()
@@ -124,7 +124,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
     def test_build_models(self):
         """ Test quant layers and quantizers are built and configured correctly for the mp model,
             and the mapping from nodes to configurable quant layers is correct. """
-        model, g, se = self.setup()
+        model, g, se = self._setup()
         # sanity check that we set up the configuration we intended, and it was correctly configured
         conf_a_nodes = [n for n in g.get_topo_sorted_nodes() if n.has_configurable_activation()]
         assert [n.layer_class for n in conf_a_nodes] == [self.conv_cls, self.relu_cls, self.convtr_cls]
@@ -172,7 +172,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
 
     def test_build_models_disable_activations(self):
         """ Test mp model with disabled activation flag. """
-        model, g, _ = self.setup()
+        model, g, _ = self._setup()
         se = SensitivityEvaluation(g, MixedPrecisionQuantizationConfig(), self.repr_datagen,
                                    fw_impl=self.fw_impl, disable_activation_for_metric=True, hessian_info_service=None)
         activation_holders = self.fetch_model_layers_by_cls(se.mp_model, self.fw_impl.activation_quant_layer_cls)
@@ -182,7 +182,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
 
     def test_configure_mp_model(self):
         """ Test mp model configuration. """
-        model, g, se = self.setup()
+        model, g, se = self._setup()
         # a x w: conv 2x2, relu 2, conv_tr 2x1, fc 1x2
         conv, relu, conv_tr = [n.name for n in g.get_topo_sorted_nodes() if n.has_configurable_activation()]
         conv_, fc = [n.name for n in g.get_topo_sorted_nodes() if n.has_any_configurable_weight()]
@@ -211,7 +211,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
 
     def test_configure_mp_model_errors(self):
         """ Test errors during model configuration. """
-        model, g, se = self.setup()
+        model, g, se = self._setup()
         with pytest.raises(ValueError, match='Requested configuration is either empty or contain only None values'):
             with se._configured_mp_model({}, {}):
                 pass
@@ -234,7 +234,7 @@ class BaseSensitivityEvaluationIntegTester(BaseFWIntegrationTest, abc.ABC):
         """ Test compute_metric method (not the metric computation itself) """
 
         mp_config = MixedPrecisionQuantizationConfig(custom_metric_fn=Mock()) if custom else None
-        model, g, se = self.setup(mp_config)
+        model, g, se = self._setup(mp_config)
         conv, relu, conv_tr = [n.name for n in g.get_topo_sorted_nodes() if n.has_configurable_activation()]
         conv_, fc = [n.name for n in g.get_topo_sorted_nodes() if n.has_any_configurable_weight()]
 

@@ -14,9 +14,8 @@
 # ==============================================================================
 import copy
 from dataclasses import dataclass, InitVar
-from typing import Callable, List, Tuple
+from typing import Callable, List
 
-from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig, ActivationQuantizationMode

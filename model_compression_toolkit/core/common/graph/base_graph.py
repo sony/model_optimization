@@ -120,8 +120,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
     def fusing_info(self, fusing_info: FusingInfo):
         self._fusing_info = fusing_info
 
-    def set_fqc(self,
-                fqc: FrameworkQuantizationCapabilities):
+    def set_fqc(self, fqc: FrameworkQuantizationCapabilities):
         """
         Set the graph's FQC.
         Args:

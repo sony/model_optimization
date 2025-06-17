@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from pytest import fixture
 
@@ -52,6 +52,11 @@ def fw_impl_mock():
 def fw_info_mock():
     """ Basic FrameworkInfo mock. """
     return DummyFrameworkInfo
+
+
+@fixture
+def patch_fw_info(fw_info_mock, mocker):
+    return mocker.patch('model_compression_toolkit.core.common.framework_info._current_framework_info', fw_info_mock)
 
 
 @fixture

@@ -122,8 +122,7 @@ if FOUND_TF:
         # Convert the original Keras model to an internal graph representation.
         float_graph = read_model_to_graph(model,
                                           representative_data_gen,
-                                          target_platform_capabilities,
-                                          DEFAULT_KERAS_INFO,
+                                          framework_platform_capabilities,
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,

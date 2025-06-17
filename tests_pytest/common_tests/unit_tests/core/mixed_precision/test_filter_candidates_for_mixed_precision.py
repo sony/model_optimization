@@ -17,39 +17,12 @@ import pytest
 from unittest.mock import MagicMock, Mock
 
 from model_compression_toolkit.core import ResourceUtilization
-from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_candidates_filter import \
     filter_candidates_for_mixed_precision
 from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities, \
     QuantizationConfigOptions
 from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc
-
-
-@pytest.fixture
-def setup_mocks(graph_mock):
-    """
-    Set up mock objects for testing the filtering of mixed precision candidates.
-
-    Mocks the behavior of a graph containing activation and weight-configurable nodes
-    with multiple quantization candidates. The test will check whether the correct candidates
-    are filtered based on given constraints.
-    """
-    # Activation-configurable node with candidates
-    act_node = build_node(qcs=[build_nbits_qc(8), build_nbits_qc(4)])
-    act_node.get_qco = Mock(return_value=Mock(spec=QuantizationConfigOptions, base_config=Mock(activation_n_bits=8)))
-
-    # Weights-configurable node with candidates
-    weight_node = build_node(qcs=[build_nbits_qc(w_attr={'kernel': (8, True)}),
-                                  build_nbits_qc(w_attr={'kernel': (4, True)})])
-    qco = Mock(spec=QuantizationConfigOptions,
-               base_config=MagicMock(attr_weights_configs_mapping={'kernel': MagicMock(weights_n_bits=8)}))
-    weight_node.get_qco = Mock(return_value=qco)
-
-    graph_mock.get_activation_configurable_nodes.return_value = [act_node]
-    graph_mock.get_weights_configurable_nodes.return_value = [weight_node]
-    fw_info_mock.get_kernel_op_attributes.return_value = ['kernel']
-
-    return graph_mock, fw_info_mock, act_node, weight_node
 
 
 @pytest.mark.parametrize(
@@ -61,7 +34,7 @@ def setup_mocks(graph_mock):
         (ResourceUtilization(total_memory=1), 2, 2),  # Total memory restricted
         (ResourceUtilization(bops=1), 2, 2),  # BOPS restricted
     ])
-def test_filtering(setup_mocks, tru, expected_act_candidates, expected_weight_candidates):
+def test_filtering(graph_mock, tru, expected_act_candidates, expected_weight_candidates, patch_fw_info):
     """
     Test candidate filtering based on weight and activation restrictions.
 
@@ -71,9 +44,23 @@ def test_filtering(setup_mocks, tru, expected_act_candidates, expected_weight_ca
     - When both restrictions are applied, filtering occurs on both activations and weights.
     - When no restrictions are applied, all candidates remain.
     """
-    graph, fw_info, act_node, weight_node = setup_mocks
+    patch_fw_info.get_kernel_op_attribute = Mock(return_value='kernel')
 
-    filter_candidates_for_mixed_precision(graph, tru, fw_info, Mock(spec=FrameworkQuantizationCapabilities))
+    act_node = build_node(qcs=[build_nbits_qc(8), build_nbits_qc(4)])
+    act_node.get_qco = Mock(return_value=Mock(spec=QuantizationConfigOptions, base_config=Mock(activation_n_bits=8)))
+
+    # Weights-configurable node with candidates
+    weight_node = build_node(qcs=[build_nbits_qc(w_attr={'kernel': (8, True)}),
+                                  build_nbits_qc(w_attr={'kernel': (4, True)})],
+                             node_fw_info=Mock(kernel_attr='kernel'))
+    qco = Mock(spec=QuantizationConfigOptions,
+               base_config=MagicMock(attr_weights_configs_mapping={'kernel': MagicMock(weights_n_bits=8)}))
+    weight_node.get_qco = Mock(return_value=qco)
+
+    graph_mock.get_activation_configurable_nodes.return_value = [act_node]
+    graph_mock.get_weights_configurable_nodes.return_value = [weight_node]
+
+    filter_candidates_for_mixed_precision(graph_mock, tru, Mock(spec=FrameworkQuantizationCapabilities))
 
     assert len(act_node.candidates_quantization_cfg) == expected_act_candidates
     assert len(weight_node.candidates_quantization_cfg) == expected_weight_candidates

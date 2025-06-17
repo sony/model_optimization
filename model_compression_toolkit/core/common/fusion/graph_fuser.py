@@ -14,13 +14,12 @@
 #  ==============================================================================
 
 import copy
-from typing import List, Tuple
+from typing import Tuple
 
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig, TPCQuantizationInfo
-from itertools import product
 
 
 class FusedLayerType:
@@ -30,6 +29,7 @@ class FusedLayerType:
     """
     def __init__(self):
         self.__name__ = 'FusedLayer'
+
 
 class GraphFuser:
     def apply_node_fusion(self, graph: Graph) -> Graph:
@@ -64,7 +64,6 @@ class GraphFuser:
             self._replace_nodes_with_fused_node(graph_copy, original_nodes, fused_node)
 
         return graph_copy
-
 
     @staticmethod
     def _create_fused_node(fused_node_id: str, nodes: Tuple[BaseNode]) -> BaseNode:
@@ -164,5 +163,3 @@ class GraphFuser:
 
         # Finally, add the new fused node to the graph
         graph.add_node(fused_node)
-
-

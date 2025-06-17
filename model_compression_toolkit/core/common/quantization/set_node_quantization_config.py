@@ -139,21 +139,21 @@ def set_quantization_configs_to_node(node: BaseNode,
     node_qc_options = node.get_qco(fqc)
     base_config, node_qc_options_list = filter_node_qco_by_graph(node, fqc, graph, node_qc_options)
 
-    # Create QC candidates for weights and activation combined
-    weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
-
     node_attrs_list = node.get_node_weights_attributes()
-    mp_candidates = [_create_node_single_candidate_qc(fw_info, weight_channel_axis, op_cfg, node_attrs_list)
+    mp_candidates = [_create_node_single_candidate_qc(node.channel_axis, op_cfg, node_attrs_list)
                      for op_cfg in node_qc_options_list]
-    sp_cfg = _create_node_single_candidate_qc(fw_info, weight_channel_axis, base_config, node_attrs_list)
+    sp_cfg = _create_node_single_candidate_qc(node.channel_axis, base_config, node_attrs_list)
     node.tpc_quantization_info = TPCQuantizationInfo(base_quantization_cfg=sp_cfg,
                                                      candidates_quantization_cfg=mp_candidates)
-    node.sort_node_candidates(fw_info)
+    node.sort_node_candidates()
     if not node.get_has_activation():
         node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
 
-
-    if candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT:
+    for candidate_qc in [*node.candidates_quantization_cfg, node.tpc_quantization_info.base_quantization_cfg]:
+        if candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.QUANT and \
+                not node.get_has_activation():
+            candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
+        elif candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.PRESERVE_QUANT:
             prev_nodes = graph.get_prev_nodes(node)
             if len(prev_nodes) != 1:
                 # Preserving the quantization of more than 1 previous node is ambiguous, so disable it.

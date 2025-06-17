@@ -119,9 +119,9 @@ class TestSetNodeQuantizationConfig:
         }
 
         fqc = Mock(filterlayer2qco=_filters, layer2qco=_filters)
-        set_quantization_configs_to_node(first_node, graph, fw_info_mock, fqc)
-        set_quantization_configs_to_node(preserving_node, graph, fw_info_mock, fqc)
-        set_quantization_configs_to_node(no_quant_node, graph, fw_info_mock, fqc)
+        set_quantization_configs_to_node(first_node, graph, fqc)
+        set_quantization_configs_to_node(preserving_node, graph, fqc)
+        set_quantization_configs_to_node(no_quant_node, graph, fqc)
 
         assert not first_node.is_quantization_preserving() and first_node.is_activation_quantization_enabled()
         assert preserving_node.is_quantization_preserving() and not preserving_node.is_activation_quantization_enabled()
