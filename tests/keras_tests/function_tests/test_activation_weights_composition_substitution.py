@@ -107,14 +107,13 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
 
     attach2keras = AttachTpcToKeras()
     fqc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
+    graph = load_fqc_configuration(graph, fqc)
 
     # Standard graph substitutions
     graph = substitute(graph, keras_impl.get_substitutions_prepare_graph())
     for node in graph.nodes:
         node.prior_info = keras_impl.get_node_prior_info(node=node, graph=graph)
     graph = substitute(graph, keras_impl.get_substitutions_pre_statistics_collection(qc))
-
-    graph = load_fqc_configuration(graph, fqc)
 
     graph = filter_nodes_candidates(graph)
 

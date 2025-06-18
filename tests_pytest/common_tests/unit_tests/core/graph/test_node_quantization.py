@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.graph.edge import Edge
 from unittest.mock import Mock
 
 from model_compression_toolkit.quantization_preparation.load_fqc import set_quantization_configs_to_node
-from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc, DummyLayer
+from tests_pytest._test_util.graph_builder_utils import build_node, DummyLayer
 from model_compression_toolkit.core.common.framework_info import set_fw_info
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
     OpQuantizationConfig, AttributeQuantizationConfig, Signedness

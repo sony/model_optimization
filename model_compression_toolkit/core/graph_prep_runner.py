@@ -16,7 +16,6 @@
 
 from typing import Callable, Any
 
-from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig

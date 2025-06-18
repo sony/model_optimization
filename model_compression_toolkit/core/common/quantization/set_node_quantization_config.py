@@ -131,32 +131,3 @@ def set_manual_bitwidth_config(graph, bit_width_config: BitWidthConfig):
         n.candidates_quantization_cfg.weights_quantization_cfg = candidates
         for w_nbits, attr in manual_wbits:
             n.base_quantization_cfg.weights_quantization_cfg.get_attr_config(attr).weights_n_bits = w_nbits
-
-
-    # manual_activation_bitwidths = bit_width_config.get_nodes_to_manipulate_activation_bit_widths(graph)
-    # for n, a_nbits in manual_activation_bitwidths.items():
-    #     candidates = [qc for qc in n.candidates_quantization_cfg if qc.activation_quantization_cfg.activation_n_bits == a_nbits]
-    #     if not candidates:
-    #         raise ValueError(f'Invalid manual bitwidth {a_nbits} for activation of node {n}. '
-    #                          f'Only bitwidth supported by TPC can be specified.')
-    #     n.candidates_quantization_cfg.activation_quantization_cfg = candidates
-    #     n.base_quantization_cfg.activation_quantization_cfg.activation_n_bits = a_nbits
-    #
-    # manual_weights_bitwidths = bit_width_config.get_nodes_to_manipulate_weights_bit_widths(graph)
-    #
-    # def qc_attr_nbits(qc, attr, n):
-    #     if attr not in qc.activation_quantization_cfg.weights_quantization_cfg.get_all_weights_attrs():
-    #         raise ValueError(f'Invalid attribute {attr} in manual weights configuration for node {n}')
-    #     return qc.activation_quantization_cfg.weights_quantization_cfg.get_attr_config(attr)
-    #
-    # for n, manual_wbits in manual_weights_bitwidths.items():
-    #     candidates = [qc for qc in n.candidates_quantization_cfg
-    #                   if all(qc_attr_nbits(qc, attr, n) == w_nbits for w_nbits, attr in manual_wbits)]
-    #     if not candidates:
-    #         raise ValueError(f'Invalid manual bitwidth configuration {manual_wbits} for node {n}. '
-    #                          f'Only bitwidth supported by TPC can be specified.')
-    #     n.candidates_quantization_cfg.weights_quantization_cfg = candidates
-    #     for w_nbits, attr in manual_wbits:
-    #         n.base_quantization_cfg.weights_quantization_cfg.get_attr_config(attr).weights_n_bits = w_nbits
-    #
-    #

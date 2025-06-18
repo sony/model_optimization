@@ -108,7 +108,6 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         self.weights = {}
         self.layer_class = activation_class
 
-        # We disable all weights quantization so we just use base cfg of activation as base cfg. It shouldn't be used in MP anyway.
         self.tpc_quantization_info = TPCQuantizationInfo(candidates_quantization_cfg=origin_node.get_unique_activation_candidates(),
                                                          base_quantization_cfg=None, validate=False)
         self.tpc_quantization_info.disable_weights_quantization()

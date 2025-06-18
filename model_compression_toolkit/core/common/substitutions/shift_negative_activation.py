@@ -16,11 +16,10 @@ import copy
 import numpy as np
 from typing import List, Tuple, Any, Callable
 
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig

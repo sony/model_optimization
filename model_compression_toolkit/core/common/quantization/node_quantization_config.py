@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, Any, List, Tuple, Dict, TYPE_CHECKING
+from typing import Callable, Any, List, Dict, TYPE_CHECKING
 from enum import Enum, auto
 import numpy as np
 

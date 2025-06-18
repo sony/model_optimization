@@ -18,8 +18,6 @@ from pydantic import ValidationError
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as current_schema
 import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v1
 import model_compression_toolkit.target_platform_capabilities.schema.v2 as schema_v2
-from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qco_for_node
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS, \
     all_tpc_types, FUTURE_SCHEMA_VERSIONS, _schema_v1_to_v2

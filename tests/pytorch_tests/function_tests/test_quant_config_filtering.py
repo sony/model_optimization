@@ -59,21 +59,20 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
         return tpc
 
     def test_config_filtering(self):
-        with patch('model_compression_toolkit.core.common.framework_info._current_framework_info'):
-            node = FunctionalNode('node',{},
-                                  [1, 8], [1, 8], {}, torch.multiply,
-                                  [], {}, functional_op=torch.multiply)
-            next_node1 = FunctionalNode('next_node',{FUNCTION},
-                                  [1, 8], [1, 8], {}, torch.add,
-                                  [], {}, functional_op=torch.add)
-            next_node2 = FunctionalNode('next_node',{},
-                                  [1, 8], [1, 8], {}, torch.div,
-                                  [], {}, functional_op=torch.div)
+        node = FunctionalNode('node',{},
+                              [1, 8], [1, 8], {}, torch.multiply,
+                              [], {}, functional_op=torch.multiply)
+        next_node1 = FunctionalNode('next_node',{FUNCTION},
+                              [1, 8], [1, 8], {}, torch.add,
+                              [], {}, functional_op=torch.add)
+        next_node2 = FunctionalNode('next_node',{},
+                              [1, 8], [1, 8], {}, torch.div,
+                              [], {}, functional_op=torch.div)
 
         tpc = self.get_tpc_default_16bit()
         tpc = AttachTpcToPytorch().attach(tpc)
 
-        node_qc_options = fetch_qco_for_node(node, tpc)
+        node_qc_options = node.get_qco(tpc)
         self.assertTrue(node_qc_options.base_config.activation_n_bits == 16, "base_config should start with 16 bits.")
 
         # test base_config changed due to next node supported input bits.

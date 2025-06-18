@@ -27,7 +27,7 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.constants import PYTORCH, FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
+from model_compression_toolkit.constants import PYTORCH, FUSED_LAYER_PATTERN
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qco_for_node
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \

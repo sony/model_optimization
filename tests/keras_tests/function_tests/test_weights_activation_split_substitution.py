@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 import tensorflow as tf
 import keras

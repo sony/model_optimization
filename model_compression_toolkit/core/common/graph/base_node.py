@@ -25,12 +25,7 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
-    OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
-    FrameworkQuantizationCapabilities
 
 
 WeightAttrT = Union[str, int]

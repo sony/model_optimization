@@ -17,7 +17,7 @@ from typing import Callable, Tuple, Union
 
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.quantization_preparation.load_fqc import set_nodes_quantization_configuration
+from model_compression_toolkit.quantization_preparation.load_fqc import load_fqc_configuration
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.tpc_io_handler import load_target_platform_capabilities
 from model_compression_toolkit.verify_packages import FOUND_TF
@@ -126,8 +126,7 @@ if FOUND_TF:
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
         # as it prepares the graph for the pruning process.
-        float_graph_with_compression_config = set_nodes_quantization_configuration(float_graph,
-                                                                                   framework_platform_capabilities)
+        float_graph_with_compression_config = load_fqc_configuration(float_graph, framework_platform_capabilities)
 
         # Create a Pruner object with the graph and configuration.
         pruner = Pruner(float_graph_with_compression_config,

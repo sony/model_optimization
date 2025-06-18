@@ -15,10 +15,8 @@
 from typing import Union, Iterable, List, Callable
 
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.core import QuantizationConfig
 
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.graph.base_node import NodeFrameworkInfo
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig, TPCQuantizationInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
@@ -56,10 +54,6 @@ def build_node(name='node', canonical_weights: dict = None, final_weights: dict 
                     weights=weights,
                     layer_class=layer_class,
                     reuse=reuse)
-    # TODO irena
-    # if node_fw_info:
-    #     node.node_fw_info = node_fw_info
-
     if qcs or sp_qc:
         assert isinstance(qcs, (list, type(None)))
         qcs = qcs or [sp_qc]
