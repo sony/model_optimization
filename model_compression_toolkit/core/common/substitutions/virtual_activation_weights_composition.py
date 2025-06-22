@@ -50,9 +50,7 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
             return graph
 
         # Virtual composed activation-weights node
-        v_node = VirtualActivationWeightsNode(act_node,
-                                              weights_node,
-                                              fw_info=graph.fw_info)
+        v_node = VirtualActivationWeightsNode(act_node, weights_node)
 
         # Update graph
         graph.add_node(v_node)

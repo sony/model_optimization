@@ -33,9 +33,9 @@ def build_mock_node(name, layer_class, wqe_flag):
     node = Mock(spec=BaseNode)
     node.name = name
     node.layer_class = layer_class
+    node.kernel_attr = "wqe_flag"
 
     node.is_no_quantization.return_value = True
-    node.is_fln_no_quantization.return_value = False
     node.is_weights_quantization_enabled.return_value = wqe_flag
 
     activation_quantization_cfg = Mock(spec=NodeActivationQuantizationConfig)
@@ -68,8 +68,8 @@ def test_filter_node_candidates(wqe_flag):
     graph.nodes = mock_nodes
     ### call override_fused_node_activation_quantization_candidates
     graph.override_fused_node_activation_quantization_candidates()
-    fw_info = Mock()
-    fw_info.get_kernel_op_attributes.return_value = ['weight']
-    output_candidates = filter_node_candidates(graph.nodes[0], fw_info)
+
+    output_candidates = filter_node_candidates(graph.nodes[0])
+
     assert output_candidates[0].activation_quantization_cfg.activation_n_bits == FLOAT_BITWIDTH
     assert output_candidates[0].activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO

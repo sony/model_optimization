@@ -18,7 +18,7 @@ import numpy as np
 from typing import List, Union, Tuple, Optional
 
 from networkx.algorithms.dag import topological_sort
-from model_compression_toolkit.core import FrameworkInfo, QuantizationErrorMethod
+from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -30,7 +30,6 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 
 
 def create_stats_collector_for_node(node: common.BaseNode,
-                                    fw_info: FrameworkInfo,
                                     quant_node_in_fln: bool) -> BaseStatsCollector:
     """
     Gets a node and a groups list and create and return a statistics collector for a node
@@ -39,7 +38,7 @@ def create_stats_collector_for_node(node: common.BaseNode,
 
     Args:
         node: Node to create its statistics collector.
-        fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel).
+        quant_node_in_fln: Whether the node should be quantized as part of an FLN.
 
     Returns:
         Statistics collector for statistics collection for the node.
@@ -48,7 +47,7 @@ def create_stats_collector_for_node(node: common.BaseNode,
     if node.is_activation_quantization_enabled() or quant_node_in_fln:
         min_output = getattr(node.prior_info, 'min_output', None)
         max_output = getattr(node.prior_info, 'max_output', None)
-        stats_collector = common.StatsCollector(out_channel_axis=fw_info.out_channel_axis_mapping.get(node.type),
+        stats_collector = common.StatsCollector(out_channel_axis=node.out_channel_axis,
                                                 init_min_value=min_output,
                                                 init_max_value=max_output)
     else:
@@ -58,21 +57,19 @@ def create_stats_collector_for_node(node: common.BaseNode,
 
 
 def create_tensor2node(graph: common.Graph,
-                       node: common.BaseNode,
-                       fw_info: common.FrameworkInfo):
+                       node: common.BaseNode):
     """
     Force statistic collector creation and assignment for a node.
     Args:
         graph: Graph of the node (for retrieving the current tensor).
         node: Node to create a tensor for.
-        fw_info: Specific framework information (for example, output channels index).
 
     """
     current_sc = graph.get_out_stats_collector(node)
     is_list_nostat_collectors = isinstance(current_sc, list) and len(
         [sc for sc in current_sc if not isinstance(sc, common.NoStatsCollector)]) == 0
     if isinstance(current_sc, common.NoStatsCollector) or current_sc is None or is_list_nostat_collectors:
-        stats_collector = common.StatsCollector(fw_info.out_channel_axis_mapping.get(node.type))
+        stats_collector = common.StatsCollector(node.out_channel_axis)
         graph.set_out_stats_collector_to_node(node, stats_collector)
 
 
@@ -140,7 +137,6 @@ class ModelCollector:
 
     def __init__(self, graph: Graph,
                  fw_impl: FrameworkImplementation,
-                 fw_info: FrameworkInfo,
                  hessian_info_service: HessianInfoService = None,
                  qc: common.QuantizationConfig = common.DEFAULTCONFIG):
         """
@@ -149,12 +145,10 @@ class ModelCollector:
         Args:
             graph: Graph to build a model from it.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-            fw_info: FrameworkInfo object with a specific framework information.
             qc: Quantization configuration containing parameters for how the graph should be quantized.
         """
 
         self.fw_impl = fw_impl
-        self.fw_info = fw_info
         self.hessian_service = hessian_info_service
         self.qc = qc
         self.model_outputs = [out.node for out in graph.get_outputs()]
@@ -162,17 +156,15 @@ class ModelCollector:
         # Assign statistics collectors to nodes
         for n in graph.get_topo_sorted_nodes():
             quant_node_in_fln = n.is_fln_quantization() and graph.fusing_info.is_quantized_node_in_fln(n)
-            sc = create_stats_collector_for_node(n, fw_info=fw_info, quant_node_in_fln=quant_node_in_fln)  # Get static collector for the node
+            sc = create_stats_collector_for_node(n, quant_node_in_fln=quant_node_in_fln)  # Get static collector for the node
             # If we use bias correction, and the node has kernel weights to quantize, we need to make sure
             # its previous nodes' tensors are consistent with this node.
-            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-            if qc.weights_bias_correction and kernel_attr is not None and n.is_weights_quantization_enabled(
-                    kernel_attr):
+            if qc.weights_bias_correction and n.kernel_attr is not None and n.is_weights_quantization_enabled(
+                    n.kernel_attr):
                 for ie in graph.incoming_edges(n):
                     input_node = ie.source_node
                     create_tensor2node(graph,
-                                       input_node,
-                                       fw_info)
+                                       input_node)
             if sc is not None:
                 graph.set_out_stats_collector_to_node(n, sc)
 
@@ -205,13 +197,11 @@ class ModelCollector:
         # TODO: Add integration test for this case
         append2output = outputs_nodes + [n for n in self.model_outputs if n not in outputs_nodes]
 
-
         # Build a float model and output all layers' outputs
         # (that should be collected) as the model's outputs
         self.model, _ = self.fw_impl.model_builder(graph,
                                                    mode=ModelBuilderMode.FLOAT,
-                                                   append2output=append2output,
-                                                   fw_info=self.fw_info)
+                                                   append2output=append2output)
 
     def infer(self, inputs_list: List[np.ndarray]):
         """

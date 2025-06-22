@@ -30,19 +30,15 @@ class RandomImportanceMetric(BaseImportanceMetric):
                  graph: Graph,
                  representative_data_gen: Callable,
                  fw_impl: FrameworkImplementation,
-                 pruning_config: PruningConfig,
-                 fw_info: FrameworkInfo):
+                 pruning_config: PruningConfig):
         self.float_graph = graph
         self.representative_data_gen = representative_data_gen
         self.fw_impl = fw_impl
         self.pruning_config = pruning_config
-        self.fw_info = fw_info
-
 
     def get_entry_node_to_simd_score(self, entry_nodes: List[BaseNode]):
         entry_node_to_score = self._get_entry_node_to_score(entry_nodes)
-        self.channel_grouping = ChannelGrouping(prunable_nodes=entry_nodes,
-                                                fw_info=self.fw_info)
+        self.channel_grouping = ChannelGrouping(prunable_nodes=entry_nodes)
         self.channel_grouping.group_scores_by_simd_groups(entry_node_to_score)
         grouped_indices = self.channel_grouping.simd_groups_indices
         entry_node_to_simd_score = {}
@@ -55,8 +51,8 @@ class RandomImportanceMetric(BaseImportanceMetric):
     def _get_entry_node_to_score(self, sections_input_nodes: List[BaseNode]):
         random_scores = []
         for node in sections_input_nodes:
-            weight_attr = self.fw_info.kernel_ops_attributes_mapping.get(sections_input_nodes[0].type)[0]
-            channel_mapping = self.fw_info.kernel_channels_mapping.get(node.type)[0]
+            weight_attr = sections_input_nodes[0].kernel_attr
+            channel_mapping = node.channel_axis.output
             random_scores.append(np.random.random(node.get_weights_by_keys(weight_attr).shape[channel_mapping]))
         entry_node_to_score = {node: scores for node, scores in zip(sections_input_nodes, random_scores)}
         return entry_node_to_score

@@ -21,6 +21,7 @@ from model_compression_toolkit.logger import Logger
 
 if FOUND_TF:
     import keras
+    from model_compression_toolkit.core.keras.default_framework_info import set_keras_info
     from model_compression_toolkit.exporter.model_wrapper.keras.validate_layer import is_keras_layer_exportable
     from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import \
         FakelyQuantKerasExporter
@@ -36,6 +37,7 @@ if FOUND_TF:
         KerasExportSerializationFormat.TFLITE: [QuantizationFormat.FAKELY_QUANT, QuantizationFormat.INT8]
     }
 
+    @set_keras_info
     def keras_export_model(model: keras.models.Model,
                            save_model_path: str,
                            is_layer_exportable_fn: Callable = is_keras_layer_exportable,

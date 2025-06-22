@@ -19,7 +19,6 @@ from model_compression_toolkit.core.common.pruning.pruning_framework_implementat
     PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.constants import BIAS, GROUPS, FILTERS, UNITS, USE_BIAS
 import keras
@@ -38,27 +37,23 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
 
     def prune_entry_node(self,
                          node: BaseNode,
-                         output_mask: np.ndarray,
-                         fw_info: FrameworkInfo):
+                         output_mask: np.ndarray):
         """
         Prunes the entry node of a model in Keras.
 
         Args:
             node (BaseNode): The entry node to be pruned.
             output_mask (np.ndarray): A numpy array representing the mask to be applied to the output channels.
-            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         return _prune_keras_edge_node(node=node,
                                       mask=output_mask,
-                                      fw_info=fw_info,
                                       is_exit_node=False)
 
     def prune_intermediate_node(self,
                                 node: BaseNode,
                                 input_mask: np.ndarray,
-                                output_mask: np.ndarray,
-                                fw_info: FrameworkInfo):
+                                output_mask: np.ndarray):
         """
         Prunes an intermediate node in a Keras model.
 
@@ -66,7 +61,6 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             node (BaseNode): The intermediate node to be pruned.
             input_mask (np.ndarray): A numpy array representing the mask to be applied to the input channels.
             output_mask (np.ndarray): A numpy array representing the mask to be applied to the output channels.
-            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         _edit_node_input_shape(input_mask, node)
@@ -79,20 +73,17 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
 
     def prune_exit_node(self,
                         node: BaseNode,
-                        input_mask: np.ndarray,
-                        fw_info: FrameworkInfo):
+                        input_mask: np.ndarray):
         """
         Prunes the exit node of a model in Keras.
 
         Args:
             node (BaseNode): The exit node to be pruned.
             input_mask (np.ndarray): A numpy array representing the mask to be applied to the input channels.
-            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         return _prune_keras_edge_node(node=node,
                                       mask=input_mask,
-                                      fw_info=fw_info,
                                       is_exit_node=True)
 
     def is_node_entry_node(self, node: BaseNode) -> bool:
@@ -109,22 +100,19 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
 
     def is_node_exit_node(self,
                           node: BaseNode,
-                          corresponding_entry_node: BaseNode,
-                          fw_info: FrameworkInfo) -> bool:
+                          corresponding_entry_node: BaseNode) -> bool:
         """
         Determines whether a node is an exit node in a Keras model.
 
         Args:
             node (BaseNode): The node to be checked.
             corresponding_entry_node (BaseNode): The entry node of the pruning section that is checked.
-            fw_info (FrameworkInfo): Framework-specific information object.
 
         Returns:
             bool: Boolean indicating if the node is an exit node.
         """
         return _is_keras_node_pruning_section_edge(node) and PruningSection.has_matching_channel_count(node,
-                                                                                                       corresponding_entry_node,
-                                                                                                       fw_info)
+                                                                                                       corresponding_entry_node)
 
     def is_node_intermediate_pruning_section(self, node: BaseNode) -> bool:
         """
@@ -143,8 +131,7 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
                                  keras.layers.Dense]
 
     def attrs_oi_channels_info_for_pruning(self,
-                                           node: BaseNode,
-                                           fw_info: FrameworkInfo) -> Dict[str, Tuple[int, int]]:
+                                           node: BaseNode) -> Dict[str, Tuple[int, int]]:
         """
         Retrieves the attributes of a given node along with the output/input (OI) channel axis
         for each attribute used to prune these attributes.
@@ -161,7 +148,6 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
 
         Args:
             node (BaseNode): The node from the computational graph.
-            fw_info (FrameworkInfo): Contains framework-specific information and utilities.
 
         Returns:
             Dict[str, Tuple[int, int]]: A dictionary where each key is an attribute name (like 'kernel' or 'bias')
@@ -169,13 +155,8 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         """
 
         attributes_with_axis = {}
-        if fw_info.is_kernel_op(node.type):
-            kernel_attributes = fw_info.get_kernel_op_attributes(node.type)
-            if kernel_attributes is None or len(kernel_attributes)==0:
-                Logger.critical(f"Expected kernel attributes for operation for node type {node.type}, found None or empty.")
-
-            for attr in kernel_attributes:
-                attributes_with_axis[attr] = fw_info.kernel_channels_mapping.get(node.type)
+        if node.is_kernel_op:
+            attributes_with_axis[node.kernel_attr] = (node.channel_axis.output, node.channel_axis.input)
 
             # Bias is a vector at the length of the number of output channels.
             # For this reason, input channel axis is irrelevant to the bias attribute.
@@ -216,7 +197,6 @@ def _is_keras_node_pruning_section_edge(node: BaseNode) -> bool:
 
 def _prune_keras_edge_node(node: BaseNode,
                            mask: np.ndarray,
-                           fw_info: FrameworkInfo,
                            is_exit_node: bool):
     """
     Prunes the given Keras node by applying the mask to the node's weights (kernels and biases).
@@ -225,21 +205,18 @@ def _prune_keras_edge_node(node: BaseNode,
     Args:
         node: The node to be pruned.
         mask: The pruning mask to be applied.
-        fw_info: Framework-specific information object.
         is_exit_node: A boolean indicating whether the node is an exit node.
 
     """
 
     # Retrieve the kernel attribute and the axes to prune.
-    kernel_attr = fw_info.get_kernel_op_attributes(node.type)[0]
-    io_axis = fw_info.kernel_channels_mapping.get(node.type)
-    axis_to_prune = io_axis[int(is_exit_node)]
-    kernel = node.get_weights_by_keys(kernel_attr)
+    axis_to_prune = node.channel_axis.input if is_exit_node else node.channel_axis.output
+    kernel = node.get_weights_by_keys(node.kernel_attr)
     # Convert mask to boolean.
     mask_bool = mask.astype(bool)
 
     pruned_kernel = kernel.compress(mask_bool, axis=axis_to_prune)
-    node.set_weights_by_keys(name=kernel_attr, tensor=pruned_kernel)
+    node.set_weights_by_keys(name=node.kernel_attr, tensor=pruned_kernel)
 
     if not is_exit_node and node.framework_attr[USE_BIAS]:
         # Prune the bias if applicable and it's an entry node.

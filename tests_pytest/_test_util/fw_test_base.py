@@ -23,7 +23,6 @@ from model_compression_toolkit.core.graph_prep_runner import graph_preparation_r
 class BaseFWIntegrationTest(abc.ABC):
     """ Base class providing utils for integration / e2e tests. """
 
-    fw_info: FrameworkInfo
     fw_impl: FrameworkImplementation
     attach_to_fw_func: Callable
 
@@ -33,7 +32,6 @@ class BaseFWIntegrationTest(abc.ABC):
         graph = graph_preparation_runner(model,
                                          datagen,
                                          quantization_config=quant_config,
-                                         fw_info=self.fw_info,
                                          fw_impl=self.fw_impl,
                                          fqc=self.attach_to_fw_func(tpc),
                                          mixed_precision_enable=mp,

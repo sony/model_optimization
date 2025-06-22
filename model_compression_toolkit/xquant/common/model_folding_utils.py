@@ -34,7 +34,6 @@ class ModelFoldingUtils:
     """
 
     def __init__(self,
-                 fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  fw_default_fqc: FrameworkQuantizationCapabilities):
         """
@@ -42,11 +41,9 @@ class ModelFoldingUtils:
         and default FQC.
 
         Args:
-            fw_info: Framework-specific information.
             fw_impl: Implementation functions for the framework.
             fw_default_fqc: Default target platform capabilities for the handled framework.
         """
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
         self.fw_default_fqc = fw_default_fqc
 
@@ -69,8 +66,7 @@ class ModelFoldingUtils:
         float_folded_model, _ = self.fw_impl.model_builder(
             float_graph,
             mode=ModelBuilderMode.FLOAT,
-            append2output=None,
-            fw_info=self.fw_info
+            append2output=None
         )
         return float_folded_model
 
@@ -100,7 +96,6 @@ class ModelFoldingUtils:
         graph = graph_preparation_runner(in_model=model,
                                          representative_data_gen=repr_dataset,
                                          fw_impl=self.fw_impl,
-                                         fw_info=self.fw_info,
                                          quantization_config=DEFAULTCONFIG,
                                          fqc=self.fw_default_fqc)
         return graph

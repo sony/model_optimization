@@ -50,7 +50,7 @@ class BaseWeightsActivationSplit(BaseSubstitution):
             Graph after applying the substitution.
         """
         # The decomposition works on linear nodes, that is, nodes with kernel ops
-        kernel_attr = graph.fw_info.get_kernel_op_attributes(node.type)[0]
+        kernel_attr = node.kernel_attr
         if kernel_attr is None:
             Logger.critical(f"Trying to split node weights and activation, but node "
                             f"{node.name} doesn't have a kernel attribute.")

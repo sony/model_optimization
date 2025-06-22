@@ -18,6 +18,7 @@ from typing import Callable, Any, List, Tuple, Union, Dict, TYPE_CHECKING
 from enum import Enum, auto
 import numpy as np
 
+from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
@@ -262,7 +263,7 @@ class WeightsAttrQuantizationConfig:
     def __init__(self,
                  qc: QuantizationConfig,
                  weights_attr_cfg: AttributeQuantizationConfig,
-                 weights_channels_axis: Tuple[int, int] = None):
+                 weights_channels_axis: ChannelAxisMapping = None):
         """
 
         Args:
@@ -352,7 +353,7 @@ class WeightsAttrQuantizationConfig:
                                                     p=self.l_p_value,
                                                     n_bits=self.weights_n_bits,
                                                     per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
-                                                    channel_axis=self.weights_channels_axis[0],  # output channel axis
+                                                    channel_axis=self.weights_channels_axis.output,  # output channel axis
                                                     min_threshold=min_threshold)[0]  # Take only first output, the q-params, as axis is already chosen.
             )
         else:
@@ -400,7 +401,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
     """
     def __init__(self, qc: QuantizationConfig,
                  op_cfg: OpQuantizationConfig,
-                 weights_channels_axis: Tuple[int, int],
+                 weights_channels_axis: ChannelAxisMapping,
                  node_attrs_list: List[str]):
         """
 

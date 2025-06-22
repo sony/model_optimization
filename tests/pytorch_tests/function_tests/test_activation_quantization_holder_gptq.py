@@ -8,7 +8,6 @@ from torch.nn import Conv2d
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.gptq import GradualActivationQuantizationConfig, QFractionLinearAnnealingConfig
 from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
@@ -22,6 +21,8 @@ from model_compression_toolkit.trainable_infrastructure.common.base_trainable_qu
 from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import \
     STESymmetricActivationTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import PytorchLinearAnnealingScheduler
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 
@@ -71,6 +72,8 @@ def representative_dataset():
 
 
 class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(PyTorchInfo)
 
     def test_adding_holder_instead_quantize_wrapper(self):
         gptq_model = self._get_gptq_model(INPUT_SHAPE, BasicModel())
@@ -148,7 +151,6 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         qc.linear_collapsing = False
         graph = prepare_graph_with_quantization_parameters(in_model,
                                                            pytorch_impl,
-                                                           DEFAULT_PYTORCH_INFO,
                                                            representative_dataset,
                                                            generate_pytorch_tpc,
                                                            [1] + input_shape,
@@ -164,7 +166,6 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
                                      graph,
                                      gptq_cfg,
                                      pytorch_impl,
-                                     DEFAULT_PYTORCH_INFO,
                                      representative_dataset)
         gptq_model, _ = trainer.build_gptq_model()
         return gptq_model

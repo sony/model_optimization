@@ -124,10 +124,9 @@ class ResourceUtilizationCalculator:
     unexpected_qc_error = 'Custom quantization configuration is not expected for non-custom bit mode.'
     unexpected_qc_nodes_error = 'Custom quantization configuration contains unexpected node names.'
 
-    def __init__(self, graph: Graph, fw_impl: FrameworkImplementation, fw_info: FrameworkInfo):
+    def __init__(self, graph: Graph, fw_impl: FrameworkImplementation):
         self.graph = graph
         self.fw_impl = fw_impl
-        self.fw_info = fw_info
 
         # Currently we go over the full graph even if utilization won't be requested for all nodes.
         # We could fill the cache on the fly only for requested nodes, but it's probably negligible.
@@ -544,14 +543,10 @@ class ResourceUtilizationCalculator:
         self._validate_custom_qcs(w_qc, bitwidth_mode)
 
         # check if the node has kernel
-        kernel_attrs = self.fw_info.get_kernel_op_attributes(n.type)
-        if len(kernel_attrs) > 1:  # pragma: no cover
-            raise NotImplementedError('Multiple kernel attributes are not supported for BOPS computation.')
-        if not kernel_attrs or not kernel_attrs[0]:
+        if not n.kernel_attr:
             return 0
 
-        kernel_attr = kernel_attrs[0]
-        node_mac = self.fw_impl.get_node_mac_operations(n, self.fw_info)
+        node_mac = self.fw_impl.get_node_mac_operations(n)
         if node_mac == 0:
             return node_mac
 
@@ -559,12 +554,12 @@ class ResourceUtilizationCalculator:
         assert len(prev_nodes) == 1, f'Weights node is expected to have exactly one input, {n} has {len(prev_nodes)}'
         a_node = prev_nodes[0]
         if (target_criterion == TargetInclusionCriterion.AnyQuantized and
-                not (a_node.is_activation_quantization_enabled() or n.is_weights_quantization_enabled(kernel_attr))):
+                not (a_node.is_activation_quantization_enabled() or n.is_weights_quantization_enabled(n.kernel_attr))):
             return 0
 
         act_qc = self._extract_qc(a_node, act_qcs)
         a_nbits = self._get_activation_nbits(a_node, bitwidth_mode, act_qc)
-        w_nbits = self._get_weight_nbits(n, kernel_attr, bitwidth_mode, w_qc)
+        w_nbits = self._get_weight_nbits(n, n.kernel_attr, bitwidth_mode, w_qc)
         node_bops = a_nbits * w_nbits * node_mac
         return node_bops
 

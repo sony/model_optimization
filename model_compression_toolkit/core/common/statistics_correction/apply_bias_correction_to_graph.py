@@ -41,9 +41,8 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
     graph = copy.deepcopy(graph_to_apply_bias_correction)
     for n in graph.nodes:
         # bias correction is only relevant for nodes with kernel op
-        kernel_attr = graph.fw_info.get_kernel_op_attributes(n.type)[0]
-        if core_config.quantization_config.weights_bias_correction and kernel_attr is not None and \
-            n.is_weights_quantization_enabled(kernel_attr) and \
+        if core_config.quantization_config.weights_bias_correction and n.kernel_attr is not None and \
+            n.is_weights_quantization_enabled(n.kernel_attr) and \
                 not n.final_weights_quantization_cfg.weights_second_moment_correction:
             # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
             # a bias correction term was calculated during model preparation, and is used now in the node's bias term.

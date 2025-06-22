@@ -22,6 +22,14 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from tests_pytest._test_util import tpc_util
 
 
+class DummyFrameworkInfo(FrameworkInfo):
+    activation_quantizer_mapping = {}
+    kernel_channels_mapping = {}
+    _layer_min_max_mapping = {}
+    kernel_ops_attribute_mapping = {}
+    out_channel_axis_mapping = {}
+
+
 @fixture
 def minimal_tpc():
     """ Minimal TPC as a fixture. """
@@ -43,7 +51,7 @@ def fw_impl_mock():
 @fixture
 def fw_info_mock():
     """ Basic FrameworkInfo mock. """
-    return Mock(spec_set=FrameworkInfo)
+    return DummyFrameworkInfo
 
 
 @fixture

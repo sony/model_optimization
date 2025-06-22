@@ -73,23 +73,25 @@ if FOUND_ONNX:
             Returns:
                 Fake-quant PyTorch model.
             """
-            # List all activation quantization holders with num_bits>8 and replace them with Identity, because
-            # ONNX doesn't support quantization of more than 8 bits for torch.fake_quantize_per_tensor_affine.
-            act_holder_list = [n for n, m in self.model.named_modules()
-                               if isinstance(m, PytorchActivationQuantizationHolder) and
-                               m.activation_holder_quantizer.num_bits > 8]
-            for act_holder in act_holder_list: # pragma: no cover
-                obj = self.model
-                attrs = act_holder.split(".")
-                for a in attrs[:-1]:
-                    obj = getattr(obj, a)
-                if hasattr(obj, attrs[-1]):
-                    delattr(obj, attrs[-1])
-                    setattr(obj, attrs[-1], torch.nn.Identity())
-                else:
-                    Logger.info(f"During removal of activation quantization of a quantizer (with bits > 8) in ONNX FQ "
-                                f"export, deletion of activation holder '{act_holder}' failed — could not locate one or"
-                                f"more intermediate attributes in the path.")
+            # When exporting using Fakely Quant Quantization Format list all activation quantization holders with
+            # num_bits>8 and replace them with Identity, because ONNX doesn't support quantization of more than 8 bits
+            # for torch.fake_quantize_per_tensor_affine.
+            if not self._use_onnx_custom_quantizer_ops:
+                act_holder_list = [n for n, m in self.model.named_modules()
+                                   if isinstance(m, PytorchActivationQuantizationHolder) and
+                                   m.activation_holder_quantizer.num_bits > 8]
+                for act_holder in act_holder_list: # pragma: no cover
+                    obj = self.model
+                    attrs = act_holder.split(".")
+                    for a in attrs[:-1]:
+                        obj = getattr(obj, a)
+                    if hasattr(obj, attrs[-1]):
+                        delattr(obj, attrs[-1])
+                        setattr(obj, attrs[-1], torch.nn.Identity())
+                    else:
+                        Logger.info(f"During removal of activation quantization of a quantizer (with bits > 8) in ONNX"
+                                    f"FQ export, deletion of activation holder '{act_holder}' failed — could not locate"
+                                    f"one or more intermediate attributes in the path.")
 
             for layer in self.model.children():
                 self.is_layer_exportable_fn(layer)

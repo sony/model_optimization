@@ -14,8 +14,8 @@
 # ==============================================================================
 from typing import Tuple, List
 
-from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
@@ -40,8 +40,7 @@ def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str], L
     compare_points_name = []
     for n in input_graph.get_topo_sorted_nodes():
         # only nodes with kernel attribute are currently trained with GPTQ and are used as compare points
-        kernel_attr = input_graph.fw_info.get_kernel_op_attributes(n.type)[0]
-        if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr) and not n.reuse:
+        if n.kernel_attr is not None and n.is_weights_quantization_enabled(n.kernel_attr) and not n.reuse:
             compare_points.append(n)
             compare_points_name.append(n.name)
             compare_points_std.append(n.prior_info.std_output)
@@ -49,20 +48,15 @@ def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str], L
     return compare_points, compare_points_name, compare_points_mean, compare_points_std
 
 
-def get_kernel_attribute_name_for_gptq(layer_type: type, fw_info: FrameworkInfo) -> str:
+def get_kernel_attribute_name_for_gptq(layer_type: type) -> str:
     """
     Returns a layer's kernel attribute name for GPTQ training purposes.
 
     Args:
         layer_type: A type of model's layer.
-        fw_info: A FrameworkInfo object.
 
     Returns: The name of the kernel attribute.
 
     """
-    kernel_attribute = fw_info.get_kernel_op_attributes(layer_type)
-    if len(kernel_attribute) != 1:
-        Logger.critical(  # pragma: no cover
-            f"In GPTQ training, only the kernel weights attribute should be trained. "
-            f"However, the number of kernel attributes is {len(kernel_attribute)}.")
-    return kernel_attribute[0]
+
+    return get_fw_info().get_kernel_op_attribute(layer_type)

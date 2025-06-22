@@ -26,13 +26,13 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.core.common.hessian as hessian_common
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
-
 
 
 def basic_model(input_shape, layer):
@@ -110,7 +110,6 @@ class TestHessianInfoCalculatorBase(unittest.TestCase):
                                           input_shape=input_shape)
         graph = prepare_graph_with_configs(in_model,
                                            keras_impl,
-                                           DEFAULT_KERAS_INFO,
                                            _repr_dataset,
                                            generate_keras_tpc,
                                            attach2fw=AttachTpcToKeras())
@@ -118,6 +117,8 @@ class TestHessianInfoCalculatorBase(unittest.TestCase):
 
 
 class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
 
     def _test_hessian_scores(self, hessian_info, target_nodes, repr_dataset, granularity, num_scores=1):
         dataloader = data_gen_to_dataloader(repr_dataset, batch_size=1)
@@ -232,7 +233,6 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         keras_impl = KerasImplementation()
         graph = prepare_graph_with_configs(in_model,
                                            keras_impl,
-                                           DEFAULT_KERAS_INFO,
                                            _repr_dataset,
                                            generate_keras_tpc,
                                            attach2fw=AttachTpcToKeras())
@@ -276,7 +276,6 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         keras_impl = KerasImplementation()
         graph = prepare_graph_with_configs(float_model,
                                            keras_impl,
-                                           DEFAULT_KERAS_INFO,
                                            _repr_dataset,
                                            generate_keras_tpc,
                                            attach2fw=AttachTpcToKeras())
@@ -410,7 +409,6 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         keras_impl = KerasImplementation()
         graph = prepare_graph_with_configs(in_model,
                                            keras_impl,
-                                           DEFAULT_KERAS_INFO,
                                            _repr_dataset,
                                            generate_keras_tpc,
                                            attach2fw=AttachTpcToKeras())
@@ -456,7 +454,6 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         keras_impl = KerasImplementation()
         graph = prepare_graph_with_configs(float_model,
                                            keras_impl,
-                                           DEFAULT_KERAS_INFO,
                                            _repr_dataset,
                                            generate_keras_tpc,
                                            attach2fw=AttachTpcToKeras())

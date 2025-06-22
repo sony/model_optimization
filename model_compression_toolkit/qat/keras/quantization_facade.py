@@ -37,10 +37,10 @@ if FOUND_TF:
     from tensorflow.keras.models import Model
 
     from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
-    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+    from model_compression_toolkit.core.keras.default_framework_info import set_keras_info
 
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 
@@ -52,7 +52,6 @@ if FOUND_TF:
     from model_compression_toolkit.constants import TENSORFLOW
     from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-    from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder, \
     get_activation_quantizer_holder
     from model_compression_toolkit.qat.common.qat_config import QATConfig
@@ -73,11 +72,11 @@ if FOUND_TF:
         Returns: Wrapped layer
 
         """
-        if is_qat_applicable(n, DEFAULT_KERAS_INFO):
+        if is_qat_applicable(n):
             # If we are here, then the node has a kernel attribute to quantize and training during QAT
             weights_quantizers, _ = quantization_builder(n,
                                                          qat_config,
-                                                         DEFAULT_KERAS_INFO.get_kernel_op_attributes(n.type)[0])
+                                                         n.kernel_attr)
             if len(weights_quantizers) > 0:
                 layer.trainable = True
                 return KerasTrainableQuantizationWrapper(layer, weights_quantizers)
@@ -87,6 +86,7 @@ if FOUND_TF:
         return layer
 
 
+    @set_keras_info
     def keras_quantization_aware_training_init_experimental(in_model: Model,
                                                             representative_data_gen: Callable,
                                                             target_resource_utilization: ResourceUtilization = None,
@@ -175,8 +175,7 @@ if FOUND_TF:
                        f"If you encounter an issue, please open an issue in our GitHub "
                        f"project https://github.com/sony/model_optimization")
 
-        KerasModelValidation(model=in_model,
-                             fw_info=DEFAULT_KERAS_INFO).validate()
+        KerasModelValidation(model=in_model).validate()
 
         if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
@@ -184,7 +183,7 @@ if FOUND_TF:
                              "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
                              "or pass a valid mixed precision configuration.")
 
-        tb_w = init_tensorboard_writer(DEFAULT_KERAS_INFO)
+        tb_w = init_tensorboard_writer()
 
         fw_impl = KerasImplementation()
 
@@ -198,17 +197,15 @@ if FOUND_TF:
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
                                                   representative_data_gen=representative_data_gen,
                                                   core_config=core_config,
-                                                  fw_info=DEFAULT_KERAS_INFO,
                                                   fw_impl=fw_impl,
                                                   fqc=target_platform_capabilities,
                                                   target_resource_utilization=target_resource_utilization,
                                                   tb_w=tb_w)
 
-        tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_KERAS_INFO, fw_impl, tb_w)
+        tg = ptq_runner(tg, representative_data_gen, core_config, fw_impl, tb_w)
 
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
         qat_model, user_info = KerasModelBuilder(graph=tg,
-                                                 fw_info=DEFAULT_KERAS_INFO,
                                                  wrapper=_qat_wrapper,
                                                  get_activation_quantizer_holder_fn=partial(get_activation_quantizer_holder,
                                                                                             qat_config=qat_config)).build_model()

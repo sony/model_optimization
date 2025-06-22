@@ -15,6 +15,7 @@
 from typing import Callable, List, Tuple
 
 from model_compression_toolkit.core import QuantizationConfig
+from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig, \
@@ -40,7 +41,7 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
                  activation_quantization_fn: Callable = None,
                  activation_quantization_params_fn: Callable = None,
                  weights_quantization_cfg: NodeWeightsQuantizationConfig = None,
-                 weights_channels_axis: Tuple[int, int] = None,
+                 weights_channels_axis: ChannelAxisMapping = None,
                  node_attrs_list: List[str] = None):
         """
 

@@ -35,9 +35,8 @@ class MaskIndicator(Enum):
     REMAINED = 1
 
 
-
 class PerChannelMask:
-    def __init__(self, prunable_nodes: List[BaseNode], fw_info: FrameworkInfo):
+    def __init__(self, prunable_nodes: List[BaseNode]):
         """
         Initializes the PerChannelMask with prunable nodes and framework information.
         This class is responsible for maintaining and updating the pruning masks for each
@@ -46,10 +45,8 @@ class PerChannelMask:
 
         Args:
             prunable_nodes: List of nodes in the model that are subject to pruning.
-            fw_info: Framework-specific information required for pruning operations.
         """
         self.prunable_nodes = prunable_nodes
-        self.fw_info = fw_info
         self._mask = None  # Initialize the mask dictionary
         self._init_masks()  # Call to initialize masks for each prunable node
 
@@ -106,8 +103,7 @@ class PerChannelMask:
         Returns:
             int: Number of output channels for the node.
         """
-        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)[0]
-        oc_axis = self.fw_info.kernel_channels_mapping.get(node.type)[0]
-        num_oc = node.get_weights_by_keys(kernel_attr).shape[oc_axis]
+        oc_axis = node.channel_axis.output
+        num_oc = node.get_weights_by_keys(node.kernel_attr).shape[oc_axis]
         return num_oc
 

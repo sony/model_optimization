@@ -167,7 +167,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         graph, nbits = self._prepare_graph(model, disable_linear_collapse=True)
         linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits
 
-        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
+        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl)
         ru_orig, detailed_orig = ru_calc.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
                                                                       BitwidthMode.QMinBit,
                                                                       return_detailed=True)
@@ -208,7 +208,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
         graph, nbits = self._prepare_graph(model)
         linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits
 
-        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
+        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl)
         ru_orig, detailed_orig = ru_calc.compute_resource_utilization(TargetInclusionCriterion.AnyQuantized,
                                                                       BitwidthMode.QMinBit,
                                                                       return_detailed=True)
@@ -246,7 +246,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
                                  f"{layer_names['act3']}": f"FusedNode_{layer_names['conv3']}_{layer_names['act3']}"}
         assert graph.fusing_info.node_name_to_fused_op_id == expected_node_fuse_op
 
-        ru_calculator = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
+        ru_calculator = ResourceUtilizationCalculator(graph, self.fw_impl)
         ru_before_snc, detailed_ru_before_snc = ru_calculator.compute_resource_utilization(
             TargetInclusionCriterion.AnyQuantizedNonFused,
             BitwidthMode.QMinBit,
@@ -265,8 +265,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
             c.activation_quantization_cfg.activation_quantization_params = {THRESHOLD: 100.0}
 
         graph = self.fw_impl.shift_negative_correction(graph,
-                                                       core_config,
-                                                       self.fw_info)
+                                                       core_config)
 
         expected_node_fuse_op = {f"{layer_names['conv1']}": f"FusedNode_{layer_names['conv1']}_{layer_names['act1']}",
                                  f"{layer_names['act1']}": f"FusedNode_{layer_names['conv1']}_{layer_names['act1']}",
@@ -280,7 +279,7 @@ class BaseRUIntegrationTester(BaseFWIntegrationTest, abc.ABC):
 
         linear_w_min_nbit, linear_a_min_nbit, default_w_nbits, default_a_nbit, binary_out_a_bit = nbits
 
-        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl, self.fw_info)
+        ru_calc = ResourceUtilizationCalculator(graph, self.fw_impl)
         ru_orig, detailed_orig = ru_calc.compute_resource_utilization(TargetInclusionCriterion.AnyQuantizedNonFused,
                                                                       BitwidthMode.QMinBit,
                                                                       return_detailed=True)

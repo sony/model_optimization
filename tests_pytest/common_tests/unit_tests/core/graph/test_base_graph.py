@@ -27,20 +27,29 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_histogram
 
-    
-# Setup TEST_QC and TEST_QCO for testing.
-TEST_QC = generate_test_op_qc(**generate_test_attr_configs(),
-                              activation_n_bits=16,
-                              activation_quantization_method=QuantizationMethod.POWER_OF_TWO)
-
-def build_mock_fusing_info(nodes):
+def build_mock_fusing_info(nodes, idx):
     """
     Creates a mock FusingInfo object that simulates the behavior of fusing information in a graph.
     """
 
+    OpQCfg = Mock(spec=NodeActivationQuantizationConfig)
+    OpQCfg.activation_n_bits = 16
+    OpQCfg.signedness = Signedness.AUTO
+    OpQCfg.activation_quantization_method = QuantizationMethod.POWER_OF_TWO
+    OpQCfg.activation_quantization_params_fn = power_of_two_selection_histogram
+
     fusing_info = Mock(spec=FusingInfo)
     fusing_info.get_inner_fln_nodes.return_value = [nodes[0], nodes[1]]
-    fusing_info.get_fused_op_quantization_config.side_effect = [TEST_QC, None]
+    
+    if idx == 1:
+        OpQCfg.enable_activation_quantization = True
+        fusing_info.get_fused_op_quantization_config.side_effect = [OpQCfg, None]
+    elif idx == 2:
+        fusing_info.get_fused_op_quantization_config.side_effect = [None, None]
+    else:
+        OpQCfg.enable_activation_quantization = False
+        fusing_info.get_fused_op_quantization_config.side_effect = [OpQCfg, None]
+
     return fusing_info
 
 def build_mock_node(name, layer_class):
@@ -62,7 +71,13 @@ def build_mock_node(name, layer_class):
 
 
 class TestGraph:
-    def test_override_fused_node_activation_quantization_candidates(self):
+    
+    @pytest.mark.parametrize(("idx"), [
+        0,
+        1,
+        2,
+    ])
+    def test_override_fused_node_activation_quantization_candidates(self, idx):
         """
         Test the override_fused_node_activation_quantization_candidates function for a graph with multiple nodes and configurations.
         """
@@ -75,7 +90,7 @@ class TestGraph:
         ### Note: Generate the graph first because fusing_info cannot be set without it.
         ###       In the following Mock, use wraps to mock everything except fusing_info.
         real_graph = Graph("dummy", [], [], [], [])
-        real_graph.fusing_info = build_mock_fusing_info(mock_nodes) 
+        real_graph.fusing_info = build_mock_fusing_info(mock_nodes, idx) 
         
         graph = Mock(spec=Graph, wraps=real_graph)
         graph.nodes = mock_nodes
@@ -86,11 +101,15 @@ class TestGraph:
         ### Check if the ActivationQuantization settings set on the graph nodes match the expected values
         nodes = list(graph.nodes)
         
-        ### Check if the first node ActivationQuantization settings match the expected values
-        assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.quant_mode == ActivationQuantizationMode.FLN_QUANT
-        assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits == 16
-        assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.signedness == Signedness.AUTO
-        assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
-        assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params_fn == power_of_two_selection_histogram
-        ### Check if the second node ActivationQuantization settings match the expected values
-        assert nodes[1].candidates_quantization_cfg[0].activation_quantization_cfg.quant_mode == ActivationQuantizationMode.FLN_NO_QUANT
+        if idx == 1:
+            ### Check if the first node ActivationQuantization settings match the expected values
+            assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.quant_mode == ActivationQuantizationMode.FLN_QUANT
+            assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits == 16
+            assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.signedness == Signedness.AUTO
+            assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
+            assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params_fn == power_of_two_selection_histogram
+            ### Check if the second node ActivationQuantization settings match the expected values
+            assert nodes[1].candidates_quantization_cfg[0].activation_quantization_cfg.quant_mode == ActivationQuantizationMode.FLN_NO_QUANT
+        else:
+            ### Check if the first node ActivationQuantization settings match the expected values
+            assert nodes[0].candidates_quantization_cfg[0].activation_quantization_cfg.quant_mode == ActivationQuantizationMode.FLN_NO_QUANT

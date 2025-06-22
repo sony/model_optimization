@@ -30,7 +30,6 @@ from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
@@ -364,7 +363,7 @@ class PytorchModel(torch.nn.Module):
         """
         node_to_output_tensors_dict = dict()
         node_to_output_tensors_dict_float = dict()
-        configurable_nodes = self.graph.get_configurable_sorted_nodes_names(DEFAULT_PYTORCH_INFO)
+        configurable_nodes = self.graph.get_configurable_sorted_nodes_names()
         for node in self.node_sort:
             op_func = self._get_op_func(node, configurable_nodes)
             input_tensors = _build_input_tensors_list(node,
@@ -440,7 +439,6 @@ class PyTorchModelBuilder(BaseModelBuilder):
     def __init__(self,
                  graph: common.Graph,
                  append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = False,
                  wrapper: Callable = None,
                  get_activation_quantizer_holder_fn: Callable = None):
@@ -449,7 +447,6 @@ class PyTorchModelBuilder(BaseModelBuilder):
         Args:
             graph: Graph to build the model from.
             append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
             wrapper: A function wrapper Pytorch Layers.
             get_activation_quantizer_holder_fn: Function to retrieve a quantization holder for a node.
@@ -457,7 +454,6 @@ class PyTorchModelBuilder(BaseModelBuilder):
 
         super().__init__(graph,
                          append2output,
-                         fw_info,
                          return_float_outputs)
 
         self.wrapper = wrapper

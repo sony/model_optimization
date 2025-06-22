@@ -16,7 +16,6 @@ from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.common.user_info import UserInformation
 import tensorflow as tf
 import numpy as np

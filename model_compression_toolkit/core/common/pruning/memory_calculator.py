@@ -34,18 +34,16 @@ class MemoryCalculator:
     which is crucial for deploying models on memory-constrained devices or optimizing for computational efficiency.
     """
 
-    def __init__(self, graph: Graph, fw_info: FrameworkInfo, fw_impl: PruningFrameworkImplementation):
+    def __init__(self, graph: Graph, fw_impl: PruningFrameworkImplementation):
         """
         Initializes the MemoryCalculator with necessary information about the model's graph,
         framework-specific details, and pruning implementation.
 
         Args:
             graph (Graph): Computational graph of the model.
-            fw_info (FrameworkInfo): Contains framework-specific information.
             fw_impl (PruningFrameworkImplementation): Implementation details for pruning.
         """
         self.graph = graph
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
 
     def get_pruned_graph_memory(self,
@@ -204,19 +202,13 @@ class MemoryCalculator:
             if node == section.exit_node:
                 return masks.get(section.entry_node)
 
-        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)
-        # Ensure only one kernel attribute exists for the given node.
-        if len(kernel_attr) != 1:
-            Logger.critical(f"Expected a single attribute, but found {len(kernel_attr)} attributes for node '{node}'. Ensure the node configuration is correct.")
-        kernel_attr = kernel_attr[0]
-
         # Retrieve and validate the axis index for the output channels.
-        _, ic_axis = self.fw_info.kernel_channels_mapping.get(node.type)
+        ic_axis = node.channel_axis.input
         if ic_axis is None or int(ic_axis) != ic_axis:
             Logger.critical(f"Invalid input channel axis type for node '{node}': expected integer but got '{ic_axis}'.")
 
         # Get the number of output channels based on the kernel attribute and axis.
-        num_ic = node.get_weights_by_keys(kernel_attr).shape[ic_axis]
+        num_ic = node.get_weights_by_keys(node.kernel_attr).shape[ic_axis]
         mask = np.ones(num_ic, dtype=bool)
         return mask
 
@@ -289,7 +281,7 @@ class MemoryCalculator:
             int: The total number of parameters in the node after pruning.
         """
         total_params = 0
-        attributes_and_oc_axis = self.fw_impl.attrs_oi_channels_info_for_pruning(node, self.fw_info)
+        attributes_and_oc_axis = self.fw_impl.attrs_oi_channels_info_for_pruning(node)
 
         # Iterate over the node's weights and apply pruning based on the masks.
         for w_attr, w in node.weights.items():
@@ -311,7 +303,7 @@ class MemoryCalculator:
             num_oc = np.sum(output_mask)
         else:
             # Get the node channel axis from framework info
-            channel_axis = self.fw_info.out_channel_axis_mapping.get(node.type)
+            channel_axis = node.out_channel_axis
             if channel_axis is None:
                 Logger.critical(f"The channel axis is undefined. Please ensure the channel axis is explicitly defined for node {node.type} in the framework info.")
 

@@ -39,7 +39,8 @@ from model_compression_toolkit.core.pytorch.constants import CALL_FUNCTION, OUTP
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.common.framework_info import set_fw_info, get_fw_info
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
 
@@ -176,6 +177,7 @@ class BasePytorchLayerTest(BaseLayerTest):
                          quantization_modes=quantization_modes,
                          is_inputs_a_list=is_inputs_a_list,
                          use_cpu=use_cpu)
+        set_fw_info(PyTorchInfo)
 
     def get_tpc(self):
         if self.current_mode == LayerTestMode.FLOAT:
@@ -190,8 +192,8 @@ class BasePytorchLayerTest(BaseLayerTest):
         else:
             raise NotImplemented
 
-    def get_fw_info(self) -> FrameworkInfo:
-        return DEFAULT_PYTORCH_INFO
+    def get_fw_info(self) -> type[FrameworkInfo]:
+        return get_fw_info()
 
     def get_fw_impl(self) -> FrameworkImplementation:
         return PytorchImplementation()
@@ -255,7 +257,7 @@ class BasePytorchLayerTest(BaseLayerTest):
                     float_weights = get_layer_weights(getattr(float_model, float_layer_name))
                     for k, v in quantized_weights.items():
                         # TODO: remove use of kernel op dict
-                        if k in fw_info.kernel_ops_attributes_mapping.get(type(op)):
+                        if k == fw_info.get_kernel_op_attribute(type(op)):
                             float_weight = float_weights.get(k)
                             self.unit_test.assertFalse(float_weight is None)
                             self.unit_test.assertTrue(np.sum(np.abs(v - float_weight)) > 0.0)

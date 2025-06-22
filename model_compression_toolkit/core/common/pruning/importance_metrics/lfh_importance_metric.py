@@ -38,8 +38,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
                  graph: Graph,
                  representative_data_gen: Callable,
                  fw_impl: PruningFrameworkImplementation,
-                 pruning_config: PruningConfig,
-                 fw_info: FrameworkInfo):
+                 pruning_config: PruningConfig):
         """
         Initialize the LFHImportanceMetric instance.
 
@@ -48,13 +47,11 @@ class LFHImportanceMetric(BaseImportanceMetric):
             representative_data_gen (Callable): Function to generate representative data.
             fw_impl (PruningFrameworkImplementation): Implementation of pruning for the framework.
             pruning_config (PruningConfig): Configuration for pruning.
-            fw_info (FrameworkInfo): Framework-specific information.
         """
         self.float_graph = graph
         self.representative_data_gen = representative_data_gen
         self.fw_impl = fw_impl
         self.pruning_config = pruning_config
-        self.fw_info = fw_info
 
         # Initialize internal dictionaries for storing intermediate computations.
         self._entry_node_to_hessian_score = {}
@@ -158,8 +155,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
             Dict[BaseNode, List[np.ndarray]]: Dictionary of entry nodes mapped to their SIMD group indices.
         """
         # Initialize channel grouping utility.
-        channel_grouping = ChannelGrouping(prunable_nodes=list(entry_node_to_score.keys()),
-                                           fw_info=self.fw_info)
+        channel_grouping = ChannelGrouping(prunable_nodes=list(entry_node_to_score.keys()))
 
         channel_grouping.group_scores_by_simd_groups(entry_node_to_score)
         grouped_indices = channel_grouping.simd_groups_indices
@@ -249,20 +245,14 @@ class LFHImportanceMetric(BaseImportanceMetric):
         Returns:
             tuple: A tuple containing the kernel attribute, the number of output channels, and the axis of the output channels.
         """
-        kernel_attr = self.fw_info.get_kernel_op_attributes(entry_node.type)
-        # Ensure only one kernel attribute exists for the given node.
-        if len(kernel_attr) != 1:
-            Logger.critical(f"Expected a single attribute but found multiple attributes ({len(kernel_attr)}) for node {entry_node}.")
-        kernel_attr = kernel_attr[0]
-
         # Retrieve and validate the axis index for the output channels.
-        oc_axis, _ = self.fw_info.kernel_channels_mapping.get(entry_node.type)
+        oc_axis = entry_node.channel_axis.output
         if oc_axis is None or int(oc_axis) != oc_axis:
             Logger.critical(f"Invalid output channel axis type for node {entry_node}: expected integer but got {oc_axis}.")
 
         # Get the number of output channels based on the kernel attribute and axis.
-        num_oc = entry_node.get_weights_by_keys(kernel_attr[0]).shape[oc_axis]
-        return kernel_attr, num_oc, oc_axis
+        num_oc = entry_node.get_weights_by_keys(entry_node.kernel_attr).shape[oc_axis]
+        return entry_node.kernel_attr, num_oc, oc_axis
 
     def _concatenate_tensors_by_indices(self,
                                         channels: List[np.ndarray],

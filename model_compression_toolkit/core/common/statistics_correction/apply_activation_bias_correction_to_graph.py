@@ -38,8 +38,7 @@ def apply_activation_bias_correction_to_graph(graph: Graph,
 
     for n in graph.nodes:
         # Activation bias correction is only relevant for nodes with kernel op
-        kernel_attr = graph.fw_info.get_kernel_op_attributes(n.type)[0]
-        if core_config.quantization_config.activation_bias_correction and kernel_attr is not None and \
+        if core_config.quantization_config.activation_bias_correction and n.kernel_attr is not None and \
                 n.final_activation_quantization_cfg.activation_bias_correction_term is not None:
             # If activation bias correction is enabled in n.quantization_cfg, an activation bias correction term was
             # calculated during model preparation, and is used now in the node's bias term.

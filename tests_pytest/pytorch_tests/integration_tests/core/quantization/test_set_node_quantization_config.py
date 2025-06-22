@@ -32,7 +32,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     AttributeQuantizationConfig
 from mct_quantizers import QuantizationMethod
 
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS, POS_ATTR
@@ -125,12 +125,11 @@ class TestManualWeightsBitwidthSelection:
 
     def get_test_graph(self, qc):
         float_model = self.get_float_model()
-        fw_info = DEFAULT_PYTORCH_INFO
+        fw_info = PyTorchInfo
 
         fw_impl = PytorchImplementation()
         graph = fw_impl.model_reader(float_model,
                                      self.representative_data_gen)
-        graph.set_fw_info(fw_info)
 
         tpc = self.get_tpc()
         attach2pytorch = AttachTpcToPytorch()

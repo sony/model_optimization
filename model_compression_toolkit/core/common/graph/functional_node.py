@@ -1,6 +1,21 @@
+# Copyright 2021 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from typing import Dict, Any, Tuple, Type, List, Union
 
-from model_compression_toolkit.verify_packages import FOUND_TF
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
@@ -45,6 +60,7 @@ class FunctionalNode(BaseNode):
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
             has_activation: Whether the node has activations that we might want to quantize.
             tensor_input_allocs: A list of indices and strings for allocations input tensors in the node's args and kwargs.
+
         """
 
         super().__init__(name,
@@ -63,6 +79,7 @@ class FunctionalNode(BaseNode):
         self.op_call_args = list(op_call_args)
         self.functional_op = functional_op
         self.tensor_input_allocs = [] if tensor_input_allocs is None else tensor_input_allocs
+        self.node_fw_info = self._get_fw_node_attrs(functional_op, framework_attr)
 
     @property
     def type(self):

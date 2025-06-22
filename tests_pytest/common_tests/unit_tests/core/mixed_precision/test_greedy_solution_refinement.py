@@ -28,7 +28,7 @@ import copy
 def search_manager():
     manager = Mock()
     manager.mp_topo_configurable_nodes = MagicMock()
-    manager.fw_info.get_kernel_op_attributes = MagicMock()
+    manager.fw_info.get_kernel_op_attribute = MagicMock()
     manager.copy_config_with_replacement = MixedPrecisionSearchManager.copy_config_with_replacement
     manager.using_virtual_graph = False    # asserted in refinement
     return manager

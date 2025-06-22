@@ -157,7 +157,7 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         graph.remove_node(bn_node)
         graph.remove_node(source_node)
 
-        self._calc_weights_quantization_params(conv_bn, weights_scale, graph.fw_info)
+        self._calc_weights_quantization_params(conv_bn, weights_scale)
 
         assert num_nodes_before_substitution - len(graph.nodes) == 1
         assert num_edges_before_substitution - len(graph.edges) == 1
@@ -165,18 +165,15 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
 
     def _calc_weights_quantization_params(self,
                                           conv_bn: BaseNode,
-                                          weights_scale: np.ndarray,
-                                          fw_info):
+                                          weights_scale: np.ndarray):
         """
         Update node weights quantization params.
         Args:
             conv_bn: Convolution node to update the weights quantization params.
             weights_scale: Weight scale factor in which to multiply the conv node's weight.
-            fw_info: FrameworkInfo object with information about the specific framework's model
         """
         # Conv layer is ensured to have a kernel attribute
-        kernel_attr = fw_info.get_kernel_op_attributes(conv_bn.type)[0]
-        conv_bn_kernel_cfg = conv_bn.final_weights_quantization_cfg.get_attr_config(kernel_attr)
+        conv_bn_kernel_cfg = conv_bn.final_weights_quantization_cfg.get_attr_config(conv_bn.kernel_attr)
         # In case of SYMMETRIC weight quantization method, we update the threshold by weights_scale
         if conv_bn_kernel_cfg.weights_quantization_method == QuantizationMethod.SYMMETRIC:
             original_threshold = conv_bn_kernel_cfg.weights_quantization_params[THRESHOLD]

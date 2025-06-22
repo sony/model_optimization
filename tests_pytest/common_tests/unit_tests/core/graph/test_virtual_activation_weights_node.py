@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+from model_compression_toolkit.core.common.framework_info import set_fw_info
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode
 from tests_pytest._test_util.graph_builder_utils import build_node, DummyLayer, build_nbits_qc
 
@@ -24,12 +25,18 @@ class DummyLayerWKernel:
 
 
 class TestVirtualActivationWeightsNode:
+    @pytest.fixture(autouse=True)
+    def setup(self, fw_info_mock):
+        set_fw_info(fw_info_mock)
+
     # TODO tests only cover combining weights from activation and weight nodes and errors.
     def test_activation_with_weights(self, fw_info_mock):
         """ Tests that weights from activation and weight node are combined correctly. """
         # Each node has a unique weight attr and a unique positional weights. In addition, both nodes have
         # an identical canonical attribute (but different full name), and an identical positional weight.
         # All weights have different quantization.
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'weight' if nt is DummyLayerWKernel else None
+
         a_node = build_node('a', layer_class=DummyLayer,
                             final_weights={'aaweightaa': np.ones((3, 14)), 'foo': np.ones(15),
                                            1: np.ones(15), 2: np.ones((5, 9))},
@@ -45,9 +52,7 @@ class TestVirtualActivationWeightsNode:
                                                 pos_attr=(7, True, [1, 3]),
                                                 convert_canonical_attr=False)])
 
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['weight'] if nt is DummyLayerWKernel else [None]
-
-        v_node = VirtualActivationWeightsNode(a_node, w_node, fw_info_mock)
+        v_node = VirtualActivationWeightsNode(a_node, w_node)
         assert len(v_node.weights) == 8
 
         assert len(w_node.weights) == len(a_node.weights) == 4
@@ -85,6 +90,8 @@ class TestVirtualActivationWeightsNode:
         }
 
     def test_invalid_configurable_w_node_weight(self, fw_info_mock):
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'kernel' if nt is DummyLayerWKernel else None
+
         w_node = build_node('w', layer_class=DummyLayerWKernel,
                             canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)},
                             qcs=[
@@ -93,12 +100,12 @@ class TestVirtualActivationWeightsNode:
                             ])
         a_node = build_node('a', qcs=[build_nbits_qc()])
 
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['kernel'] if nt is DummyLayerWKernel else [None]
-
         with pytest.raises(NotImplementedError, match='Only kernel weight can be configurable. Got configurable .*foo'):
-            VirtualActivationWeightsNode(a_node, w_node, fw_info_mock)
+            VirtualActivationWeightsNode(a_node, w_node)
 
     def test_invalid_a_node_configurable_weight(self, fw_info_mock):
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'kernel' if nt is DummyLayerWKernel else None
+
         w_node = build_node('w', layer_class=DummyLayerWKernel,
                             canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)},
                             qcs=[
@@ -110,20 +117,18 @@ class TestVirtualActivationWeightsNode:
                                 build_nbits_qc(w_attr={'bar': (8, True), 'baz': (8, True)}),
                                 build_nbits_qc(w_attr={'bar': (8, True), 'baz': (4, True)})
                             ])
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['kernel'] if nt is DummyLayerWKernel else [None]
-
         with pytest.raises(NotImplementedError, match='Node .*aaa with a configurable weight cannot be used as '
                                                       'activation for VirtualActivationWeightsNode'):
-            VirtualActivationWeightsNode(a_node, w_node, fw_info_mock)
+            VirtualActivationWeightsNode(a_node, w_node)
 
     def test_invalid_a_node_kernel(self, fw_info_mock):
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'weight' if nt is DummyLayerWKernel else 'kernel'
         w_node = build_node('w', layer_class=DummyLayerWKernel, canonical_weights={'weight': np.ones(3)},
                             qcs=[build_nbits_qc(w_attr={'weight': (8, True)})])
         a_node = build_node('aaa', canonical_weights={'kernel': np.ones(3)},
                             qcs=[build_nbits_qc(w_attr={'kernel': (8, True)})])
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['weight'] if nt is DummyLayerWKernel else ['kernel']
 
         with pytest.raises(NotImplementedError, match='Node .*aaa with kernel cannot be used as '
                                                       'activation for VirtualActivationWeightsNode'):
-            VirtualActivationWeightsNode(a_node, w_node, fw_info_mock)
+            VirtualActivationWeightsNode(a_node, w_node)
 

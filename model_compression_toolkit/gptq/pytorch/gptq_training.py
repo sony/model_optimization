@@ -54,7 +54,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
                  graph_quant: Graph,
                  gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
-                 fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
                  hessian_info_service: HessianInfoService = None):
         """
@@ -68,7 +67,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
             graph_quant: Graph to build a quantized networks from.
             gptq_config: GradientPTQConfigV2 with parameters about the tuning process.
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-            fw_info: Framework information
             representative_data_gen: Dataset to use for inputs of the models.
             hessian_info_service: HessianInfoService to fetch info based on the hessian approximation of the float model.
         """
@@ -81,7 +79,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
                          graph_quant,
                          gptq_config,
                          fw_impl,
-                         fw_info,
                          representative_data_gen_fn=representative_data_gen,
                          hessian_info_service=hessian_info_service)
 
@@ -167,8 +164,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             A boolean whether the layer is to be wrapped with a Quantization Wrapper.
         """
 
-        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)[0]
-        return kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)
+        return node.kernel_attr is not None and node.is_weights_quantization_enabled(node.kernel_attr)
 
     def gptq_wrapper(self,
                      n: BaseNode,
@@ -187,7 +183,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             # If we are here, then the node has a kernel attribute to quantize and training during GPTQ
             weights_quantizers, _ = quantization_builder(n,
                                                          self.gptq_config,
-                                                         self.fw_info.get_kernel_op_attributes(n.type)[0])
+                                                         n.kernel_attr)
 
             if len(weights_quantizers) > 0:
                 return PytorchQuantizationWrapper(layer,
@@ -224,7 +220,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
         """
         gptq_model, gptq_user_info = PyTorchModelBuilder(graph=self.graph_quant,
                                                          append2output=self.compare_points,
-                                                         fw_info=self.fw_info,
                                                          wrapper=self.gptq_wrapper,
                                                          return_float_outputs=True,
                                                          get_activation_quantizer_holder_fn=self.get_activation_quantizer_holder).build_model()
@@ -340,8 +335,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                     Logger.critical(f"Cannot update GPTQ graph: Layer with name '{name}' is missing or not unique. "
                                     f"Ensure each layer has a unique name and exists within the graph for updates.")
                 node = node[0]
-                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
-                                                                      fw_info=self.fw_info)
+                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type)
                 # TODO: only kernel attributes are currently trained in GPTQ, so only the kernel weights need to be updated.
                 #  To enable GPTQ for other attributes, this code needs to be modified.
                 weights, weight_quant_config, activation_quant_config = \

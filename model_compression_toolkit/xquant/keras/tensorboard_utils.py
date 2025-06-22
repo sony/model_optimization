@@ -40,18 +40,15 @@ class KerasTensorboardUtils(TensorboardUtils):
     """
 
     def __init__(self, report_dir: str,
-                 fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation):
         """
         Initialize the KerasTensorboardUtils class with the given parameters.
 
         Args:
             report_dir (str): Directory where the TensorBoard files will be stored.
-            fw_info (FrameworkInfo): Information about the framework being used.
             fw_impl (FrameworkImplementation): Implementation functions for the framework.
         """
         super().__init__(report_dir,
-                         fw_info,
                          fw_impl)
 
     def get_graph_for_tensorboard_display(self,

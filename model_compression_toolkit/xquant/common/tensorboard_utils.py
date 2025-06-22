@@ -36,19 +36,16 @@ class TensorboardUtils:
 
     def __init__(self,
                  report_dir: str,
-                 fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation):
         """
         Initialize the TensorboardUtils.
 
         Args:
             report_dir (str): Directory where Tensorboard logs will be stored.
-            fw_info (FrameworkInfo): Framework-specific information.
             fw_impl (FrameworkImplementation): Framework-specific implementation.
         """
         self.fw_impl = fw_impl
-        self.fw_info = fw_info
-        self.tb_writer = TensorboardWriter(report_dir, fw_info)
+        self.tb_writer = TensorboardWriter(report_dir)
         Logger.info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
 
     def get_graph_for_tensorboard_display(self,

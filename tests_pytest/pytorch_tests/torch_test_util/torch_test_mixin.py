@@ -20,7 +20,8 @@ from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizat
 
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests_pytest._test_util.fw_test_base import BaseFWIntegrationTest
 
@@ -34,7 +35,7 @@ class TorchFwMixin:
         TorchFooTester(BaseFooTester, TorchFwMixin):
           ...
     """
-    fw_info = DEFAULT_PYTORCH_INFO
+    set_fw_info(PyTorchInfo)
     fw_impl = PytorchImplementation()
     attach_to_fw_func = AttachTpcToPytorch().attach
 

@@ -20,7 +20,7 @@ from model_compression_toolkit.constants import WEIGHTS, ACTIVATION
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import get_fw_info, ChannelAxisMapping
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
@@ -73,7 +73,6 @@ def set_quantization_configuration_to_graph(graph: Graph,
         set_quantization_configs_to_node(node=n,
                                          graph=graph,
                                          quant_config=quant_config,
-                                         fw_info=graph.fw_info,
                                          fqc=graph.fqc,
                                          mixed_precision_enable=mixed_precision_enable,
                                          manual_bit_width_override=manual_bit_width_override)
@@ -154,7 +153,6 @@ def filter_node_qco_by_graph(node: BaseNode,
 def set_quantization_configs_to_node(node: BaseNode,
                                      graph: Graph,
                                      quant_config: QuantizationConfig,
-                                     fw_info: FrameworkInfo,
                                      fqc: FrameworkQuantizationCapabilities,
                                      mixed_precision_enable: bool = False,
                                      manual_bit_width_override: Optional[Dict] = None):
@@ -165,7 +163,6 @@ def set_quantization_configs_to_node(node: BaseNode,
         node (BaseNode): Node to set its quantization configurations.
         graph (Graph): Model's internal representation graph.
         quant_config (QuantizationConfig): Quantization configuration to generate the node's configurations from.
-        fw_info (FrameworkInfo): Information needed for quantization about the specific framework.
         fqc (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to get default OpQuantizationConfig.
         mixed_precision_enable (bool): Whether mixed precision is enabled. Defaults to False.
         manual_bit_width_override (Optional[int]): Specifies a custom bit-width to override the node's activation bit-width. Defaults to None.
@@ -186,10 +183,8 @@ def set_quantization_configs_to_node(node: BaseNode,
         mixed_precision_enable=mixed_precision_enable)
 
     # Create QC candidates for weights and activation combined
-    weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
     node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
-                                                                  fw_info,
-                                                                  weight_channel_axis,
+                                                                  node.channel_axis,
                                                                   node_qc_options_list,
                                                                   base_config,
                                                                   node,
@@ -198,7 +193,7 @@ def set_quantization_configs_to_node(node: BaseNode,
     # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
     # (in reversed order). since only kernel attribute is quantized in weights mixed precision,
     # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
-    node.sort_node_candidates(fw_info)
+    node.sort_node_candidates()
 
     for candidate_qc in node.candidates_quantization_cfg:
         if candidate_qc.activation_quantization_cfg.quant_mode == ActivationQuantizationMode.QUANT and \
@@ -217,14 +212,12 @@ def set_quantization_configs_to_node(node: BaseNode,
 
 
 def create_node_activation_qc(qc: QuantizationConfig,
-                              fw_info: FrameworkInfo,
                               op_cfg: OpQuantizationConfig) -> NodeActivationQuantizationConfig:
     """
     Create an activation quantization configuration from a QuantizationConfig object.
 
     Args:
         qc: QuantizationConfig to create the node's config from.
-        fw_info: Information about the specific framework the node was created from (e.g., whether or not its
         weights/activations should be quantized)
         op_cfg: OpQuantizationConfig with quantizers types to set in node quantization configuration.
 
@@ -232,7 +225,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
         Activation quantization configuration of a node.
     """
 
-    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
+    activation_quantization_fn = get_fw_info().activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
         Logger.critical('Unknown activation quantization method specified.')  # pragma: no cover
 
@@ -245,8 +238,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
 
 
 def _create_node_single_candidate_qc(qc: QuantizationConfig,
-                                     fw_info: FrameworkInfo,
-                                     weight_channel_axis: Tuple[int, int],
+                                     weight_channel_axis: ChannelAxisMapping,
                                      op_cfg: OpQuantizationConfig,
                                      node_attrs_list: List[str]) -> CandidateNodeQuantizationConfig:
     """
@@ -256,8 +248,6 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
 
     Args:
         qc: QuantizationConfig to create the node's config from.
-        fw_info: Information about the specific framework the node was created from (e.g., whether its
-            weights/activations should be quantized)
         weight_channel_axis: (Output, Input) channel index of the node's kernel.
         op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
         node_attrs_list: A list of the node's weights attributes names.
@@ -269,7 +259,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
     # parameters for weights attributes quantization are set within  CandidateNodeQuantizationConfig initialization
 
     # get parameters for activation quantization
-    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
+    activation_quantization_fn = get_fw_info().activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
         Logger.critical('Unknown activation quantization method specified.')  # pragma: no cover
 
@@ -293,8 +283,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
 
 
 def _create_node_candidates_qc(qc: QuantizationConfig,
-                               fw_info: FrameworkInfo,
-                               weight_channel_axis: Tuple[int, int],
+                               weight_channel_axis: ChannelAxisMapping,
                                node_qc_options_list: List[OpQuantizationConfig],
                                base_config: OpQuantizationConfig,
                                node: BaseNode,
@@ -304,8 +293,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
 
     Args:
         qc (QuantizationConfig): Quantization configuration the quantization process should follow.
-        fw_info (FrameworkInfo): Framework information (e.g., which layers should have their kernels quantized).
-        weight_channel_axis (Tuple[int, int]): (Output, Input) channel index of the node's kernel.
+        weight_channel_axis (ChannelAxisMapping): (Output, Input) channel index of the node's kernel.
         node_qc_options_list (List[OpQuantizationConfig]): List of quantization configs of node.
         base_config (OpQuantizationConfig): Base quantization config for node.
         node (BaseNode): A node to set quantization configuration candidates to.
@@ -322,14 +310,12 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         for op_cfg in node_qc_options_list:
             candidate_qc = copy.deepcopy(qc)
             candidates.append(_create_node_single_candidate_qc(candidate_qc,
-                                                               fw_info,
                                                                weight_channel_axis,
                                                                op_cfg,
                                                                node_attrs_list))
 
     else:
         candidates.append(_create_node_single_candidate_qc(qc,
-                                                           fw_info,
                                                            weight_channel_axis,
                                                            base_config,
                                                            node_attrs_list))

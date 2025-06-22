@@ -22,6 +22,8 @@ import tensorflow as tf
 
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.keras.reader.reader import model_reader
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 
 
 def basic_model(input_shape):
@@ -74,6 +76,8 @@ def _is_bipartite(g):
 
 
 class TestMemoryGraph(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
 
     def test_memory_graph_build(self):
         model = basic_model((8, 8, 3))
