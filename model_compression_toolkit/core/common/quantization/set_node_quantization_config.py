@@ -148,7 +148,7 @@ def _set_manual_weights_bitwidths(manual_weights_bitwidths: Dict[BaseNode, Dict[
                 raise ValueError(f'Cannot apply manual bit-width configuration for positional attribute of node {n} as '
                                  f'the attribute is not quantized.')
             assert len({cfg.weights_n_bits for cfg in pos_attrs.values()}) == 1
-            return list(pos_attrs.values())[0]
+            return list(pos_attrs.values())[0].weights_n_bits
         if attr not in qc.weights_quantization_cfg.all_weight_attrs:
             raise ValueError(f'Unexpected attribute {attr} in manual weights bit-width configuration for node {n}.')
         attr_cfg = qc.weights_quantization_cfg.get_attr_config(attr)
@@ -166,4 +166,8 @@ def _set_manual_weights_bitwidths(manual_weights_bitwidths: Dict[BaseNode, Dict[
         n.tpc_quantization_info.candidates_quantization_cfg = candidates
         for attr, w_nbits in manual_wbits.items():
             base_weights_cfg = n.tpc_quantization_info.base_quantization_cfg.weights_quantization_cfg
-            base_weights_cfg.get_attr_config(attr).weights_n_bits = w_nbits
+            if attr == POS_ATTR:
+                for pos_attr in base_weights_cfg.pos_attributes_config_mapping:
+                    base_weights_cfg.get_attr_config(pos_attr).weights_n_bits = w_nbits
+            else:
+                base_weights_cfg.get_attr_config(attr).weights_n_bits = w_nbits
