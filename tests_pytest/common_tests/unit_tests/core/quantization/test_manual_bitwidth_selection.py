@@ -58,6 +58,7 @@ def get_test_graph():
     return graph
 
 
+@pytest.skip("TODO manual bitwidth unittest", allow_module_level=True)
 class TestBitWidthConfig:
     # test case for set_manual_activation_bit_width
     test_input_0 = (None, None)

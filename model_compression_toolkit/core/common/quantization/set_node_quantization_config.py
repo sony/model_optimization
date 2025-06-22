@@ -120,19 +120,22 @@ def set_manual_bitwidth_config(graph, bit_width_config: BitWidthConfig):
         _set_manual_weights_bitwidths(manual_weights_bitwidths)
 
 
-# TODO irena: check coverage
+# TODO irena: check coverage and add missing tests
 def _set_manual_activation_bitwidths(manual_activation_bitwidths: Dict[BaseNode, int]):
     for n, a_nbits in manual_activation_bitwidths.items():
         quant_mode = n.tpc_quantization_info.get_activation_quant_mode()
+        # TODO irena: for FLN I think it should be ignored with warning for layer filter, and error for name filter
         if quant_mode != ActivationQuantizationMode.QUANT:
             raise ValueError(f'Cannot apply manual activation bit-width for node {n} with activation quantization mode'
                              f'{quant_mode}, as it does not have its own quantization configuration.')
         candidates = [qc for qc in n.candidates_quantization_cfg
                       if qc.activation_quantization_cfg.activation_n_bits == a_nbits]
         if not candidates:
+            valid_nbits = sorted(list({qc.activation_quantization_cfg.activation_n_bits
+                                       for qc in n.candidates_quantization_cfg}))
             raise ValueError(
-                f'Cannot apply manual activation bit-width {a_nbits} for node {n}. Bit-width must be one of: '
-                f'{[qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg]}')
+                f'Manually selected activation bit-width {a_nbits} is invalid for node {n}. '
+                f'Valid bit-widths: {valid_nbits}.')
         n.tpc_quantization_info.candidates_quantization_cfg = candidates
         n.tpc_quantization_info.base_quantization_cfg.activation_quantization_cfg.activation_n_bits = a_nbits
 
