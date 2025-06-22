@@ -100,7 +100,7 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                      candidates_quantization_cfg=mp_candidates)
 
     # TODO irena probably doesn't need to sort. find min/max don't count on it anymore
-    node.sort_node_candidates()
+    # node.sort_node_candidates()
 
     if not node.has_activation:
         node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)

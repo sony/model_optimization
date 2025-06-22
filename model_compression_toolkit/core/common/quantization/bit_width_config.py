@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.matchers.node_matcher import BaseNodeMatcher
 from model_compression_toolkit.logger import Logger
 
-from model_compression_toolkit.core.common.graph.base_node import WeightAttrT
+from model_compression_toolkit.core.common.graph.base_node import WeightAttrT, BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
 
 
@@ -95,7 +95,7 @@ class BitWidthConfig:
         for attr, bit_width, filter in zip (attrs, bit_widths, filters):
             self.manual_weights_bit_width_selection_list += [ManualWeightsBitWidthSelection(filter, bit_width, attr)]
 
-    def get_nodes_to_manipulate_activation_bit_widths(self, graph: Graph) -> Dict:
+    def get_nodes_activation_bit_widths(self, graph: Graph) -> Dict[BaseNode, int]:
         """
         Retrieve nodes from the graph that need their bit-widths for activation changed according to the manual bit-width selections.
 
@@ -108,7 +108,7 @@ class BitWidthConfig:
         activation_nodes_to_change_bit_width = self._construct_node_to_new_activation_bit_mapping(graph)
         return activation_nodes_to_change_bit_width
 
-    def get_nodes_to_manipulate_weights_bit_widths(self, graph: Graph) -> Dict:
+    def get_nodes_weights_bit_widths(self, graph: Graph) -> Dict[BaseNode, Dict[str, int]]:
         """
         Retrieve nodes from the graph that need their bit-widths for weights changed according to the manual bit-width selections.
 
@@ -166,7 +166,7 @@ class BitWidthConfig:
             attrs = BitWidthConfig._expand_to_list_core(filters, attrs)
         return attrs, bit_widths, filters
 
-    def _construct_node_to_new_activation_bit_mapping(self, graph) -> Dict:
+    def _construct_node_to_new_activation_bit_mapping(self, graph) -> Dict[BaseNode, int]:
         """
         Retrieve nodes from the graph that need their activation bit-widths changed according to the manual bit-width selections.
 
@@ -192,7 +192,7 @@ class BitWidthConfig:
                 unit_nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width})
         return unit_nodes_to_change_bit_width
 
-    def _construct_node_to_new_weights_bit_mapping(self, graph) -> Dict:
+    def _construct_node_to_new_weights_bit_mapping(self, graph) -> Dict[BaseNode, Dict[str, int]]:
         """
         Retrieve nodes from the graph that need their weights bit-widths changed according to the manual bit-width selections.
 
@@ -212,7 +212,7 @@ class BitWidthConfig:
                     f"to change their bit width to {manual_bit_width_selection.bit_width}.")
 
             for n in filtered_nodes:
-                attr_to_change_bit_width = []
+                attr_to_change_bit_width = {}
                 
                 attrs_str = n.get_node_weights_attributes()
                 if len(attrs_str) == 0:
@@ -239,7 +239,7 @@ class BitWidthConfig:
                                 f"Node {n} has an existing manual bit width configuration of {manual_bit_width_selection.attr}." 
                                 f"A new manual configuration request of {manual_bit_width_selection.bit_width} has been received, and the previous value is being overridden.")
 
-                attr_to_change_bit_width.append([manual_bit_width_selection.bit_width, manual_bit_width_selection.attr])
+                attr_to_change_bit_width[manual_bit_width_selection.attr] = manual_bit_width_selection.bit_width
                 unit_nodes_to_change_bit_width.update({n: attr_to_change_bit_width})
 
         return unit_nodes_to_change_bit_width

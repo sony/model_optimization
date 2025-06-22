@@ -122,7 +122,6 @@ class TestManualWeightsBitwidthSelection:
 
     def get_test_graph(self, qc):
         float_model = self.get_float_model()
-        fw_info = PyTorchInfo
 
         fw_impl = PytorchImplementation()
         graph = fw_impl.model_reader(float_model,

@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
@@ -108,26 +110,60 @@ def set_manual_bitwidth_config(graph, bit_width_config: BitWidthConfig):
         graph: graph after candidates have been set on nodes.
         bit_width_config: bit-width config.
     """
-    manual_activation_bitwidths = bit_width_config.get_nodes_to_manipulate_activation_bit_widths(graph)
-    manual_weights_bitwidths = bit_width_config.get_nodes_to_manipulate_weights_bit_widths(graph)
+    manual_activation_bitwidths = bit_width_config.get_nodes_activation_bit_widths(graph)
+    manual_weights_bitwidths = bit_width_config.get_nodes_weights_bit_widths(graph)
+
+    if manual_activation_bitwidths:
+        _set_manual_activation_bitwidths(manual_activation_bitwidths)
+
+    if manual_weights_bitwidths:
+        _set_manual_weights_bitwidths(manual_weights_bitwidths)
+
+
+# TODO irena: check coverage
+def _set_manual_activation_bitwidths(manual_activation_bitwidths: Dict[BaseNode, int]):
     for n, a_nbits in manual_activation_bitwidths.items():
-        candidates = [qc for qc in n.candidates_quantization_cfg if qc.activation_quantization_cfg.activation_n_bits == a_nbits]
+        quant_mode = n.tpc_quantization_info.get_activation_quant_mode()
+        if quant_mode != ActivationQuantizationMode.QUANT:
+            raise ValueError(f'Cannot apply manual activation bit-width for node {n} with activation quantization mode'
+                             f'{quant_mode}, as it does not have its own quantization configuration.')
+        candidates = [qc for qc in n.candidates_quantization_cfg
+                      if qc.activation_quantization_cfg.activation_n_bits == a_nbits]
         if not candidates:
-            raise ValueError(f'Manually selected activation bit-width {a_nbits} is invalid for node {n}.')
+            raise ValueError(
+                f'Cannot apply manual activation bit-width {a_nbits} for node {n}. Bit-width must be one of: '
+                f'{[qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg]}')
         n.tpc_quantization_info.candidates_quantization_cfg = candidates
         n.tpc_quantization_info.base_quantization_cfg.activation_quantization_cfg.activation_n_bits = a_nbits
 
+
+# TODO irena: check coverage
+def _set_manual_weights_bitwidths(manual_weights_bitwidths: Dict[BaseNode, Dict[str, int]]):
     def qc_attr_nbits(qc, attr, n):
-        if attr not in qc.activation_quantization_cfg.weights_quantization_cfg.get_all_weights_attrs():
-            raise ValueError(f'Invalid attribute {attr} in manual weights configuration for node {n}')
-        return qc.activation_quantization_cfg.weights_quantization_cfg.get_attr_config(attr)
+        if attr == POS_ATTR:
+            pos_attrs = qc.weights_quantization_cfg.pos_attributes_config_mapping
+            if not pos_attrs:
+                raise ValueError('Unexpected positional attribute in manual weights bit-width for node {n}.')
+            if any(cfg.enable_weights_quantization is False for cfg in pos_attrs.values()):
+                raise ValueError(f'Cannot apply manual bit-width configuration for positional attribute of node {n} as '
+                                 f'the attribute is not quantized.')
+            assert len({cfg.weights_n_bits for cfg in pos_attrs.values()}) == 1
+            return list(pos_attrs.values())[0]
+        if attr not in qc.weights_quantization_cfg.all_weight_attrs:
+            raise ValueError(f'Unexpected attribute {attr} in manual weights bit-width configuration for node {n}.')
+        attr_cfg = qc.weights_quantization_cfg.get_attr_config(attr)
+        if not attr_cfg.enable_weights_quantization:
+            raise ValueError(f'Cannot apply manual bit-width configuration for weights attribute {attr} of node {n} as '
+                             f'the attribute is not quantized.')
+        return qc.weights_quantization_cfg.get_attr_config(attr).weights_n_bits
 
     for n, manual_wbits in manual_weights_bitwidths.items():
         candidates = [qc for qc in n.candidates_quantization_cfg
-                      if all(qc_attr_nbits(qc, attr, n) == w_nbits for w_nbits, attr in manual_wbits)]
+                      if all(qc_attr_nbits(qc, attr, n) == w_nbits for attr, w_nbits in manual_wbits.items())]
         if not candidates:
-            raise ValueError(f'Invalid manual bitwidth configuration {manual_wbits} for node {n}. '
-                             f'Only bitwidth supported by TPC can be specified.')
-        n.candidates_quantization_cfg.weights_quantization_cfg = candidates
-        for w_nbits, attr in manual_wbits:
-            n.base_quantization_cfg.weights_quantization_cfg.get_attr_config(attr).weights_n_bits = w_nbits
+            raise ValueError(f'Cannot apply manual weights bit-width configuration {manual_wbits} for node {n} as it '
+                             f'does not match any of the quantization candidates.')
+        n.tpc_quantization_info.candidates_quantization_cfg = candidates
+        for attr, w_nbits in manual_wbits.items():
+            base_weights_cfg = n.tpc_quantization_info.base_quantization_cfg.weights_quantization_cfg
+            base_weights_cfg.get_attr_config(attr).weights_n_bits = w_nbits
