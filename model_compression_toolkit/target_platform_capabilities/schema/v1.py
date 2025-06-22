@@ -212,6 +212,9 @@ class OpQuantizationConfig(BaseModel):
         Returns:
             OpQuantizationConfig: Edited quantization configuration.
         """
+        unknown_keys = [k for k in attr_to_edit if k not in self.attr_weights_configs_mapping]
+        assert not unknown_keys, f'attr_to_edit contains unknown keys {unknown_keys}'
+
         # Clone and update top-level attributes
         updated_config = self.model_copy(update=kwargs)
 
