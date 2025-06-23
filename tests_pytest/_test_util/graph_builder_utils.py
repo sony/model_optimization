@@ -34,7 +34,7 @@ def build_node(name='node', canonical_weights: dict = None, final_weights: dict 
                qcs: List[CandidateNodeQuantizationConfig] = None,
                sp_qc: CandidateNodeQuantizationConfig = None,
                input_shape=(4, 5, 6), output_shape=(4, 5, 6),
-               layer_class=DummyLayer, reuse=False, disable_tpc_info_validation=False): # , node_fw_info: NodeFrameworkInfo = None): # TODO irena
+               layer_class=DummyLayer, reuse=False, disable_tpc_info_validation=False):
     """ Build a node for tests.
         Either 'canonical_weights' (to be used by default) or 'final_weights' should be passed.
           Canonical weights are converted into full unique names, that contain the canonical name as a substring.
