@@ -662,7 +662,7 @@ class BaseNode:
             return False
 
         # Get attributes from node to filter
-        layer_config = self.framework_attr
+        layer_config = self.framework_attr.copy()
         if hasattr(self, "op_call_kwargs"):
             layer_config.update(self.op_call_kwargs)
 
