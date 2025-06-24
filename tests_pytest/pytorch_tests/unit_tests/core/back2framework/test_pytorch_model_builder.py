@@ -65,7 +65,6 @@ def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
         signedness=Signedness.AUTO
     )
     a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg,
-                                              activation_quantization_fn=None,
                                               activation_quantization_params_fn=None)
     if len(aq_params) != 0:
         a_qcfg.set_activation_quantization_param(aq_params)

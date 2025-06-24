@@ -209,10 +209,8 @@ def _create_candidate(weight_channel_axis: ChannelAxisMapping,
     """
 
     # TODO irena: i think we shouldn't inject methods here, it's quantization implementation, not configuration
-    activation_quantization_fn = get_fw_info().activation_quantizer_mapping[op_cfg.activation_quantization_method]
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
     aqc = NodeActivationQuantizationConfig(op_cfg=op_cfg,
-                                           activation_quantization_fn=activation_quantization_fn,
                                            activation_quantization_params_fn=activation_quantization_params_fn)
 
     # TODO: remove this validation and warning once enabling all attributes quantization by default

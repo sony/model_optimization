@@ -16,8 +16,10 @@ from typing import List, Callable, Any
 
 import numpy as np
 
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_activation_quantizer
 
 
 def verify_candidates_descending_order(node_q_cfg: List[CandidateNodeQuantizationConfig],
@@ -105,6 +107,7 @@ def init_activation_quantizers(node_q_cfg: List[CandidateNodeQuantizationConfig]
     activation_quantizers = []
     for index, qc in enumerate(node_q_cfg):
         q_activation = node_q_cfg[index].activation_quantization_cfg
-        activation_quantizers.append(q_activation.quantize_node_output)
+        quantizer = get_activation_quantizer(q_activation)
+        activation_quantizers.append(quantizer)
 
     return activation_quantizers

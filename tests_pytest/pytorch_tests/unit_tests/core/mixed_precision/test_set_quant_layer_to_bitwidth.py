@@ -31,14 +31,16 @@ from tests_pytest.pytorch_tests.torch_test_util.torch_test_mixin import TorchFwM
 
 class TestConfigureQLayer(TorchFwMixin):
     @pytest.mark.parametrize('ind', [None, 0, 1, 2])
-    def test_configure_activation(self, ind):
+    def test_configure_activation(self, ind, mocker):
         """ Test correct activation quantizer is set and applied. """
-        def quant_fn(nbits, *args, **kwargs):
-            return lambda x: x*nbits
+
+        def quant_factory(nbits, *args, **kwargs):
+            return lambda x: x * nbits
+        mocker.patch('model_compression_toolkit.core.common.quantization.quantization_fn_selection'
+                     '.get_activation_quantizer_factory', lambda *args: quant_factory)
+
         abits = [8, 4, 2]
-        quantizer = ConfigurableActivationQuantizer(node_q_cfg=[
-            build_nbits_qc(abit, activation_quantization_fn=quant_fn) for abit in abits
-        ])
+        quantizer = ConfigurableActivationQuantizer(node_q_cfg=[build_nbits_qc(abit) for abit in abits])
         layer = PytorchActivationQuantizationHolder(quantizer)
         set_activation_quant_layer_to_bitwidth(layer, ind, self.fw_impl)
         assert quantizer.active_quantization_config_index == ind

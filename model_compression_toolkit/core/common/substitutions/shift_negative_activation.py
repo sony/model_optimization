@@ -18,6 +18,8 @@ from typing import List, Tuple, Any, Callable
 
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
+    get_activation_quantizer_factory
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
@@ -325,7 +327,8 @@ def shift_negative_function(graph: Graph,
                 'float32')  # Change to type float32 to support tensorflow dtypes
             for _shift_value in _q_points:
                 _hist_bins = hist_bins.astype(np.float32) + _shift_value
-                fw_quant_fn = non_linear_node_cfg_candidate.activation_quantization_fn(non_linear_node_cfg_candidate.activation_n_bits,qparams)
+                quantizer_factory = get_activation_quantizer_factory(non_linear_node_cfg_candidate.activation_quantization_method)
+                fw_quant_fn = quantizer_factory(non_linear_node_cfg_candidate.activation_n_bits, qparams)
                 """
                 In SNC, when better shifting values are tested for better choice,
                 the histogram (which is a numpy object) is quantized using the non-linear node activation

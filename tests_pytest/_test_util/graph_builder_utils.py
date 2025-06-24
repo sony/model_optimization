@@ -76,8 +76,7 @@ def full_attr_name(canonical_name: Union[str, dict, Iterable]):
 
 
 def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, ()),
-                   convert_canonical_attr=True, q_preserving=False,
-                   activation_quantization_fn: Callable=None) -> CandidateNodeQuantizationConfig:
+                   convert_canonical_attr=True, q_preserving=False) -> CandidateNodeQuantizationConfig:
     """
     Build quantization config with configurable nbits and enabling/disabling quantization only.
 
@@ -119,7 +118,6 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
         signedness=Signedness.AUTO
     )
     a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg,
-                                              activation_quantization_fn=activation_quantization_fn,
                                               activation_quantization_params_fn=None)
     # full names from the layers
     attr_names = list(w_attr.keys())

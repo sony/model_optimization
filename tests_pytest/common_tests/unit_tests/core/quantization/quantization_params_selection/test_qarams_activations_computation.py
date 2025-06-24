@@ -63,7 +63,7 @@ class TestActivationQParams:
             simd_size=None,
             signedness=signedness
         )
-        activation_quant_cfg = NodeActivationQuantizationConfig(op_cfg, None, None)
+        activation_quant_cfg = NodeActivationQuantizationConfig(op_cfg, None)
         activation_quant_cfg.set_qc(QuantizationConfig())
         activation_quant_cfg.activation_quantization_method = quant_method
         return activation_quant_cfg

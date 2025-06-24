@@ -250,9 +250,6 @@ class ChangeFinalActivationQuantizationMethod(BaseAction):
             node.final_activation_quantization_cfg.set_activation_quantization_params_fn(
                 activation_quantization_params_fn)
 
-            activation_quantization_fn = get_fw_info().activation_quantizer_mapping.get(self.activation_quantization_method)
-
-            node.final_activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
             node.final_activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
 
 
@@ -283,15 +280,7 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
             for qc in node.candidates_quantization_cfg:
                 activation_quantization_params_fn = get_activation_quantization_params_fn(
                     self.activation_quantization_method)
-
                 qc.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
-                activation_quantization_fn = get_fw_info().activation_quantizer_mapping.get(
-                    self.activation_quantization_method)
-
-                if activation_quantization_fn is None:
-                    Logger.critical('Unknown activation quantization method specified.')  # pragma: no cover
-
-                qc.activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
                 qc.activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
 
 

@@ -34,7 +34,6 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
         op_cfg, _, _ = get_op_quantization_configs()
 
         nac = NodeActivationQuantizationConfig(op_cfg,
-                                               activation_quantization_fn=power_of_two_quantizer,
                                                activation_quantization_params_fn=power_of_two_selection_histogram)
         og_nac = copy.deepcopy(nac)
 

@@ -17,7 +17,6 @@ from enum import Enum, auto
 import numpy as np
 
 from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
-from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn
@@ -25,8 +24,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import \
-    AttributeQuantizationConfig, \
-    OpQuantizationConfig
+    AttributeQuantizationConfig, OpQuantizationConfig
 
 if TYPE_CHECKING:
     from model_compression_toolkit.core.common.graph.base_node import WeightAttrT
@@ -85,18 +83,14 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     """
     def __init__(self,
                  op_cfg: OpQuantizationConfig,
-                 activation_quantization_fn: Callable,
-                 activation_quantization_params_fn: Callable
-                 ):
+                 activation_quantization_params_fn: Callable):
         """
 
         Args:
             op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
-            activation_quantization_fn: Function to use when quantizing the node's activations.
             activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
         """
 
-        self.activation_quantization_fn = activation_quantization_fn
         self.activation_quantization_params_fn = activation_quantization_params_fn
         self.activation_quantization_method = op_cfg.activation_quantization_method
         self.activation_n_bits = op_cfg.activation_n_bits
@@ -152,36 +146,6 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     def fln_quantization(self):
         return self.quant_mode == ActivationQuantizationMode.FLN_QUANT
 
-    def quantize_node_output(self,
-                             tensors: Any) -> Any:
-        """
-
-        Args:
-            tensors: framework tensor/s
-
-        Returns:
-            Framework tensor/s after applying fake quantization.
-
-        """
-        fake_quant = self.activation_quantization_fn(self.activation_n_bits,
-                                                     self.activation_quantization_params)
-
-        if fake_quant is None:
-            Logger.critical(
-                "Layer is intended to be quantized, but the fake_quant function is None.")  # pragma: no cover
-
-        return fake_quant(tensors)
-
-    def set_activation_quantization_fn(self, activation_quantization_fn: Callable):
-        """
-        Sets activation quantization function for the node.
-
-        Args:
-            activation_quantization_fn: Function for quantazing the activations.
-
-        """
-        self.activation_quantization_fn = activation_quantization_fn
-
     def set_activation_quantization_params_fn(self, activation_quantization_params_fn:Callable):
         """
         Sets activation params function for the node.
@@ -218,8 +182,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         if not isinstance(other, NodeActivationQuantizationConfig):
             return False  # pragma: no cover
 
-        return self.activation_quantization_fn == other.activation_quantization_fn and \
-               self.activation_quantization_params_fn == other.activation_quantization_params_fn and \
+        return self.activation_quantization_params_fn == other.activation_quantization_params_fn and \
                self.activation_error_method == other.activation_error_method and \
                self.activation_quantization_method == other.activation_quantization_method and \
                self.activation_n_bits == other.activation_n_bits and \
@@ -234,8 +197,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
 
     def __hash__(self):
-        return hash((self.activation_quantization_fn,
-                     self.activation_quantization_params_fn,
+        return hash((self.activation_quantization_params_fn,
                      self.activation_error_method,
                      self.activation_quantization_method,
                      self.activation_n_bits,
@@ -263,6 +225,8 @@ class WeightsAttrQuantizationConfig:
             weights_attr_cfg: AttributeQuantizationConfig with parameters to use when creating the node's attribute quantization config.
             weights_channels_axis: Axis to quantize a node's attribute when quantizing per-channel (if not quantizing per-channel than expecting None).
         """
+        # TODO irena remove functions.
+        from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
         self.weights_quantization_fn = get_weights_quantization_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_channels_axis = weights_channels_axis
