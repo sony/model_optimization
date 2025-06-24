@@ -42,38 +42,9 @@ def load_fqc_configuration(graph: Graph, fqc: FrameworkQuantizationCapabilities)
     Returns:
         Updated graph.
     """
-    graph = set_nodes_quantization_configuration(graph, fqc)
-    graph = set_fusion_info(graph, fqc)
+    graph = _set_nodes_quantization_configuration(graph, fqc)
+    graph = _set_fusion_info(graph, fqc)
 
-    return graph
-
-
-def set_nodes_quantization_configuration(graph: Graph,
-                                         fqc: FrameworkQuantizationCapabilities) -> Graph:
-    """
-    Set quantization configuration for each graph node.
-
-    Args:
-        graph: graph to set with quantization configuration.
-        fqc: framework quantization capabilities.
-
-    Returns:
-        Graph: The graph with quantization configurations attached to each node in it.
-    """
-    validate_custom_ops_have_qco(graph, fqc)
-
-    for n in graph.get_topo_sorted_nodes():
-        set_quantization_configs_to_node(node=n,
-                                         graph=graph,
-                                         fqc=fqc)
-    return graph
-
-
-def set_fusion_info(graph, fqc) -> Graph:
-    # TODO fix the horrible dict with const keys inside get_fusing_patterns. use named tuple or class
-    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
-    graph.fusing_info = fusing_info
-    graph.disable_fused_nodes_activation_quantization()
     return graph
 
 
@@ -108,20 +79,6 @@ def set_quantization_configs_to_node(node: BaseNode,
     _disable_unsupported_quant_preserving(node, graph)
 
 
-def _disable_unsupported_quant_preserving(node, graph):
-    if not node.tpc_quantization_info.get_activation_quant_mode() == ActivationQuantizationMode.PRESERVE_QUANT:
-        return
-
-    prev_nodes = graph.get_prev_nodes(node)
-    if len(prev_nodes) != 1:
-        Logger.info(f'Disabling Quantization-Preserving for node {node.name} with {len(prev_nodes)} inputs.')
-        node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
-    elif prev_nodes[0].tpc_quantization_info.get_activation_quant_mode() == ActivationQuantizationMode.NO_QUANT:
-        Logger.info(f'Disabling Quantization-Preserving for node {node.name} since previous node activation '
-                    f'quantization is disabled.')
-        node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
-
-
 def fetch_qco_for_node(node: BaseNode,
                        fqc: FrameworkQuantizationCapabilities,
                        return_default=True) -> Optional[QuantizationConfigOptions]:
@@ -151,19 +108,69 @@ def fetch_qco_for_node(node: BaseNode,
         raise ValueError(f'Cannot assign quantization configuration to {node} as it matches more than one op type with '
                          f'conflicting configs: {op_types}.')
 
-    # if node matches by both filter and opset, filter takes priority (TODO irena: verify)
+    # if node matches by both filter and opset, filter takes priority
     if filter_qcos:
         return filter_qcos[0]
 
     if qcos:
         return qcos[0]
 
-    # TODO irena move check for custom from graph.set_fqc here
     return fqc.tpc.default_qco if return_default else None
 
 
-# TODO irena copied from graph.set_fqc here.
-def validate_custom_ops_have_qco(graph, fqc):
+def _set_nodes_quantization_configuration(graph: Graph,
+                                          fqc: FrameworkQuantizationCapabilities) -> Graph:
+    """
+    Set quantization configuration for each graph node.
+
+    Args:
+        graph: graph to set with quantization configuration.
+        fqc: framework quantization capabilities.
+
+    Returns:
+        Graph: The graph with quantization configurations attached to each node in it.
+    """
+    _validate_custom_ops_have_qco(graph, fqc)
+
+    for n in graph.get_topo_sorted_nodes():
+        set_quantization_configs_to_node(node=n,
+                                         graph=graph,
+                                         fqc=fqc)
+    return graph
+
+
+def _set_fusion_info(graph, fqc) -> Graph:
+    # TODO fix the dict with const keys inside get_fusing_patterns. use named tuple or class
+    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
+    graph.fusing_info = fusing_info
+    graph.disable_fused_nodes_activation_quantization()
+    return graph
+
+
+def _disable_unsupported_quant_preserving(node: BaseNode, graph: Graph):
+    """
+    Disable quantization for quantization preserving ops in cases it cannot be supported
+    (multiple inputs or un-quantized previous node).
+
+    Args:
+        node: current node.
+        graph: graph.
+    """
+    if not node.tpc_quantization_info.get_activation_quant_mode() == ActivationQuantizationMode.PRESERVE_QUANT:
+        return
+
+    prev_nodes = graph.get_prev_nodes(node)
+    if len(prev_nodes) != 1:
+        Logger.info(f'Disabling Quantization-Preserving for node {node.name} with {len(prev_nodes)} inputs.')
+        node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
+    elif prev_nodes[0].tpc_quantization_info.get_activation_quant_mode() == ActivationQuantizationMode.NO_QUANT:
+        Logger.info(f'Disabling Quantization-Preserving for node {node.name} since previous node activation '
+                    f'quantization is disabled.')
+        node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
+
+
+# TODO irena copied from graph.set_fqc as is. Why does it have Keras errors?
+def _validate_custom_ops_have_qco(graph, fqc):
     custom_nodes = [n for n in graph.nodes if n.is_custom]
     for n in custom_nodes:
         qco = fetch_qco_for_node(n, fqc, return_default=False)
