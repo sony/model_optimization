@@ -18,7 +18,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping, get_fw_info
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig, TPCQuantizationInfo
+    CandidateNodeQuantizationConfig, QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig, ActivationQuantizationMode
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
@@ -67,14 +67,14 @@ def set_quantization_configs_to_node(node: BaseNode,
                      for qc in candidates_qcs]
     sp_cfg = _create_candidate(node.channel_axis, base_config, node_attrs_list)
 
-    node.tpc_quantization_info = TPCQuantizationInfo(base_quantization_cfg=sp_cfg,
-                                                     candidates_quantization_cfg=mp_candidates)
+    node.quantization_cfg = QuantizationConfig(base_quantization_cfg=sp_cfg,
+                                               candidates_quantization_cfg=mp_candidates)
 
     # TODO is not needed anymore as find min/max candidate look for a real max/min, but some tests still count on it
     node.sort_node_candidates()
 
     if not node.has_activation:
-        node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
+        node.quantization_cfg.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
 
     _disable_unsupported_quant_preserving(node, graph)
 
@@ -156,17 +156,17 @@ def _disable_unsupported_quant_preserving(node: BaseNode, graph: Graph):
         node: current node.
         graph: graph.
     """
-    if not node.tpc_quantization_info.get_activation_quant_mode() == ActivationQuantizationMode.PRESERVE_QUANT:
+    if not node.quantization_cfg.get_activation_quant_mode() == ActivationQuantizationMode.PRESERVE_QUANT:
         return
 
     prev_nodes = graph.get_prev_nodes(node)
     if len(prev_nodes) != 1:
         Logger.info(f'Disabling Quantization-Preserving for node {node.name} with {len(prev_nodes)} inputs.')
-        node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
-    elif prev_nodes[0].tpc_quantization_info.get_activation_quant_mode() == ActivationQuantizationMode.NO_QUANT:
+        node.quantization_cfg.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
+    elif prev_nodes[0].quantization_cfg.get_activation_quant_mode() == ActivationQuantizationMode.NO_QUANT:
         Logger.info(f'Disabling Quantization-Preserving for node {node.name} since previous node activation '
                     f'quantization is disabled.')
-        node.tpc_quantization_info.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
+        node.quantization_cfg.update_activation_quantization_mode(ActivationQuantizationMode.NO_QUANT)
 
 
 # TODO irena copied from graph.set_fqc as is. Why does it have Keras errors?

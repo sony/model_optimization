@@ -38,7 +38,7 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
 #  candidates, but we create a separate copy), and updating in place is allowed. Also we require quantization mode to
 #  be identical between all configs.
 @dataclass
-class TPCQuantizationInfo:
+class QuantizationConfig:
     # quantization config for single precision
     base_quantization_cfg: CandidateNodeQuantizationConfig
     # quantization candidate configs for mixed precision

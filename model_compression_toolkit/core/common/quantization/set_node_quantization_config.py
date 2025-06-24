@@ -123,7 +123,7 @@ def set_manual_bitwidth_config(graph, bit_width_config: BitWidthConfig):
 # TODO irena: check coverage and add missing tests
 def _set_manual_activation_bitwidths(manual_activation_bitwidths: Dict[BaseNode, int]):
     for n, a_nbits in manual_activation_bitwidths.items():
-        quant_mode = n.tpc_quantization_info.get_activation_quant_mode()
+        quant_mode = n.quantization_cfg.get_activation_quant_mode()
         # TODO irena: for FLN I think it should be ignored with warning for layer filter, and error for name filter
         if quant_mode != ActivationQuantizationMode.QUANT:
             raise ValueError(f'Cannot apply manual activation bit-width for node {n} with activation quantization mode'
@@ -136,8 +136,8 @@ def _set_manual_activation_bitwidths(manual_activation_bitwidths: Dict[BaseNode,
             raise ValueError(
                 f'Manually selected activation bit-width {a_nbits} is invalid for node {n}. '
                 f'Valid bit-widths: {valid_nbits}.')
-        n.tpc_quantization_info.candidates_quantization_cfg = candidates
-        n.tpc_quantization_info.base_quantization_cfg.activation_quantization_cfg.activation_n_bits = a_nbits
+        n.quantization_cfg.candidates_quantization_cfg = candidates
+        n.quantization_cfg.base_quantization_cfg.activation_quantization_cfg.activation_n_bits = a_nbits
 
 
 # TODO irena: check coverage
@@ -166,9 +166,9 @@ def _set_manual_weights_bitwidths(manual_weights_bitwidths: Dict[BaseNode, Dict[
         if not candidates:
             raise ValueError(f'Cannot apply manual weights bit-width configuration {manual_wbits} for node {n} as it '
                              f'does not match any of the quantization candidates.')
-        n.tpc_quantization_info.candidates_quantization_cfg = candidates
+        n.quantization_cfg.candidates_quantization_cfg = candidates
         for attr, w_nbits in manual_wbits.items():
-            base_weights_cfg = n.tpc_quantization_info.base_quantization_cfg.weights_quantization_cfg
+            base_weights_cfg = n.quantization_cfg.base_quantization_cfg.weights_quantization_cfg
             if attr == POS_ATTR:
                 for pos_attr in base_weights_cfg.pos_attributes_config_mapping:
                     base_weights_cfg.get_attr_config(pos_attr).weights_n_bits = w_nbits

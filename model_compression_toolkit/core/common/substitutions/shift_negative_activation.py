@@ -452,14 +452,14 @@ def shift_negative_function(graph: Graph,
 
     set_quantization_configs_to_node(add_node, graph, graph.fqc)
     # TODO: do we not quantize the weights of this 'add' on purpose?
-    add_node.tpc_quantization_info.disable_weights_quantization()
+    add_node.quantization_cfg.disable_weights_quantization()
 
     def update(c):
         c.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
         c.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
                                                                          SIGNED: False})
 
-    add_node.tpc_quantization_info.update_all(update)
+    add_node.quantization_cfg.update_all(update)
 
     # Add the new padding node to a fused op with the op2d.
     if pad_node:
@@ -594,7 +594,7 @@ def apply_shift_negative_correction(graph: Graph,
     for n in nodes:
         # Skip substitution if QuantizationMethod is uniform.
         if any(aqc.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.UNIFORM
-               for aqc in n.tpc_quantization_info.candidates_quantization_cfg):
+               for aqc in n.candidates_quantization_cfg):
             continue
 
         if snc_node_types.apply(n):

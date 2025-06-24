@@ -73,7 +73,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         for node in graph.nodes:
             # TODO irena remove set_qc:
-            for c in node.tpc_quantization_info.candidates_quantization_cfg:
+            for c in node.quantization_cfg.candidates_quantization_cfg:
                 c.activation_quantization_cfg.set_qc(core_config.quantization_config)
                 c.weights_quantization_cfg.set_qc(core_config.quantization_config)
                 for attr_cfg in c.weights_quantization_cfg.get_all_weight_attrs_configs().values():

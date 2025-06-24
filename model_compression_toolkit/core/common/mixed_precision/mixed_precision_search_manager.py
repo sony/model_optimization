@@ -472,8 +472,8 @@ class ConfigReconstructionHelper:
             assert isinstance(virtual_node, VirtualSplitActivationNode)
             orig_a_node = virtual_node.origin_node
 
-        virtual_qc = virtual_node.tpc_quantization_info.candidates_quantization_cfg[virtual_qc_ind]
-        matching_orig_a_cfgs = [i for i, orig_qc in enumerate(orig_a_node.tpc_quantization_info.candidates_quantization_cfg)
+        virtual_qc = virtual_node.candidates_quantization_cfg[virtual_qc_ind]
+        matching_orig_a_cfgs = [i for i, orig_qc in enumerate(orig_a_node.candidates_quantization_cfg)
                                 if orig_qc.activation_quantization_cfg == virtual_qc.activation_quantization_cfg]
         if not matching_orig_a_cfgs:    # pragma: no cover
             raise ValueError(f'Could not find matching activation quantization config in the original node '

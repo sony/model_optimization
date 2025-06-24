@@ -21,7 +21,7 @@ import numpy as np
 from model_compression_toolkit.core.common.framework_info import get_fw_info, ChannelAxisMapping
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
-from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import TPCQuantizationInfo
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
@@ -90,7 +90,7 @@ class BaseNode:
         self.inputs_as_list = inputs_as_list
         self.final_weights_quantization_cfg = None
         self.final_activation_quantization_cfg = None
-        self.tpc_quantization_info: TPCQuantizationInfo = None
+        self.quantization_cfg: QuantizationConfig = None
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
@@ -157,8 +157,8 @@ class BaseNode:
 
     @property
     def candidates_quantization_cfg(self):
-        assert self.tpc_quantization_info
-        return self.tpc_quantization_info.candidates_quantization_cfg
+        assert self.quantization_cfg
+        return self.quantization_cfg.candidates_quantization_cfg
 
     @property
     def type(self):
@@ -186,7 +186,7 @@ class BaseNode:
             # if we have a final configuration, then we only care to check if it enables activation quantization.
             return self.final_activation_quantization_cfg.quant_mode == q_mode
 
-        q_modes = {qc.activation_quantization_cfg.quant_mode for qc in self.tpc_quantization_info.candidates_quantization_cfg}
+        q_modes = {qc.activation_quantization_cfg.quant_mode for qc in self.candidates_quantization_cfg}
         assert len(q_modes) == 1
         return q_modes.pop() == q_mode
 
@@ -427,7 +427,7 @@ class BaseNode:
             return {}
 
         if self.is_weights_quantization_enabled(kernel_attr):
-            parameters_dict = copy.deepcopy(self.tpc_quantization_info.candidates_quantization_cfg[0].weights_quantization_cfg.
+            parameters_dict = copy.deepcopy(self.candidates_quantization_cfg[0].weights_quantization_cfg.
                                             get_attr_config(kernel_attr).__dict__)
             for shared_parameter in shared_parameters:
                 if shared_parameter in parameters_dict:
@@ -451,11 +451,11 @@ class BaseNode:
         shared_attributes = [ACTIVATION_N_BITS_ATTRIBUTE]
         attr = dict()
         if self.is_activation_quantization_enabled():
-            attr = copy.deepcopy(self.tpc_quantization_info.candidates_quantization_cfg[0].activation_quantization_cfg.__dict__)
+            attr = copy.deepcopy(self.candidates_quantization_cfg[0].activation_quantization_cfg.__dict__)
             for shared_attr in shared_attributes:
                 if shared_attr in attr:
                     unified_attr = []
-                    for candidate in self.tpc_quantization_info.candidates_quantization_cfg:
+                    for candidate in self.candidates_quantization_cfg:
                         unified_attr.append(getattr(candidate.activation_quantization_cfg, shared_attr))
                     attr[shared_attr] = unified_attr
         return attr
@@ -469,8 +469,8 @@ class BaseNode:
 
         """
         return all(candidate.activation_quantization_cfg ==
-                   self.tpc_quantization_info.candidates_quantization_cfg[0].activation_quantization_cfg
-                   for candidate in self.tpc_quantization_info.candidates_quantization_cfg)
+                   self.candidates_quantization_cfg[0].activation_quantization_cfg
+                   for candidate in self.candidates_quantization_cfg)
 
     def is_all_weights_candidates_equal(self, attr: str) -> bool:
         """
@@ -542,7 +542,7 @@ class BaseNode:
         """
         aw_nbits = [(c.activation_quantization_cfg.activation_n_bits,
                      *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weight_attrs_configs().values()])
-                    for c in self.tpc_quantization_info.candidates_quantization_cfg]
+                    for c in self.candidates_quantization_cfg]
         min_nbits = min(aw_nbits)
         min_ind = [i for i, nb in enumerate(aw_nbits) if min_nbits == nb]
         # check that no other candidate has a lower nbit for any weight
@@ -557,7 +557,7 @@ class BaseNode:
         """
         aw_nbits = [(c.activation_quantization_cfg.activation_n_bits,
                      *[v.weights_n_bits for v in c.weights_quantization_cfg.get_all_weight_attrs_configs().values()])
-                    for c in self.tpc_quantization_info.candidates_quantization_cfg]
+                    for c in self.candidates_quantization_cfg]
         max_nbits = max(aw_nbits)
         max_ind = [i for i, nb in enumerate(aw_nbits) if max_nbits == nb]
         # check that no other candidate has a higher nbit for any weight
@@ -583,7 +583,7 @@ class BaseNode:
                            f"An empty list of candidates is returned.")
             return []
 
-        unique_candidates = copy.deepcopy(self.tpc_quantization_info.candidates_quantization_cfg)
+        unique_candidates = copy.deepcopy(self.candidates_quantization_cfg)
         seen_candidates = set()
         unique_candidates = [candidate for candidate in unique_candidates if
                              candidate.weights_quantization_cfg.get_attr_config(attr) not in seen_candidates
@@ -599,7 +599,7 @@ class BaseNode:
         Returns: A list with node's candidates of unique activation bit-width value.
         """
 
-        unique_candidates = copy.deepcopy(self.tpc_quantization_info.candidates_quantization_cfg)
+        unique_candidates = copy.deepcopy(self.candidates_quantization_cfg)
         seen_candidates = set()
         unique_candidates = [candidate for candidate in unique_candidates if
                              candidate.activation_quantization_cfg not in seen_candidates
@@ -613,8 +613,9 @@ class BaseNode:
         Returns: True if the node has at list one quantization configuration candidate with activation quantization enabled.
         """
 
-        return len(self.tpc_quantization_info.candidates_quantization_cfg) > 0 and \
-            any([c.activation_quantization_cfg.enable_activation_quantization for c in self.tpc_quantization_info.candidates_quantization_cfg])
+        return (len(self.candidates_quantization_cfg) > 0 and
+                any([c.activation_quantization_cfg.enable_activation_quantization
+                     for c in self.candidates_quantization_cfg]))
 
     def get_all_weights_attr_candidates(self, attr: str) -> List[WeightsAttrQuantizationConfig]:
         """
@@ -628,7 +629,7 @@ class BaseNode:
         """
         # note that if the given attribute name does not exist in the node's attributes mapping,
         # the inner method would log an exception.
-        return [c.weights_quantization_cfg.get_attr_config(attr) for c in self.tpc_quantization_info.candidates_quantization_cfg]
+        return [c.weights_quantization_cfg.get_attr_config(attr) for c in self.candidates_quantization_cfg]
 
     def is_match_type(self, _type: Type) -> bool:
         """
@@ -685,7 +686,7 @@ class BaseNode:
             int: The node's SIMD size.
 
         """
-        simd_list = [qc.weights_quantization_cfg.simd_size for qc in self.tpc_quantization_info.candidates_quantization_cfg]
+        simd_list = [qc.weights_quantization_cfg.simd_size for qc in self.candidates_quantization_cfg]
         if len(simd_list) > 1:
             Logger.warning(f"More than one pruning SIMD option is available."
                            f" Min SIMD is used: {min(simd_list)}")
@@ -706,11 +707,11 @@ class BaseNode:
             the candidates in descending order.
         The operation is done inplace.
         """
-        if self.tpc_quantization_info.candidates_quantization_cfg is not None:
+        if self.quantization_cfg.candidates_quantization_cfg is not None:
             if self.kernel_attr is not None:
-                self.tpc_quantization_info.candidates_quantization_cfg.sort(
+                self.quantization_cfg.candidates_quantization_cfg.sort(
                     key=lambda c: (c.weights_quantization_cfg.get_attr_config(self.kernel_attr).weights_n_bits,
                                    c.activation_quantization_cfg.activation_n_bits), reverse=True)
             else:
-                self.tpc_quantization_info.candidates_quantization_cfg.sort(
+                self.quantization_cfg.candidates_quantization_cfg.sort(
                     key=lambda c: c.activation_quantization_cfg.activation_n_bits, reverse=True)

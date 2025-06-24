@@ -165,8 +165,8 @@ def get_finalized_graph(initial_graph: Graph,
             attr_cfg.l_p_value = quant_config.l_p_value
     for n in transformed_graph.nodes:
         if not mixed_precision_enable:
-            n.tpc_quantization_info.candidates_quantization_cfg = [n.tpc_quantization_info.base_quantization_cfg]
-        n.tpc_quantization_info.update_all(update)
+            n.quantization_cfg.candidates_quantization_cfg = [n.quantization_cfg.base_quantization_cfg]
+        n.quantization_cfg.update_all(update)
 
     ######################################
     # Channel equalization

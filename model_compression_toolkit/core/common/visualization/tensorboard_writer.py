@@ -207,7 +207,7 @@ class TensorboardWriter(object):
             attr = dict()
             if n.final_activation_quantization_cfg is not None:
                 attr.update(n.final_activation_quantization_cfg.__dict__)
-            elif n.tpc_quantization_info is not None:
+            elif n.quantization_cfg is not None:
                 attr.update(n.get_unified_activation_candidates_dict())
             return attr
 
@@ -229,7 +229,7 @@ class TensorboardWriter(object):
             attr = dict()
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
-            elif n.tpc_quantization_info is not None:
+            elif n.quantization_cfg is not None:
                 attr.update(n.get_unified_weights_candidates_dict())
             return attr
 

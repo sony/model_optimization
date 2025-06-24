@@ -18,7 +18,7 @@ from mct_quantizers import QuantizationMethod
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig, TPCQuantizationInfo
+    CandidateNodeQuantizationConfig, QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
@@ -58,8 +58,8 @@ def build_node(name='node', canonical_weights: dict = None, final_weights: dict 
         assert isinstance(qcs, (list, type(None)))
         qcs = qcs or [sp_qc]
         sp_qc = sp_qc or qcs[0]
-        node.tpc_quantization_info = TPCQuantizationInfo(base_quantization_cfg=sp_qc, candidates_quantization_cfg=qcs,
-                                                         validate=not disable_tpc_info_validation)
+        node.quantization_cfg = QuantizationConfig(base_quantization_cfg=sp_qc, candidates_quantization_cfg=qcs,
+                                                   validate=not disable_tpc_info_validation)
     return node
 
 

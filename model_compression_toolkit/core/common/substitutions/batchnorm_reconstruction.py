@@ -124,7 +124,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
 
         bn_node.prior_info = copy.deepcopy(source_node.prior_info)
 
-        bn_node.tpc_quantization_info = copy.deepcopy(source_node.tpc_quantization_info)
+        bn_node.quantization_cfg = copy.deepcopy(source_node.quantization_cfg)
 
         for qc in bn_node.candidates_quantization_cfg:
             qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
