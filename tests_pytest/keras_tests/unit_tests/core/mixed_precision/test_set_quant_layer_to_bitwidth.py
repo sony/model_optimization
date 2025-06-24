@@ -49,8 +49,12 @@ class TestConfigureQLayer(KerasFwMixin):
             assert np.allclose(x*abits[ind], y)
 
     @pytest.mark.parametrize('ind', [None, 0, 1, 2])
-    def test_configure_weights(self, ind):
+    def test_configure_weights(self, ind, mocker):
         """ Test correct weights quantizer is set and applied. """
+        def quant_factory(*args, **kwargs):
+            return lambda x, nbits, *args: x * nbits
+        mocker.patch('model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils.'
+                     'get_weights_quantization_fn', quant_factory)
         inp = keras.layers.Input(shape=(16, 16, 3))
         out = keras.layers.Conv2D(8, kernel_size=5)(inp)
         model = keras.Model(inp, out)
@@ -63,7 +67,6 @@ class TestConfigureQLayer(KerasFwMixin):
         for qc in qcs:
             attr_cfg = qc.weights_quantization_cfg.get_attr_config(KERNEL)
             attr_cfg.weights_channels_axis = (0,)
-            attr_cfg.weights_quantization_fn = lambda x, nbits, *args: x*nbits
         quantizer = ConfigurableWeightsQuantizer(
             node_q_cfg=qcs,
             float_weights=inner_layer.kernel.numpy(),

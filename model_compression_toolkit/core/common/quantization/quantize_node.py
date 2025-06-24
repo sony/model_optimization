@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
@@ -47,11 +46,12 @@ def get_quantized_weights_attr_by_qc(attr_name: str,
         output_channels_axis = None
 
     Logger.debug(f'quantizing layer {n.name} attribute {attr_name} with {weights_qc.weights_n_bits} bits')
-    quantized_kernel = weights_qc.weights_quantization_fn(n.get_weights_by_keys(attr_name),
-                                                          n_bits=weights_qc.weights_n_bits,
-                                                          signed=True,
-                                                          quantization_params=weights_qc.weights_quantization_params,
-                                                          per_channel=weights_qc.weights_per_channel_threshold,
-                                                          output_channels_axis=output_channels_axis)
+    weights_quantization_fn = get_weights_quantization_fn(weights_qc.weights_quantization_method)
+    quantized_kernel = weights_quantization_fn(n.get_weights_by_keys(attr_name),
+                                               n_bits=weights_qc.weights_n_bits,
+                                               signed=True,
+                                               quantization_params=weights_qc.weights_quantization_params,
+                                               per_channel=weights_qc.weights_per_channel_threshold,
+                                               output_channels_axis=output_channels_axis)
 
     return quantized_kernel, channels_axis

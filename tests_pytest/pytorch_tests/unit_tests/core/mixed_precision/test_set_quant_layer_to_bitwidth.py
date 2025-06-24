@@ -52,8 +52,12 @@ class TestConfigureQLayer(TorchFwMixin):
             assert torch.allclose(x*abits[ind], y)
 
     @pytest.mark.parametrize('ind', [None, 0, 1, 2])
-    def test_configure_weights(self, ind):
+    def test_configure_weights(self, ind, mocker):
         """ Test correct weights quantizer is set and applied. """
+        def quant_factory(*args, **kwargs):
+            return lambda x, nbits, *args: x * nbits
+        mocker.patch('model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils.'
+                     'get_weights_quantization_fn', quant_factory)
         inner_layer = torch.nn.Conv2d(3, 8, kernel_size=5).to(get_working_device())
         orig_weight = inner_layer.weight.clone()
         orig_bias = inner_layer.bias.clone()
@@ -63,7 +67,6 @@ class TestConfigureQLayer(TorchFwMixin):
         for qc in qcs:
             attr_cfg = qc.weights_quantization_cfg.get_attr_config(KERNEL)
             attr_cfg.weights_channels_axis = (0,)
-            attr_cfg.weights_quantization_fn = lambda x, nbits, *args: x*nbits
 
         quantizer = ConfigurableWeightsQuantizer(
             node_q_cfg=qcs,

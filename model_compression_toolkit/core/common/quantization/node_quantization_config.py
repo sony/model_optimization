@@ -226,8 +226,6 @@ class WeightsAttrQuantizationConfig:
             weights_channels_axis: Axis to quantize a node's attribute when quantizing per-channel (if not quantizing per-channel than expecting None).
         """
         # TODO irena remove functions.
-        from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
-        self.weights_quantization_fn = get_weights_quantization_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_method = weights_attr_cfg.weights_quantization_method
@@ -316,8 +314,7 @@ class WeightsAttrQuantizationConfig:
         if not isinstance(other, WeightsAttrQuantizationConfig):
             return False  # pragma: no cover
 
-        return self.weights_quantization_fn == other.weights_quantization_fn and \
-               self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
+        return self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
                self.weights_channels_axis == other.weights_channels_axis and \
                self.weights_quantization_method == other.weights_quantization_method and \
                self.weights_n_bits == other.weights_n_bits and \
@@ -327,8 +324,7 @@ class WeightsAttrQuantizationConfig:
                self.l_p_value == other.l_p_value
 
     def __hash__(self):
-        return hash((self.weights_quantization_fn,
-                     self.weights_quantization_params_fn,
+        return hash((self.weights_quantization_params_fn,
                      self.weights_channels_axis,
                      self.weights_error_method,
                      self.weights_quantization_method,

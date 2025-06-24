@@ -16,10 +16,10 @@ from typing import List, Callable, Any
 
 import numpy as np
 
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
-from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_activation_quantizer
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import (get_activation_quantizer,
+                                                                                          get_weights_quantization_fn)
 
 
 def verify_candidates_descending_order(node_q_cfg: List[CandidateNodeQuantizationConfig],
@@ -79,13 +79,13 @@ def init_quantized_weights(node_q_cfg: List[CandidateNodeQuantizationConfig],
     quantized_weights = []
     for qc in node_q_cfg:
         qc_weights_attr = qc.weights_quantization_cfg.get_attr_config(kernel_attr)
-        q_weight = qc_weights_attr.weights_quantization_fn(float_weights,
-                                                           qc_weights_attr.weights_n_bits,
-                                                           True,
-                                                           qc_weights_attr.weights_quantization_params,
-                                                           qc_weights_attr.weights_per_channel_threshold,
-                                                           qc_weights_attr.weights_channels_axis[
-                                                               0])  # output channel axis
+        weights_quantization_fn = get_weights_quantization_fn(qc_weights_attr.weights_quantization_method)
+        q_weight = weights_quantization_fn(float_weights,
+                                           qc_weights_attr.weights_n_bits,
+                                           True,
+                                           qc_weights_attr.weights_quantization_params,
+                                           qc_weights_attr.weights_per_channel_threshold,
+                                           qc_weights_attr.weights_channels_axis[0])  # output channel axis
 
         quantized_weights.append(fw_tensor_convert_func(q_weight))
 
