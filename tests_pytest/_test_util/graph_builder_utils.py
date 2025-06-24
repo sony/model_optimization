@@ -117,8 +117,7 @@ def build_nbits_qc(a_nbits=8, a_enable=True, w_attr=None, pos_attr=(32, False, (
         simd_size=None,
         signedness=Signedness.AUTO
     )
-    a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg,
-                                              activation_quantization_params_fn=None)
+    a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg)
     # full names from the layers
     attr_names = list(w_attr.keys())
     if convert_canonical_attr:

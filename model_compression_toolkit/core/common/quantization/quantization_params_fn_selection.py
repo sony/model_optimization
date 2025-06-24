@@ -19,38 +19,13 @@ from functools import partial
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
-    lut_kmeans_tensor, lut_kmeans_histogram
+    lut_kmeans_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
-    symmetric_selection_tensor, symmetric_selection_histogram
+    symmetric_selection_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import \
-    uniform_selection_histogram, uniform_selection_tensor
+    uniform_selection_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import \
-    power_of_two_selection_tensor, power_of_two_selection_histogram
-
-
-def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod) -> Callable:
-    """
-    Generate a function for finding activation quantization parameters.
-
-    Args:
-        activation_quantization_method: Which quantization method to use for activations.
-    Returns:
-        A function to find the quantization parameters.
-
-    """
-    if activation_quantization_method == QuantizationMethod.POWER_OF_TWO:
-        params_fn = power_of_two_selection_histogram
-    elif activation_quantization_method == QuantizationMethod.SYMMETRIC:
-        params_fn = symmetric_selection_histogram
-    elif activation_quantization_method == QuantizationMethod.UNIFORM:
-        params_fn = uniform_selection_histogram
-    elif activation_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
-        params_fn = lut_kmeans_histogram
-    else:
-        Logger.critical(
-            f"No parameter function found for the specified quantization method: {activation_quantization_method}")  # pragma: no cover
-    return params_fn
-
+    power_of_two_selection_tensor
 
 weights_quant_params_fns = {
     QuantizationMethod.POWER_OF_TWO: power_of_two_selection_tensor,

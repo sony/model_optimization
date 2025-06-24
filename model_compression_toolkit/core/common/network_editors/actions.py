@@ -22,10 +22,9 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.logger import Logger
 
 
-from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_activation_quantization_params_fn, get_weights_quantization_params_fn
+    get_weights_quantization_params_fn
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
     get_weights_quantization_fn
 
@@ -174,47 +173,6 @@ class ChangeFinalActivationQuantConfigAttr(BaseAction):
                 node.final_activation_quantization_cfg.set_quant_config_attr(parameter_name, parameter_value)
 
 
-class ChangeQuantizationParamFunction(BaseAction):
-    """
-    Class ChangeQuantizationParamFunction to change a node's weights/activations quantization params function.
-    """
-
-    def __init__(self,
-                 attr_name: str = None,
-                 activation_quantization_params_fn: Callable = None,
-                 weights_quantization_params_fn: Callable = None):
-        """
-        Init a ChangeQuantizationParamFunction object.
-
-        Args:
-            attr_name: The weights attribute's name to set the weights quantization params function for (if setting weights params).
-            activation_quantization_params_fn: a params function for a node's activations.
-            weights_quantization_params_fn: a params function for a node's weights.
-        """
-        self.activation_quantization_params_fn = activation_quantization_params_fn
-        self.weights_quantization_params_fn = weights_quantization_params_fn
-        self.attr_name = attr_name
-
-    def apply(self, node: BaseNode, graph):
-        """
-        Change the node's weights/activations quantization params function.
-
-        Args:
-            node: Node object to change its quantization params function.
-            graph: Graph to apply the action on.
-
-        Returns:
-            The node after its quantization params function has been modified.
-        """
-        for nqc in node.candidates_quantization_cfg:
-            if self.activation_quantization_params_fn is not None:
-                nqc.activation_quantization_cfg.set_activation_quantization_params_fn(
-                    self.activation_quantization_params_fn)
-            if self.weights_quantization_params_fn is not None:
-                attr_config = nqc.weights_quantization_cfg.get_attr_config(self.attr_name)
-                attr_config.override_weights_quantization_params_fn(self.weights_quantization_params_fn)
-
-
 class ChangeFinalActivationQuantizationMethod(BaseAction):
     """
     Class ChangeFinalActivationQuantizationMethod to change a node's weights/activations quantizer function.
@@ -243,13 +201,6 @@ class ChangeFinalActivationQuantizationMethod(BaseAction):
         """
 
         if self.activation_quantization_method is not None and node.final_activation_quantization_cfg is not None:
-
-            activation_quantization_params_fn = get_activation_quantization_params_fn(
-                self.activation_quantization_method)
-
-            node.final_activation_quantization_cfg.set_activation_quantization_params_fn(
-                activation_quantization_params_fn)
-
             node.final_activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
 
 
@@ -278,9 +229,6 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
         """
         if self.activation_quantization_method is not None:
             for qc in node.candidates_quantization_cfg:
-                activation_quantization_params_fn = get_activation_quantization_params_fn(
-                    self.activation_quantization_method)
-                qc.activation_quantization_cfg.set_activation_quantization_params_fn(activation_quantization_params_fn)
                 qc.activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
 
 

@@ -81,22 +81,14 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     """
     Attributes for configuring the quantization of the activations of a node.
     """
-    def __init__(self,
-                 op_cfg: OpQuantizationConfig,
-                 activation_quantization_params_fn: Callable):
+    def __init__(self, op_cfg: OpQuantizationConfig):
         """
 
         Args:
             op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
-            activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
         """
-
-        self.activation_quantization_params_fn = activation_quantization_params_fn
         self.activation_quantization_method = op_cfg.activation_quantization_method
         self.activation_n_bits = op_cfg.activation_n_bits
-        self.activation_quantization_params = {}
-        # TODO irena: computed by compute_activation_bias_correction. shouldnt really be here
-        self.activation_bias_correction_term = None
         if op_cfg.enable_activation_quantization and op_cfg.quantization_preserving:
             raise ValueError("An OpQuantizationConfig can't have both enable_activation_quantization and quantization_preserving enabled.")
         if op_cfg.enable_activation_quantization:
@@ -106,6 +98,10 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         else:
             self.quant_mode = ActivationQuantizationMode.NO_QUANT
         self.signedness = op_cfg.signedness
+
+        self.activation_quantization_params = {}
+        # TODO irena: computed by compute_activation_bias_correction. shouldnt really be here
+        self.activation_bias_correction_term = None
 
         # TODO irena remove along with set_qc. Keeping for eq and hash to work without set_qc being called
         self.activation_error_method = None
@@ -146,16 +142,6 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     def fln_quantization(self):
         return self.quant_mode == ActivationQuantizationMode.FLN_QUANT
 
-    def set_activation_quantization_params_fn(self, activation_quantization_params_fn:Callable):
-        """
-        Sets activation params function for the node.
-
-        Args:
-            activation_quantization_params_fn: Function for calculating activation params.
-
-        """
-        self.activation_quantization_params_fn = activation_quantization_params_fn
-
     def set_activation_quantization_param(self,
                                           activation_params: dict):
         """
@@ -182,8 +168,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         if not isinstance(other, NodeActivationQuantizationConfig):
             return False  # pragma: no cover
 
-        return self.activation_quantization_params_fn == other.activation_quantization_params_fn and \
-               self.activation_error_method == other.activation_error_method and \
+        return self.activation_error_method == other.activation_error_method and \
                self.activation_quantization_method == other.activation_quantization_method and \
                self.activation_n_bits == other.activation_n_bits and \
                self.quant_mode == other.quant_mode and \
@@ -197,8 +182,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
 
     def __hash__(self):
-        return hash((self.activation_quantization_params_fn,
-                     self.activation_error_method,
+        return hash((self.activation_error_method,
                      self.activation_quantization_method,
                      self.activation_n_bits,
                      self.quant_mode,

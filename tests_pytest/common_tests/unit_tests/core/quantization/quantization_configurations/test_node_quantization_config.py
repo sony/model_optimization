@@ -40,10 +40,10 @@ class TestActivationQParams:
 
     def test_quantization_mode(self):
         with pytest.raises(ValueError):
-            NodeActivationQuantizationConfig(self._get_op_config(True, True), lambda x: 0)
-        assert NodeActivationQuantizationConfig(self._get_op_config(False, False),
-                                                lambda x: 0).quant_mode == ActivationQuantizationMode.NO_QUANT
-        assert NodeActivationQuantizationConfig(self._get_op_config(True, False),
-                                                lambda x: 0).quant_mode == ActivationQuantizationMode.QUANT
-        assert NodeActivationQuantizationConfig(self._get_op_config(False, True),
-                                                lambda x: 0).quant_mode == ActivationQuantizationMode.PRESERVE_QUANT
+            NodeActivationQuantizationConfig(self._get_op_config(True, True))
+        assert (NodeActivationQuantizationConfig(self._get_op_config(False, False)).
+                quant_mode == ActivationQuantizationMode.NO_QUANT)
+        assert (NodeActivationQuantizationConfig(self._get_op_config(True, False)).
+                quant_mode == ActivationQuantizationMode.QUANT)
+        assert (NodeActivationQuantizationConfig(self._get_op_config(False, True)).
+                quant_mode == ActivationQuantizationMode.PRESERVE_QUANT)
