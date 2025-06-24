@@ -15,14 +15,13 @@
 import abc
 import uuid
 
-from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_PREFIX, \
     VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
-from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTES
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
+from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTE
 
 
 class VirtualNode(BaseNode, abc.ABC):
@@ -128,28 +127,23 @@ class VirtualActivationWeightsNode(VirtualNode):
 
     def __init__(self,
                  act_node: BaseNode,
-                 weights_node: BaseNode,
-                 fw_info: FrameworkInfo):
+                 weights_node: BaseNode):
         """
         Init a VirtualActivationWeightsNode object.
 
         Args:
             act_node: The original activation node.
             weights_node: The original weights node.
-            fw_info: A FrameworkInfo object with framework specific information.
         """
         # Validate weights node
-        kernel_attrs = fw_info.get_kernel_op_attributes(weights_node.type)
-        assert len(kernel_attrs) == 1 and kernel_attrs[0] is not None, f'Expected exactly one kernel attr, {kernel_attrs}'
-        kernel_attr = kernel_attrs[0]
         conf_weights = [attr for attr in weights_node.weights if weights_node.is_configurable_weight(attr)]
-        if len(conf_weights) > 1 or len(conf_weights) == 1 and not weights_node.is_configurable_weight(kernel_attr):
+        if len(conf_weights) > 1 or len(conf_weights) == 1 and not weights_node.is_configurable_weight(weights_node.kernel_attr):
             raise NotImplementedError(f'Only kernel weight can be configurable. Got configurable {conf_weights}.')
 
         weights = weights_node.weights.copy()
         act_node_w_rename = {}
         if act_node.weights:
-            if fw_info.get_kernel_op_attributes(act_node) != DEFAULT_KERNEL_ATTRIBUTES:
+            if act_node.kernel_attr != DEFAULT_KERNEL_ATTRIBUTE:
                 raise NotImplementedError(f'Node {act_node} with kernel cannot be used as activation for '
                                           f'VirtualActivationWeightsNode.')
             if act_node.has_any_configurable_weight():
@@ -157,7 +151,7 @@ class VirtualActivationWeightsNode(VirtualNode):
                                           'VirtualActivationWeightsNode.')
             # combine weights from activation and weights
             for w_id, w in act_node.weights.items():
-                if w_id not in weights and not (isinstance(w_id, str) and kernel_attr in w_id):
+                if w_id not in weights and not (isinstance(w_id, str) and weights_node.kernel_attr in w_id):
                     weights[w_id] = w
                     continue
                 # if same identifier is used as in weight nodes (or contains the kernel substring), generate a new
@@ -185,7 +179,7 @@ class VirtualActivationWeightsNode(VirtualNode):
         self.original_weights_node = weights_node
 
         v_candidates = []
-        weights_candidates_quantization_cfg = weights_node.get_unique_weights_candidates(kernel_attr)
+        weights_candidates_quantization_cfg = weights_node.get_unique_weights_candidates(weights_node.kernel_attr)
         for c_a in act_node.candidates_quantization_cfg:
             for c_w in weights_candidates_quantization_cfg:
                 composed_candidate = CandidateNodeQuantizationConfig(activation_quantization_cfg=c_a.activation_quantization_cfg,
@@ -203,7 +197,7 @@ class VirtualActivationWeightsNode(VirtualNode):
                 v_candidates.append(composed_candidate)
 
         # sorting the candidates by weights number of bits first and then by activation number of bits (reversed order)
-        v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+        v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(weights_node.kernel_attr).weights_n_bits,
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
         self.candidates_quantization_cfg = v_candidates

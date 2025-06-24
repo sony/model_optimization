@@ -125,18 +125,16 @@ class FrameworkImplementation(ABC):
                       graph: Graph,
                       mode: ModelBuilderMode,
                       append2output: List[Any],
-                      fw_info: FrameworkInfo,
                       return_float_outputs: bool = False) -> Tuple:
         """
         Build a framework model from a graph.
-        The mode determines how the model should be build. append2output is a list of Nodes
+        The mode determines how the model should be built. append2output is a list of Nodes
         to set as the model outputs.
 
         Args:
             graph: Graph to build the model from it.
             mode: Mode for how to build the model.
             append2output: List of Nodes to set as the model's outputs.
-            fw_info: FrameworkInfo object with information about the specific framework's model
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
 
         Returns:
@@ -170,15 +168,13 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def shift_negative_correction(self,
                                   graph: Graph,
-                                  core_config: CoreConfig,
-                                  fw_info: FrameworkInfo) -> Graph:
+                                  core_config: CoreConfig) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
 
         Args:
             graph: Graph to apply SNC on.
             core_config: Quantization configuration.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             Graph after SNC.
@@ -189,15 +185,13 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def compute_activation_bias_correction(self,
                                            graph: Graph,
-                                           quant_config: QuantizationConfig,
-                                           fw_info: FrameworkInfo) -> Graph:
+                                           quant_config: QuantizationConfig) -> Graph:
         """
         Compute activation bias correction on a graph.
 
         Args:
             graph: Graph to apply activation bias correction on.
             quant_config: QuantizationConfig of how the model should be quantized.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             Graph after activation bias correction computing.
@@ -207,30 +201,28 @@ class FrameworkImplementation(ABC):
 
     @abstractmethod
     def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
-                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
+                                               quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used for channel equalization.
 
         Args:
             quant_config: QuantizationConfig to determine which substitutions to return.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
         raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
-                             f'framework\'s get_substitutions_channel_equalization method.')  # pragma: no cover
+                                  f'framework\'s get_substitutions_channel_equalization method.')  # pragma: no cover
 
     @abstractmethod
-    def get_substitutions_prepare_graph(self, fw_info: FrameworkInfo = None) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used to prepare the graph.
 
         """
         raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
-                             f'framework\'s get_substitutions_prepare_graph method.')  # pragma: no cover
+                                  f'framework\'s get_substitutions_prepare_graph method.')  # pragma: no cover
 
     @abstractmethod
     def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) -> \
@@ -328,14 +320,12 @@ class FrameworkImplementation(ABC):
                              f'method.')  # pragma: no cover
 
     def get_node_prior_info(self, node: BaseNode,
-                            fw_info: FrameworkInfo,
                             graph: Graph) -> NodePriorInfo:
         """
         Get a NodePriorInfo object for a node.
 
         Args:
             node: Node to get its prior info.
-            fw_info: Framework specific information needed to create the prior info of the node.
             graph: Graph to check the next node type.
 
         Returns:
@@ -343,7 +333,7 @@ class FrameworkImplementation(ABC):
         """
 
         raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
-                             f'framework\'s get_node_prior_info method.')  # pragma: no cover
+                                  f'framework\'s get_node_prior_info method.')  # pragma: no cover
 
     def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
         """
@@ -394,20 +384,18 @@ class FrameworkImplementation(ABC):
 
     @abstractmethod
     def get_node_mac_operations(self,
-                                node: BaseNode,
-                                fw_info: FrameworkInfo) -> float:
+                                node: BaseNode) -> float:
         """
         Gets the MAC operation count for a given operation.
 
         Args:
             node: A graph node that wraps the operation for which the MAC count is computed.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns: The MAC count of the operation
         """
 
         raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
-                             f'framework\'s get_node_mac_operations method.')  # pragma: no cover
+                                  f'framework\'s get_node_mac_operations method.')  # pragma: no cover
 
     @abstractmethod
     def apply_second_moment_correction(self,

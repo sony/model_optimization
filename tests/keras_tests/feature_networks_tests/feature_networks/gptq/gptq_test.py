@@ -220,7 +220,7 @@ class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
         # check relevant weights were updated
         weights_diff = []
         for l_q, l_f in zip(quantized_model.layers, quantized_gptq_model.layers):
-            if self.get_fw_info().get_kernel_op_attributes(type(l_q))[0] is not None:
+            if self.get_fw_info().get_kernel_op_attribute(type(l_q)) is not None:
                 for w_q, w_f in zip(l_q.weights, l_f.weights):
                     weights_diff.append(np.any(w_q.numpy() != w_f.numpy()))
 

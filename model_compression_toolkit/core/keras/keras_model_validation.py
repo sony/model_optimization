@@ -1,6 +1,6 @@
 from tensorflow.keras.models import Model
 
-from model_compression_toolkit.core import FrameworkInfo
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from model_compression_toolkit.core.common.framework_info import ChannelAxis
 from model_compression_toolkit.core.common.model_validation import ModelValidation
 from model_compression_toolkit.core.keras.constants import CHANNELS_FORMAT, CHANNELS_FORMAT_LAST, CHANNELS_FORMAT_FIRST
@@ -11,17 +11,15 @@ class KerasModelValidation(ModelValidation):
     Class to define validation methods in order to validate the received Keras model to quantize.
     """
 
-    def __init__(self, model: Model, fw_info: FrameworkInfo):
+    def __init__(self, model: Model):
         """
         Initialize a KerasModelValidation object.
 
         Args:
             model: Keras model to check its validity.
-            fw_info: Information about the framework of the model (Keras).
         """
 
-        super(KerasModelValidation, self).__init__(model=model,
-                                                   fw_info=fw_info)
+        super(KerasModelValidation, self).__init__(model=model)
 
     def validate_output_channel_consistency(self):
         """
@@ -30,9 +28,10 @@ class KerasModelValidation(ModelValidation):
         If the model has layers with different output channels index, an exception is thrown.
 
         """
+        fw_info = get_fw_info()
         for layer in self.model.layers:
             data_format = layer.get_config().get(CHANNELS_FORMAT)
             if data_format is not None:
-                assert (data_format == CHANNELS_FORMAT_LAST and self.fw_info.out_channel_axis_mapping.get(layer) == ChannelAxis.NHWC.value
-                        or data_format == CHANNELS_FORMAT_FIRST and self.fw_info.out_channel_axis_mapping.get(layer) == ChannelAxis.NCHW.value), \
+                assert (data_format == CHANNELS_FORMAT_LAST and fw_info.get_out_channel_axis(layer) == ChannelAxis.NHWC.value
+                        or data_format == CHANNELS_FORMAT_FIRST and fw_info.get_out_channel_axis(layer) == ChannelAxis.NCHW.value), \
                     f'Model can not have layers with different data formats.'

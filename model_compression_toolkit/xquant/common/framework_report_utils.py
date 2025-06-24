@@ -34,7 +34,6 @@ class FrameworkReportUtils:
     """
 
     def __init__(self,
-                 fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  similarity_calculator: SimilarityCalculator,
                  dataset_utils: DatasetUtils,
@@ -45,7 +44,6 @@ class FrameworkReportUtils:
         Initializes the FrameworkReportUtils class with various utility components required for generating the report.
 
         Args:
-            fw_info (FrameworkInfo): Information about the framework being used.
             fw_impl (FrameworkImplementation): The implemented functions of the framework.
             similarity_calculator (SimilarityCalculator): A utility for calculating similarity metrics.
             dataset_utils (DatasetUtils): Utilities for handling datasets.
@@ -53,7 +51,6 @@ class FrameworkReportUtils:
             tb_utils (TensorboardUtils): Utilities for TensorBoard operations.
             get_metadata_fn (Callable): Function to retrieve the metadata from the quantized model.
         """
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
         self.similarity_calculator = similarity_calculator
         self.dataset_utils = dataset_utils

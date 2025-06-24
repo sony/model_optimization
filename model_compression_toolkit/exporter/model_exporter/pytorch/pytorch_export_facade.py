@@ -27,6 +27,7 @@ DEFAULT_ONNX_OPSET_VERSION = 15
 
 if FOUND_TORCH:
     import torch.nn
+    from model_compression_toolkit.core.pytorch.default_framework_info import set_pytorch_info
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import FakelyQuantONNXPyTorchExporter
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import FakelyQuantTorchScriptPyTorchExporter
     from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
@@ -41,6 +42,7 @@ if FOUND_TORCH:
         PytorchExportSerializationFormat.ONNX: [QuantizationFormat.FAKELY_QUANT, QuantizationFormat.MCTQ]
     }
 
+    @set_pytorch_info
     def pytorch_export_model(model: torch.nn.Module,
                              save_model_path: str,
                              repr_dataset: Callable,

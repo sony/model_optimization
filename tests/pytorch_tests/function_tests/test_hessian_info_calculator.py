@@ -20,7 +20,7 @@ from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
 import numpy as np
 
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
@@ -221,7 +221,7 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
     def _setup(self):
         model_float = self.model()
         pytorch_impl = PytorchImplementation()
-        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(),
                                            self.representative_data_gen, generate_pytorch_tpc,
                                            attach2fw=AttachTpcToPytorch())
 

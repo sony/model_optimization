@@ -14,10 +14,11 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple, List, Type, Union
+from typing import Dict, Any, Tuple, List, Type, Union, NamedTuple
 
 import numpy as np
 
+from model_compression_toolkit.core.common.framework_info import get_fw_info, ChannelAxisMapping
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
@@ -34,11 +35,21 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 WeightAttrT = Union[str, int]
 
 
+class NodeFrameworkInfo(NamedTuple):
+    """
+    Node's specific framework information.
+    """
+    channel_axis: ChannelAxisMapping
+    out_channel_axis: int
+    minmax: Tuple[float, float]
+    kernel_attr: str
+    is_kernel_op: bool
+
+
 class BaseNode:
     """
     Class to represent a node in a graph that represents the model.
     """
-
     def __init__(self,
                  name: str,
                  framework_attr: Dict[str, Any],
@@ -88,6 +99,78 @@ class BaseNode:
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
+        self.node_fw_info = self._get_fw_node_attrs(layer_class, framework_attr)
+
+    def _get_fw_node_attrs(self, node_type, framework_attr):
+        fw_info = get_fw_info()
+        return None if fw_info is None else NodeFrameworkInfo(
+            fw_info.get_kernel_channels(node_type),
+            fw_info.get_out_channel_axis(node_type),
+            fw_info.get_layer_min_max(node_type, framework_attr),
+            fw_info.get_kernel_op_attribute(node_type),
+            fw_info.is_kernel_op(node_type)
+        )
+
+    def _assert_fw_info_exists(self):
+        """
+        Verify NodeFrameworkInfo was initialized.
+        """
+        assert self.node_fw_info is not None, f"NodeFrameworkInfo not initialized for node {self.name}"  # pragma: no cover
+
+    @property
+    def channel_axis(self) -> ChannelAxisMapping:
+        """
+        Extract channels axis from node's NodeFrameworkInfo.
+
+        Returns:
+            Channels axis named tuple.
+        """
+        self._assert_fw_info_exists()
+        return self.node_fw_info.channel_axis
+
+    @property
+    def out_channel_axis(self) -> int:
+        """
+        Extract output channel axis from node's NodeFrameworkInfo.
+
+        Returns:
+            Output channel axis.
+        """
+        self._assert_fw_info_exists()
+        return self.node_fw_info.out_channel_axis
+
+    @property
+    def minmax(self) -> Tuple[float, float]:
+        """
+        Extract expected min-max activation values from node's NodeFrameworkInfo.
+
+        Returns:
+            A tuple of min-max values.
+        """
+        self._assert_fw_info_exists()
+        return self.node_fw_info.minmax
+
+    @property
+    def kernel_attr(self) -> str:
+        """
+        Extract kernel name from node's NodeFrameworkInfo.
+
+        Returns:
+            Kernel name.
+        """
+        self._assert_fw_info_exists()
+        return self.node_fw_info.kernel_attr
+
+    @property
+    def is_kernel_op(self) -> bool:
+        """
+        Check if kernel exists for the node.
+
+        Returns:
+            Whether the node has a kernel or not.
+        """
+        self._assert_fw_info_exists()
+        return self.node_fw_info.is_kernel_op
 
     @property
     def type(self):
@@ -298,13 +381,10 @@ class BaseNode:
 
         return input_tensors
 
-    def get_num_parameters(self, fw_info) -> Tuple[int,int]:
+    def get_num_parameters(self) -> Tuple[int,int]:
         """
         Compute the number of parameters the node holds.
         It returns a tuple: Number of quantized parameters, number of float parameters.
-
-        Args:
-            fw_info: Framework info to decide which attributes should be quantized.
 
         Returns:
             A tuple of (Number of quantized parameters, number of float parameters).
@@ -314,11 +394,10 @@ class BaseNode:
 
         q_node_num_params = 0
 
-        for attr in fw_info.get_kernel_op_attributes(self.type):
-            if attr is not None:
-                w = self.get_weights_by_keys(attr)
-                if w is not None:
-                    q_node_num_params += w.flatten().shape[0]
+        if self.kernel_attr is not None:
+            w = self.get_weights_by_keys(self.kernel_attr)
+            if w is not None:
+                q_node_num_params += w.flatten().shape[0]
 
         f_node_num_params = total_node_params - q_node_num_params
 
@@ -326,22 +405,19 @@ class BaseNode:
         assert int(f_node_num_params) == f_node_num_params
         return int(q_node_num_params), int(f_node_num_params)
 
-    def get_memory_bytes(self, fw_info) -> float:
+    def get_memory_bytes(self) -> float:
         """
         Compute the number of bytes the node's memory requires.
-
-        Args:
-            fw_info: Framework info to decide which attributes should be quantized.
 
         Returns: Number of bytes the node's memory requires.
 
         """
         # TODO: this method is used for tensorboard only. If we want to enable logging of other attributes memory
         #  then it needs to be modified. But, it might be better to remove this method from the BaseNode completely.
-        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        kernel_attr = self.kernel_attr
         if kernel_attr is None:
             return 0
-        q_params, f_params = self.get_num_parameters(fw_info)
+        q_params, f_params = self.get_num_parameters()
         if self.final_weights_quantization_cfg is None:  # float coefficients
             memory = (f_params+q_params) * FP32_BYTES_PER_PARAMETER
         else:
@@ -351,15 +427,12 @@ class BaseNode:
 
         return memory
 
-    def get_unified_weights_candidates_dict(self, fw_info) -> Dict[str, Any]:
+    def get_unified_weights_candidates_dict(self) -> Dict[str, Any]:
         """
         In Mixed-Precision, a node's kernel can have multiple candidates for weights quantization configuration.
         In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
         to create a single dictionary from all candidates.
-        This method is aimed to build such an unified dictionary for a node.
-
-        Args:
-            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+        This method is aimed to build such a unified dictionary for a node.
 
         Returns: A dictionary containing information from node's weight quantization configuration candidates.
 
@@ -369,7 +442,7 @@ class BaseNode:
         # We assume that only the kernel attribute have more than one candidate, since we only allow to
         # quantize the kernel using mixed precision
         # TODO: need to modify if we want to present a unified config for other attributes
-        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        kernel_attr = self.kernel_attr
         if kernel_attr is None:
             # This node doesn't have a kernel attribute
             return {}
@@ -437,20 +510,13 @@ class BaseNode:
         candidates = self.get_all_weights_attr_candidates(attr)
         return all(candidate == candidates[0] for candidate in candidates[1:])
 
-    def has_kernel_weight_to_quantize(self, fw_info):
+    def has_kernel_weight_to_quantize(self):
         """
-        Checks whether the node has kernel attribute that need to be quantized according to the framework info.
+        Checks whether the node has kernel attribute that need to be quantized according to the node's framework info.
 
-        Args:
-            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-
-        Returns: Whether the node has weights that need to be quantized.
+        Returns: Whether the node's kernel need to be quantized.
         """
-        attrs = fw_info.get_kernel_op_attributes(self.type)
-        for attr in attrs:
-            if attr and self.get_weights_by_keys(attr) is not None:
-                return True
-        return False
+        return self.kernel_attr and self.get_weights_by_keys(self.kernel_attr) is not None
 
     def has_any_weight_attr_to_quantize(self) -> bool:
         """
@@ -724,7 +790,7 @@ class BaseNode:
             Logger.critical(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
 
-    def sort_node_candidates(self, fw_info):
+    def sort_node_candidates(self):
         """
         Sorts the node candidates.
         We assume that the candidates are ordered in the following way (for mixed precision purposes):
@@ -733,16 +799,11 @@ class BaseNode:
             - If the node doesn't have a kernel we only consider the candidate activation number of bits to sort
             the candidates in descending order.
         The operation is done inplace.
-
-        Args:
-            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-
         """
         if self.candidates_quantization_cfg is not None:
-            kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
-            if kernel_attr is not None:
+            if self.kernel_attr is not None:
                 self.candidates_quantization_cfg.sort(
-                    key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+                    key=lambda c: (c.weights_quantization_cfg.get_attr_config(self.kernel_attr).weights_n_bits,
                                    c.activation_quantization_cfg.activation_n_bits), reverse=True)
             else:
                 self.candidates_quantization_cfg.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,

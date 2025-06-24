@@ -23,6 +23,8 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
@@ -36,7 +38,6 @@ from model_compression_toolkit.core.common.quantization.quantization_config impo
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
@@ -77,6 +78,9 @@ def get_tpc(quant_method, per_channel):
 
 
 class TestParamSelectionWithHMSE(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
+
     def _setup_with_args(self, quant_method, per_channel, running_gptq=True, tpc_fn=get_tpc, model_gen_fn=model_gen):
         self.qc = QuantizationConfig(weights_error_method=mct.core.QuantizationErrorMethod.HMSE,
                                      custom_tpc_opset_to_layer={
@@ -90,11 +94,10 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
         self.float_model = model_gen_fn()
         self.keras_impl = KerasImplementation()
-        self.fw_info = DEFAULT_KERAS_INFO
         self.quant_method = quant_method
         self.per_channel = per_channel
 
-        self.graph = prepare_graph_with_configs(self.float_model, self.keras_impl, self.fw_info,
+        self.graph = prepare_graph_with_configs(self.float_model, self.keras_impl,
                                                 representative_dataset,
                                                 lambda name, _tp: tpc_fn(quant_method, per_channel),
                                                 qc=self.qc,
@@ -107,7 +110,6 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
         mi = ModelCollector(self.graph,
                             fw_impl=self.keras_impl,
-                            fw_info=self.fw_info,
                             qc=self.qc)
 
         for i in range(10):

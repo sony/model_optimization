@@ -97,16 +97,14 @@ class BaseInputScaling(common.BaseSubstitution):
             scale_factor = threshold_float / threshold
             graph.user_info.set_input_scale(1 / scale_factor)
 
-            kernel_attr = graph.fw_info.get_kernel_op_attributes(linear_layer.type)[0]
-
-            w1_fixed = linear_layer.get_weights_by_keys(kernel_attr) * scale_factor
-            linear_layer.set_weights_by_keys(kernel_attr, w1_fixed)
+            w1_fixed = linear_layer.get_weights_by_keys(linear_layer.kernel_attr) * scale_factor
+            linear_layer.set_weights_by_keys(linear_layer.kernel_attr, w1_fixed)
 
             graph.scale_stats_collector(input_layer, 1 / scale_factor)
 
             # After scaling weights may have different thresholds so it needs to be recalculated
             for nqc in linear_layer.candidates_quantization_cfg:
-                nqc.weights_quantization_cfg.get_attr_config(kernel_attr).calculate_and_set_weights_params(w1_fixed,
+                nqc.weights_quantization_cfg.get_attr_config(linear_layer.kernel_attr).calculate_and_set_weights_params(w1_fixed,
                                                                                                            nqc.weights_quantization_cfg.min_threshold)
 
         return graph

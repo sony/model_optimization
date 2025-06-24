@@ -21,7 +21,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.substitutions.scale_equalization import fixed_second_moment_after_relu, \
     fixed_mean_after_relu
 from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
@@ -131,9 +131,9 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
             beta = np.mean(float_model_layer2_weight / quantized_model_layer2_weight)
             scale_factor = np.mean(scale_factor)
         else:
-            first_layer_chn_dim = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(
+            first_layer_chn_dim = KerasInfo.get_kernel_channels(
                 type(quantized_model.layers[q_first_linear_op_index].layer))[0]
-            second_layer_chn_dim = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(
+            second_layer_chn_dim = KerasInfo.get_kernel_channels(
                 type(quantized_model.layers[q_second_linear_op_index].layer))[1]
 
             first_layer_axes = tuple(np.delete(np.arange(quantized_model_layer1_weight.numpy().ndim),

@@ -44,7 +44,7 @@ keras = tf.keras
 layers = keras.layers
 
 
-def prepare_graph_for_first_network_editor(in_model, representative_data_gen, core_config, fw_info, fw_impl,
+def prepare_graph_for_first_network_editor(in_model, representative_data_gen, core_config, fw_impl,
                                            tpc, target_resource_utilization=None, tb_w=None):
 
     if target_resource_utilization is not None:
@@ -56,7 +56,6 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
-                                                 fw_info,
                                                  fw_impl,
                                                  fqc,
                                                  core_config.bit_width_config,
@@ -69,7 +68,6 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
     ######################################
     mi = ModelCollector(transformed_graph,
                         fw_impl,
-                        fw_info,
                         core_config.quantization_config)
 
     if tb_w is not None:
@@ -85,17 +83,16 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
     # Notice that not all actions affect at this stage (for example, actions that edit the final configuration as
     # there are no final configurations at this stage of the optimization). For this reason we edit the graph
     # again at the end of the optimization process.
-    edit_network_graph(transformed_graph, fw_info, core_config.debug_config.network_editor)
+    edit_network_graph(transformed_graph, core_config.debug_config.network_editor)
 
     return transformed_graph
 
 
-def prepare_graph_for_second_network_editor(in_model, representative_data_gen, core_config, fw_info, fw_impl,
+def prepare_graph_for_second_network_editor(in_model, representative_data_gen, core_config, fw_impl,
                                             tpc, target_resource_utilization=None, tb_w=None):
     transformed_graph = prepare_graph_for_first_network_editor(in_model=in_model,
                                                                representative_data_gen=representative_data_gen,
                                                                core_config=core_config,
-                                                               fw_info=fw_info,
                                                                fw_impl=fw_impl,
                                                                tpc=tpc,
                                                                target_resource_utilization=target_resource_utilization,
@@ -125,8 +122,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     ######################################
     if core_config.quantization_config.shift_negative_activation_correction:
         transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
-                                                              core_config,
-                                                              fw_info)
+                                                              core_config)
         if tb_w is not None:
             tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')
             tb_w.add_all_statistics(transformed_graph, 'after_shift_negative_correction')
@@ -138,7 +134,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     ######################################
     # Statistics Correction
     ######################################
-    tg_with_bias = statistics_correction_runner(transformed_graph, core_config, fw_info, fw_impl, tb_w)
+    tg_with_bias = statistics_correction_runner(transformed_graph, core_config, fw_impl, tb_w)
 
     for n in tg_with_bias.nodes:
         assert n.final_weights_quantization_cfg is None
@@ -151,7 +147,6 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg_with_bias,
-                                                 fw_info,
                                                  fw_impl,
                                                  target_resource_utilization,
                                                  core_config.mixed_precision_config,
@@ -168,7 +163,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
 
     # Edit the graph again after finalizing the configurations.
     # This is since some actions regard the final configuration and should be edited.
-    edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
+    edit_network_graph(tg, core_config.debug_config.network_editor)
 
     return tg
 
@@ -200,7 +195,6 @@ class BaseChangeQuantConfigAttrTest(BaseKerasFeatureNetworkTest):
                                                 representative_data_gen=
                                                 self.representative_data_gen_experimental,
                                                 core_config=core_config,
-                                                fw_info=self.get_fw_info(),
                                                 fw_impl=self.get_fw_impl(),
                                                 target_resource_utilization=self.get_resource_utilization(),
                                                 tpc=self.get_tpc())
@@ -288,7 +282,6 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
                                                 representative_data_gen=
                                                 self.representative_data_gen_experimental,
                                                 core_config=core_config,
-                                                fw_info=self.get_fw_info(),
                                                 fw_impl=self.get_fw_impl(),
                                                 target_resource_utilization=self.get_resource_utilization(),
                                                 tpc=self.get_tpc())

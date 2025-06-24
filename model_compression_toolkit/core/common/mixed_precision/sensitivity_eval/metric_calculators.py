@@ -15,7 +15,7 @@
 import numpy as np
 from typing import runtime_checkable, Protocol, Callable, Any, List, Tuple
 
-from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig, MpDistanceWeighting
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, MpDistanceWeighting
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
@@ -62,15 +62,12 @@ class DistanceMetricCalculator(MetricCalculator):
                  graph: Graph,
                  mp_config: MixedPrecisionQuantizationConfig,
                  representative_data_gen: Callable,
-                 fw_info: FrameworkInfo,
                  fw_impl: Any,
                  hessian_info_service: HessianInfoService = None):
         """
         Args:
             graph: Graph to search for its MP configuration.
             mp_config: MP Quantization configuration for how the graph should be quantized.
-            fw_info: FrameworkInfo object about the specific framework
-                (e.g., attributes of different layers' weights to quantize).
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             representative_data_gen: Dataset used for getting batches for inference.
             hessian_info_service: HessianInfoService to fetch Hessian approximation information.
@@ -78,14 +75,13 @@ class DistanceMetricCalculator(MetricCalculator):
         self.graph = graph
         self.mp_config = mp_config
         self.representative_data_gen = representative_data_gen
-        self.fw_info = fw_info
         self.fw_impl = fw_impl
 
         if self.mp_config.distance_weighting_method == MpDistanceWeighting.HESSIAN:
             assert hessian_info_service is not None, ('Expected HessianInfoService object to be passed with Hessian '
                                                       'distance weighting')
 
-        self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
+        self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
 
         # Get interest points and output points set for distance measurement and set other helper datasets
         # We define a separate set of output nodes of the model for the purpose of sensitivity computation.
@@ -396,8 +392,8 @@ class DistanceMetricCalculator(MetricCalculator):
         """
 
         return [n.node for n in graph.get_outputs()
-                if (graph.fw_info.is_kernel_op(n.node.type) and
-                    n.node.is_weights_quantization_enabled(graph.fw_info.get_kernel_op_attributes(n.node.type)[0])) or
+                if (n.node.is_kernel_op and
+                    n.node.is_weights_quantization_enabled(n.node.kernel_attr)) or
                 n.node.is_activation_quantization_enabled()]
 
     @staticmethod

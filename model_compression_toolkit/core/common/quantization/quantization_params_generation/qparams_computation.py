@@ -20,6 +20,7 @@ from typing import List, Callable, Generator
 from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
@@ -44,11 +45,8 @@ def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph) -> List[Ba
     """
     hmse_nodes = []
     for n in nodes_list:
-        kernel_attr_name = graph.fw_info.get_kernel_op_attributes(n.type)
-        kernel_attr_name = None if kernel_attr_name is None or len(kernel_attr_name) == 0 else kernel_attr_name[0]
-
-        if kernel_attr_name is not None and n.is_weights_quantization_enabled(kernel_attr_name) and \
-            all([c.weights_quantization_cfg.get_attr_config(kernel_attr_name).weights_error_method ==
+        if n.kernel_attr is not None and n.is_weights_quantization_enabled(n.kernel_attr) and \
+            all([c.weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_error_method ==
                  QuantizationErrorMethod.HMSE for c in n.candidates_quantization_cfg]):
             hmse_nodes.append(n)
 
@@ -114,11 +112,7 @@ def calculate_quantization_params(graph: Graph,
                     if attr_cfg.weights_error_method == QuantizationErrorMethod.HMSE:
                         # Although we collected nodes for HMSE before running the loop, we keep this verification to
                         # notify the user in case of HMSE configured for node that is not compatible for this method
-                        kernel_attr_name = graph.fw_info.get_kernel_op_attributes(n.type)
-                        if len(kernel_attr_name) > 0:
-                            kernel_attr_name = kernel_attr_name[0]
-
-                        if kernel_attr_name is None or kernel_attr_name not in attr:
+                        if n.kernel_attr is None or n.kernel_attr not in attr:
                             Logger.warning(f"The HMSE error method for parameters selection is only supported for "
                                            f"kernel weights attributes. Running parameters selection for attribute "
                                            f"'{attr}' in node '{n.name}' with the default MSE error method instead.")
@@ -132,7 +126,7 @@ def calculate_quantization_params(graph: Graph,
                                                                                node=n,
                                                                                hessian_info_service=hessian_info_service,
                                                                                num_hessian_samples=num_hessian_samples)
-                    attr_cfg.weights_channels_axis = (output_channels_axis, attr_cfg.weights_channels_axis[1])
+                    attr_cfg.weights_channels_axis = ChannelAxisMapping(output_channels_axis, attr_cfg.weights_channels_axis.input)
                     attr_cfg.set_weights_quantization_param(weights_params)
 
             if n.is_activation_quantization_enabled() or n.is_fln_quantization():

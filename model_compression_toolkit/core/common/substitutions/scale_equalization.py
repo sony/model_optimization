@@ -20,8 +20,6 @@ import scipy
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 
 
@@ -77,7 +75,6 @@ def fixed_second_moment_after_relu(mu: np.ndarray,
 
 def scale_reshaping(scale: np.ndarray,
                     op2d: common.BaseNode,
-                    kernel_channel_mapping: DefaultDict,
                     kernel_str: str,
                     in_channels: bool = True) -> np.ndarray:
     """
@@ -89,7 +86,6 @@ def scale_reshaping(scale: np.ndarray,
     Args:
         scale: Scale factor to scale the kernel channels by.
         op2d: Node to scale its kernel.
-        kernel_channel_mapping: Mapping from a layer to a tuple of indices of its output/input kernel channels.
         kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
         in_channels: Kernel's index of input channels.
 
@@ -99,12 +95,11 @@ def scale_reshaping(scale: np.ndarray,
 
     op_ndims = op2d.get_weights_by_keys(kernel_str).ndim
     reshape_target = np.ones(op_ndims, dtype=np.int32)
-    reshape_target[kernel_channel_mapping.get(op2d.type)[int(in_channels)]] = -1
+    reshape_target[op2d.channel_axis.input if in_channels else op2d.channel_axis.output] = -1
     return np.reshape(scale, reshape_target)
 
 
-def update_linear_nodes(fw_info: FrameworkInfo,
-                        first_op2d_node: BaseNode,
+def update_linear_nodes(first_op2d_node: BaseNode,
                         second_op2d_node: BaseNode,
                         scale_factor: np.ndarray,
                         kernel_str: str,
@@ -116,7 +111,6 @@ def update_linear_nodes(fw_info: FrameworkInfo,
     The scale factor contain a scale value per-channel.
 
     Args:
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         first_op2d_node: Node to multiply its kernel by the scale factor.
         second_op2d_node: Node to divide its kernel by the scale factor.
@@ -125,15 +119,12 @@ def update_linear_nodes(fw_info: FrameworkInfo,
         kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
 
     """
-
     w2_fixed = second_op2d_node.get_weights_by_keys(kernel_str) / scale_reshaping(scale_factor,
                                                                                   second_op2d_node,
-                                                                                  fw_info.kernel_channels_mapping,
                                                                                   kernel_str)
 
     w1_fixed = first_op2d_node.get_weights_by_keys(kernel_str) * scale_reshaping(scale_factor,
                                                                                  first_op2d_node,
-                                                                                 fw_info.kernel_channels_mapping,
                                                                                  kernel_str,
                                                                                  in_channels=False)
 
@@ -168,8 +159,7 @@ def calculate_scale_correction(first_op2d_node: BaseNode) -> tuple:
     return scale_factor
 
 
-def scale_equalization_lnl(fw_info: FrameworkInfo,
-                           first_op2d_node: BaseNode,
+def scale_equalization_lnl(first_op2d_node: BaseNode,
                            second_op2d_node: BaseNode,
                            kernel_str: str,
                            bias_str: str):
@@ -179,7 +169,6 @@ def scale_equalization_lnl(fw_info: FrameworkInfo,
     follows the activation node to get the same expected output without the scaling.
 
     Args:
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         first_op2d_node: Node to multiply its kernel by the scale factor.
         second_op2d_node: Node to divide its kernel by the scale factor.
@@ -189,8 +178,7 @@ def scale_equalization_lnl(fw_info: FrameworkInfo,
     """
     scale_factor = calculate_scale_correction(first_op2d_node)
 
-    update_linear_nodes(fw_info,
-                        first_op2d_node,
+    update_linear_nodes(first_op2d_node,
                         second_op2d_node,
                         scale_factor,
                         kernel_str,
@@ -206,7 +194,6 @@ class BaseScaleEqualization(common.BaseSubstitution):
 
     def __init__(self,
                  quant_config: QuantizationConfig,
-                 fw_info: FrameworkInfo,
                  matcher_instance,
                  kernel_str: str,
                  bias_str: str):
@@ -214,13 +201,11 @@ class BaseScaleEqualization(common.BaseSubstitution):
         Initialize a ScaleEqualization object.
         Args:
             quant_config: QuantizationConfig containing parameters of how the model should be quantized.
-            fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
             groups of layers by how they should be quantized, etc.)
             matcher_instance: Per substitution matcher instance of type WalkMatcher
         """
 
         self.quant_config = quant_config
-        self.fw_info = fw_info
         self.kernel_str = kernel_str
         self.bias_str = bias_str
         super().__init__(matcher_instance=matcher_instance)
@@ -243,8 +228,7 @@ class BaseScaleEqualization(common.BaseSubstitution):
         act_node = nodes_list[1]
         second_op2d_node = nodes_list[-1]
         if first_op2d_node.prior_info.std_output is not None and act_node.is_activation_quantization_enabled():
-            scale_equalization_lnl(self.fw_info,
-                                   first_op2d_node,
+            scale_equalization_lnl(first_op2d_node,
                                    second_op2d_node,
                                    self.kernel_str,
                                    self.bias_str)

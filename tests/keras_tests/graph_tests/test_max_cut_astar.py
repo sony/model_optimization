@@ -25,6 +25,8 @@ from model_compression_toolkit.core.common.graph.memory_graph.max_cut_astar impo
 from model_compression_toolkit.core.common.graph.memory_graph.memory_element import MemoryElements
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.keras.reader.reader import model_reader
+from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 
 
 def simple_model(input_shape):
@@ -70,7 +72,12 @@ def expanding_model(input_shape):
     return keras.Model(inputs=inputs, outputs=concat)
 
 
-class TestMaxCutAstarInit(unittest.TestCase):
+class BaseTest(unittest.TestCase):
+    def setUp(self):
+        set_fw_info(KerasInfo)
+
+
+class TestMaxCutAstarInit(BaseTest):
 
     def _run_max_cut_astar_initialization_test(self, model):
         graph = model_reader(model)
@@ -99,8 +106,7 @@ class TestMaxCutAstarInit(unittest.TestCase):
         self._run_max_cut_astar_initialization_test(model)
 
 
-class TestMaxCutAstarCleanMemory(unittest.TestCase):
-
+class TestMaxCutAstarCleanMemory(BaseTest):
     def test_max_cut_astar_clean_memory_simple(self):
         model = simple_model((8, 8, 3))
         graph = model_reader(model)
@@ -157,7 +163,7 @@ class TestMaxCutAstarCleanMemory(unittest.TestCase):
         self.assertTrue(any([cut_size > clean_cut_size for cut_size, clean_cut_size in total_memory]))
 
 
-class TestMaxCutAstarCanExpand(unittest.TestCase):
+class TestMaxCutAstarCanExpand(BaseTest):
 
     def test_max_cut_astar_can_expand_simple(self):
         model = simple_model((8, 8, 3))
@@ -233,7 +239,7 @@ class TestMaxCutAstarCanExpand(unittest.TestCase):
                         "Should be able to expand the given cut with the given node")
 
 
-class TestMaxCutAstarIsPivot(unittest.TestCase):
+class TestMaxCutAstarIsPivot(BaseTest):
 
     def test_max_cut_astar_is_pivot(self):
         model = simple_model((8, 8, 3))
@@ -259,7 +265,7 @@ class TestMaxCutAstarIsPivot(unittest.TestCase):
             n = mc_astar.memory_graph.activation_tensor_children(list(act_tensor)[0])[0]
 
 
-class TestMaxCutAstarExpand(unittest.TestCase):
+class TestMaxCutAstarExpand(BaseTest):
 
     def test_max_cut_astar_expand_simple(self):
         model = simple_model((8, 8, 3))
@@ -336,7 +342,7 @@ class TestMaxCutAstarExpand(unittest.TestCase):
         self.assertTrue(len(expanded_cuts[1].mem_elements.elements) == 3)
 
 
-class TestMaxCutAstarSolve(unittest.TestCase):
+class TestMaxCutAstarSolve(BaseTest):
 
     def test_max_cut_astar_solve_simple(self):
         model = simple_model((8, 8, 3))

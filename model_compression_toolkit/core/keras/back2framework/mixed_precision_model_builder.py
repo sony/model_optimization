@@ -36,7 +36,6 @@ from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_q
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 
 class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
@@ -47,14 +46,12 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
     def __init__(self,
                  graph: common.Graph,
                  append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                  return_float_outputs: bool = False):
         """
 
         Args:
             graph: Graph to build the model from.
             append2output: Nodes to append to model's output.
-            fw_info: Information about the specific framework of the model that is built.
             return_float_outputs: Whether the model returns float tensors or not.
         """
 
@@ -62,7 +59,6 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         super().__init__(graph,
                          append2output,
-                         fw_info,
                          return_float_outputs,
                          wrapper=self.mixed_precision_wrapper,
                          get_activation_quantizer_holder_fn=self.mixed_precision_activation_holder)
@@ -87,13 +83,12 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             ValueError: if kernel attribute is quantized but not configurable.
         """
 
-        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-        if kernel_attr is None or not n.is_weights_quantization_enabled(kernel_attr):
+        if n.kernel_attr is None or not n.is_weights_quantization_enabled(n.kernel_attr):
             return layer
-        if not n.is_configurable_weight(kernel_attr):  # pragma: no cover
+        if not n.is_configurable_weight(n.kernel_attr):  # pragma: no cover
             raise ValueError(f'Weight wrapper is not expected to be created for non-configurable weight of node {n}.')
-        wq = ConfigurableWeightsQuantizer(**self._get_weights_configurable_quantizer_kwargs(n, kernel_attr))
-        return KerasQuantizationWrapper(layer, weights_quantizers={kernel_attr: wq})
+        wq = ConfigurableWeightsQuantizer(**self._get_weights_configurable_quantizer_kwargs(n, n.kernel_attr))
+        return KerasQuantizationWrapper(layer, weights_quantizers={n.kernel_attr: wq})
 
     def _get_weights_configurable_quantizer_kwargs(self, n: BaseNode, attr: str) -> Dict[str, Any]:
         """
@@ -147,13 +142,12 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         # activation number of bits (in reversed order).
         # since only kernel attribute is quantized in weights mixed precision,
         # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
-        n.sort_node_candidates(self.fw_info)
+        n.sort_node_candidates()
 
         max_candidate_idx = n.find_max_candidate_index()
-        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
         activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
                                                                     'max_candidate_idx': max_candidate_idx,
-                                                                    'kernel_attr': kernel_attr})] \
+                                                                    'kernel_attr': n.kernel_attr})] \
                                  * num_of_outputs
 
         # Holder by definition uses a single quantizer for the activation quantization
@@ -181,7 +175,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         # creating a mapping between graph nodes and model's layers for mixed precision configurability
         conf_node2layers = {n.name: self._find_layers_in_model_by_node(n, model.layers)
-                            for n in self.graph.get_configurable_sorted_nodes(self.fw_info)}
+                            for n in self.graph.get_configurable_sorted_nodes()}
 
         return model, user_info, conf_node2layers
 
@@ -231,8 +225,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         """
         # Only layers with kernel op are considered weights configurable
-        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-        weights_quant = False if kernel_attr is None else n.is_weights_quantization_enabled(kernel_attr)
+        weights_quant = False if n.kernel_attr is None else n.is_weights_quantization_enabled(n.kernel_attr)
         act_quant = n.is_activation_quantization_enabled()
 
         if weights_quant and not act_quant:

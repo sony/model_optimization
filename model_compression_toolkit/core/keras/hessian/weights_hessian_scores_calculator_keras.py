@@ -22,7 +22,6 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresGranularity
 from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.hessian.hessian_scores_calculator_keras import HessianScoresCalculatorKeras
 from model_compression_toolkit.logger import Logger
 
@@ -95,20 +94,11 @@ class WeightsHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                 for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
 
                     # Check if the target node's layer type is supported.
-                    if not DEFAULT_KERAS_INFO.is_kernel_op(ipt_node.type):
+                    if not ipt_node.is_kernel_op:
                         Logger.critical(f"Hessian information with respect to weights is not supported for "
                                         f"{ipt_node.type} layers.")  # pragma: no cover
 
-                    # Get the weight attributes for the target node type
-                    weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(ipt_node.type)
-
-                    # Get the weight tensor for the target node
-                    if len(weight_attributes) != 1:  # pragma: no cover
-                        Logger.critical(
-                            f"Hessian-based scoring with respect to weights is currently supported only for nodes with "
-                            f"a single weight attribute. Found {len(weight_attributes)} attributes.")
-
-                    weight_tensor = getattr(model.get_layer(ipt_node.name), weight_attributes[0])
+                    weight_tensor = getattr(model.get_layer(ipt_node.name), ipt_node.kernel_attr)
 
                     if j == 0:
                         # On the first iteration we store the weight_tensor shape for later reshaping the results
@@ -116,7 +106,7 @@ class WeightsHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                         tensors_original_shape.append(weight_tensor.shape)
 
                     # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-                    output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(ipt_node.type)
+                    output_channel_axis = ipt_node.channel_axis.output
 
                     # Get number of scores that should be calculated by the granularity.
                     num_of_scores = self._get_num_scores_by_granularity(weight_tensor,

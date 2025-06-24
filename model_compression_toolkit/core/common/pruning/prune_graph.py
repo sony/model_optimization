@@ -27,7 +27,6 @@ from model_compression_toolkit.logger import Logger
 
 def build_pruned_graph(graph: Graph,
                        masks: Dict[BaseNode, np.ndarray],
-                       fw_info: FrameworkInfo,
                        fw_impl: FrameworkImplementation) -> Graph:
     """
     Prunes the provided graph according to the given pruning output-channels masks.
@@ -35,7 +34,6 @@ def build_pruned_graph(graph: Graph,
     Args:
         graph: The original computational graph to be pruned.
         masks: A dictionary mapping each prunable node to its pruning mask.
-        fw_info: Framework-specific information object.
         fw_impl: Framework-specific implementation object.
 
     Returns:
@@ -66,8 +64,7 @@ def build_pruned_graph(graph: Graph,
             section_mask = PruningSectionMask(entry_node_oc_mask=mask,
                                               exit_node_ic_mask=mask)
             pruning_section.apply_inner_section_mask(section_mask,
-                                                     fw_impl,
-                                                     fw_info)
+                                                     fw_impl)
 
     return graph_to_prune
 

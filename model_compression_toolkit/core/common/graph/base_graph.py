@@ -23,7 +23,6 @@ import numpy as np
 
 from networkx.algorithms.dag import topological_sort
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX, EDGE_SOURCE_INDEX
 from model_compression_toolkit.core.common.graph.edge import Edge, convert_to_edge
@@ -74,7 +73,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                  input_nodes: List[BaseNode],
                  output_nodes: List[OutTensor],
                  edge_list: List[Edge],
-                 fw_info: FrameworkInfo = None,
                  **attr):
         """
         Args:
@@ -82,7 +80,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             input_nodes: List of input nodes the model
             output_nodes: List of output nodes of the model to a list of their output indices.
             edge_list: List of edges the graph has between nodes.
-            fw_info: FrameworkInfo object (needed for computing the graph's weights memory).
             **attr: Attributes to add to graph as key=value pairs.
         """
 
@@ -103,7 +100,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                           e.sink_node,
                           **e.get_attributes())
         self.user_info = UserInformation()
-        self.fw_info = fw_info
 
     @property
     def skip_validation_check(self) -> bool:
@@ -123,16 +119,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
     @validate_graph_after_change
     def fusing_info(self, fusing_info: FusingInfo):
         self._fusing_info = fusing_info
-
-    def set_fw_info(self,
-                    fw_info: FrameworkInfo):
-        """
-        Set the graph's framework info.
-        Args:
-            fw_info: FrameworkInfo object.
-        """
-
-        self.fw_info = fw_info
 
     def set_fqc(self,
                 fqc: FrameworkQuantizationCapabilities):
@@ -563,7 +549,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return output_edges
 
     def get_configurable_sorted_nodes_names(self,
-                                            fw_info: FrameworkInfo,
                                             include_reused_nodes: bool = False) -> List[str]:
         """
         Get a list of nodes' names that can be configured (namely, has one or
@@ -571,56 +556,49 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         order of the graph.
 
         Args:
-            fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether or not to include reused nodes (False by default).
 
         Returns: List of nodes' names that can be configured (namely, has one or
         more weight qc candidate) sorted topology.
 
         """
-        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(fw_info=fw_info,
-                                                                           include_reused_nodes=include_reused_nodes)]
+        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes=include_reused_nodes)]
         return sorted_names
 
     def get_weights_configurable_nodes(self,
-                                       fw_info: FrameworkInfo,
                                        include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that their weights can be configured (namely, has one or
         more weight qc candidate and their weights should be quantized).
 
         Args:
-            fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether to include reused nodes (False by default).
 
         Returns:
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
         """
         # configurability is only relevant for kernel attribute quantization
-        potential_conf_nodes = [n for n in list(self) if fw_info.is_kernel_op(n.type)]
+        potential_conf_nodes = [n for n in list(self) if n.is_kernel_op]
 
         def is_configurable(n):
-            kernel_attrs = fw_info.get_kernel_op_attributes(n.type)
-            return any(n.is_configurable_weight(attr) for attr in kernel_attrs) and (not n.reuse or include_reused_nodes)
+            return n.is_configurable_weight(n.kernel_attr) and (not n.reuse or include_reused_nodes)
 
         return [n for n in potential_conf_nodes if is_configurable(n)]
 
     def get_sorted_weights_configurable_nodes(self,
-                                              fw_info: FrameworkInfo,
                                               include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of sorted nodes that their weights can be configured (namely, has one or
         more weight qc candidate and their weights should be quantized).
 
         Args:
-            fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether to include reused nodes (False by default).
 
         Returns:
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate)
             sorted topologically.
         """
-        return self._sort_nodes_in_list(self.get_weights_configurable_nodes(fw_info, include_reused_nodes))
+        return self._sort_nodes_in_list(self.get_weights_configurable_nodes(include_reused_nodes))
 
     def get_activation_configurable_nodes(self) -> List[BaseNode]:
         """
@@ -644,7 +622,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return self._sort_nodes_in_list(self.get_activation_configurable_nodes())
 
     def get_configurable_sorted_nodes(self,
-                                      fw_info: FrameworkInfo,
                                       include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that can be configured (namely, has one or
@@ -652,14 +629,13 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         The nodes are sorted according to the topological order of the graph.
 
         Args:
-            fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether or not to include reused nodes (False by default).
 
         Returns:
              A list of nodes that can be configured (namely, has one or more qc candidate) sorted topology.
 
         """
-        weights_configurable_nodes = self.get_weights_configurable_nodes(fw_info, include_reused_nodes)
+        weights_configurable_nodes = self.get_weights_configurable_nodes(include_reused_nodes)
         activation_configurable_nodes = self.get_activation_configurable_nodes()
 
         # combine and remove duplications
@@ -684,7 +660,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                 sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes
 
-    def get_min_candidates_config(self, fw_info: FrameworkInfo) -> Dict[BaseNode, int]:
+    def get_min_candidates_config(self) -> Dict[BaseNode, int]:
         """
         Builds a minimal configuration.
         Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
@@ -697,26 +673,23 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             A dict from layer to an index of its minimal candidate.
         """
-        conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
+        conf_sorted_nodes = self.get_configurable_sorted_nodes()
         return {n: n.find_min_candidate_index() for n in conf_sorted_nodes}
 
-    def get_max_candidates_config(self, fw_info: FrameworkInfo) -> Dict[BaseNode, int]:
+    def get_max_candidates_config(self) -> Dict[BaseNode, int]:
         """
         Builds a maximal configuration.
         Note: we assume that a maximal configuration exists, i.e., each configurable node has exactly one candidate
             with maximal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
             one of them is quantized)
 
-        Args:
-            fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
-
         Returns:
             A dict from layer to an index of its maximal candidate.
         """
-        conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
+        conf_sorted_nodes = self.get_configurable_sorted_nodes()
         return {n: n.find_max_candidate_index() for n in conf_sorted_nodes}
 
-    def get_final_weights_config(self, fw_info: FrameworkInfo) -> List[Tuple[BaseNode, int]]:
+    def get_final_weights_config(self) -> List[Tuple[BaseNode, int]]:
         """
         Gets the final number of bits for quantization of each weights' configurable layer.
 
@@ -726,9 +699,9 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns: A list of pairs of (node type, node's weights quantization bitwidth).
 
         """
-        sorted_conf_weights = self.get_sorted_weights_configurable_nodes(fw_info)
+        sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
         # a configurable node by definition has a kernel op
-        return [(n, n.final_weights_quantization_cfg.get_attr_config(self.fw_info.get_kernel_op_attributes(n.type)[0]).weights_n_bits)
+        return [(n, n.final_weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_n_bits)
                 for n in sorted_conf_weights]
 
     def get_final_activation_config(self) -> List[Tuple[BaseNode, int]]:
@@ -846,7 +819,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             next_node = self.out_edges(next_node)[0].sink_node
 
             # If next_node is an exit node and has only one incoming edge, the topology is prunable.
-            if fw_impl.is_node_exit_node(next_node, entry_node, self.fw_info) and len(self.in_edges(next_node)) == 1:
+            if fw_impl.is_node_exit_node(next_node, entry_node) and len(self.in_edges(next_node)) == 1:
                 return True
 
             # If the next node is not an intermediate node or has more than one incoming/outgoing edge,
@@ -876,7 +849,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         intermediate_nodes, exit_node = self._find_intermediate_and_exit_nodes(entry_node, fw_impl)
 
-        if not fw_impl.is_node_exit_node(exit_node, entry_node, self.fw_info):
+        if not fw_impl.is_node_exit_node(exit_node, entry_node):
             Logger.critical(f"Node {exit_node} is not a valid exit node for the pruning section starting with {entry_node}.")   # pragma: no cover
 
         return PruningSection(entry_node=entry_node,
@@ -897,7 +870,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         intermediate_nodes = []
         next_node = self.out_edges(entry_node)[0].sink_node
-        while not fw_impl.is_node_exit_node(next_node, entry_node, self.fw_info):
+        while not fw_impl.is_node_exit_node(next_node, entry_node):
             intermediate_nodes.append(next_node)
             next_node = self.out_edges(next_node)[0].sink_node
 

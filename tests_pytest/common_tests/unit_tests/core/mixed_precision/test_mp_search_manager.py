@@ -21,7 +21,7 @@ import numpy as np
 
 from model_compression_toolkit.core import ResourceUtilization, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTES
+from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTE, set_fw_info
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitActivationNode, VirtualSplitWeightsNode
@@ -52,6 +52,10 @@ def build_graph(fw_info_mock, w_mp: bool, a_mp: bool):
     # n2 qcs: [a8, a2, a4]
     # n3 qcs: [a4w4, a4w8, a4w2, a8w4, a8w8, a8w2]
     # n4 qcs: [w12, w4, w8]
+    op_kernels = {DummyLayer1: 'foo', DummyLayer2: 'bar'}
+    fw_info_mock.get_kernel_op_attribute = lambda nt: op_kernels.get(nt, DEFAULT_KERNEL_ATTRIBUTE)
+    fw_info_mock.is_kernel_op = lambda nt: nt in op_kernels
+
     n1 = build_node('n1', qcs=[build_nbits_qc(a_nbits=8)], output_shape=(None, 1, 2, 3))
 
     abits2 = [8, 2, 4] if a_mp else [4]
@@ -69,13 +73,8 @@ def build_graph(fw_info_mock, w_mp: bool, a_mp: bool):
                     qcs=[build_nbits_qc(a_nbits=2, w_attr={'bar': (wb, True)}) for wb in wbit4])
     n5 = build_node('n5', qcs=[build_nbits_qc(a_nbits=8)], output_shape=(None, 34, 1))
 
-    op_kernels = {DummyLayer1: ['foo'], DummyLayer2: ['bar']}
-    fw_info_mock.get_kernel_op_attributes = lambda nt: op_kernels.get(nt, DEFAULT_KERNEL_ATTRIBUTES)
-    fw_info_mock.is_kernel_op = lambda nt: nt in op_kernels
-
     g = Graph('g', input_nodes=[n1], nodes=[n2, n3, n4], output_nodes=[n5],
-              edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0), Edge(n3, n4, 0, 0), Edge(n4, n5, 0, 0)],
-              fw_info=fw_info_mock)
+              edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0), Edge(n3, n4, 0, 0), Edge(n4, n5, 0, 0)])
     return g, [n1, n2, n3, n4, n5]
 
 
@@ -84,11 +83,15 @@ class TestMixedPrecisionSearchManager:
         TODO: Sensitivity computation is not tested.
               BOPS: only logical flow is tested.
     """
+    @pytest.fixture(autouse=True)
+    def setup(self, fw_info_mock):
+        set_fw_info(fw_info_mock)
+
     def test_prepare_weights_ru_for_lp(self, fw_info_mock, fw_impl_mock):
         """ Tests ru related setup and methods for weights target. """
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=False)
         ru = ResourceUtilization(weights_memory=100)
-        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl_mock,
                                           sensitivity_evaluator=Mock(), target_resource_utilization=ru,
                                           mp_config=Mock())
         assert mgr.min_ru_config == {n3: 2, n4: 1}
@@ -103,7 +106,7 @@ class TestMixedPrecisionSearchManager:
         """ Tests ru related setup and methods for activation target. """
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=False, a_mp=True)
         ru = ResourceUtilization(activation_memory=150)
-        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl_mock,
                                           sensitivity_evaluator=Mock(), target_resource_utilization=ru,
                                           mp_config=Mock())
         # 6 x [8], 120 x [8, 2, 4], 40 x [4, 8], 273 x [2], 34 x [8]
@@ -130,7 +133,7 @@ class TestMixedPrecisionSearchManager:
         """ Tests ru related setup and methods for total target.  """
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=True)
         ru = ResourceUtilization(total_memory=200)
-        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl_mock,
                                           sensitivity_evaluator=Mock(), target_resource_utilization=ru,
                                           mp_config=Mock())
         assert mgr.min_ru_config == {n2: 1, n3: 2, n4: 1}
@@ -160,7 +163,7 @@ class TestMixedPrecisionSearchManager:
                                    {RUTarget.TOTAL: 200 - 81.5 - np.array([48, 288, 400, 706, 818, 272]) / 8},
                                    sort_axis=0)
 
-    def test_compute_relative_ru_virtual_graph(self, mocker, graph_mock, fw_info_mock, fw_impl_mock):
+    def test_compute_relative_ru_virtual_graph(self, mocker, graph_mock, fw_impl_mock):
         """ Test compute ru mapping for virtual graph. Here we mostly test apis integration.
             - mock virtual graph, config reconstructor and ru helper compute_utilization
             - config reconstructor is called with correct args
@@ -185,7 +188,7 @@ class TestMixedPrecisionSearchManager:
         reconstructed_cfgs = [Mock(), Mock(), Mock(), Mock()]
         recon_cfg_mock = mocker.patch.object(ConfigReconstructionHelper, 'reconstruct_full_configuration',
                                              Mock(side_effect=reconstructed_cfgs))
-        mgr = MixedPrecisionSearchManager(graph_mock, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        mgr = MixedPrecisionSearchManager(graph_mock, fw_impl=fw_impl_mock,
                                           sensitivity_evaluator=Mock(),
                                           target_resource_utilization=ResourceUtilization(bops=100, total_memory=100),
                                           mp_config=Mock())
@@ -278,7 +281,7 @@ class TestMixedPrecisionSearchManager:
     def test_compute_ru_for_replaced_config(self, fw_info_mock, fw_impl_mock):
         g, [n1, n2, n3, n4, n5] = build_graph(fw_info_mock, w_mp=True, a_mp=True)
         ru = ResourceUtilization(weights_memory=100, activation_memory=200, total_memory=300)
-        mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
                                           target_resource_utilization=ru, mp_config=Mock())
 
         cfg = mgr.copy_config_with_replacement(mgr.min_ru_config, n3, 4)
@@ -318,11 +321,11 @@ class TestMixedPrecisionSearchManager:
         virt_sub_mock = Mock()
         fw_impl_mock.get_substitutions_virtual_weights_activation_coupling = virt_sub_mock
 
-        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl_mock, sensitivity_evaluator=Mock(),
                                           target_resource_utilization=target_ru, mp_config=Mock())
         res = mgr.search()
         # ru should always be computed on the original graph
-        ru_helper_spy.assert_called_with(g, fw_info_mock, fw_impl_mock)
+        ru_helper_spy.assert_called_with(g, fw_impl_mock)
         if exp_virtual:
             substitute_mock.assert_called_with(copy_mock.return_value, virt_sub_mock.return_value)
             assert mgr.mp_graph is substitute_mock.return_value
@@ -350,6 +353,9 @@ class TestMixedPrecisionSearchManager:
             - check correct configurations (from graph) are passed to mock sensitivity evaluator.
             - final sensitivity is built correctly from mocked computed metrics.
         """
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'foo' if nt is DummyLayer else DEFAULT_KERNEL_ATTRIBUTE
+        fw_info_mock.is_kernel_op = lambda nt: nt is DummyLayer
+
         a_conf = build_node('a_conf', layer_class=DummyLayer2, qcs=[build_nbits_qc(nb) for nb in (4, 2)])
         a_conf_w = build_node('a_conf_w',
                               canonical_weights={'foo': np.ones(10)},
@@ -371,11 +377,9 @@ class TestMixedPrecisionSearchManager:
             return a + 0.1*w
         se.compute_metric = Mock(side_effect=compute_metric_mock)
 
-        fw_info_mock.get_kernel_op_attributes = lambda nt: ['foo'] if nt is DummyLayer else DEFAULT_KERNEL_ATTRIBUTES
-        fw_info_mock.is_kernel_op = lambda nt: nt is DummyLayer
         mp_config = MixedPrecisionQuantizationConfig(metric_normalization=MpMetricNormalization.NONE,
                                                      metric_epsilon=None)
-        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl_mock,
                                           sensitivity_evaluator=se,
                                           target_resource_utilization=ResourceUtilization(total_memory=100),
                                           mp_config=mp_config)
@@ -395,7 +399,7 @@ class TestMixedPrecisionSearchManager:
         assert np.allclose(res[w_conf], np.array([0, 0.1]))
         assert np.allclose(res[aw_conf], np.array([0, 1.1, 2.2, 3.3]))
 
-    def test_build_sensitivity_mapping_virtual_graph(self, graph_mock, fw_info_mock, fw_impl_mock, mocker):
+    def test_build_sensitivity_mapping_virtual_graph(self, graph_mock, fw_impl_mock, mocker):
         """ Test build_sensitivity method for virtual graph. We only test apis integration:
             - mock virtual graph, config reconstructor and sensitivity evaluator.
             - reconstruct_separate_aw_configs is called with correct args
@@ -423,7 +427,7 @@ class TestMixedPrecisionSearchManager:
                                                  Mock(side_effect=aw_configs))
         mp_config = MixedPrecisionQuantizationConfig(metric_epsilon=None,
                                                      metric_normalization=MpMetricNormalization.NONE)
-        mgr = MixedPrecisionSearchManager(graph_mock, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        mgr = MixedPrecisionSearchManager(graph_mock, fw_impl=fw_impl_mock,
                                           sensitivity_evaluator=se_mock,
                                           target_resource_utilization=ResourceUtilization(bops=100),
                                           mp_config=mp_config)
@@ -458,6 +462,9 @@ class TestMixedPrecisionSearchManager:
     ])
     def test_build_sensitivity_mapping_params(self, fw_impl_mock, fw_info_mock, norm, eps, max_thresh, exp1, exp2):
         """ Tests sensitivity normalization method, epsilon and threshold. """
+        fw_info_mock.get_kernel_op_attribute = lambda nt: DEFAULT_KERNEL_ATTRIBUTE
+        fw_info_mock.is_kernel_op = lambda nt: False
+
         ph = build_node('ph', qcs=[build_nbits_qc()])
         n1 = build_node('n1', qcs=[build_nbits_qc(nb) for nb in (4, 2, 16, 8)])
         n2 = build_node('n2', qcs=[build_nbits_qc(nb) for nb in (4, 8, 2)])
@@ -467,13 +474,10 @@ class TestMixedPrecisionSearchManager:
         se = Mock(spec_set=SensitivityEvaluation)
         se.compute_metric = lambda mp_a_cfg, mp_w_cfg: list(mp_a_cfg.values())[0] + 1
 
-        fw_info_mock.get_kernel_op_attributes = lambda nt: DEFAULT_KERNEL_ATTRIBUTES
-        fw_info_mock.is_kernel_op = lambda nt: False
-
         mp_config = MixedPrecisionQuantizationConfig(metric_normalization=norm,
                                                      metric_epsilon=eps,
                                                      metric_normalization_threshold=max_thresh)
-        mgr = MixedPrecisionSearchManager(g, fw_info=fw_info_mock, fw_impl=fw_impl_mock,
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl_mock,
                                           sensitivity_evaluator=se,
                                           target_resource_utilization=ResourceUtilization(activation_memory=100),
                                           mp_config=mp_config)
@@ -494,7 +498,7 @@ class TestMixedPrecisionSearchManager:
                 assert np.allclose(np.sort(res[k], axis=sort_axis), np.sort(exp_res[k], axis=sort_axis)), k
 
     def _run_search_test(self, g, ru, sensitivity, exp_cfg, fw_impl):
-        mgr = MixedPrecisionSearchManager(g, fw_info=g.fw_info, fw_impl=fw_impl, sensitivity_evaluator=Mock(),
+        mgr = MixedPrecisionSearchManager(g, fw_impl=fw_impl, sensitivity_evaluator=Mock(),
                                           target_resource_utilization=ru, mp_config=Mock())
         mgr._build_sensitivity_mapping = Mock(return_value=sensitivity)
         res = mgr.search()
@@ -515,10 +519,10 @@ class TestConfigHelper:
     kernel_attr = 'im_kernel'
 
     @pytest.fixture(autouse=True)
-    def fw_info_mock(self, fw_info_mock):
-        self.fw_info_mock = fw_info_mock
-        self.fw_info_mock.get_kernel_op_attributes = \
-            lambda nt: [self.kernel_attr] if nt == self.AWLayer else DEFAULT_KERNEL_ATTRIBUTES
+    def setup(self, fw_info_mock):
+        fw_info_mock.get_kernel_op_attribute = \
+            lambda nt: self.kernel_attr if nt == self.AWLayer else DEFAULT_KERNEL_ATTRIBUTE
+        set_fw_info(fw_info_mock)
 
     @staticmethod
     def build_aw_node(abits, wbits, name='aw', layer_cls=AWLayer, w_attr=kernel_attr):
@@ -532,13 +536,14 @@ class TestConfigHelper:
     def build_a_node(abits, name='a', layer_cls=ALayer):
         return build_node(name, layer_class=layer_cls, qcs=[build_nbits_qc(abit) for abit in abits])
 
-    @pytest.mark.parametrize('n, ind', [
-        (build_a_node(abits=(5, 3, 7)), 1),
-        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 8),
-        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 5),
-        (build_aw_node(abits=(5,), wbits=(2, 4, 8)), 2),
+    @pytest.mark.parametrize('n_params, ind', [
+        ({'abits': (5, 3, 7)}, 1),
+        ({'abits': (4, 8, 16), 'wbits': (2, 6, 10)}, 8),
+        ({'abits': (4, 8, 16), 'wbits': (2, 6, 10)}, 5),
+        ({'abits': (5,), 'wbits': (2, 4, 8)}, 2),
     ])
-    def test_retrieve_a_candidates_regular_node(self, graph_mock, n, ind):
+    def test_retrieve_a_candidates_regular_node(self, graph_mock, n_params, ind):
+        n = self.build_aw_node(**n_params) if 'wbits' in n_params else self.build_a_node(**n_params)
         graph_mock.nodes = [n]
         helper = ConfigReconstructionHelper(graph_mock)
         ret_n, ret_inds = helper._retrieve_matching_orig_a_candidates(copy.deepcopy(n), ind)
@@ -564,32 +569,34 @@ class TestConfigHelper:
         assert helper._retrieve_matching_orig_a_candidates(vwn, vind) == (None, None)
 
     @pytest.mark.parametrize('orig_a_n, build_va, orig_w_n, v_ind', [
-        (build_a_node(abits=(2, 4, 8)), False, build_aw_node(abits=(5, 7, 3), wbits=(3, 6)), 5),
-        (build_a_node(abits=(2,)), False, build_aw_node(abits=(5, 7), wbits=(3, 4, 6)), 2),
-        (build_aw_node(abits=(2, 4, 6), wbits=(3, 5, 7, 9)), True, build_aw_node(abits=(8, 10), wbits=(11, 12)), 5),
-        (build_aw_node(abits=(2, 4, 6), wbits=(3, 5, 7, 9)), True, build_aw_node(abits=(8, 10), wbits=(11, 12)), 3),
-        (build_aw_node(abits=(2,), wbits=(3,)), True, build_aw_node(abits=(8,), wbits=(11,)), 0)
+        ((build_a_node, {'abits': (2, 4, 8)}), False, (build_aw_node, {'abits': (5, 7, 3), 'wbits': (3, 6)}), 5),
+        ((build_a_node, {'abits': (2,)}), False, (build_aw_node, {'abits': (5, 7), 'wbits': (3, 4, 6)}), 2),
+        ((build_aw_node, {'abits': (2, 4, 6), 'wbits': (3, 5, 7, 9)}), True, (build_aw_node, {'abits': (8, 10), 'wbits': (11, 12)}), 5),
+        ((build_aw_node, {'abits': (2, 4, 6), 'wbits': (3, 5, 7, 9)}), True, (build_aw_node, {'abits': (8, 10), 'wbits': (11, 12)}), 3),
+        ((build_aw_node, {'abits': (2,), 'wbits': (3,)}), True, (build_aw_node, {'abits': (8,), 'wbits': (11,)}), 0)
     ])
     def test_retrieve_a_candidates_virt_aw_node(self, graph_mock, orig_a_n, build_va, orig_w_n, v_ind):
+        orig_a_n = orig_a_n[0](**orig_a_n[1])
+        orig_w_n = orig_w_n[0](**orig_w_n[1])
         graph_mock.nodes = [orig_a_n]
         a_n = copy.deepcopy(orig_a_n)
         if build_va:
             a_n = VirtualSplitActivationNode(a_n, self.VALayer, {})
         vaw_n = VirtualActivationWeightsNode(act_node=a_n,
-                                             weights_node=VirtualSplitWeightsNode(orig_w_n, self.kernel_attr),
-                                             fw_info=self.fw_info_mock)
+                                             weights_node=VirtualSplitWeightsNode(orig_w_n, self.kernel_attr))
         helper = ConfigReconstructionHelper(graph_mock)
         ret_n, ret_inds = helper._retrieve_matching_orig_a_candidates(vaw_n, v_ind)
         assert ret_n is orig_a_n
         self._validate_activation(orig_a_n, ret_inds, vaw_n, v_ind)
 
-    @pytest.mark.parametrize('n, ind', [
-        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 8),
-        (build_aw_node(abits=(4, 8, 16), wbits=(2, 6, 10)), 1),
-        (build_aw_node(abits=(5,), wbits=(2, 4, 8)), 1),
-        (build_aw_node(abits=(4, 8, 16), wbits=(5,)), 2)
+    @pytest.mark.parametrize('n_params, ind', [
+        ({'abits': (4, 8, 16), 'wbits': (2, 6, 10)}, 8),
+        ({'abits': (4, 8, 16), 'wbits': (2, 6, 10)}, 1),
+        ({'abits': (5,), 'wbits': (2, 4, 8)}, 1),
+        ({'abits': (4, 8, 16), 'wbits': (5,)}, 2)
     ])
-    def test_retrieve_w_candidates_regular_node(self, graph_mock, n, ind):
+    def test_retrieve_w_candidates_regular_node(self, graph_mock, n_params, ind):
+        n = self.build_aw_node(**n_params)
         graph_mock.nodes = [n]
         helper = ConfigReconstructionHelper(graph_mock)
         ret_n, ret_inds = helper._retrieve_matching_orig_w_candidates(copy.deepcopy(n), ind)
@@ -621,20 +628,21 @@ class TestConfigHelper:
         assert helper._retrieve_matching_orig_w_candidates(va_n, vind) == (None, None)
 
     @pytest.mark.parametrize('orig_a_n, build_va, orig_w_n, v_ind', [
-        (build_a_node(abits=(2, 4, 8, 16)), False, build_aw_node(abits=(5, 7), wbits=(3, 6, 9)), 11),
-        (build_a_node(abits=(2, 4, 8, 16)), True, build_aw_node(abits=(5, 7), wbits=(3, 6, 9)), 7),
-        (build_a_node(abits=(2, 4, 8, 16)), True, build_aw_node(abits=(5, 7), wbits=(3,)), 2),
-        (build_a_node(abits=(2,)), False, build_aw_node(abits=(5, 7), wbits=(3, 4, 6)), 2),
-        (build_a_node(abits=(2,)), True, build_aw_node(abits=(8,), wbits=(11,)), 0)
+        ({'abits': (2, 4, 8, 16)}, False, {'abits': (5, 7), 'wbits': (3, 6, 9)}, 11),
+        ({'abits': (2, 4, 8, 16)}, True, {'abits': (5, 7), 'wbits': (3, 6, 9)}, 7),
+        ({'abits': (2, 4, 8, 16)}, True, {'abits': (5, 7), 'wbits': (3,)}, 2),
+        ({'abits': (2,)}, False, {'abits': (5, 7), 'wbits': (3, 4, 6)}, 2),
+        ({'abits': (2,)}, True, {'abits': (8,), 'wbits': (11,)}, 0)
     ])
     def test_retrieve_w_candidates_virt_aw_node(self, graph_mock, orig_a_n, build_va, orig_w_n, v_ind):
+        orig_a_n = self.build_a_node(**orig_a_n)
+        orig_w_n = self.build_aw_node(**orig_w_n)
         graph_mock.nodes = [orig_a_n]
         a_n = copy.deepcopy(orig_a_n)
         if build_va:
             a_n = VirtualSplitActivationNode(a_n, self.VALayer, {})
         vaw_n = VirtualActivationWeightsNode(act_node=a_n,
-                                             weights_node=VirtualSplitWeightsNode(orig_w_n, self.kernel_attr),
-                                             fw_info=self.fw_info_mock)
+                                             weights_node=VirtualSplitWeightsNode(orig_w_n, self.kernel_attr))
         helper = ConfigReconstructionHelper(graph_mock)
         ret_n, ret_inds = helper._retrieve_matching_orig_a_candidates(vaw_n, v_ind)
         assert ret_n is orig_a_n
@@ -661,8 +669,7 @@ class TestConfigHelper:
         if build_va:
             a_node = VirtualSplitActivationNode(a_node, self.ALayer, {})
         vaw = VirtualActivationWeightsNode(act_node=a_node,
-                                           weights_node=VirtualSplitWeightsNode(copy.deepcopy(orig_w_node), self.kernel_attr),
-                                           fw_info=self.fw_info_mock)
+                                           weights_node=VirtualSplitWeightsNode(copy.deepcopy(orig_w_node), self.kernel_attr))
         helper = ConfigReconstructionHelper(graph_mock)
         ret_n, ret_inds = helper._retrieve_matching_orig_w_candidates(vaw, v_ind)
         assert ret_n is orig_w_node
@@ -693,13 +700,11 @@ class TestConfigHelper:
         mpa_mpw2 = self.build_aw_node(name='mpa_mpw2', abits=(6, 7), wbits=(3, 4, 5))
         graph_mock.nodes = [spa, mpa_mpw, mpa_spw, mpa_mpw2]
         vaw1 = VirtualActivationWeightsNode(copy.deepcopy(spa),
-                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw), self.kernel_attr),
-                                            self.fw_info_mock)
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw), self.kernel_attr))
         va1 = VirtualSplitActivationNode(copy.deepcopy(mpa_spw), self.ALayer, {})
         vw = VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw2), self.kernel_attr)
         vaw2 = VirtualActivationWeightsNode(VirtualSplitActivationNode(copy.deepcopy(mpa_mpw2), self.ALayer, {}),
-                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_spw), self.kernel_attr),
-                                            self.fw_info_mock)
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_spw), self.kernel_attr))
 
         v_cfg = {vaw1: 2, va1: 1, vw: 2, vaw2: 1}
 
@@ -736,11 +741,9 @@ class TestConfigHelper:
 
         graph_mock.nodes = [spa, mpa_mpw, mpa_spw, spa_mpw, mpa_mpw2, mpa_spw2, spa_mpw2]
         vaw1 = VirtualActivationWeightsNode(copy.deepcopy(spa),
-                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw), self.kernel_attr),
-                                            self.fw_info_mock)
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_mpw), self.kernel_attr))
         vaw2 = VirtualActivationWeightsNode(VirtualSplitActivationNode(copy.deepcopy(mpa_mpw), self.ALayer, {}),
-                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_spw), self.kernel_attr),
-                                            self.fw_info_mock)
+                                            VirtualSplitWeightsNode(copy.deepcopy(mpa_spw), self.kernel_attr))
         va = VirtualSplitActivationNode(copy.deepcopy(mpa_spw), self.ALayer, {})
         vw = VirtualSplitWeightsNode(copy.deepcopy(spa_mpw), self.kernel_attr)
 

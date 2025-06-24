@@ -37,20 +37,18 @@ def set_bit_widths(mixed_precision_enable: bool,
     """
     if mixed_precision_enable:
         assert all([len(n.candidates_quantization_cfg) > 0
-                    for n in graph.get_configurable_sorted_nodes(graph.fw_info)]), \
+                    for n in graph.get_configurable_sorted_nodes()]), \
             "All configurable nodes in graph should have at least one candidate configuration in mixed precision mode"
 
         # Get a list of nodes' names we need to finalize (that they have at least one weight qc candidate).
-        sorted_nodes_names = graph.get_configurable_sorted_nodes_names(graph.fw_info)
+        sorted_nodes_names = graph.get_configurable_sorted_nodes_names()
 
         for node in graph.nodes:  # set a specific node qc for each node final qc
             # If it's reused, take the configuration that the base node has
             node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2])
             if node_name in sorted_nodes_names:  # only configurable nodes are in this list
                 node_index_in_graph = sorted_nodes_names.index(node_name)
-                _set_node_final_qc(bit_widths_config[node_index_in_graph],
-                                   node,
-                                   graph.fw_info)
+                _set_node_final_qc(bit_widths_config[node_index_in_graph], node)
             else:
                 if node.is_activation_quantization_enabled():
                     # If we are here, this means that we are in weights-only mixed-precision
@@ -83,8 +81,7 @@ def set_bit_widths(mixed_precision_enable: bool,
 
 
 def _get_node_qc_by_bit_widths(node: BaseNode,
-                               node_bit_width_cfg: int,
-                               fw_info) -> Any:
+                               node_bit_width_cfg: int) -> Any:
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg.
@@ -93,21 +90,18 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
     Args:
         node: Node to get its quantization configuration candidate.
         node_bit_width_cfg: Configuration which determines the node's desired bit width.
-        fw_info: Information relevant to a specific framework about how layers should be quantized.
 
     Returns:
         Node quantization configuration if it was found, or None otherwise.
     """
     # only the weights kernel attribute is quantized in weights mixed precision at the moment
-    kernel_attr = fw_info.get_kernel_op_attributes(node.type)
-
     if node.is_activation_quantization_enabled():
         qc = node.candidates_quantization_cfg[node_bit_width_cfg]
 
         return qc
 
-    elif kernel_attr is not None:
-        if node.is_weights_quantization_enabled(kernel_attr[0]):
+    elif node.kernel_attr is not None:
+        if node.is_weights_quantization_enabled(node.kernel_attr):
             qc = node.candidates_quantization_cfg[node_bit_width_cfg]
 
             return qc
@@ -116,8 +110,7 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
 
 
 def _set_node_final_qc(node_bit_width_cfg: int,
-                       node: BaseNode,
-                       fw_info):
+                       node: BaseNode):
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg, and use it to finalize the node's
@@ -127,12 +120,9 @@ def _set_node_final_qc(node_bit_width_cfg: int,
     Args:
         node_bit_width_cfg: Configuration which determines the node's desired bit width.
         node: Node to set its node quantization configuration.
-        fw_info: Information relevant to a specific framework about how layers should be quantized.
 
     """
-    node_qc = _get_node_qc_by_bit_widths(node,
-                                         node_bit_width_cfg,
-                                         fw_info)
+    node_qc = _get_node_qc_by_bit_widths(node, node_bit_width_cfg)
 
     if node_qc is None:
         Logger.critical(f'Node {node.name} quantization configuration from configuration file'  # pragma: no cover

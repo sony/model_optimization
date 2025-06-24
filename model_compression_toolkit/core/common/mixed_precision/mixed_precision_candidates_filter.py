@@ -22,7 +22,6 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 
 def filter_candidates_for_mixed_precision(graph: Graph,
                                           target_resource_utilization: ResourceUtilization,
-                                          fw_info: FrameworkInfo,
                                           fqc: FrameworkQuantizationCapabilities):
     """
     Filters out candidates in case of mixed precision search for only weights or activation compression.
@@ -35,7 +34,6 @@ def filter_candidates_for_mixed_precision(graph: Graph,
     Args:
         graph: A graph representation of the model to be quantized.
         target_resource_utilization: The resource utilization of the target device.
-        fw_info: fw_info: Information needed for quantization about the specific framework.
         fqc: FrameworkQuantizationCapabilities object that describes the desired inference target platform.
 
     """
@@ -59,11 +57,10 @@ def filter_candidates_for_mixed_precision(graph: Graph,
     elif tru.activation_restricted() and not tru.weight_restricted():
         # Running mixed precision for activation compression only -
         # filter out candidates weights only configurable node
-        weight_configurable_nodes = [n for n in graph.get_weights_configurable_nodes(fw_info)]
+        weight_configurable_nodes = [n for n in graph.get_weights_configurable_nodes()]
         for n in weight_configurable_nodes:
-            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-            base_cfg_nbits = n.get_qco(fqc).base_config.attr_weights_configs_mapping[kernel_attr].weights_n_bits
+            base_cfg_nbits = n.get_qco(fqc).base_config.attr_weights_configs_mapping[n.kernel_attr].weights_n_bits
             filtered_conf = [c for c in n.candidates_quantization_cfg if
-                             c.weights_quantization_cfg.get_attr_config(kernel_attr).enable_weights_quantization and
-                             c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == base_cfg_nbits]
+                             c.weights_quantization_cfg.get_attr_config(n.kernel_attr).enable_weights_quantization and
+                             c.weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_n_bits == base_cfg_nbits]
             n.candidates_quantization_cfg = filtered_conf

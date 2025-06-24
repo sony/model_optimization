@@ -23,7 +23,6 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresGranularity
 from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.hessian.hessian_scores_calculator_pytorch import \
     HessianScoresCalculatorPytorch
 from model_compression_toolkit.logger import Logger
@@ -92,22 +91,14 @@ class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
             for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
 
                 # Check if the target node's layer type is supported.
-                if not DEFAULT_PYTORCH_INFO.is_kernel_op(ipt_node.type):
+                if not ipt_node.is_kernel_op:
                     Logger.critical(f"Hessian information with respect to weights is not supported for "
                                     f"{ipt_node.type} layers.")  # pragma: no cover
 
-                # Get the weight attributes for the target node type
-                weights_attributes = DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(ipt_node.type)
-
-                # Get the weight tensor for the target node
-                if len(weights_attributes) != 1:  # pragma: no cover
-                    Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a "
-                                    f"single weight attribute. {len(weights_attributes)} attributes found.")
-
-                weights_tensor = getattr(getattr(model, ipt_node.name), weights_attributes[0])
+                weights_tensor = getattr(getattr(model, ipt_node.name), ipt_node.kernel_attr)
 
                 # Get the output channel index
-                output_channel_axis, _ = DEFAULT_PYTORCH_INFO.kernel_channels_mapping.get(ipt_node.type)
+                output_channel_axis = ipt_node.channel_axis.output
                 shape_channel_axis = [i for i in range(len(weights_tensor.shape))]
                 if self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL:
                     shape_channel_axis.remove(output_channel_axis)

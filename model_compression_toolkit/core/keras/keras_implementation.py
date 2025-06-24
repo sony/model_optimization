@@ -65,7 +65,6 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.matmul_substitution import \
@@ -175,18 +174,16 @@ class KerasImplementation(FrameworkImplementation):
                       graph: Graph,
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
-                      fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                       return_float_outputs: bool = False) -> Tuple:
         """
         Build a Keras model from a graph.
-        The mode determines how the model should be build. append2output is a list of Nodes
+        The mode determines how the model should be built. append2output is a list of Nodes
         to set as the model outputs.
 
         Args:
             graph: Graph to build the model from it.
             mode: Mode for how to build the model.
             append2output: List of Nodes to set as the model's outputs.
-            fw_info: FrameworkInfo object with information about the specific framework's model
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
         Returns:
             A tuple with the model and additional relevant supporting objects.
@@ -195,7 +192,6 @@ class KerasImplementation(FrameworkImplementation):
         keras_model_builder = get_keras_model_builder(mode)
         return keras_model_builder(graph=graph,
                                    append2output=append2output,
-                                   fw_info=fw_info,
                                    return_float_outputs=return_float_outputs).build_model()
 
     def run_model_inference(self,
@@ -227,65 +223,57 @@ class KerasImplementation(FrameworkImplementation):
 
     def shift_negative_correction(self,
                                   graph: Graph,
-                                  core_config: CoreConfig,
-                                  fw_info: FrameworkInfo) -> Graph:
+                                  core_config: CoreConfig) -> Graph:
         """
         Apply shift negative correction (SNC) on a graph.
 
         Args:
             graph: Graph to apply SNC on.
             core_config: Quantization configuration.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             Graph after SNC.
         """
         return keras_apply_shift_negative_correction(graph,
-                                                     core_config,
-                                                     fw_info)
+                                                     core_config)
 
     def compute_activation_bias_correction(self,
                                            graph: Graph,
-                                           quant_config: QuantizationConfig,
-                                           fw_info: FrameworkInfo):
+                                           quant_config: QuantizationConfig):
         """
         Compute activation bias correction on a graph.
 
         Args:
             graph: Graph to apply activation bias correction on.
             quant_config: QuantizationConfig of how the model should be quantized.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             Graph after activation bias correction computing.
         """
         return keras_compute_activation_bias_correction_of_graph(graph=graph,
                                                                  quant_config=quant_config,
-                                                                 fw_info=fw_info,
                                                                  fw_impl=self)
 
     def get_substitutions_channel_equalization(self,
-                                               quant_config: QuantizationConfig,
-                                               fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
+                                               quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used for channel equalization.
 
         Args:
             quant_config: QuantizationConfig to determine which substitutions to return.
-            fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
         substitutions_list = []
         if quant_config.activation_channel_equalization:
-            substitutions_list.extend([ScaleEqualization(quant_config, fw_info),
-                                       ScaleEqualizationWithPad(quant_config, fw_info),
-                                       ScaleEqualizationMidActivation(quant_config, fw_info),
-                                       ScaleEqualizationMidActivationWithPad(quant_config, fw_info)])
+            substitutions_list.extend([ScaleEqualization(quant_config),
+                                       ScaleEqualizationWithPad(quant_config),
+                                       ScaleEqualizationMidActivation(quant_config),
+                                       ScaleEqualizationMidActivationWithPad(quant_config)])
         return substitutions_list
 
-    def get_substitutions_prepare_graph(self, fw_info: FrameworkInfo = None) -> List[common.BaseSubstitution]:
+    def get_substitutions_prepare_graph(self) -> List[common.BaseSubstitution]:
         """
 
         Returns: A list of the framework substitutions used to prepare the graph.
@@ -402,22 +390,19 @@ class KerasImplementation(FrameworkImplementation):
 
     def get_node_prior_info(self,
                             node: BaseNode,
-                            fw_info: FrameworkInfo,
                             graph: Graph) -> NodePriorInfo:
         """
         Get a NodePriorInfo object for a node that represents a Keras layer.
 
         Args:
             node: Node to get its prior info.
-            fw_info: Framework specific information needed to create the prior info of the node.
             graph: Graph to check the next node type.
 
         Returns:
             NodePriorInfo with information about the node.
         """
 
-        return create_node_prior_info(node=node,
-                                      fw_info=fw_info, graph=graph)
+        return create_node_prior_info(node=node, graph=graph)
 
     def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
         """
@@ -530,23 +515,19 @@ class KerasImplementation(FrameworkImplementation):
         return True
 
     def get_node_mac_operations(self,
-                                node: BaseNode,
-                                fw_info: FrameworkInfo) -> float:
+                                node: BaseNode) -> float:
         """
         Gets the MAC operation count for a given operation.
 
         Args:
             node: A graph node that wraps the operation for which the MAC count is computed.
-            fw_info: FrameworkInfo object with information about the Keras model.
 
         Returns: The MAC count og the operation
         """
-        kernels = fw_info.get_kernel_op_attributes(node.type)
-        if not kernels or kernels[0] is None:
+        if node.kernel_attr is None:
             return 0
 
-        assert len(kernels) == 1
-        kernel_shape = node.get_weights_by_keys(kernels[0]).shape
+        kernel_shape = node.get_weights_by_keys(node.kernel_attr).shape
 
         if node.is_match_type(Conv2D) or node.is_match_type(Conv2DTranspose) or node.is_match_type(DepthwiseConv2D):
             h, w = node.get_output_shapes_list()[0][-3:-1]
@@ -554,8 +535,7 @@ class KerasImplementation(FrameworkImplementation):
 
         if node.is_match_type(Dense):
             # IN * OUT * (all previous dims[:-1])
-            _, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
-            return node.get_total_output_params() * kernel_shape[input_channel_axis]
+            return node.get_total_output_params() * kernel_shape[node.channel_axis.input]
 
         return 0
 

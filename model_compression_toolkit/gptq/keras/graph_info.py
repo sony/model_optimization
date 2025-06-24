@@ -16,8 +16,8 @@
 import tensorflow as tf
 from typing import Tuple, List
 from model_compression_toolkit.core.keras.constants import USE_BIAS
+from model_compression_toolkit.core.common.framework_info import get_fw_info
 from tensorflow.keras.models import Model
-from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
@@ -44,8 +44,7 @@ def get_gptq_trainable_parameters(fxp_model: Model,
 
     for layer in fxp_model.layers:
         if isinstance(layer, KerasTrainableQuantizationWrapper):
-            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                  fw_info=DEFAULT_KERAS_INFO)
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer))
 
             # collect trainable weights per quantizer
             if kernel_attribute not in layer.weights_quantizers:
@@ -57,9 +56,8 @@ def get_gptq_trainable_parameters(fxp_model: Model,
             trainable_threshold.extend(quantizer_trainable_threshold)
 
             if add_bias:
-                kernel_ops_attrs = DEFAULT_KERAS_INFO.kernel_ops_attributes_mapping.get(type(layer.layer))
-                use_bias = kernel_ops_attrs is not None and kernel_ops_attrs[0] is not None \
-                           and layer.layer.get_config().get(USE_BIAS)
+                kernel_ops_attr = get_fw_info().get_kernel_op_attribute(type(layer.layer))
+                use_bias = kernel_ops_attr is not None and layer.layer.get_config().get(USE_BIAS)
                 if use_bias is not None and use_bias and layer.layer.bias is not None:
                     bias_weights.append([layer.layer.bias])
 

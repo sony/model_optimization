@@ -16,7 +16,6 @@
 import copy
 from typing import Callable, Any, List, Optional
 
-from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -46,7 +45,6 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 def core_runner(in_model: Any,
                 representative_data_gen: Callable,
                 core_config: CoreConfig,
-                fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 fqc: FrameworkQuantizationCapabilities,
                 target_resource_utilization: ResourceUtilization = None,
@@ -65,7 +63,6 @@ def core_runner(in_model: Any,
         in_model: Model to quantize.
         representative_data_gen: Dataset used for calibration.
         core_config: CoreConfig containing parameters of how the model should be quantized
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.).
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         fqc: FrameworkQuantizationCapabilities object that models the inference target platform and
@@ -99,7 +96,6 @@ def core_runner(in_model: Any,
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen,
                                      core_config.quantization_config,
-                                     fw_info,
                                      fw_impl,
                                      fqc,
                                      core_config.bit_width_config,
@@ -112,7 +108,6 @@ def core_runner(in_model: Any,
     tg = quantization_preparation_runner(graph=graph,
                                          representative_data_gen=representative_data_gen,
                                          core_config=core_config,
-                                         fw_info=fw_info,
                                          fw_impl=fw_impl,
                                          tb_w=tb_w,
                                          hessian_info_service=hessian_info_service)
@@ -123,9 +118,8 @@ def core_runner(in_model: Any,
     if core_config.is_mixed_precision_enabled:
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
-            filter_candidates_for_mixed_precision(graph, target_resource_utilization, fw_info, fqc)
+            filter_candidates_for_mixed_precision(graph, target_resource_utilization, fqc)
             bit_widths_config = search_bit_width(tg,
-                                                 fw_info,
                                                  fw_impl,
                                                  target_resource_utilization,
                                                  core_config.mixed_precision_config,
@@ -153,22 +147,20 @@ def core_runner(in_model: Any,
     ######################################
     if core_config.quantization_config.activation_bias_correction:
         tg = fw_impl.compute_activation_bias_correction(graph=tg,
-                                                        quant_config=core_config.quantization_config,
-                                                        fw_info=fw_info)
+                                                        quant_config=core_config.quantization_config)
 
     # Edit the graph again after finalizing the configurations.
     # This is since some actions regard the final configuration and should be edited.
-    edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
+    edit_network_graph(tg, core_config.debug_config.network_editor)
 
     _set_final_resource_utilization(graph=tg,
                                     final_bit_widths_config=bit_widths_config,
                                     target_resource_utilization=target_resource_utilization,
-                                    fw_info=fw_info,
                                     fw_impl=fw_impl)
 
     if core_config.is_mixed_precision_enabled:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
-        weights_conf_nodes_bitwidth = tg.get_final_weights_config(fw_info)
+        weights_conf_nodes_bitwidth = tg.get_final_weights_config()
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
 
         if len(weights_conf_nodes_bitwidth) > 0:
@@ -200,7 +192,6 @@ def core_runner(in_model: Any,
 def _set_final_resource_utilization(graph: Graph,
                                     final_bit_widths_config: List[int],
                                     target_resource_utilization: Optional[ResourceUtilization],
-                                    fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation):
     """
     Computing the resource utilization of the model according to the final bit-width configuration,
@@ -210,14 +201,13 @@ def _set_final_resource_utilization(graph: Graph,
         graph: Graph to compute the resource utilization for.
         final_bit_widths_config: The final bit-width configuration to quantize the model accordingly.
         target_resource_utilization: Requested target resource utilization if relevant.
-        fw_info: A FrameworkInfo object.
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
 
     """
     ru_targets = target_resource_utilization.get_restricted_targets() if target_resource_utilization else None
     final_ru = None
     if ru_targets:
-        ru_calculator = ResourceUtilizationCalculator(graph, fw_impl, fw_info)
+        ru_calculator = ResourceUtilizationCalculator(graph, fw_impl)
         w_qcs = {n.name: n.final_weights_quantization_cfg for n in graph.nodes}
         a_qcs = {n.name: n.final_activation_quantization_cfg for n in graph.nodes}
         final_ru = ru_calculator.compute_resource_utilization(TargetInclusionCriterion.AnyQuantizedNonFused,
