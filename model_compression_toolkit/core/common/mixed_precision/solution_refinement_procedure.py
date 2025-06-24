@@ -50,8 +50,11 @@ def greedy_solution_refinement_procedure(mp_solution: Dict[BaseNode, int],
     if target_resource_utilization.bops_restricted():
         Logger.info(f'Target resource utilization constraint BOPs - Skipping MP greedy solution refinement')
         return mp_solution
-
     assert search_manager.using_virtual_graph is False
+
+    tru = target_resource_utilization
+    activation_restricted = tru.activation_restricted() or tru.total_mem_restricted() or tru.bops_restricted()
+    weights_restricted = tru.weight_restricted() or tru.total_mem_restricted() or tru.bops_restricted()
 
     new_solution = mp_solution.copy()
     changed = True
@@ -62,7 +65,7 @@ def greedy_solution_refinement_procedure(mp_solution: Dict[BaseNode, int],
         nodes_next_candidate = {}
 
         for node in search_manager.mp_topo_configurable_nodes:
-            if new_solution[node] == 0:
+            if new_solution[node] == node.find_max_candidate_index():
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
@@ -71,9 +74,8 @@ def greedy_solution_refinement_procedure(mp_solution: Dict[BaseNode, int],
             # only weights kernel attribute is quantized with weights mixed precision
             valid_candidates = _get_valid_candidates_indices(node_candidates,
                                                              new_solution[node],
-                                                             target_resource_utilization.activation_restricted(),
-                                                             target_resource_utilization.weight_restricted()
-                                                             )
+                                                             activation_restricted,
+                                                             weights_restricted)
 
             # Create a list of ru for the valid candidates.
             updated_ru = []
