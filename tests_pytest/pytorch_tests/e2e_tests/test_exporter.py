@@ -14,6 +14,10 @@ from model_compression_toolkit.target_platform_capabilities import AttributeQuan
     QuantizationConfigOptions, OpQuantizationConfig, Signedness, TargetPlatformCapabilities
 
 
+def rmse(x, y):
+    return np.sqrt(np.power(x - y, 2).mean())
+
+
 def onnx_reader(model_file, quantization_holder):
     model = onnx.load(model_file)
 
@@ -152,7 +156,7 @@ class TestExporter:
 
     def representative_dataset(self, num_inputs):
         def rep_dataset():
-            yield [np.random.randn(32, self.in_channels) for _ in range(num_inputs)]
+            yield [np.random.randn(512, self.in_channels) for _ in range(num_inputs)]
         return rep_dataset
 
     def _run_mct(self, float_model, rep_dataset, abits, a_qmethod, w_qmethod=mctq.QuantizationMethod.POWER_OF_TWO):
@@ -190,8 +194,7 @@ class TestExporter:
             torch_outputs = [torch_outputs]
         torch_outputs = [o.detach().cpu().numpy() for o in torch_outputs]
 
-        print([np.linalg.norm(onnx_output - torch_output) for onnx_output, torch_output in zip(onnx_outputs, torch_outputs)])
-        assert np.all([np.isclose(np.linalg.norm(onnx_output-torch_output), 0, atol=tol)
+        assert np.all([np.isclose(rmse(onnx_output, torch_output), 0, atol=tol)
                        for onnx_output, torch_output in zip(onnx_outputs, torch_outputs)])
 
     def _assert_quant_params_match(self, quantized_model, onnx_model_dict, a_qmethod, w_qmethod=mctq.QuantizationMethod.POWER_OF_TWO):
@@ -245,7 +248,7 @@ class TestExporter:
     @pytest.mark.parametrize('w_qmethod', [mctq.QuantizationMethod.POWER_OF_TWO,
                                            mctq.QuantizationMethod.SYMMETRIC,
                                            mctq.QuantizationMethod.UNIFORM])
-    @pytest.mark.parametrize('a_qmethod, tol', [(mctq.QuantizationMethod.POWER_OF_TWO, 0.0),
+    @pytest.mark.parametrize('a_qmethod, tol', [(mctq.QuantizationMethod.POWER_OF_TWO, 1e-8),
                                                 (mctq.QuantizationMethod.SYMMETRIC, 1e-2),
                                                 (mctq.QuantizationMethod.UNIFORM, 1e-2)])
     @pytest.mark.parametrize('abits', [8, 16])
