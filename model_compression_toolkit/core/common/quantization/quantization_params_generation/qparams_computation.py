@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
-    import get_activations_qparams
+    import compute_activation_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
     compute_weights_qparams
 from model_compression_toolkit.logger import Logger
@@ -130,9 +130,8 @@ def calculate_quantization_params(graph: Graph,
 
             if n.is_activation_quantization_enabled():
                 # If node's activations should be quantized as well, we compute its activation quantization parameters
-                activation_params = get_activations_qparams(
-                    activation_quant_cfg=candidate_qc.activation_quantization_cfg,
-                    node_prior_info=n.prior_info,
+                activation_params = compute_activation_qparams(
+                    activation_quant_cfg=candidate_qc.activation_quantization_cfg, node_prior_info=n.prior_info,
                     out_stats_container=graph.get_out_stats_collector(n))
                 # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
                 candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_params)

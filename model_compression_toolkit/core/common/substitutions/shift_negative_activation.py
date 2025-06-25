@@ -19,14 +19,14 @@ from typing import List, Tuple, Any, Callable
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
-    get_activation_quantizer_factory
+    get_activation_quantization_fn_factory
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
-    import get_activations_qparams
+    import compute_activation_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import z_score_filter
@@ -327,7 +327,8 @@ def shift_negative_function(graph: Graph,
                 'float32')  # Change to type float32 to support tensorflow dtypes
             for _shift_value in _q_points:
                 _hist_bins = hist_bins.astype(np.float32) + _shift_value
-                quantizer_factory = get_activation_quantizer_factory(non_linear_node_cfg_candidate.activation_quantization_method)
+                quantizer_factory = get_activation_quantization_fn_factory(
+                    non_linear_node_cfg_candidate.activation_quantization_method)
                 fw_quant_fn = quantizer_factory(non_linear_node_cfg_candidate.activation_n_bits, qparams)
                 """
                 In SNC, when better shifting values are tested for better choice,
@@ -471,11 +472,11 @@ def shift_negative_function(graph: Graph,
                                op2d_node=op2d_node)
 
     if non_linear_node_cfg_candidate.shift_negative_threshold_recalculation:
-        activation_param = get_activations_qparams(activation_quant_cfg=non_linear_node_cfg_candidate,
-                                                   nodes_prior_info=non_linear_node.prior_info,
-                                                   out_stats_container=graph.get_out_stats_collector(non_linear_node))
+        activation_param = compute_activation_qparams(activation_quant_cfg=non_linear_node_cfg_candidate,
+                                                      node_prior_info=non_linear_node.prior_info,
+                                                      out_stats_container=graph.get_out_stats_collector(non_linear_node))
 
-        assert activation_param.get(SIGNED) == False
+        assert activation_param.get(SIGNED) is False
         for candidate_qc in non_linear_node.candidates_quantization_cfg:
             candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_param)
 

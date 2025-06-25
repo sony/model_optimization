@@ -25,6 +25,46 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationErrorMethod
 
 
+def compute_activation_qparams(activation_quant_cfg: NodeActivationQuantizationConfig,
+                               node_prior_info: NodePriorInfo,
+                               out_stats_container: BaseStatsCollector) -> Dict[str, Union[np.ndarray, float, bool]]:
+    """
+    Compute the activations params for a given node in a graph according to a params function.
+
+    Args:
+        activation_quant_cfg: node's activation quantization configuration.
+        node_prior_info: Prior info collected for the node that is being quantized.
+        out_stats_container: Tensor containing output statistics of the node.
+
+    Returns:
+        The computed activation quantization params.
+    """
+    activation_quantization_params_fn = _get_activation_quantization_params_fn(
+        activation_quant_cfg.activation_quantization_method, no_clipping=node_prior_info.is_output_bounded())
+
+    # Extract and filter histogram data from the statistics container.
+    bins_values, bins_counts = _get_histogram_data(activation_quant_cfg, out_stats_container)
+
+    # Retrieve the minimum and maximum values from the statistics container.
+    min_value, max_value = out_stats_container.get_min_max_values()
+
+    # Determine if the activations should be considered signed.
+    signed = _determine_signedness(activation_quant_cfg, node_prior_info, min_value, bins_values, bins_counts)
+
+    # Compute and return the activation quantization parameters.
+    return activation_quantization_params_fn(
+        bins_values,
+        bins_counts,
+        activation_quant_cfg.l_p_value,
+        activation_quant_cfg.activation_n_bits,
+        min_value,
+        max_value,
+        min_threshold=activation_quant_cfg.min_threshold,
+        quant_error_method=activation_quant_cfg.activation_error_method,
+        is_signed=signed
+    )
+
+
 def _get_histogram_data(
     activation_quant_cfg: NodeActivationQuantizationConfig,
     out_stats_container: BaseStatsCollector
@@ -83,46 +123,6 @@ def _determine_signedness(
         return min_value < 0
 
     return np.any(bins_values[:-1][bins_counts > 0] < 0)
-
-
-def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConfig,
-                            node_prior_info: NodePriorInfo,
-                            out_stats_container: BaseStatsCollector) -> Dict[str, Union[np.ndarray, float, bool]]:
-    """
-    Compute the activations params for a given node in a graph according to a params function.
-
-    Args:
-        activation_quant_cfg: node's activation quantization configuration.
-        node_prior_info: Prior info collected for the node that is being quantized.
-        out_stats_container: Tensor containing output statistics of the node.
-
-    Returns:
-        The computed activation quantization params.
-    """
-    activation_quantization_params_fn = _get_activation_quantization_params_fn(
-        activation_quant_cfg.activation_quantization_method, no_clipping=node_prior_info.is_output_bounded())
-
-    # Extract and filter histogram data from the statistics container.
-    bins_values, bins_counts = _get_histogram_data(activation_quant_cfg, out_stats_container)
-
-    # Retrieve the minimum and maximum values from the statistics container.
-    min_value, max_value = out_stats_container.get_min_max_values()
-
-    # Determine if the activations should be considered signed.
-    signed = _determine_signedness(activation_quant_cfg, node_prior_info, min_value, bins_values, bins_counts)
-
-    # Compute and return the activation quantization parameters.
-    return activation_quantization_params_fn(
-        bins_values,
-        bins_counts,
-        activation_quant_cfg.l_p_value,
-        activation_quant_cfg.activation_n_bits,
-        min_value,
-        max_value,
-        min_threshold=activation_quant_cfg.min_threshold,
-        quant_error_method=activation_quant_cfg.activation_error_method,
-        is_signed=signed
-    )
 
 
 _activation_quant_params_fns = {

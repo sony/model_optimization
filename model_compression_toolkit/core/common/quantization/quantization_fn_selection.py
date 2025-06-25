@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.quantization.quantizers.uniform_quant
     symmetric_quantizer, uniform_quantizer
 
 
-def get_activation_quantizer_factory(quantization_method: QuantizationMethod) -> Callable[[int, dict], Callable]:
+def get_activation_quantization_fn_factory(quantization_method: QuantizationMethod) -> Callable[[int, dict], Callable]:
     """
     Get factory for activation quantizer.
 
@@ -35,10 +35,10 @@ def get_activation_quantizer_factory(quantization_method: QuantizationMethod) ->
     Returns:
         Factory that accepts activation bitwidth and a dict of quantization params, and returns the quantizer.
     """
-    return get_fw_info().activation_quantizer_mapping[quantization_method]
+    return get_fw_info().activation_quantizer_factory_mapping[quantization_method]
 
 
-def get_activation_quantizer(activation_quantization_cfg: NodeActivationQuantizationConfig) -> Callable:
+def get_activation_quantization_fn(activation_quantization_cfg: NodeActivationQuantizationConfig) -> Callable:
     """
     Get activation quantizer based on activation quantization configuration.
 
@@ -48,7 +48,8 @@ def get_activation_quantizer(activation_quantization_cfg: NodeActivationQuantiza
     Returns:
         Activation quantizer that accepts a tensor and returns a quantized tensor.
     """
-    quantizer_factory = get_activation_quantizer_factory(activation_quantization_cfg.activation_quantization_method)
+    quantizer_factory = get_activation_quantization_fn_factory(
+        activation_quantization_cfg.activation_quantization_method)
     quantizer = quantizer_factory(activation_quantization_cfg.activation_n_bits,
                                   activation_quantization_cfg.activation_quantization_params)
     return quantizer

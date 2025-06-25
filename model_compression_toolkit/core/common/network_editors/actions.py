@@ -20,11 +20,8 @@ from typing import Callable
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.logger import Logger
-
-
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
-    get_weights_quantization_fn
+
 
 _EditRule = namedtuple('EditRule', 'filter action')
 

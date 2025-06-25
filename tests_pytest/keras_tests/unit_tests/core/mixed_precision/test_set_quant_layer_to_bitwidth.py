@@ -35,7 +35,7 @@ class TestConfigureQLayer(KerasFwMixin):
         def quant_factory(nbits, *args, **kwargs):
             return lambda x: x*nbits
         mocker.patch('model_compression_toolkit.core.common.quantization.quantization_fn_selection.'
-                     'get_activation_quantizer_factory', lambda *args: quant_factory)
+                     'get_activation_quantization_fn_factory', lambda *args: quant_factory)
         abits = [8, 4, 2]
         quantizer = ConfigurableActivationQuantizer(node_q_cfg=[build_nbits_qc(abit) for abit in abits])
         layer = KerasActivationQuantizationHolder(quantizer)

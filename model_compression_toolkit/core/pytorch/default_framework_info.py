@@ -60,6 +60,16 @@ class PyTorchInfo(FrameworkInfo):
                                 ConvTranspose2d: 1}
 
     """
+    Mapping from a QuantizationMethod to an activation quantizer function.
+    """
+    activation_quantizer_factory_mapping = {
+        QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
+        QuantizationMethod.SYMMETRIC: symmetric_quantization,
+        QuantizationMethod.UNIFORM: uniform_quantization,
+        QuantizationMethod.LUT_POT_QUANTIZER: activation_lut_kmean_quantizer
+    }
+
+    """
     Map from an Pytorch module to its min/max output values (if known).
     The values are used for tensor min/max values initialization.
     """
@@ -80,14 +90,6 @@ class PyTorchInfo(FrameworkInfo):
                               silu: (-0.279, None),
                               SiLU: (-0.279, None),
                               }
-
-    """
-    Mapping from a QuantizationMethod to an activation quantizer function.
-    """
-    activation_quantizer_mapping = {QuantizationMethod.POWER_OF_TWO: power_of_two_quantization,
-                                    QuantizationMethod.SYMMETRIC: symmetric_quantization,
-                                    QuantizationMethod.UNIFORM: uniform_quantization,
-                                    QuantizationMethod.LUT_POT_QUANTIZER: activation_lut_kmean_quantizer}
 
     @classmethod
     def get_kernel_channels(cls, node_type: Any) -> ChannelAxisMapping:

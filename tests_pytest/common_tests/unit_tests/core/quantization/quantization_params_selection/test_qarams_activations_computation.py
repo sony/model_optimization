@@ -31,7 +31,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation import (
     _get_histogram_data,
     _determine_signedness,
-    get_activations_qparams, _get_activation_quantization_params_fn
+    compute_activation_qparams, _get_activation_quantization_params_fn
 )
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
     symmetric_selection_histogram
@@ -169,7 +169,7 @@ class TestActivationQParams:
         mocker.patch(f'{root}._get_histogram_data', return_value=(np.array([-1, 0, 1]), np.array([3, 4])))
         stat_collector_mock = mocker.Mock(spec_set=StatsCollector, get_min_max_values=lambda: (-1, 1))
 
-        ret = get_activations_qparams(activation_quant_cfg, node_prior_info, stat_collector_mock)
+        ret = compute_activation_qparams(activation_quant_cfg, node_prior_info, stat_collector_mock)
         get_params_fn_mock.assert_called_once_with(quant_method, no_clipping=is_bounded)
         assert ret == get_params_fn_mock.return_value.return_value
 
@@ -197,5 +197,5 @@ class TestActivationQParams:
         nodes_prior_info.is_output_bounded = Mock(return_value=True)
 
         activation_quant_cfg = self._create_activation_quant_cfg(quant_method, n_bits=2)
-        result = get_activations_qparams(activation_quant_cfg, nodes_prior_info, stats)
+        result = compute_activation_qparams(activation_quant_cfg, nodes_prior_info, stats)
         assert result == expected_result

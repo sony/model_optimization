@@ -18,7 +18,7 @@ import numpy as np
 
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
-from model_compression_toolkit.core.common.quantization.quantization_fn_selection import (get_activation_quantizer,
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import (get_activation_quantization_fn,
                                                                                           get_weights_quantization_fn)
 
 
@@ -107,7 +107,7 @@ def init_activation_quantizers(node_q_cfg: List[CandidateNodeQuantizationConfig]
     activation_quantizers = []
     for index, qc in enumerate(node_q_cfg):
         q_activation = node_q_cfg[index].activation_quantization_cfg
-        quantizer = get_activation_quantizer(q_activation)
+        quantizer = get_activation_quantization_fn(q_activation)
         activation_quantizers.append(quantizer)
 
     return activation_quantizers
