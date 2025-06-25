@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, Any, List, Dict, TYPE_CHECKING
+from typing import Any, List, Dict, TYPE_CHECKING
 from enum import Enum, auto
-import numpy as np
 
 from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_weights_quantization_params_fn
 
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
@@ -209,8 +206,6 @@ class WeightsAttrQuantizationConfig:
             weights_attr_cfg: AttributeQuantizationConfig with parameters to use when creating the node's attribute quantization config.
             weights_channels_axis: Axis to quantize a node's attribute when quantizing per-channel (if not quantizing per-channel than expecting None).
         """
-        # TODO irena remove functions.
-        self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_method = weights_attr_cfg.weights_quantization_method
         self.weights_n_bits = weights_attr_cfg.weights_n_bits
@@ -227,26 +222,6 @@ class WeightsAttrQuantizationConfig:
         self.weights_error_method = qc.weights_error_method
         self.l_p_value = qc.l_p_value
 
-    def override_weights_quantization_fn(self, weights_quantization_fn: Callable):
-        """
-        Override weights quantization function for the node.
-
-        Args:
-            weights_quantization_fn: Function for quantazing the weights.
-
-        """
-        self.weights_quantization_fn = weights_quantization_fn
-
-    def override_weights_quantization_params_fn(self, weights_quantization_params_fn: Callable):
-        """
-        Override weights params function for the node.
-
-        Args:
-            weights_quantization_params_fn: Function for calculating the weights params.
-
-        """
-        self.weights_quantization_params_fn = weights_quantization_params_fn
-
     def set_weights_quantization_param(self,
                                        weights_params: dict):
         """
@@ -259,31 +234,6 @@ class WeightsAttrQuantizationConfig:
         assert self.enable_weights_quantization
         for param_name, param_value in weights_params.items():
             self.weights_quantization_params[param_name] = param_value
-
-    def calculate_and_set_weights_params(self, tensor_data: np.ndarray, min_threshold: float):
-        """
-        Args:
-            tensor_data: Tensor content as Numpy array.
-            min_threshold: A minimal threshold to set as quantization parameter.
-
-        Returns:
-            Recalculated weights quantization params from the kernel and channel axis.
-
-        """
-        assert self.enable_weights_quantization
-        assert not (self.weights_per_channel_threshold and self.weights_channels_axis is None), \
-            "Trying to calculate threshold per channel, channel axis in None."
-        if self.weights_quantization_params_fn is not None:
-            self.set_weights_quantization_param(
-                self.weights_quantization_params_fn(tensor_data,
-                                                    p=self.l_p_value,
-                                                    n_bits=self.weights_n_bits,
-                                                    per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
-                                                    channel_axis=self.weights_channels_axis.output,  # output channel axis
-                                                    min_threshold=min_threshold)[0]  # Take only first output, the q-params, as axis is already chosen.
-            )
-        else:
-            self.set_weights_quantization_param({})
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -298,8 +248,7 @@ class WeightsAttrQuantizationConfig:
         if not isinstance(other, WeightsAttrQuantizationConfig):
             return False  # pragma: no cover
 
-        return self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
-               self.weights_channels_axis == other.weights_channels_axis and \
+        return self.weights_channels_axis == other.weights_channels_axis and \
                self.weights_quantization_method == other.weights_quantization_method and \
                self.weights_n_bits == other.weights_n_bits and \
                self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
@@ -308,8 +257,7 @@ class WeightsAttrQuantizationConfig:
                self.l_p_value == other.l_p_value
 
     def __hash__(self):
-        return hash((self.weights_quantization_params_fn,
-                     self.weights_channels_axis,
+        return hash((self.weights_channels_axis,
                      self.weights_error_method,
                      self.weights_quantization_method,
                      self.weights_n_bits,

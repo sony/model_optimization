@@ -17,7 +17,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import (
     lut_kmeans_tensor, lut_kmeans_histogram)
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import (
-    symmetric_no_clipping_selection_min_max, symmetric_selection_histogram)
+    symmetric_no_clipping_selection_min_max, symmetric_selection_histogram, symmetric_selection_tensor)
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import (
-    uniform_no_clipping_selection_min_max, uniform_selection_histogram)
+    uniform_no_clipping_selection_min_max, uniform_selection_histogram, uniform_selection_tensor)
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.outlier_filter import z_score_filter

@@ -21,8 +21,6 @@ from model_compression_toolkit.core.common.network_editors.actions import Change
     EditRule, ChangeCandidatesWeightsQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
     NodeTypeFilter
-from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_weights_quantization_params_fn
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
@@ -202,9 +200,6 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         # set a weight above 1
         self.conv_w[0, 0, 0, 0] = 1.1
         super().__init__(unit_test )
-
-    def weights_params_fn(self):
-        return get_weights_quantization_params_fn(QuantizationMethod.POWER_OF_TWO)
 
     def get_tpc(self):
         tpc = generate_test_tpc({

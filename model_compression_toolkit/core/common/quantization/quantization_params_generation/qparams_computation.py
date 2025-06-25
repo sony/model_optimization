@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService, He
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
-    get_weights_qparams
+    compute_weights_qparams
 from model_compression_toolkit.logger import Logger
 
 
@@ -119,13 +119,12 @@ def calculate_quantization_params(graph: Graph,
                             mod_attr_cfg = copy.deepcopy(attr_cfg)
                             mod_attr_cfg.weights_error_method = QuantizationErrorMethod.MSE
 
-                    weights_params, output_channels_axis = get_weights_qparams(n.get_weights_by_keys(attr),
-                                                                               candidate_qc.weights_quantization_cfg,
-                                                                               mod_attr_cfg,
-                                                                               output_channels_axis,
-                                                                               node=n,
-                                                                               hessian_info_service=hessian_info_service,
-                                                                               num_hessian_samples=num_hessian_samples)
+                    min_threshold = candidate_qc.weights_quantization_cfg.min_threshold
+                    weights_params, output_channels_axis = compute_weights_qparams(n.get_weights_by_keys(attr),
+                                                                                   mod_attr_cfg, output_channels_axis,
+                                                                                   min_threshold=min_threshold, node=n,
+                                                                                   hessian_info_service=hessian_info_service,
+                                                                                   num_hessian_samples=num_hessian_samples)
                     attr_cfg.weights_channels_axis = ChannelAxisMapping(output_channels_axis, attr_cfg.weights_channels_axis.input)
                     attr_cfg.set_weights_quantization_param(weights_params)
 
