@@ -45,7 +45,12 @@ def onnx_reader(model_file, quantization_holder):
                     model_dict[node.name]['attributes']['weight_value'] = onnx.numpy_helper.to_array(init)
                 elif init.name == node.input[2]:
                     model_dict[node.name]['attributes']['bias_value'] = onnx.numpy_helper.to_array(init)
-
+        elif 'Weights' in node.op_type and 'Quantizer' in node.op_type:
+            if len(node.input) == 3:
+                model_dict[node.name]['attributes']['min_value'] = constants.get(node.input[1])
+                model_dict[node.name]['attributes']['max_value'] = constants.get(node.input[2])
+            elif len(node.input) == 2:
+                model_dict[node.name]['attributes']['threshold'] = constants.get(node.input[1])
         elif node.op_type == 'QuantizeLinear':
             # Get scale (input[1]) and zero_point (input[2]) if available
             scale_name = node.input[1] if len(node.input) > 1 else None
@@ -137,7 +142,7 @@ class TestExporter:
     def setup_method(self):
         self.in_channels = 3
         self.out_channels = 4
-        self.onnx_file = "./tmp_model.onnx"
+        self.onnx_file = f"./tmp_model_{np.random.randint(1e10)}.onnx"
         self.qname_dict = {mctq.QuantizationMethod.POWER_OF_TWO: 'ActivationPOTQuantizer',
                            mctq.QuantizationMethod.SYMMETRIC: 'ActivationSymmetricQuantizer',
                            mctq.QuantizationMethod.UNIFORM: 'ActivationUniformQuantizer'
@@ -208,8 +213,18 @@ class TestExporter:
         else:
             assert np.isclose(quantized_model.x_activation_holder_quantizer.activation_holder_quantizer.threshold_np,
                               onnx_model_dict[f'/x_activation_holder_quantizer/{self.qname_dict[a_qmethod]}']['attributes']['threshold'])
+
         assert quantized_model.linear.weights_quantizers['weight'].num_bits == \
                onnx_model_dict[f'/linear/{self.wqname_dict[w_qmethod]}']['attributes']['num_bits']
+        if w_qmethod == mctq.QuantizationMethod.UNIFORM:
+            assert np.isclose(quantized_model.linear.weights_quantizers['weight'].adjusted_min_range_np,
+                              onnx_model_dict[f'/linear/{self.wqname_dict[w_qmethod]}']['attributes']['min_value'])
+            assert np.isclose(quantized_model.linear.weights_quantizers['weight'].adjusted_max_range_np,
+                              onnx_model_dict[f'/linear/{self.wqname_dict[w_qmethod]}']['attributes']['max_value'])
+        else:
+            assert np.isclose(quantized_model.linear.weights_quantizers['weight'].threshold_np,
+                              onnx_model_dict[f'/linear/{self.wqname_dict[w_qmethod]}']['attributes']['threshold'])
+
         assert quantized_model.linear_activation_holder_quantizer.activation_holder_quantizer.num_bits == \
                onnx_model_dict[f'/linear_activation_holder_quantizer/{self.qname_dict[a_qmethod]}']['attributes']['num_bits']
         if a_qmethod == mctq.QuantizationMethod.UNIFORM:
