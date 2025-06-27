@@ -155,7 +155,7 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(transformed_graph)
     transformed_graph.fusing_info = fusing_info
-    transformed_graph.disable_fused_nodes_activation_quantization()
+    transformed_graph.override_fused_node_activation_quantization_candidates()
 
     ######################################
     # Channel equalization

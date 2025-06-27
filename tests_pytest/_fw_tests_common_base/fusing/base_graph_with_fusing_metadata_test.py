@@ -117,7 +117,7 @@ class BaseGraphWithFusingMetadataTest(abc.ABC):
             for qc in node.candidates_quantization_cfg:
                 qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.QUANT
 
-        graph_with_fusion_metadata.disable_fused_nodes_activation_quantization()
+        graph_with_fusion_metadata.override_fused_node_activation_quantization_candidates()
         disabled_nodes = [
             node.name for node in graph_with_fusion_metadata.nodes
             if all(not qc.activation_quantization_cfg.enable_activation_quantization

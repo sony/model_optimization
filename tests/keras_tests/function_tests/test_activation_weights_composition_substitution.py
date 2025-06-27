@@ -124,7 +124,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
 
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
     graph.fusing_info = fusing_info
-    graph.disable_fused_nodes_activation_quantization()
+    graph.override_fused_node_activation_quantization_candidates()
 
     graph = filter_nodes_candidates(graph)
 
@@ -230,7 +230,7 @@ class TestActivationWeightsComposition(unittest.TestCase):
 
         graph.skip_validation_check = False
 
-        self._verify_two_conv_with_split_test(graph, v_graph, 3, 3)
+        self._verify_two_conv_with_split_test(graph, v_graph, 9, 3)
 
     def test_all_weights_layers_composition(self):
         in_model = multiple_weights_nodes_model()
