@@ -230,7 +230,7 @@ class TestActivationWeightsComposition(unittest.TestCase):
 
         graph.skip_validation_check = False
 
-        self._verify_two_conv_with_split_test(graph, v_graph, 3, 3)
+        self._verify_two_conv_with_split_test(graph, v_graph, 9, 3)
 
     def test_all_weights_layers_composition(self):
         in_model = multiple_weights_nodes_model()
