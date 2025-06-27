@@ -887,19 +887,19 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         nodes_in_fln = self.fusing_info.get_inner_fln_nodes()
         for node in nodes_in_fln:
             fused_node_op_id = self.fusing_info.get_fused_op_id_for_node(node.name)
-            fusiong_op_quaitization_cfg = self.fusing_info.get_fused_op_quantization_config(fused_node_op_id) 
+            fusiong_op_quaitization_cfg = self.fusing_info.get_fused_op_quantization_config(fused_node_op_id)             
+            org_candidate = node.candidates_quantization_cfg[0]
             if fusiong_op_quaitization_cfg is not None and fusiong_op_quaitization_cfg.enable_activation_quantization:
                 # Set ActivationQuantizationMode to FLN_QUANT and update the value of quantization_config
-                org_candidate = node.candidates_quantization_cfg[0]
                 activation_quantization_cfg = NodeActivationQuantizationConfig(qc=org_candidate,
-                                                                               op_cfg=fusiong_op_quaitization_cfg, 
+                                                                               op_cfg=fusiong_op_quaitization_cfg,
                                                                                activation_quantization_fn=org_candidate.activation_quantization_cfg.activation_quantization_fn,
                                                                                activation_quantization_params_fn=org_candidate.activation_quantization_cfg.activation_quantization_params_fn)
-                weights_quantization_cfg = org_candidate.weights_quantization_cfg
-                node.candidates_quantization_cfg = []
-                node.candidates_quantization_cfg.append(CandidateNodeQuantizationConfig(activation_quantization_cfg=activation_quantization_cfg, weights_quantization_cfg=weights_quantization_cfg))
                 activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
+                for qc in node.candidates_quantization_cfg:
+                    qc.activation_quantization_cfg = activation_quantization_cfg
             else:
+                # Set ActivationQuantizationMode to FLN_NO_QUANT
                 for qc in node.candidates_quantization_cfg:
                     qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_NO_QUANT
 

@@ -26,39 +26,50 @@ from model_compression_toolkit.core.common.quantization.filter_nodes_candidates 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from mct_quantizers import QuantizationMethod
 
-def build_mock_node(name, layer_class, wqe_flag):
+def build_mock_node(name, layer_class, idx):
     """
     Creates mock nodes representing a simple neural network structure.
     """
     node = Mock(spec=BaseNode)
     node.name = name
     node.layer_class = layer_class
-    node.kernel_attr = "wqe_flag"
-
-    node.is_no_quantization.return_value = True
-    node.is_weights_quantization_enabled.return_value = wqe_flag
+    node.kernel_attr = "Dmy"
+    
+    if idx == 0:
+        node.is_no_quantization.return_value = True
+        node.is_weights_quantization_enabled.return_value = False
+    elif idx == 1:
+        node.is_no_quantization.return_value = True
+        node.is_weights_quantization_enabled.return_value = True
+    else:
+        node.is_no_quantization.return_value = False
+        node.is_weights_quantization_enabled.return_value = True       
+        node.is_fln_no_quantization.return_value = True
 
     activation_quantization_cfg = Mock(spec=NodeActivationQuantizationConfig)
     activation_quantization_cfg.quant_mode = Mock()
     candidate_quantization_config = Mock(spec=CandidateNodeQuantizationConfig)
     candidate_quantization_config.activation_quantization_cfg = activation_quantization_cfg
     candidate_quantization_config.weights_quantization_cfg = Mock()
+    activation_quantization_cfg.activation_n_bits = 16
+    activation_quantization_cfg.activation_quantization_method = QuantizationMethod.SYMMETRIC
 
     node.candidates_quantization_cfg = [candidate_quantization_config]
 
     return node
 
-@pytest.mark.parametrize(("wqe_flag"), [
-    False,
-    True,   ### QUANT layer : ReLU
+@pytest.mark.parametrize(("idx"), [
+    0,
+    1,
+    2,
 ])
-def test_filter_node_candidates(wqe_flag):
+def test_filter_node_candidates(idx):
     """
     Test the filter_node_candidates function for a graph with multiple nodes and configurations.
     """
     ### Create Test Nodes
     mock_nodes = []
-    mock_nodes.append(build_mock_node(name='conv', layer_class='Conv2d', wqe_flag=wqe_flag))
+    mock_nodes.append(build_mock_node(name='conv', layer_class='Conv2d', idx=idx))
     ### Create a mock graph
     ### Note: Generate the graph first because fusing_info cannot be set without it.
     ###       In the following Mock, use wraps to mock everything except fusing_info.
@@ -71,5 +82,10 @@ def test_filter_node_candidates(wqe_flag):
 
     output_candidates = filter_node_candidates(graph.nodes[0])
 
-    assert output_candidates[0].activation_quantization_cfg.activation_n_bits == FLOAT_BITWIDTH
-    assert output_candidates[0].activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
+    if idx == 0 or idx == 1:
+        assert output_candidates[0].activation_quantization_cfg.activation_n_bits == FLOAT_BITWIDTH
+        assert output_candidates[0].activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
+    else:
+        assert output_candidates[0].activation_quantization_cfg.activation_n_bits == 16
+        assert output_candidates[0].activation_quantization_cfg.activation_quantization_method == QuantizationMethod.SYMMETRIC
+          
