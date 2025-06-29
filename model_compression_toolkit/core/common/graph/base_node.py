@@ -21,7 +21,7 @@ import numpy as np
 from model_compression_toolkit.core.common.framework_info import get_fw_info, ChannelAxisMapping
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
-from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import QuantizationConfig
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
@@ -90,7 +90,7 @@ class BaseNode:
         self.inputs_as_list = inputs_as_list
         self.final_weights_quantization_cfg = None
         self.final_activation_quantization_cfg = None
-        self.quantization_cfg: QuantizationConfig = None
+        self.quantization_cfg: NodeQuantizationConfig = None
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom

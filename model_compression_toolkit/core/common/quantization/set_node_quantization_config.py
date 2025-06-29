@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
@@ -50,7 +50,7 @@ def filter_node_qco_by_graph(node: BaseNode,
         that are compatible with next nodes supported input bit-widths.
 
     """
-    from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qco_for_node
+    from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qc_options_for_node
 
     # Filter quantization config options that don't match the graph.
     _base_config = node_qc_options.base_config
@@ -61,7 +61,7 @@ def filter_node_qco_by_graph(node: BaseNode,
     next_nodes = []
     while len(_next_nodes):
         n = _next_nodes.pop(0)
-        qco = fetch_qco_for_node(n, fqc)
+        qco = fetch_qc_options_for_node(n, fqc)
         qp = [qc.quantization_preserving for qc in qco.quantization_configurations]
         if not all(qp) and any(qp):
             Logger.error(f'Attribute "quantization_preserving" should be the same for all QuantizaionConfigOptions in {n}.')
@@ -72,7 +72,7 @@ def filter_node_qco_by_graph(node: BaseNode,
     if len(next_nodes) == 0:
         return _base_config, _node_qc_options
 
-    next_nodes_qc_options = [fetch_qco_for_node(_node, fqc) for _node in next_nodes]
+    next_nodes_qc_options = [fetch_qc_options_for_node(_node, fqc) for _node in next_nodes]
     all_next_nodes_supported_input_bitwidth = [max_input_activation_n_bits(op_cfg)
                                                    for qc_opts in next_nodes_qc_options
                                                    for op_cfg in qc_opts.quantization_configurations
@@ -122,6 +122,17 @@ def set_manual_bitwidth_config(graph, bit_width_config: BitWidthConfig):
 
 # TODO irena: check coverage and add missing tests
 def _set_manual_activation_bitwidths(manual_activation_bitwidths: Dict[BaseNode, int]):
+    """
+    Filters out candidates that don't match the requested manual activation bitwidths, and updates the
+    activation bitwidth in the base quantization config.
+
+    Args:
+        manual_activation_bitwidths: nodes' manual activation bitwidth.
+
+    Raises:
+        ValueError: if the manual bitwidth is requested for un-quantized node.
+                    if the manual bitwidth is not compatible with any candidate.
+    """
     for n, a_nbits in manual_activation_bitwidths.items():
         quant_mode = n.quantization_cfg.get_activation_quant_mode()
         # TODO irena: for FLN I think it should be ignored with warning for layer filter, and error for name filter
@@ -142,8 +153,20 @@ def _set_manual_activation_bitwidths(manual_activation_bitwidths: Dict[BaseNode,
 
 # TODO irena: check coverage
 def _set_manual_weights_bitwidths(manual_weights_bitwidths: Dict[BaseNode, Dict[str, int]]):
+    """
+    Filters out candidates that don't match the requested weight attributes manual bitwidths, and updates the bitwidths
+    in the base quantization config.
+
+    Args:
+        manual_activation_bitwidths: nodes' manual activation bitwidth.
+
+    Raises:
+        ValueError: if the manual bitwidth is requested for non-existing attribute.
+                    if the manual bitwidth is requested for un-quantized weights attribute.
+                    if the manual bitwidth is not compatible with any candidate.
+    """
     def qc_attr_nbits(qc, attr, n):
-        if attr == POS_ATTR:
+        if attr == POSITIONAL_ATTR:
             pos_attrs = qc.weights_quantization_cfg.pos_attributes_config_mapping
             if not pos_attrs:
                 raise ValueError('Unexpected positional attribute in manual weights bit-width for node {n}.')
@@ -169,7 +192,7 @@ def _set_manual_weights_bitwidths(manual_weights_bitwidths: Dict[BaseNode, Dict[
         n.quantization_cfg.candidates_quantization_cfg = candidates
         for attr, w_nbits in manual_wbits.items():
             base_weights_cfg = n.quantization_cfg.base_quantization_cfg.weights_quantization_cfg
-            if attr == POS_ATTR:
+            if attr == POSITIONAL_ATTR:
                 for pos_attr in base_weights_cfg.pos_attributes_config_mapping:
                     base_weights_cfg.get_attr_config(pos_attr).weights_n_bits = w_nbits
             else:

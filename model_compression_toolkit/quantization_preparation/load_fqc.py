@@ -18,7 +18,7 @@ from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping, get_fw_info
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig, QuantizationConfig
+    CandidateNodeQuantizationConfig, NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig, ActivationQuantizationMode
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
@@ -59,7 +59,7 @@ def set_quantization_configs_to_node(node: BaseNode,
         graph (Graph): Model's internal representation graph.
         fqc (FrameworkQuantizationCapabilities): FrameworkQuantizationCapabilities to get default OpQuantizationConfig.
     """
-    qc_options = fetch_qco_for_node(node, fqc)
+    qc_options = fetch_qc_options_for_node(node, fqc)
     base_config, candidates_qcs = filter_node_qco_by_graph(node, fqc, graph, qc_options)
 
     node_attrs_list = node.get_node_weights_attributes()
@@ -67,8 +67,8 @@ def set_quantization_configs_to_node(node: BaseNode,
                      for qc in candidates_qcs]
     sp_cfg = _create_candidate(node.channel_axis, base_config, node_attrs_list)
 
-    node.quantization_cfg = QuantizationConfig(base_quantization_cfg=sp_cfg,
-                                               candidates_quantization_cfg=mp_candidates)
+    node.quantization_cfg = NodeQuantizationConfig(base_quantization_cfg=sp_cfg,
+                                                   candidates_quantization_cfg=mp_candidates)
 
     # TODO is not needed anymore as find min/max candidate look for a real max/min, but some tests still count on it
     node.sort_node_candidates()
@@ -79,9 +79,9 @@ def set_quantization_configs_to_node(node: BaseNode,
     _disable_unsupported_quant_preserving(node, graph)
 
 
-def fetch_qco_for_node(node: BaseNode,
-                       fqc: FrameworkQuantizationCapabilities,
-                       return_default=True) -> Optional[QuantizationConfigOptions]:
+def fetch_qc_options_for_node(node: BaseNode,
+                              fqc: FrameworkQuantizationCapabilities,
+                              return_default=True) -> Optional[QuantizationConfigOptions]:
     """
     Get quantization configuration options for the node from TPC.
 
@@ -173,7 +173,7 @@ def _disable_unsupported_quant_preserving(node: BaseNode, graph: Graph):
 def _validate_custom_ops_have_qco(graph, fqc):
     custom_nodes = [n for n in graph.nodes if n.is_custom]
     for n in custom_nodes:
-        qco = fetch_qco_for_node(n, fqc, return_default=False)
+        qco = fetch_qc_options_for_node(n, fqc, return_default=False)
         if not qco:
             Logger.critical(f'MCT does not support optimizing Keras custom layers. Found a layer of type {n.type}. '
                             ' Please add the custom layer to Framework Quantization Capabilities (FQC), or file a feature '

@@ -20,7 +20,7 @@ from torch.nn import Conv2d
 from torch import add, sub
 
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.target_platform_capabilities.constants import BIAS, PYTORCH_KERNEL, POS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import BIAS, PYTORCH_KERNEL, POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.core import CoreConfig
@@ -132,10 +132,10 @@ def generate_tpc_pos_attr_local(default_config):
         lut_values_bitwidth=None)
 
     const_config_input16_positional_weight16 = const_config_input16.clone_and_edit(
-        attr_weights_configs_mapping={POS_ATTR: positional_weight_16_attr_config})
+        attr_weights_configs_mapping={POSITIONAL_ATTR: positional_weight_16_attr_config})
 
     const_config_input16_positional_weight8 = const_config_input16.clone_and_edit(
-        attr_weights_configs_mapping={POS_ATTR: positional_weight_8_attr_config})
+        attr_weights_configs_mapping={POSITIONAL_ATTR: positional_weight_8_attr_config})
     const_configuration_options_inout16 = (
         schema.QuantizationConfigOptions(quantization_configurations=tuple([
             const_config_input16_positional_weight8,
@@ -152,7 +152,7 @@ def generate_tpc_pos_attr_local(default_config):
         lut_values_bitwidth=None)
 
     const_config_input16_positional_weight2 = const_config_input16.clone_and_edit(
-        attr_weights_configs_mapping={POS_ATTR: positional_weight_2_attr_config})
+        attr_weights_configs_mapping={POSITIONAL_ATTR: positional_weight_2_attr_config})
     const_configuration_options_inout_2 = (
         schema.QuantizationConfigOptions(quantization_configurations=tuple([
             const_config_input16,
@@ -308,10 +308,10 @@ class TestManualPositionalAttrWeightsBitwidth(BaseTorchIntegrationTest):
         return tpc
 
     # (LayerType, bit width, attribute)
-    test_input_1 = (NodeTypeFilter(add), 16, POS_ATTR)
-    test_input_2 = (NodeTypeFilter(sub), [2], [POS_ATTR])
-    test_input_3 = (NodeNameFilter('add'), 16, POS_ATTR)
-    test_input_4 = (NodeNameFilter('sub'), 2, [POS_ATTR])
+    test_input_1 = (NodeTypeFilter(add), 16, POSITIONAL_ATTR)
+    test_input_2 = (NodeTypeFilter(sub), [2], [POSITIONAL_ATTR])
+    test_input_3 = (NodeNameFilter('add'), 16, POSITIONAL_ATTR)
+    test_input_4 = (NodeNameFilter('sub'), 2, [POSITIONAL_ATTR])
 
     @pytest.mark.parametrize(("inputs", "exp_bitwidth", "layer_name"), [
         (test_input_1, 16, 'add'),

@@ -32,7 +32,7 @@ from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS, POS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS, POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.constants import PYTORCH_KERNEL
 
 
@@ -240,10 +240,10 @@ class TestManualPositionalAttrWeightsBitwidthSelection(TestManualWeightsBitwidth
             lut_values_bitwidth=None)
 
         const_config_input16_positional_weight16 = const_config_input16.clone_and_edit(
-            attr_weights_configs_mapping={POS_ATTR: positional_weight_16_attr_config})
+            attr_weights_configs_mapping={POSITIONAL_ATTR: positional_weight_16_attr_config})
 
         const_config_input16_positional_weight8 = const_config_input16.clone_and_edit(
-            attr_weights_configs_mapping={POS_ATTR: positional_weight_8_attr_config})
+            attr_weights_configs_mapping={POSITIONAL_ATTR: positional_weight_8_attr_config})
         const_configuration_options_inout16 = (
             schema.QuantizationConfigOptions(quantization_configurations=tuple([
                 const_config_input16,

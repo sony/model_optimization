@@ -19,7 +19,7 @@ from model_compression_toolkit.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_
     VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig, QuantizationConfig
+    CandidateNodeQuantizationConfig, NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
 
 
@@ -75,7 +75,7 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
 
         self.name = origin_node.name + VIRTUAL_WEIGHTS_SUFFIX
 
-        self.quantization_cfg = QuantizationConfig(
+        self.quantization_cfg = NodeQuantizationConfig(
             candidates_quantization_cfg=origin_node.get_unique_weights_candidates(kernel_attr),
             base_quantization_cfg=None, validate=False
         )
@@ -108,8 +108,8 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         self.weights = {}
         self.layer_class = activation_class
 
-        self.quantization_cfg = QuantizationConfig(candidates_quantization_cfg=origin_node.get_unique_activation_candidates(),
-                                                   base_quantization_cfg=None, validate=False)
+        self.quantization_cfg = NodeQuantizationConfig(candidates_quantization_cfg=origin_node.get_unique_activation_candidates(),
+                                                       base_quantization_cfg=None, validate=False)
         self.quantization_cfg.disable_weights_quantization()
 
 
@@ -201,5 +201,5 @@ class VirtualActivationWeightsNode(VirtualNode):
         v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(weights_node.kernel_attr).weights_n_bits,
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
-        self.quantization_cfg = QuantizationConfig(candidates_quantization_cfg=v_candidates,
-                                                   base_quantization_cfg=None, validate=False)
+        self.quantization_cfg = NodeQuantizationConfig(candidates_quantization_cfg=v_candidates,
+                                                       base_quantization_cfg=None, validate=False)

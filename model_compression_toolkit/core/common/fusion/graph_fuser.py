@@ -19,7 +19,7 @@ from typing import Tuple
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig, QuantizationConfig
+    CandidateNodeQuantizationConfig, NodeQuantizationConfig
 
 
 class FusedLayerType:
@@ -93,8 +93,8 @@ class GraphFuser:
         activation_cfgs = [c.activation_quantization_cfg for c in nodes[-1].candidates_quantization_cfg]
         candidates = [CandidateNodeQuantizationConfig(weights_quantization_cfg=None, activation_quantization_cfg=a)
                       for a in activation_cfgs]
-        fused_node.quantization_cfg = QuantizationConfig(base_quantization_cfg=base_cfg,
-                                                         candidates_quantization_cfg=candidates)
+        fused_node.quantization_cfg = NodeQuantizationConfig(base_quantization_cfg=base_cfg,
+                                                             candidates_quantization_cfg=candidates)
 
         # Keep the final configurations if they were set already.
         fused_node.final_weights_quantization_cfg = nodes[0].final_weights_quantization_cfg

@@ -29,7 +29,7 @@ QNNPACK_TP_MODEL = 'qnnpack'
 # TP Attributes
 KERNEL_ATTR = "kernel_attr"
 BIAS_ATTR = "bias_attr"
-POS_ATTR = "pos_attr"
+POSITIONAL_ATTR = "pos_attr"
 
 # TODO: this is duplicated from the core frameworks constants files, because the original consts can't be used here
 #  duo to circular dependency. It might be best to extract the constants from the core file and put them here (in a

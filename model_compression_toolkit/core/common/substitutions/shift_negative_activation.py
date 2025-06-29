@@ -29,7 +29,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import z_score_filter
 from model_compression_toolkit.quantization_preparation.load_fqc import set_quantization_configs_to_node, \
-    fetch_qco_for_node
+    fetch_qc_options_for_node
 from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig
 
 """
@@ -442,7 +442,7 @@ def shift_negative_function(graph: Graph,
                     bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    add_node_qco = fetch_qco_for_node(add_node, graph.fqc).quantization_configurations
+    add_node_qco = fetch_qc_options_for_node(add_node, graph.fqc).quantization_configurations
     add_supported_bitwidths = [c.activation_n_bits for c in add_node_qco]
     if original_non_linear_activation_nbits not in add_supported_bitwidths:
         raise ValueError(

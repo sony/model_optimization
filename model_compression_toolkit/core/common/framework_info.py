@@ -57,7 +57,6 @@ class FrameworkInfo(ABC):
         kernel_ops_attribute_mapping (Dict): Dictionary from a framework operator to its weight attribute to quantize.
         out_channel_axis_mapping (Dict): Dictionary of output channels of the model's layers (for computing statistics per-channel).
         _layer_min_max_mapping (Dict[Any, tuple]): Dictionary from a layer to its min/max output values.
-
     """
 
     activation_quantizer_mapping: Dict[QuantizationMethod, Callable]

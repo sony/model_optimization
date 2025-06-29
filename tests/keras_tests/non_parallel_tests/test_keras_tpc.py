@@ -23,7 +23,7 @@ from packaging import version
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qco_for_node
+from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qc_options_for_node
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attribute_filter import Greater, \
     Smaller, GreaterEq, Eq, SmallerEq, Contains
@@ -215,9 +215,9 @@ class TestKerasTPModel(unittest.TestCase):
         tanh_node = get_node(tf.nn.tanh)
         relu_node = get_node(Activation('relu'))
 
-        conv_qco = fetch_qco_for_node(conv_node, tpc_keras)
-        tanh_qco = fetch_qco_for_node(tanh_node, tpc_keras)
-        relu_qco = fetch_qco_for_node(relu_node, tpc_keras)
+        conv_qco = fetch_qc_options_for_node(conv_node, tpc_keras)
+        tanh_qco = fetch_qc_options_for_node(tanh_node, tpc_keras)
+        relu_qco = fetch_qc_options_for_node(relu_node, tpc_keras)
 
         self.assertEqual(len(conv_qco.quantization_configurations),
                          len(mixed_precision_configuration_options.quantization_configurations))

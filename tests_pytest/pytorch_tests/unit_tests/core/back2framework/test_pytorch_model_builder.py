@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common import BaseNode
 from tests_pytest._test_util.graph_builder_utils import DummyLayer
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig, QuantizationConfig
+    CandidateNodeQuantizationConfig, NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
@@ -48,7 +48,7 @@ def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizati
                     reuse=reuse)
     if qcs:
         assert isinstance(qcs, list)
-        node.quantization_cfg = QuantizationConfig(candidates_quantization_cfg = qcs, base_quantization_cfg=qcs[0])
+        node.quantization_cfg = NodeQuantizationConfig(candidates_quantization_cfg = qcs, base_quantization_cfg=qcs[0])
         node.final_activation_quantization_cfg = node.candidates_quantization_cfg[0].activation_quantization_cfg
     return node
 

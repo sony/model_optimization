@@ -32,11 +32,11 @@ class Dense:
 ### test model
 def get_test_graph():
     n1 = build_node('input', layer_class=InputLayer)
-    conv1 = build_node('conv1', layer_class=Conv2D, canonical_weights={TEST_KERNEL: [1,2], TEST_BIAS: [3,4]})
+    conv1 = build_node('conv1', canonical_weights={TEST_KERNEL: [1, 2], TEST_BIAS: [3, 4]}, layer_class=Conv2D)
     add1 = build_node('add1', layer_class=Add)
     conv2 = build_node('conv2', layer_class=Conv2D)
     bn1 = build_node('bn1', layer_class=BatchNormalization)
-    relu = build_node('relu1', layer_class=ReLU, canonical_weights={TEST_KERNEL: [1,2], TEST_BIAS: [3,4]})
+    relu = build_node('relu1', canonical_weights={TEST_KERNEL: [1, 2], TEST_BIAS: [3, 4]}, layer_class=ReLU)
     add2 = build_node('add2', layer_class=Add)
     flatten = build_node('flatten', layer_class=Flatten)
     fc = build_node('fc', layer_class=Dense)

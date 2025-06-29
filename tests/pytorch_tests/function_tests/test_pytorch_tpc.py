@@ -29,7 +29,7 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.constants import PYTORCH, FUSED_LAYER_PATTERN
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qco_for_node
+from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qc_options_for_node
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL, KERNEL_ATTR, WEIGHTS_N_BITS, PYTORCH_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -132,10 +132,10 @@ class TestPytorchTPModel(unittest.TestCase):
             avg_pool2d_k2 = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=2))
             avg_pool2d = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=1))
 
-        conv_qco = fetch_qco_for_node(conv_node, tpc_pytorch)
-        tanh_qco = fetch_qco_for_node(tanh_node, tpc_pytorch)
-        avg_pool2d_k2_qco = fetch_qco_for_node(avg_pool2d_k2, tpc_pytorch)
-        avg_pool2d_qco = fetch_qco_for_node(avg_pool2d, tpc_pytorch)
+        conv_qco = fetch_qc_options_for_node(conv_node, tpc_pytorch)
+        tanh_qco = fetch_qc_options_for_node(tanh_node, tpc_pytorch)
+        avg_pool2d_k2_qco = fetch_qc_options_for_node(avg_pool2d_k2, tpc_pytorch)
+        avg_pool2d_qco = fetch_qc_options_for_node(avg_pool2d, tpc_pytorch)
 
         self.assertEqual(len(conv_qco.quantization_configurations),
                          len(mixed_precision_configuration_options.quantization_configurations))

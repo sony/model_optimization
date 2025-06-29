@@ -20,7 +20,7 @@ from model_compression_toolkit.core.common.matchers.node_matcher import BaseNode
 from model_compression_toolkit.logger import Logger
 
 from model_compression_toolkit.core.common.graph.base_node import WeightAttrT, BaseNode
-from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
 
 
 @dataclass
@@ -225,8 +225,8 @@ class BitWidthConfig:
                             attr.append(attr_str)
                     # this is a positional attribute, so it needs to be handled separately.
                     # Search manual_bit_width_selection's attribute that contain the POS_ATTR string.
-                    elif isinstance(attr_str, int) and POS_ATTR in manual_bit_width_selection.attr:
-                        attr.append(POS_ATTR)
+                    elif isinstance(attr_str, int) and POSITIONAL_ATTR in manual_bit_width_selection.attr:
+                        attr.append(POSITIONAL_ATTR)
                 if len(attr) == 0:
                     Logger.critical(f'The requested attribute {manual_bit_width_selection.attr} to change the bit width for {n} does not exist.')
 

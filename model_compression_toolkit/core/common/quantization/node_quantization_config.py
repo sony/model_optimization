@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
     get_weights_quantization_params_fn
 
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import \
     AttributeQuantizationConfig, \
     OpQuantizationConfig
@@ -403,7 +403,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 # POS_ATTR string. If none are found, it indicates that no specific quantization config is defined for
                 # positional weights, so the default config will be used instead.
                 attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if
-                                          POS_ATTR in k}
+                                          POSITIONAL_ATTR in k}
 
                 if len(attrs_included_in_name) > 1:  # pragma: no cover
                     raise ValueError(f"Found multiple attribute in FQC OpConfig that are contained "

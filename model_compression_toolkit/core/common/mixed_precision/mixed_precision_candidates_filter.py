@@ -41,11 +41,11 @@ def filter_candidates_for_mixed_precision(graph: Graph,
         activation_configurable_nodes = [n for n in graph.get_activation_configurable_nodes()]
         for n in activation_configurable_nodes:
             base_cfg_nbits = n.quantization_cfg.base_quantization_cfg.activation_quantization_cfg.activation_n_bits
-            filtered_conf = [c for c in n.candidates_quantization_cfg if
+            filtered_cfgs = [c for c in n.candidates_quantization_cfg if
                              c.activation_quantization_cfg.enable_activation_quantization and
                              c.activation_quantization_cfg.activation_n_bits == base_cfg_nbits]
 
-            n.quantization_cfg.candidates_quantization_cfg = filtered_conf
+            n.quantization_cfg.candidates_quantization_cfg = filtered_cfgs
 
     elif tru.activation_restricted() and not tru.weight_restricted():
         # Running mixed precision for activation compression only -
@@ -54,7 +54,7 @@ def filter_candidates_for_mixed_precision(graph: Graph,
         for n in weight_configurable_nodes:
             base_cfg_nbits = (n.quantization_cfg.base_quantization_cfg.weights_quantization_cfg.
                               get_attr_config(n.kernel_attr).weights_n_bits)
-            filtered_conf = [c for c in n.candidates_quantization_cfg if
+            filtered_cfgs = [c for c in n.candidates_quantization_cfg if
                              c.weights_quantization_cfg.get_attr_config(n.kernel_attr).enable_weights_quantization and
                              c.weights_quantization_cfg.get_attr_config(n.kernel_attr).weights_n_bits == base_cfg_nbits]
-            n.quantization_cfg.candidates_quantization_cfg = filtered_conf
+            n.quantization_cfg.candidates_quantization_cfg = filtered_cfgs

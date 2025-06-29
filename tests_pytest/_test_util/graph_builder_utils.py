@@ -18,7 +18,7 @@ from mct_quantizers import QuantizationMethod
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig, QuantizationConfig
+    CandidateNodeQuantizationConfig, NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import AttributeQuantizationConfig, OpQuantizationConfig, \
@@ -32,15 +32,16 @@ class DummyLayer:
 
 def build_node(name='node', canonical_weights: dict = None, final_weights: dict = None,
                qcs: List[CandidateNodeQuantizationConfig] = None,
-               sp_qc: CandidateNodeQuantizationConfig = None,
+               base_qc: CandidateNodeQuantizationConfig = None,
                input_shape=(4, 5, 6), output_shape=(4, 5, 6),
-               layer_class=DummyLayer, reuse=False, disable_tpc_info_validation=False):
+               layer_class=DummyLayer, reuse=False, disable_node_qc_validation=False):
     """ Build a node for tests.
         Either 'canonical_weights' (to be used by default) or 'final_weights' should be passed.
           Canonical weights are converted into full unique names, that contain the canonical name as a substring.
           Final weights are used as is.
-        If qcs or sp_qc is passed, candidate_quantization_cfg and sp_quantization_cfg are both set.
-        If only qcs is passed, sp_qc is set to first qc. If only sp_qc is passed, qcs is set to [sp_qc].
+        If qcs or base_qc is passed, candidate_quantization_cfg and base_quantization_cfg are both set.
+        If only qcs is passed, base_quantization_cfg is set to first qc. If only base_qc is passed, qcs is set to [base_qc].
+        disable_node_qc_validation - disable validation when building node's qc from FQC.
     """
     assert canonical_weights is None or final_weights is None
     if canonical_weights:
@@ -54,12 +55,12 @@ def build_node(name='node', canonical_weights: dict = None, final_weights: dict 
                     weights=weights,
                     layer_class=layer_class,
                     reuse=reuse)
-    if qcs or sp_qc:
+    if qcs or base_qc:
         assert isinstance(qcs, (list, type(None)))
-        qcs = qcs or [sp_qc]
-        sp_qc = sp_qc or qcs[0]
-        node.quantization_cfg = QuantizationConfig(base_quantization_cfg=sp_qc, candidates_quantization_cfg=qcs,
-                                                   validate=not disable_tpc_info_validation)
+        qcs = qcs or [base_qc]
+        base_qc = base_qc or qcs[0]
+        node.quantization_cfg = NodeQuantizationConfig(base_quantization_cfg=base_qc, candidates_quantization_cfg=qcs,
+                                                       validate=not disable_node_qc_validation)
     return node
 
 

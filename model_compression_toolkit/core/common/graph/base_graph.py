@@ -563,7 +563,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
         """
         # configurability is only relevant for kernel attribute quantization
-        potential_conf_nodes = [n for n in list(self) if n.kernel_attr]
+        potential_conf_nodes = [n for n in self.nodes if n.kernel_attr]
 
         def is_configurable(n):
             return n.is_configurable_weight(n.kernel_attr) and (not n.reuse or include_reused_nodes)
