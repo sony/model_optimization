@@ -139,11 +139,22 @@ def _set_nodes_quantization_configuration(graph: Graph,
     return graph
 
 
-def _set_fusion_info(graph, fqc) -> Graph:
+def _set_fusion_info(graph: Graph, fqc: FrameworkQuantizationCapabilities) -> Graph:
+    """
+
+    Args:
+        graph: graph.
+        fqc: quantization capabilities with attached framework.
+
+    Returns:
+
+    """
     # TODO fix the dict with const keys inside get_fusing_patterns. use named tuple or class
+    # TODO irena instead of storing fusion inside graph (including tpc objects) and then let graph convert tpc op config to
+    #  node config, do it here and only store in graph whatever is relevant after this stage.
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
     graph.fusing_info = fusing_info
-    graph.disable_fused_nodes_activation_quantization()
+    graph.override_fused_node_activation_quantization_candidates()
     return graph
 
 

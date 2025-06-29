@@ -860,32 +860,36 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return intermediate_nodes, next_node
 
+    # TODO irena move to load_fqc and clean up tests (currently tests_pytest/common_tests/unit_tests/core/graph/test_base_graph.py)
     def override_fused_node_activation_quantization_candidates(self):
         """
         Override fused node activation quantization candidates for all nodes in fused operations,
         except for the last node in each fused group.
         Update the value of quantization_config with the value of op_quaitization_cfg from FusingInfo.
         """
-        from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
-
         nodes_in_fln = self.fusing_info.get_inner_fln_nodes()
         for node in nodes_in_fln:
             fused_node_op_id = self.fusing_info.get_fused_op_id_for_node(node.name)
-            fusiong_op_quaitization_cfg = self.fusing_info.get_fused_op_quantization_config(fused_node_op_id)
-            org_candidate = node.candidates_quantization_cfg[0]
-            if fusiong_op_quaitization_cfg is not None and fusiong_op_quaitization_cfg.enable_activation_quantization:
-                # Set ActivationQuantizationMode to FLN_QUANT and update the value of quantization_config
-                activation_quantization_cfg = NodeActivationQuantizationConfig(qc=org_candidate,
-                                                                               op_cfg=fusiong_op_quaitization_cfg,
-                                                                               activation_quantization_fn=org_candidate.activation_quantization_cfg.activation_quantization_fn,
-                                                                               activation_quantization_params_fn=org_candidate.activation_quantization_cfg.activation_quantization_params_fn)
-                activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
-                for qc in node.candidates_quantization_cfg:
-                    qc.activation_quantization_cfg = activation_quantization_cfg
+            fusing_op_quantization_cfg = self.fusing_info.get_fused_op_quantization_config(fused_node_op_id)
+            if fusing_op_quantization_cfg is not None and fusing_op_quantization_cfg.enable_activation_quantization:
+                def update(qc):
+                    qc.activation_quantization_cfg = NodeActivationQuantizationConfig(
+                        fusing_op_quantization_cfg,
+                        qc.activation_quantization_cfg.activation_quantization_fn,
+                        qc.activation_quantization_cfg.activation_quantization_params_fn
+                    )
+                    qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
+                node.quantization_cfg.update_all(update)
+                node.quantization_cfg.remove_duplicates()
             else:
-                # Set ActivationQuantizationMode to FLN_NO_QUANT
+                node.quantization_cfg.update_activation_quantization_mode(ActivationQuantizationMode.FLN_NO_QUANT)
+                # Remove duplicate candidates. We cannot compare whole candidates since activation configs might not
+                # be identical, but we do want to treat them as such. So we only check duplication by weight configs.
+                uniq_qcs = []
                 for qc in node.candidates_quantization_cfg:
-                    qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_NO_QUANT
+                    if not any(qc.weights_quantization_cfg == uqc.weights_quantization_cfg for uqc in uniq_qcs):
+                        uniq_qcs.append(qc)
+                node.quantization_cfg.candidates_quantization_cfg = uniq_qcs
 
     def validate(self):
         """

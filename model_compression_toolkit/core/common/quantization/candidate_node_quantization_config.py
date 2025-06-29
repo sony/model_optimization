@@ -89,6 +89,16 @@ class NodeQuantizationConfig:
         self._validate_consistent_activation_quant_mode()
         return self.base_quantization_cfg.activation_quantization_cfg.quant_mode
 
+    def remove_duplicates(self):
+        """
+        Remove duplicate candidates. First candidate among duplicates is kept, and the order is preserved.
+        """
+        uniq_qcs = []
+        for qc in self.candidates_quantization_cfg:
+            if qc not in uniq_qcs:
+                uniq_qcs.append(qc)
+        self.candidates_quantization_cfg = uniq_qcs
+
     def __post_init__(self, validate=True):
         if validate:
             if not any(self.base_quantization_cfg == qc for qc in self.candidates_quantization_cfg):
