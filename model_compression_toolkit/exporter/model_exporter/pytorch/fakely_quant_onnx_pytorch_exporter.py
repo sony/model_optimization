@@ -19,7 +19,6 @@ import torch.nn
 
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 
-from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.verify_packages import FOUND_ONNX
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
