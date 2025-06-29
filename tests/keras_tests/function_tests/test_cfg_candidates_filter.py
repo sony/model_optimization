@@ -60,7 +60,7 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
 
     fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
     graph.fusing_info = fusing_info
-    graph.disable_fused_nodes_activation_quantization()
+    graph.override_fused_node_activation_quantization_candidates()
 
     return graph
 

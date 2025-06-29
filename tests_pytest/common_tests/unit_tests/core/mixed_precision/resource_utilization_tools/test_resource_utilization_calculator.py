@@ -591,7 +591,7 @@ class TestActivationMaxCutUtilization:
         graph.fusing_info = fusing_info
 
         if disable_quantization:
-            graph.disable_fused_nodes_activation_quantization()
+            graph.override_fused_node_activation_quantization_candidates()
 
         graph.find_node_by_name = MethodType(Graph.find_node_by_name, graph)
 

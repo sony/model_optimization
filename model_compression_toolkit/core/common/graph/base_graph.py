@@ -32,12 +32,12 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
+from model_compression_toolkit.core.common.quantization.node_quantization_config import \
+    NodeActivationQuantizationConfig, ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
-
 
 def validate_graph_after_change(method: Callable) -> Callable:
     """
@@ -876,15 +876,32 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return intermediate_nodes, next_node
 
-    def disable_fused_nodes_activation_quantization(self):
+    def override_fused_node_activation_quantization_candidates(self):
         """
-        Disable activation quantization for all nodes in fused operations,
+        Override fused node activation quantization candidates for all nodes in fused operations,
         except for the last node in each fused group.
+        Update the value of quantization_config with the value of op_quaitization_cfg from FusingInfo.
         """
-        nodes_to_disable = self.fusing_info.get_inner_fln_nodes()
-        for node in nodes_to_disable:
-            for qc in node.candidates_quantization_cfg:
-                qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
+        from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
+
+        nodes_in_fln = self.fusing_info.get_inner_fln_nodes()
+        for node in nodes_in_fln:
+            fused_node_op_id = self.fusing_info.get_fused_op_id_for_node(node.name)
+            fusiong_op_quaitization_cfg = self.fusing_info.get_fused_op_quantization_config(fused_node_op_id)             
+            org_candidate = node.candidates_quantization_cfg[0]
+            if fusiong_op_quaitization_cfg is not None and fusiong_op_quaitization_cfg.enable_activation_quantization:
+                # Set ActivationQuantizationMode to FLN_QUANT and update the value of quantization_config
+                activation_quantization_cfg = NodeActivationQuantizationConfig(qc=org_candidate,
+                                                                               op_cfg=fusiong_op_quaitization_cfg,
+                                                                               activation_quantization_fn=org_candidate.activation_quantization_cfg.activation_quantization_fn,
+                                                                               activation_quantization_params_fn=org_candidate.activation_quantization_cfg.activation_quantization_params_fn)
+                activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
+                for qc in node.candidates_quantization_cfg:
+                    qc.activation_quantization_cfg = activation_quantization_cfg
+            else:
+                # Set ActivationQuantizationMode to FLN_NO_QUANT
+                for qc in node.candidates_quantization_cfg:
+                    qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_NO_QUANT
 
     def validate(self):
         """
