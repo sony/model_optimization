@@ -12,21 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, Any, List, Dict, TYPE_CHECKING
+from typing import Any, List, Dict, TYPE_CHECKING
 from enum import Enum, auto
-import numpy as np
 
 from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
-from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_weights_quantization_params_fn
 
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import \
-    AttributeQuantizationConfig, \
-    OpQuantizationConfig
+    AttributeQuantizationConfig, OpQuantizationConfig
 
 if TYPE_CHECKING:
     from model_compression_toolkit.core.common.graph.base_node import WeightAttrT
@@ -83,26 +78,14 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     """
     Attributes for configuring the quantization of the activations of a node.
     """
-    def __init__(self,
-                 op_cfg: OpQuantizationConfig,
-                 activation_quantization_fn: Callable,
-                 activation_quantization_params_fn: Callable
-                 ):
+    def __init__(self, op_cfg: OpQuantizationConfig):
         """
 
         Args:
             op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
-            activation_quantization_fn: Function to use when quantizing the node's activations.
-            activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
         """
-
-        self.activation_quantization_fn = activation_quantization_fn
-        self.activation_quantization_params_fn = activation_quantization_params_fn
         self.activation_quantization_method = op_cfg.activation_quantization_method
         self.activation_n_bits = op_cfg.activation_n_bits
-        self.activation_quantization_params = {}
-        # TODO irena: computed by compute_activation_bias_correction. shouldnt really be here
-        self.activation_bias_correction_term = None
         if op_cfg.enable_activation_quantization and op_cfg.quantization_preserving:
             raise ValueError("An OpQuantizationConfig can't have both enable_activation_quantization and quantization_preserving enabled.")
         if op_cfg.enable_activation_quantization:
@@ -112,6 +95,10 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         else:
             self.quant_mode = ActivationQuantizationMode.NO_QUANT
         self.signedness = op_cfg.signedness
+
+        self.activation_quantization_params = {}
+        # TODO irena: computed by compute_activation_bias_correction. shouldnt really be here
+        self.activation_bias_correction_term = None
 
         # TODO irena remove along with set_qc. Keeping for eq and hash to work without set_qc being called
         self.activation_error_method = None
@@ -152,46 +139,6 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     def fln_quantization(self):
         return self.quant_mode == ActivationQuantizationMode.FLN_QUANT
 
-    def quantize_node_output(self,
-                             tensors: Any) -> Any:
-        """
-
-        Args:
-            tensors: framework tensor/s
-
-        Returns:
-            Framework tensor/s after applying fake quantization.
-
-        """
-        fake_quant = self.activation_quantization_fn(self.activation_n_bits,
-                                                     self.activation_quantization_params)
-
-        if fake_quant is None:
-            Logger.critical(
-                "Layer is intended to be quantized, but the fake_quant function is None.")  # pragma: no cover
-
-        return fake_quant(tensors)
-
-    def set_activation_quantization_fn(self, activation_quantization_fn: Callable):
-        """
-        Sets activation quantization function for the node.
-
-        Args:
-            activation_quantization_fn: Function for quantazing the activations.
-
-        """
-        self.activation_quantization_fn = activation_quantization_fn
-
-    def set_activation_quantization_params_fn(self, activation_quantization_params_fn:Callable):
-        """
-        Sets activation params function for the node.
-
-        Args:
-            activation_quantization_params_fn: Function for calculating activation params.
-
-        """
-        self.activation_quantization_params_fn = activation_quantization_params_fn
-
     def set_activation_quantization_param(self,
                                           activation_params: dict):
         """
@@ -218,9 +165,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         if not isinstance(other, NodeActivationQuantizationConfig):
             return False  # pragma: no cover
 
-        return self.activation_quantization_fn == other.activation_quantization_fn and \
-               self.activation_quantization_params_fn == other.activation_quantization_params_fn and \
-               self.activation_error_method == other.activation_error_method and \
+        return self.activation_error_method == other.activation_error_method and \
                self.activation_quantization_method == other.activation_quantization_method and \
                self.activation_n_bits == other.activation_n_bits and \
                self.quant_mode == other.quant_mode and \
@@ -234,9 +179,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
 
     def __hash__(self):
-        return hash((self.activation_quantization_fn,
-                     self.activation_quantization_params_fn,
-                     self.activation_error_method,
+        return hash((self.activation_error_method,
                      self.activation_quantization_method,
                      self.activation_n_bits,
                      self.quant_mode,
@@ -263,8 +206,6 @@ class WeightsAttrQuantizationConfig:
             weights_attr_cfg: AttributeQuantizationConfig with parameters to use when creating the node's attribute quantization config.
             weights_channels_axis: Axis to quantize a node's attribute when quantizing per-channel (if not quantizing per-channel than expecting None).
         """
-        self.weights_quantization_fn = get_weights_quantization_fn(weights_attr_cfg.weights_quantization_method)
-        self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_method = weights_attr_cfg.weights_quantization_method
         self.weights_n_bits = weights_attr_cfg.weights_n_bits
@@ -281,26 +222,6 @@ class WeightsAttrQuantizationConfig:
         self.weights_error_method = qc.weights_error_method
         self.l_p_value = qc.l_p_value
 
-    def override_weights_quantization_fn(self, weights_quantization_fn: Callable):
-        """
-        Override weights quantization function for the node.
-
-        Args:
-            weights_quantization_fn: Function for quantazing the weights.
-
-        """
-        self.weights_quantization_fn = weights_quantization_fn
-
-    def override_weights_quantization_params_fn(self, weights_quantization_params_fn: Callable):
-        """
-        Override weights params function for the node.
-
-        Args:
-            weights_quantization_params_fn: Function for calculating the weights params.
-
-        """
-        self.weights_quantization_params_fn = weights_quantization_params_fn
-
     def set_weights_quantization_param(self,
                                        weights_params: dict):
         """
@@ -313,31 +234,6 @@ class WeightsAttrQuantizationConfig:
         assert self.enable_weights_quantization
         for param_name, param_value in weights_params.items():
             self.weights_quantization_params[param_name] = param_value
-
-    def calculate_and_set_weights_params(self, tensor_data: np.ndarray, min_threshold: float):
-        """
-        Args:
-            tensor_data: Tensor content as Numpy array.
-            min_threshold: A minimal threshold to set as quantization parameter.
-
-        Returns:
-            Recalculated weights quantization params from the kernel and channel axis.
-
-        """
-        assert self.enable_weights_quantization
-        assert not (self.weights_per_channel_threshold and self.weights_channels_axis is None), \
-            "Trying to calculate threshold per channel, channel axis in None."
-        if self.weights_quantization_params_fn is not None:
-            self.set_weights_quantization_param(
-                self.weights_quantization_params_fn(tensor_data,
-                                                    p=self.l_p_value,
-                                                    n_bits=self.weights_n_bits,
-                                                    per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
-                                                    channel_axis=self.weights_channels_axis.output,  # output channel axis
-                                                    min_threshold=min_threshold)[0]  # Take only first output, the q-params, as axis is already chosen.
-            )
-        else:
-            self.set_weights_quantization_param({})
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -352,9 +248,7 @@ class WeightsAttrQuantizationConfig:
         if not isinstance(other, WeightsAttrQuantizationConfig):
             return False  # pragma: no cover
 
-        return self.weights_quantization_fn == other.weights_quantization_fn and \
-               self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
-               self.weights_channels_axis == other.weights_channels_axis and \
+        return self.weights_channels_axis == other.weights_channels_axis and \
                self.weights_quantization_method == other.weights_quantization_method and \
                self.weights_n_bits == other.weights_n_bits and \
                self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
@@ -363,9 +257,7 @@ class WeightsAttrQuantizationConfig:
                self.l_p_value == other.l_p_value
 
     def __hash__(self):
-        return hash((self.weights_quantization_fn,
-                     self.weights_quantization_params_fn,
-                     self.weights_channels_axis,
+        return hash((self.weights_channels_axis,
                      self.weights_error_method,
                      self.weights_quantization_method,
                      self.weights_n_bits,

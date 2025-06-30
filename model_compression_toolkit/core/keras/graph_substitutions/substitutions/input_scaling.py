@@ -18,13 +18,12 @@ from tensorflow.keras.layers import InputLayer, Dense, DepthwiseConv2D, Conv2D, 
 from typing import List
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, EdgeMatcher, WalkMatcher
+from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.constants import THRESHOLD
-from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
+    compute_weights_qparams
 from model_compression_toolkit.logger import Logger
 
 input_node = NodeOperationMatcher(InputLayer)
@@ -104,8 +103,12 @@ class BaseInputScaling(common.BaseSubstitution):
 
             # After scaling weights may have different thresholds so it needs to be recalculated
             for nqc in linear_layer.candidates_quantization_cfg:
-                nqc.weights_quantization_cfg.get_attr_config(linear_layer.kernel_attr).calculate_and_set_weights_params(w1_fixed,
-                                                                                                           nqc.weights_quantization_cfg.min_threshold)
+                attr_cfg = nqc.weights_quantization_cfg.get_attr_config(linear_layer.kernel_attr)
+                assert attr_cfg.enable_weights_quantization
+                w_params, _ = compute_weights_qparams(w1_fixed, attr_quant_config=attr_cfg,
+                                                      output_channels_axis=attr_cfg.weights_channels_axis.output,
+                                                      min_threshold=nqc.weights_quantization_cfg.min_threshold)
+                attr_cfg.set_weights_quantization_param(w_params)
 
         return graph
 

@@ -14,13 +14,45 @@
 # ==============================================================================
 
 from collections.abc import Callable
-from functools import partial
 
 from mct_quantizers import QuantizationMethod
+
+from model_compression_toolkit.core.common.framework_info import get_fw_info
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantizers.lut_kmeans_quantizer import lut_kmeans_quantizer
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer, \
     symmetric_quantizer, uniform_quantizer
+
+
+def get_activation_quantization_fn_factory(quantization_method: QuantizationMethod) -> Callable[[int, dict], Callable]:
+    """
+    Get factory for activation quantizer.
+
+    Args:
+        quantization_method: quantization method for activation.
+
+    Returns:
+        Factory that accepts activation bitwidth and a dict of quantization params, and returns the quantizer.
+    """
+    return get_fw_info().activation_quantizer_factory_mapping[quantization_method]
+
+
+def get_activation_quantization_fn(activation_quantization_cfg: NodeActivationQuantizationConfig) -> Callable:
+    """
+    Get activation quantizer based on activation quantization configuration.
+
+    Args:
+        activation_quantization_cfg: activation quantization configuration.
+
+    Returns:
+        Activation quantizer that accepts a tensor and returns a quantized tensor.
+    """
+    quantizer_factory = get_activation_quantization_fn_factory(
+        activation_quantization_cfg.activation_quantization_method)
+    quantizer = quantizer_factory(activation_quantization_cfg.activation_n_bits,
+                                  activation_quantization_cfg.activation_quantization_params)
+    return quantizer
 
 
 def get_weights_quantization_fn(weights_quantization_method: QuantizationMethod) -> Callable:

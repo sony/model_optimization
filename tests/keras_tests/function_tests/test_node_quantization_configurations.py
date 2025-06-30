@@ -16,13 +16,9 @@ import copy
 import unittest
 from mct_quantizers import QuantizationMethod
 
-from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig, WeightsAttrQuantizationConfig
-from model_compression_toolkit.core.common.quantization.quantization_params_generation import \
-    power_of_two_selection_histogram
-from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer
 from model_compression_toolkit.core.keras.constants import KERNEL, BIAS
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
@@ -33,9 +29,7 @@ class TestNodeQuantizationConfigurations(unittest.TestCase):
     def test_activation_set_quant_config_attribute(self):
         op_cfg, _, _ = get_op_quantization_configs()
 
-        nac = NodeActivationQuantizationConfig(op_cfg,
-                                               activation_quantization_fn=power_of_two_quantizer,
-                                               activation_quantization_params_fn=power_of_two_selection_histogram)
+        nac = NodeActivationQuantizationConfig(op_cfg)
         og_nac = copy.deepcopy(nac)
 
         self.assertTrue(nac.activation_n_bits == 8)

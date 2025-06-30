@@ -25,9 +25,9 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
-    import get_activations_qparams
+    import compute_activation_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
-    get_weights_qparams
+    compute_weights_qparams
 from model_compression_toolkit.logger import Logger
 
 
@@ -119,21 +119,19 @@ def calculate_quantization_params(graph: Graph,
                             mod_attr_cfg = copy.deepcopy(attr_cfg)
                             mod_attr_cfg.weights_error_method = QuantizationErrorMethod.MSE
 
-                    weights_params, output_channels_axis = get_weights_qparams(n.get_weights_by_keys(attr),
-                                                                               candidate_qc.weights_quantization_cfg,
-                                                                               mod_attr_cfg,
-                                                                               output_channels_axis,
-                                                                               node=n,
-                                                                               hessian_info_service=hessian_info_service,
-                                                                               num_hessian_samples=num_hessian_samples)
+                    min_threshold = candidate_qc.weights_quantization_cfg.min_threshold
+                    weights_params, output_channels_axis = compute_weights_qparams(n.get_weights_by_keys(attr),
+                                                                                   mod_attr_cfg, output_channels_axis,
+                                                                                   min_threshold=min_threshold, node=n,
+                                                                                   hessian_info_service=hessian_info_service,
+                                                                                   num_hessian_samples=num_hessian_samples)
                     attr_cfg.weights_channels_axis = ChannelAxisMapping(output_channels_axis, attr_cfg.weights_channels_axis.input)
                     attr_cfg.set_weights_quantization_param(weights_params)
 
             if n.is_activation_quantization_enabled():
                 # If node's activations should be quantized as well, we compute its activation quantization parameters
-                activation_params = get_activations_qparams(
-                    activation_quant_cfg=candidate_qc.activation_quantization_cfg,
-                    nodes_prior_info=n.prior_info,
+                activation_params = compute_activation_qparams(
+                    activation_quant_cfg=candidate_qc.activation_quantization_cfg, node_prior_info=n.prior_info,
                     out_stats_container=graph.get_out_stats_collector(n))
                 # Create a NodeQuantizationConfig containing all quantization params and attach it to the node
                 candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_params)

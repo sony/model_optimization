@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_no_clipping_selection_min_max, \
-    power_of_two_selection_histogram, power_of_two_selection_tensor
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import lut_kmeans_tensor
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import symmetric_no_clipping_selection_min_max
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import uniform_no_clipping_selection_min_max
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import (
+    power_of_two_no_clipping_selection_min_max, power_of_two_selection_histogram, power_of_two_selection_tensor)
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import (
+    lut_kmeans_tensor, lut_kmeans_histogram)
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import (
+    symmetric_no_clipping_selection_min_max, symmetric_selection_histogram, symmetric_selection_tensor)
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import (
+    uniform_no_clipping_selection_min_max, uniform_selection_histogram, uniform_selection_tensor)
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.outlier_filter import z_score_filter

@@ -35,15 +35,15 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 
 
-def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizationConfig] = None,
-               input_shape=(4, 5, 6), output_shape=(4, 5, 6), weights = {},
+def build_node(name='node', framework_attr=None, qcs: List[CandidateNodeQuantizationConfig] = None,
+               input_shape=(4, 5, 6), output_shape=(4, 5, 6), weights=None,
                layer_class=DummyLayer, reuse=False):
 
     node = BaseNode(name=name,
-                    framework_attr=framework_attr,
+                    framework_attr=framework_attr or {},
                     input_shape=input_shape,
                     output_shape=output_shape,
-                    weights=weights,
+                    weights=weights or {},
                     layer_class=layer_class,
                     reuse=reuse)
     if qcs:
@@ -53,7 +53,7 @@ def build_node(name='node', framework_attr={}, qcs: List[CandidateNodeQuantizati
     return node
 
 
-def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
+def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params=None):
     op_cfg = OpQuantizationConfig(
         default_weight_attr_config=AttributeQuantizationConfig(),
         attr_weights_configs_mapping={},
@@ -64,10 +64,8 @@ def build_qc(a_nbits=8, a_enable=True, q_preserving=False, aq_params={}):
         supported_input_activation_n_bits=8,
         signedness=Signedness.AUTO
     )
-    a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg,
-                                              activation_quantization_fn=None,
-                                              activation_quantization_params_fn=None)
-    if len(aq_params) != 0:
+    a_qcfg = NodeActivationQuantizationConfig(op_cfg=op_cfg)
+    if aq_params:
         a_qcfg.set_activation_quantization_param(aq_params)
     qc = CandidateNodeQuantizationConfig(activation_quantization_cfg=a_qcfg, weights_quantization_cfg=None)
     return qc

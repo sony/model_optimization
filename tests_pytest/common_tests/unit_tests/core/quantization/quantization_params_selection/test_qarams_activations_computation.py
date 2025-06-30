@@ -24,14 +24,19 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import (
     power_of_two_no_clipping_selection_min_max,
     symmetric_no_clipping_selection_min_max,
-    uniform_no_clipping_selection_min_max
+    uniform_no_clipping_selection_min_max, power_of_two_selection_histogram
 )
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
+    lut_kmeans_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation import (
-    get_histogram_data,
-    determine_signedness,
-    update_activation_quantization_params_fn,
-    get_activations_qparams
+    _get_histogram_data,
+    _determine_signedness,
+    compute_activation_qparams, _get_activation_quantization_params_fn
 )
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
+    symmetric_selection_histogram
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.uniform_selection import \
+    uniform_selection_histogram
 from model_compression_toolkit.target_platform_capabilities import Signedness, OpQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 
@@ -63,7 +68,7 @@ class TestActivationQParams:
             simd_size=None,
             signedness=signedness
         )
-        activation_quant_cfg = NodeActivationQuantizationConfig(op_cfg, None, None)
+        activation_quant_cfg = NodeActivationQuantizationConfig(op_cfg)
         activation_quant_cfg.set_qc(QuantizationConfig())
         activation_quant_cfg.activation_quantization_method = quant_method
         return activation_quant_cfg
@@ -85,7 +90,7 @@ class TestActivationQParams:
 
         # Test for MSE error method.
         activation_quant_cfg.activation_error_method = QuantizationErrorMethod.MSE
-        get_histogram_data(activation_quant_cfg, stats)
+        _get_histogram_data(activation_quant_cfg, stats)
         stats.hc.get_histogram.assert_called_once()
         stats.weighted_hc.get_histogram.assert_not_called()
 
@@ -95,7 +100,7 @@ class TestActivationQParams:
 
         # Test for HMSE error method.
         activation_quant_cfg.activation_error_method = QuantizationErrorMethod.HMSE
-        get_histogram_data(activation_quant_cfg, stats)
+        _get_histogram_data(activation_quant_cfg, stats)
         stats.weighted_hc.get_histogram.assert_called_once()
         stats.hc.get_histogram.assert_not_called()
 
@@ -115,40 +120,58 @@ class TestActivationQParams:
 
         # Test for SIGNED.
         activation_quant_cfg.signedness = Signedness.SIGNED
-        assert determine_signedness(activation_quant_cfg, nodes_prior_info, 0, bins_values, bins_counts)
+        assert _determine_signedness(activation_quant_cfg, nodes_prior_info, 0, bins_values, bins_counts)
 
         # Test for UNSIGNED.
         activation_quant_cfg.signedness = Signedness.UNSIGNED
-        assert not determine_signedness(activation_quant_cfg, nodes_prior_info, 0, bins_values, bins_counts)
+        assert not _determine_signedness(activation_quant_cfg, nodes_prior_info, 0, bins_values, bins_counts)
 
         # Test for AUTO with bounded output.
         activation_quant_cfg.signedness = Signedness.AUTO
         nodes_prior_info.is_output_bounded = Mock(return_value=True)
-        assert not determine_signedness(activation_quant_cfg, nodes_prior_info, 0, bins_values, bins_counts)
-        assert not determine_signedness(activation_quant_cfg, nodes_prior_info, 1, bins_values, bins_counts)
-        assert determine_signedness(activation_quant_cfg, nodes_prior_info, -1, bins_values, bins_counts)
+        assert not _determine_signedness(activation_quant_cfg, nodes_prior_info, 0, bins_values, bins_counts)
+        assert not _determine_signedness(activation_quant_cfg, nodes_prior_info, 1, bins_values, bins_counts)
+        assert _determine_signedness(activation_quant_cfg, nodes_prior_info, -1, bins_values, bins_counts)
 
         # Test for AUTO with unbounded output.
         nodes_prior_info.is_output_bounded.return_value = False
-        assert not determine_signedness(activation_quant_cfg, nodes_prior_info, -1, bins_values, bins_counts)
+        assert not _determine_signedness(activation_quant_cfg, nodes_prior_info, -1, bins_values, bins_counts)
 
         # Test for AUTO with negative bin values.
         bins_values = np.array([-1, 2, 3, 4])
-        assert determine_signedness(activation_quant_cfg, nodes_prior_info, -1, bins_values, bins_counts)
+        assert _determine_signedness(activation_quant_cfg, nodes_prior_info, -1, bins_values, bins_counts)
 
-    @pytest.mark.parametrize('quant_method, activation_quantization_params_fn', [
-        (QuantizationMethod.POWER_OF_TWO, power_of_two_no_clipping_selection_min_max),
-        (QuantizationMethod.SYMMETRIC, symmetric_no_clipping_selection_min_max),
-        (QuantizationMethod.UNIFORM, uniform_no_clipping_selection_min_max)
+    @pytest.mark.parametrize('quant_method, no_clipping, exp_params_fn', [
+        (QuantizationMethod.POWER_OF_TWO, True, power_of_two_no_clipping_selection_min_max),
+        (QuantizationMethod.POWER_OF_TWO, False, power_of_two_selection_histogram),
+        (QuantizationMethod.SYMMETRIC, True, symmetric_no_clipping_selection_min_max),
+        (QuantizationMethod.SYMMETRIC, False, symmetric_selection_histogram),
+        (QuantizationMethod.UNIFORM, True, uniform_no_clipping_selection_min_max),
+        (QuantizationMethod.UNIFORM, False, uniform_selection_histogram),
+        (QuantizationMethod.LUT_POT_QUANTIZER, True, lut_kmeans_histogram),
+        (QuantizationMethod.LUT_POT_QUANTIZER, False, lut_kmeans_histogram),
     ])
-    def test_update_activation_quantization_params_fn(self, quant_method, activation_quantization_params_fn):
-        # Test update_activation_quantization_params_fn:
-        # Verifies that the activation_quantization_params_fn attribute is correctly set based on the quantization method.
-        # Test cases: POWER_OF_TWO, SYMMETRIC, and UNIFORM methods.
-        nodes_prior_info = Mock(spec=NodePriorInfo)
-        activation_quant_cfg = self._create_activation_quant_cfg(quant_method, n_bits=8)
-        update_activation_quantization_params_fn(activation_quant_cfg, nodes_prior_info)
-        assert activation_quant_cfg.activation_quantization_params_fn == activation_quantization_params_fn
+    def test_get_activation_quantization_params_fn(self, quant_method, no_clipping, exp_params_fn):
+        """ Tests get_activation_quantization_params_fn """
+        params_fn = _get_activation_quantization_params_fn(quant_method, no_clipping)
+        assert params_fn == exp_params_fn
+
+    @pytest.mark.parametrize('quant_method, is_bounded', [
+        (QuantizationMethod.SYMMETRIC, True),
+        (QuantizationMethod.UNIFORM, False)
+    ])
+    def test_get_activation_quantization_params_fn_usage(self, quant_method, is_bounded, mocker):
+        """ Tests that activation_quantization_params_fn is called with correct args. """
+        activation_quant_cfg = self._create_activation_quant_cfg(quant_method, n_bits=4, signedness=Signedness.SIGNED)
+        node_prior_info = Mock(spec_set=NodePriorInfo, is_output_bounded=lambda: is_bounded)
+        root = 'model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation'
+        get_params_fn_mock = mocker.patch(f'{root}._get_activation_quantization_params_fn', autospec=True)
+        mocker.patch(f'{root}._get_histogram_data', return_value=(np.array([-1, 0, 1]), np.array([3, 4])))
+        stat_collector_mock = mocker.Mock(spec_set=StatsCollector, get_min_max_values=lambda: (-1, 1))
+
+        ret = compute_activation_qparams(activation_quant_cfg, node_prior_info, stat_collector_mock)
+        get_params_fn_mock.assert_called_once_with(quant_method, no_clipping=is_bounded)
+        assert ret == get_params_fn_mock.return_value.return_value
 
     @pytest.mark.parametrize('quant_method, activation_quantization_params_fn, expected_result', [
         (QuantizationMethod.POWER_OF_TWO, power_of_two_no_clipping_selection_min_max,
@@ -174,5 +197,5 @@ class TestActivationQParams:
         nodes_prior_info.is_output_bounded = Mock(return_value=True)
 
         activation_quant_cfg = self._create_activation_quant_cfg(quant_method, n_bits=2)
-        result = get_activations_qparams(activation_quant_cfg, nodes_prior_info, stats)
+        result = compute_activation_qparams(activation_quant_cfg, nodes_prior_info, stats)
         assert result == expected_result

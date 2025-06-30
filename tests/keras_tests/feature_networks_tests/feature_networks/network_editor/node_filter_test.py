@@ -18,11 +18,9 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from mct_quantizers import KerasActivationQuantizationHolder, QuantizationMethod
 from model_compression_toolkit.core.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
-    ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
+    EditRule, ChangeCandidatesWeightsQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
     NodeTypeFilter
-from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_weights_quantization_params_fn, get_activation_quantization_params_fn
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tpc import generate_test_tpc
@@ -203,12 +201,6 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         self.conv_w[0, 0, 0, 0] = 1.1
         super().__init__(unit_test )
 
-    def weights_params_fn(self):
-        return get_weights_quantization_params_fn(QuantizationMethod.POWER_OF_TWO)
-
-    def activations_params_fn(self):
-        return get_activation_quantization_params_fn(QuantizationMethod.POWER_OF_TWO)
-
     def get_tpc(self):
         tpc = generate_test_tpc({
             'weights_quantization_method': QuantizationMethod.POWER_OF_TWO,
@@ -226,12 +218,6 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
                                                                                  weights_n_bits=self.weights_n_bits)),
                           EditRule(filter=NodeTypeFilter(self.type_to_change),
                                    action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
-                          EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                                   action=ChangeQuantizationParamFunction(attr_name=KERNEL,
-                                                                          weights_quantization_params_fn=self.weights_params_fn())),
-                          EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                                   action=ChangeQuantizationParamFunction(
-                                       activation_quantization_params_fn=self.activations_params_fn())),
                           EditRule(filter=NodeNameFilter(self.node_to_change_name) and NodeTypeFilter(layers.ReLU),
                                    action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=16))]
         return mct.core.DebugConfig(network_editor=network_editor)

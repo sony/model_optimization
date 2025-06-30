@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.model_builder_mode import ModelBuilde
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
-    import get_activations_qparams
+    import compute_activation_qparams
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 
@@ -50,12 +50,11 @@ def _collect_and_assign_act_threshold(graph: Graph,
     for _data in tqdm(representative_data_gen()):
         mi.infer(_data)
 
-    for n in list(graph.nodes):
+    for n in graph.nodes:
         if n.is_activation_quantization_enabled():
-            activation_params = get_activations_qparams(
-                activation_quant_cfg=n.final_activation_quantization_cfg,
-                nodes_prior_info=n.prior_info,
-                out_stats_container=graph.get_out_stats_collector(n))
+            activation_params = compute_activation_qparams(activation_quant_cfg=n.final_activation_quantization_cfg,
+                                                           node_prior_info=n.prior_info,
+                                                           out_stats_container=graph.get_out_stats_collector(n))
             n.final_activation_quantization_cfg.set_activation_quantization_param(activation_params)
 
 

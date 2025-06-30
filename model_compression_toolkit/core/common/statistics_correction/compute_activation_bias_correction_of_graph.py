@@ -18,7 +18,7 @@ from typing import Any, Callable
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_activation_quantization_fn
 
 
 def get_previous_node_with_activation_quantization(linear_node: BaseNode,
@@ -105,7 +105,8 @@ def compute_activation_bias_correction(graph: Graph,
     float_centers = calculate_bin_centers(float_bins)
 
     # Quantize the bin edges and calculate the centers of the quantized bins
-    quant_bins = prev_node_act_quant_cfg.quantize_node_output(fw_impl.to_tensor(float_bins))
+    activation_quantizer = get_activation_quantization_fn(prev_node_act_quant_cfg)
+    quant_bins = activation_quantizer(fw_impl.to_tensor(float_bins))
     quant_bins = fw_impl.to_numpy(quant_bins)
     quant_centers = calculate_bin_centers(quant_bins)
 

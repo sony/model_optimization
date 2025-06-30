@@ -15,14 +15,12 @@
 from typing import List, Optional
 
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping, get_fw_info
+from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig, NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig, ActivationQuantizationMode
-from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_activation_quantization_params_fn
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import filter_node_qco_by_graph
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities import FrameworkQuantizationCapabilities, \
@@ -208,12 +206,7 @@ def _create_candidate(weight_channel_axis: ChannelAxisMapping,
         Candidate quantization config.
     """
 
-    # TODO irena: i think we shouldn't inject methods here, it's quantization implementation, not configuration
-    activation_quantization_fn = get_fw_info().activation_quantizer_mapping[op_cfg.activation_quantization_method]
-    activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
-    aqc = NodeActivationQuantizationConfig(op_cfg=op_cfg,
-                                           activation_quantization_fn=activation_quantization_fn,
-                                           activation_quantization_params_fn=activation_quantization_params_fn)
+    aqc = NodeActivationQuantizationConfig(op_cfg=op_cfg)
 
     # TODO: remove this validation and warning once enabling all attributes quantization by default
     attrs_with_enabled_quantization = [attr for attr, cfg in op_cfg.attr_weights_configs_mapping.items()

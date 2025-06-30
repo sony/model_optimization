@@ -13,24 +13,18 @@
 # limitations under the License.
 # ==============================================================================
 import itertools
-from copy import deepcopy 
 
 import pytest
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import Mock
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfo
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
-from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode, NodeActivationQuantizationConfig
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig, NodeQuantizationConfig
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_histogram
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import symmetric_selection_histogram
-from model_compression_toolkit.core import QuantizationErrorMethod
-from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc
+from tests_pytest._test_util.graph_builder_utils import build_node
 
 
 def build_mock_fusing_info(nodes, idx):
@@ -42,7 +36,6 @@ def build_mock_fusing_info(nodes, idx):
     OpQCfg.activation_n_bits = 16
     OpQCfg.signedness = Signedness.AUTO
     OpQCfg.activation_quantization_method = QuantizationMethod.POWER_OF_TWO
-    OpQCfg.activation_quantization_params_fn = power_of_two_selection_histogram
     OpQCfg.quantization_preserving = False
 
     fusing_info = Mock(spec=FusingInfo)
@@ -70,8 +63,6 @@ def build_mock_node(name, layer_class, w_cfgs):
     a_cfgs = [Mock(spec=NodeActivationQuantizationConfig,
                    quant_mode=Mock(),
                    activation_n_bits=b,
-                   activation_quantization_fn=symmetric_selection_histogram,
-                   activation_quantization_params_fn=power_of_two_selection_histogram,
                    __eq__=eq) for b in [5, 6]]
 
     qcs = [CandidateNodeQuantizationConfig(a_cfg, w_cfg) for a_cfg, w_cfg in itertools.product(a_cfgs, w_cfgs)]
@@ -124,7 +115,6 @@ class TestGraph:
                 assert qc.activation_quantization_cfg.activation_n_bits == 16
                 assert qc.activation_quantization_cfg.signedness == Signedness.AUTO
                 assert qc.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
-                assert qc.activation_quantization_cfg.activation_quantization_params_fn == power_of_two_selection_histogram
                 assert qc.weights_quantization_cfg == w_cfgs[i]
             base_cfg0 = nodes[0].quantization_cfg.base_quantization_cfg
             assert base_cfg0.activation_quantization_cfg.activation_n_bits == 16

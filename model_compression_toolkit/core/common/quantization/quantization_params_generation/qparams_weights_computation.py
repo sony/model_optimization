@@ -12,35 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any, Tuple
+from functools import partial
+from typing import Dict, Any, Tuple, Callable, TYPE_CHECKING
 
 import numpy as np
+from mct_quantizers import QuantizationMethod
 
 from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core.common.hessian import HessianInfoService
-from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
-    WeightsAttrQuantizationConfig
+from model_compression_toolkit.core.common.quantization.quantization_params_generation import \
+    power_of_two_selection_tensor, lut_kmeans_tensor, symmetric_selection_tensor, uniform_selection_tensor
 from model_compression_toolkit.logger import Logger
 
+if TYPE_CHECKING:
+    from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 
-def get_weights_qparams(weights_attr_values: np.ndarray,
-                        weights_quant_config: NodeWeightsQuantizationConfig,
-                        attr_quant_config: WeightsAttrQuantizationConfig,
-                        output_channels_axis: int,
-                        node=None,
-                        hessian_info_service: HessianInfoService = None,
-                        num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Tuple[Dict[Any, Any], int]:
+
+def compute_weights_qparams(weights_attr_values: np.ndarray,
+                            attr_quant_config: 'WeightsAttrQuantizationConfig',
+                            output_channels_axis: int,
+                            min_threshold: float,
+                            node=None,
+                            hessian_info_service: HessianInfoService = None,
+                            num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Tuple[Dict[Any, Any], int]:
     """
     Compute thresholds to quantize a kernel according to a NodeWeightsQuantizationConfig
     instance.
 
     Args:
         weights_attr_values: Weights attribute parameter to compute the quantization thresholds for.
-        weights_quant_config: Weights quantization configuration to define how the thresholds are computed.
         attr_quant_config: A specific weights attribute quantization configuration to get its params.
         output_channels_axis: Index of the kernel output channels dimension.
+        min_threshold: Minimal threshold to use if threshold is too small.
         node: The node for which the quantization error is computed (used only with HMSE error method).
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
         num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
@@ -49,22 +52,43 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
         A dictionary with the quantization threshold of the kernel.
         Selected quantization channel axis.
     """
-    if attr_quant_config.weights_quantization_params_fn is not None:
-        weights_params, output_channels_axis = attr_quant_config.weights_quantization_params_fn(
-            weights_attr_values,
-            p=attr_quant_config.l_p_value,
-            n_bits=attr_quant_config.weights_n_bits,
-            per_channel=attr_quant_config.weights_per_channel_threshold,
-            channel_axis=output_channels_axis,
-            min_threshold=weights_quant_config.min_threshold,
-            quant_error_method=attr_quant_config.weights_error_method,
-            node=node,
-            hessian_info_service=hessian_info_service,
-            num_hessian_samples=num_hessian_samples)
-    else:  # pragma: no cover
-        Logger.error(f"Requested weights quantization parameters computation for node {node.name} without providing a "
-                     f"weights_quantization_params_fn."
-                     f"Returning an empty dictionary since no quantization parameters were computed.")
-        weights_params = {}
+    params_fn = _get_weights_quantization_params_fn(attr_quant_config.weights_quantization_method)
+    weights_params, output_channels_axis = params_fn(
+        weights_attr_values,
+        p=attr_quant_config.l_p_value,
+        n_bits=attr_quant_config.weights_n_bits,
+        per_channel=attr_quant_config.weights_per_channel_threshold,
+        channel_axis=output_channels_axis,
+        min_threshold=min_threshold,
+        quant_error_method=attr_quant_config.weights_error_method,
+        node=node,
+        hessian_info_service=hessian_info_service,
+        num_hessian_samples=num_hessian_samples)
 
     return weights_params, output_channels_axis
+
+
+_weights_quant_params_fns = {
+    QuantizationMethod.POWER_OF_TWO: power_of_two_selection_tensor,
+    QuantizationMethod.SYMMETRIC: symmetric_selection_tensor,
+    QuantizationMethod.UNIFORM: uniform_selection_tensor,
+    QuantizationMethod.LUT_POT_QUANTIZER: partial(lut_kmeans_tensor, is_symmetric=False),
+    QuantizationMethod.LUT_SYM_QUANTIZER: partial(lut_kmeans_tensor, is_symmetric=True)
+}
+
+
+def _get_weights_quantization_params_fn(weights_quantization_method: QuantizationMethod) -> Callable:
+    """
+    Generate a function for finding weights quantization parameters.
+
+    Args:
+        weights_quantization_method: Which quantization method to use for weights.
+    Returns:
+        A function to find the quantization parameters.
+
+    """
+    params_fn = _weights_quant_params_fns.get(weights_quantization_method)
+    if not params_fn:
+        Logger.critical(
+            f"No parameter function found for the specified quantization method: {weights_quantization_method}")  # pragma: no cover
+    return params_fn
