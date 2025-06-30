@@ -23,16 +23,21 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
     NodeActivationQuantizationConfig, NodeWeightsQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import OpQuantizationConfig
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2pytorch import \
     AttachTpcToPytorch
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness, \
     AttributeQuantizationConfig
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.default_framework_info import PyTorchInfo
+from model_compression_toolkit.core.common.framework_info import set_fw_info, get_fw_info
+
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.common.collectors.statistics_collector import StatsCollector
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS
 from mct_quantizers import QuantizationMethod
+
+from model_compression_toolkit.core.common.framework_info import ChannelAxisMapping
 
 class TestCalculateQuantizationParams:
     def get_op_qco(self):
@@ -145,12 +150,11 @@ class TestCalculateQuantizationParams:
 
     def get_test_graph(self, qem: QuantizationErrorMethod):
         float_model = self.get_float_model()
-        fw_info = DEFAULT_PYTORCH_INFO
+        set_fw_info(PyTorchInfo)
 
         fw_impl = PytorchImplementation()
         graph = fw_impl.model_reader(float_model,
                                      self.representative_data_gen)
-        graph.set_fw_info(fw_info)
 
         quantization_config = QuantizationConfig(weights_error_method=qem)
 
@@ -165,24 +169,23 @@ class TestCalculateQuantizationParams:
 
         graph.node_to_out_stats_collector = dict()
         for id, n in enumerate(graph.nodes):
-            n.prior_info = fw_impl.get_node_prior_info(node=n, fw_info=fw_info, graph=graph)
+            n.prior_info = fw_impl.get_node_prior_info(node=n, graph=graph)
             n.candidates_quantization_cfg = []
             candidate_qc_a = CandidateNodeQuantizationConfig(
                 activation_quantization_cfg=NodeActivationQuantizationConfig(qc=quantization_config, op_cfg=op_cfg,
                                                                              activation_quantization_fn=None,
                                                                              activation_quantization_params_fn=None),
                 weights_quantization_cfg=NodeWeightsQuantizationConfig(qc=quantization_config, op_cfg=op_cfg,
-                                                                       weights_channels_axis=(0, 1),
+                                                                       weights_channels_axis=ChannelAxisMapping(0, 1),
                                                                        node_attrs_list=['weight', 'bias'])
             )
             if n.name in ['conv3']:
                 candidate_qc_a.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
-                candidate_qc_a.activation_quantization_cfg.activation_n_bits = 16 # set 16bit for FLN node for test.
             else:
                 candidate_qc_a.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.QUANT
             n.candidates_quantization_cfg.append(candidate_qc_a)
 
-            graph.node_to_out_stats_collector[n] = StatsCollector(init_min_value=0.0, init_max_value=1.0, out_channel_axis=fw_info.out_channel_axis_mapping.get(n.type))
+            graph.node_to_out_stats_collector[n] = StatsCollector(init_min_value=0.0, init_max_value=1.0, out_channel_axis=get_fw_info().out_channel_axis_mapping.get(n.type))
             graph.node_to_out_stats_collector[n].hc._n_bins = 3
             if n.name in ['conv1']:
                 graph.node_to_out_stats_collector[n].hc._bins = np.array([0.4, 0.8, 1.2])

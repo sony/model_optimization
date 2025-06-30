@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from __future__ import annotations
 
 from typing import Callable, Any, List, Tuple, Union, Dict, TYPE_CHECKING
 from enum import Enum, auto
@@ -32,6 +32,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     OpQuantizationConfig
 
 if TYPE_CHECKING:
+    from model_compression_toolkit.core.common import BaseNode
     from model_compression_toolkit.core.common.graph.base_node import WeightAttrT
 
 ##########################################
@@ -199,15 +200,17 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         self.activation_quantization_params_fn = activation_quantization_params_fn
 
     def set_activation_quantization_param(self,
-                                          activation_params: dict):
+                                          activation_params: dict,
+                                          node: BaseNode):
         """
          Set a quantization parameter for the node's activation.
 
         Args:
-            activation_params: Dictionary that contains weight quantization params.
+            activation_params: Dictionary that contains activation quantization params.
+            node: node in a graph that represents the model.
 
         """
-        assert self.quant_mode == ActivationQuantizationMode.QUANT or self.quant_mode == ActivationQuantizationMode.FLN_QUANT
+        assert node.is_activation_quantization_enabled() or node.is_fln_quantization()
         for param_name, param_value in activation_params.items():
             self.activation_quantization_params[param_name] = param_value
 
