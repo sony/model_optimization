@@ -56,7 +56,7 @@ def _collect_and_assign_act_threshold(graph: Graph,
                 activation_quant_cfg=n.final_activation_quantization_cfg,
                 nodes_prior_info=n.prior_info,
                 out_stats_container=graph.get_out_stats_collector(n))
-            n.final_activation_quantization_cfg.set_activation_quantization_param(activation_params)
+            n.final_activation_quantization_cfg.set_activation_quantization_param(activation_params, n)
 
 
 def quantized_model_builder_for_second_moment_correction(graph: common.Graph,

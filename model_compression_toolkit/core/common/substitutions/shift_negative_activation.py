@@ -465,7 +465,7 @@ def shift_negative_function(graph: Graph,
                                                                              add_node_qco[op_qc_idx])
 
         candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
-                                                                                    SIGNED: False})
+                                                                                    SIGNED: False}, add_node)
 
         candidate_qc.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
 
@@ -482,7 +482,7 @@ def shift_negative_function(graph: Graph,
 
         assert activation_param.get(SIGNED) == False
         for candidate_qc in non_linear_node.candidates_quantization_cfg:
-            candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_param)
+            candidate_qc.activation_quantization_cfg.set_activation_quantization_param(activation_param, non_linear_node)
 
     return graph
 
