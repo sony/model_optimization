@@ -21,7 +21,7 @@ import numpy as np
 
 from model_compression_toolkit.core import ResourceUtilization, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTE, set_fw_info
+from model_compression_toolkit.core.common.framework_info import set_fw_info
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitActivationNode, VirtualSplitWeightsNode
@@ -53,8 +53,7 @@ def build_graph(fw_info_mock, w_mp: bool, a_mp: bool):
     # n3 qcs: [a4w4, a4w8, a4w2, a8w4, a8w8, a8w2]
     # n4 qcs: [w12, w4, w8]
     op_kernels = {DummyLayer1: 'foo', DummyLayer2: 'bar'}
-    fw_info_mock.get_kernel_op_attribute = lambda nt: op_kernels.get(nt, DEFAULT_KERNEL_ATTRIBUTE)
-    fw_info_mock.is_kernel_op = lambda nt: nt in op_kernels
+    fw_info_mock.get_kernel_op_attribute = lambda nt: op_kernels.get(nt)
 
     n1 = build_node('n1', qcs=[build_nbits_qc(a_nbits=8)], output_shape=(None, 1, 2, 3))
 
@@ -63,14 +62,14 @@ def build_graph(fw_info_mock, w_mp: bool, a_mp: bool):
 
     abit3 = [4, 8] if a_mp else [8]
     wbit3 = [4, 8, 2] if w_mp else [4]
-    n3 = build_node('n3', layer_class=DummyLayer1, output_shape=(None, 5, 8),
-                    canonical_weights={'foo': np.ones((3, 14))},
-                    qcs=[build_nbits_qc(a_nbits=ab, w_attr={'foo': (wb, True)}) for ab in abit3 for wb in wbit3])
+    n3 = build_node('n3', canonical_weights={'foo': np.ones((3, 14))},
+                    qcs=[build_nbits_qc(a_nbits=ab, w_attr={'foo': (wb, True)}) for ab in abit3 for wb in wbit3],
+                    output_shape=(None, 5, 8), layer_class=DummyLayer1)
 
     wbit4 = [12, 4, 8] if w_mp else [8]
-    n4 = build_node('n4', layer_class=DummyLayer2, output_shape=(None, 13, 21),
-                    canonical_weights={'bar': np.ones((2, 71))},
-                    qcs=[build_nbits_qc(a_nbits=2, w_attr={'bar': (wb, True)}) for wb in wbit4])
+    n4 = build_node('n4', canonical_weights={'bar': np.ones((2, 71))},
+                    qcs=[build_nbits_qc(a_nbits=2, w_attr={'bar': (wb, True)}) for wb in wbit4],
+                    output_shape=(None, 13, 21), layer_class=DummyLayer2)
     n5 = build_node('n5', qcs=[build_nbits_qc(a_nbits=8)], output_shape=(None, 34, 1))
 
     g = Graph('g', input_nodes=[n1], nodes=[n2, n3, n4], output_nodes=[n5],
@@ -353,15 +352,12 @@ class TestMixedPrecisionSearchManager:
             - check correct configurations (from graph) are passed to mock sensitivity evaluator.
             - final sensitivity is built correctly from mocked computed metrics.
         """
-        fw_info_mock.get_kernel_op_attribute = lambda nt: 'foo' if nt is DummyLayer else DEFAULT_KERNEL_ATTRIBUTE
-        fw_info_mock.is_kernel_op = lambda nt: nt is DummyLayer
+        fw_info_mock.get_kernel_op_attribute = lambda nt: 'foo' if nt is DummyLayer else None
 
-        a_conf = build_node('a_conf', layer_class=DummyLayer2, qcs=[build_nbits_qc(nb) for nb in (4, 2)])
-        a_conf_w = build_node('a_conf_w',
-                              canonical_weights={'foo': np.ones(10)},
+        a_conf = build_node('a_conf', qcs=[build_nbits_qc(nb) for nb in (4, 2)], layer_class=DummyLayer2)
+        a_conf_w = build_node('a_conf_w', canonical_weights={'foo': np.ones(10)},
                               qcs=[build_nbits_qc(nb, w_attr={'foo': (8, True)}) for nb in (4, 16)])
-        w_conf = build_node('w_conf',
-                            canonical_weights={'foo': np.ones(10)},
+        w_conf = build_node('w_conf', canonical_weights={'foo': np.ones(10)},
                             qcs=[build_nbits_qc(4, w_attr={'foo': (nb, True)}) for nb in (8, 16)])
         aw_conf = build_node('aw_conf', canonical_weights={'foo': np.ones(10)},
                              qcs=[build_nbits_qc(ab, w_attr={'foo': (wb, True)})
@@ -462,8 +458,7 @@ class TestMixedPrecisionSearchManager:
     ])
     def test_build_sensitivity_mapping_params(self, fw_impl_mock, fw_info_mock, norm, eps, max_thresh, exp1, exp2):
         """ Tests sensitivity normalization method, epsilon and threshold. """
-        fw_info_mock.get_kernel_op_attribute = lambda nt: DEFAULT_KERNEL_ATTRIBUTE
-        fw_info_mock.is_kernel_op = lambda nt: False
+        fw_info_mock.get_kernel_op_attribute = lambda nt: None
 
         ph = build_node('ph', qcs=[build_nbits_qc()])
         n1 = build_node('n1', qcs=[build_nbits_qc(nb) for nb in (4, 2, 16, 8)])
@@ -521,7 +516,7 @@ class TestConfigHelper:
     @pytest.fixture(autouse=True)
     def setup(self, fw_info_mock):
         fw_info_mock.get_kernel_op_attribute = \
-            lambda nt: self.kernel_attr if nt == self.AWLayer else DEFAULT_KERNEL_ATTRIBUTE
+            lambda nt: self.kernel_attr if nt == self.AWLayer else None
         set_fw_info(fw_info_mock)
 
     @staticmethod
@@ -530,11 +525,11 @@ class TestConfigHelper:
         for abit in abits:
             for wbit in wbits:
                 qcs.append(build_nbits_qc(abit, True, w_attr={w_attr: (wbit, True)}))
-        return build_node(name, layer_class=layer_cls, canonical_weights={w_attr: np.ones(50)}, qcs=qcs)
+        return build_node(name, canonical_weights={w_attr: np.ones(50)}, qcs=qcs, layer_class=layer_cls)
 
     @staticmethod
     def build_a_node(abits, name='a', layer_cls=ALayer):
-        return build_node(name, layer_class=layer_cls, qcs=[build_nbits_qc(abit) for abit in abits])
+        return build_node(name, qcs=[build_nbits_qc(abit) for abit in abits], layer_class=layer_cls)
 
     @pytest.mark.parametrize('n_params, ind', [
         ({'abits': (5, 3, 7)}, 1),
@@ -652,18 +647,15 @@ class TestConfigHelper:
     def test_retrieve_w_candidates_virt_aw_node_multiple_weights(self, graph_mock, build_va, v_ind):
         """ A node contains non-kernel non-configurable weights, w node contains additional non-configurable weight,
             some of weight attrs are identical. Configs should be retrieved by configurable weight of w_node. """
-        orig_a_node = build_node(
-            'a', layer_class=self.ALayer,
-            canonical_weights={'foo': np.ones(2), 'bar': np.ones(3), 1: np.ones(4)},
-            qcs=[build_nbits_qc(ab, True, w_attr={'foo': (4, True), 'bar': (5, True)},
-                                pos_attr=(6, True, [1])) for ab in (2, 3, 7)]
-        )
-        orig_w_node = build_node(
-            'a', layer_class=self.AWLayer,
-            canonical_weights={'bar': np.ones(2), self.kernel_attr: np.ones(3), 1: np.ones(4)},
-            qcs=[build_nbits_qc(ab, True, w_attr={'bar': (4, True), self.kernel_attr: (wb, True)},
-                                pos_attr=(6, True, [1])) for ab in (2, 3) for wb in (9, 10, 11)]
-        )
+        orig_a_node = build_node('a', canonical_weights={'foo': np.ones(2), 'bar': np.ones(3), 1: np.ones(4)},
+                                 qcs=[build_nbits_qc(ab, True, w_attr={'foo': (4, True), 'bar': (5, True)},
+                                                     pos_attr=(6, True, [1])) for ab in (2, 3, 7)],
+                                 layer_class=self.ALayer)
+        orig_w_node = build_node('a',
+                                 canonical_weights={'bar': np.ones(2), self.kernel_attr: np.ones(3), 1: np.ones(4)},
+                                 qcs=[build_nbits_qc(ab, True, w_attr={'bar': (4, True), self.kernel_attr: (wb, True)},
+                                                     pos_attr=(6, True, [1])) for ab in (2, 3) for wb in (9, 10, 11)],
+                                 layer_class=self.AWLayer)
         graph_mock.nodes = [orig_a_node, orig_w_node]
         a_node = copy.deepcopy(orig_a_node)
         if build_va:

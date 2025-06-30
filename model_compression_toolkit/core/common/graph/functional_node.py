@@ -103,4 +103,4 @@ class FunctionalNode(BaseNode):
 
         """
         names_match = _type.__name__ == self.type.__name__
-        return super().is_match_type(_type) or names_match
+        return names_match or super().is_match_type(_type)

@@ -15,7 +15,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Tuple
 
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.user_info import UserInformation
 

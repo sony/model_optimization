@@ -77,7 +77,5 @@ def _apply_bias_correction_to_node(node: BaseNode,
         node.set_weights_by_keys(fw_impl.constants.BIAS, - correction)
         node.framework_attr[fw_impl.constants.USE_BIAS] = True  # Mark the use_bias attribute of the node.
         node.final_weights_quantization_cfg.set_attr_config(fw_impl.constants.BIAS,
-                                                            WeightsAttrQuantizationConfig(
-                                                                qc,
-                                                                AttributeQuantizationConfig(
-                                                                    enable_weights_quantization=False)))
+                                                            WeightsAttrQuantizationConfig(AttributeQuantizationConfig(
+                                                                enable_weights_quantization=False)))

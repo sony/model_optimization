@@ -15,6 +15,7 @@
 import copy
 import unittest
 from functools import partial
+from unittest.mock import patch
 
 import numpy as np
 import torch
@@ -26,8 +27,9 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.constants import PYTORCH, FUSED_LAYER_PATTERN, FUSED_OP_QUANT_CONFIG
+from model_compression_toolkit.constants import PYTORCH, FUSED_LAYER_PATTERN
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.quantization_preparation.load_fqc import fetch_qc_options_for_node
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL, KERNEL_ATTR, WEIGHTS_N_BITS, PYTORCH_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -124,15 +126,16 @@ class TestPytorchTPModel(unittest.TestCase):
             OperationsSetToLayers("avg_pool2d",
                                      [torch.nn.functional.avg_pool2d])
 
-        conv_node = get_node(torch.nn.Conv2d(3, 3, (1, 1)))
-        tanh_node = get_node(torch.tanh)
-        avg_pool2d_k2 = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=2))
-        avg_pool2d = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=1))
+        with patch('model_compression_toolkit.core.common.framework_info._current_framework_info'):
+            conv_node = get_node(torch.nn.Conv2d(3, 3, (1, 1)))
+            tanh_node = get_node(torch.tanh)
+            avg_pool2d_k2 = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=2))
+            avg_pool2d = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=1))
 
-        conv_qco = conv_node.get_qco(tpc_pytorch)
-        tanh_qco = tanh_node.get_qco(tpc_pytorch)
-        avg_pool2d_k2_qco = avg_pool2d_k2.get_qco(tpc_pytorch)
-        avg_pool2d_qco = avg_pool2d.get_qco(tpc_pytorch)
+        conv_qco = fetch_qc_options_for_node(conv_node, tpc_pytorch)
+        tanh_qco = fetch_qc_options_for_node(tanh_node, tpc_pytorch)
+        avg_pool2d_k2_qco = fetch_qc_options_for_node(avg_pool2d_k2, tpc_pytorch)
+        avg_pool2d_qco = fetch_qc_options_for_node(avg_pool2d, tpc_pytorch)
 
         self.assertEqual(len(conv_qco.quantization_configurations),
                          len(mixed_precision_configuration_options.quantization_configurations))

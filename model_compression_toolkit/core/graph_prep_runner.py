@@ -16,22 +16,22 @@
 
 from typing import Callable, Any
 
-from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
-from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
+from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG, \
+    QuantizationErrorMethod
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
+from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_manual_bitwidth_config
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import \
     linear_collapsing_substitute
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.quantization_preparation.load_fqc import load_fqc_configuration
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
+from model_compression_toolkit.logger import Logger
 
 
 def graph_preparation_runner(in_model: Any,
@@ -112,6 +112,12 @@ def get_finalized_graph(initial_graph: Graph,
 
     Returns: Graph object that represents the model, after applying all required modifications to it.
     """
+    if quant_config.weights_error_method == QuantizationErrorMethod.HMSE:
+        if not running_gptq:
+            raise ValueError(f"The HMSE error method for parameters selection is only supported when running GPTQ "
+                             f"optimization due to long execution time that is not suitable for basic PTQ.")
+        Logger.warning("Using the HMSE error method for weights quantization parameters search. "
+                       "Note: This method may significantly increase runtime during the parameter search process.")
 
     ######################################
     # Graph substitution (prepare graph)
@@ -141,21 +147,26 @@ def get_finalized_graph(initial_graph: Graph,
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
 
-    ######################################
-    # Add quantization configurations
-    ######################################
-    transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
-                                                                quant_config=quant_config,
-                                                                bit_width_config=bit_width_config,
-                                                                mixed_precision_enable=mixed_precision_enable,
-                                                                running_gptq=running_gptq)
+    transformed_graph = load_fqc_configuration(transformed_graph, fqc)
 
-    ######################################
-    # Layer fusing
-    ######################################
-    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(transformed_graph)
-    transformed_graph.fusing_info = fusing_info
-    transformed_graph.override_fused_node_activation_quantization_candidates()
+    # filter candidates per manual config
+    if bit_width_config:
+        set_manual_bitwidth_config(graph, bit_width_config)
+
+    # TODO irena: load_fqc_configuration only loads config from tpc. Previously quant_config was read as well.
+    #  As a first stage we keep the attributes in internal configs and fill them manually from quant_config
+    #  not to break all the code at once. Eventually we need to handle quant_config directly, without injecting into candidates.
+    #  TODO 2: Also we adjust candidates for single precision, which we shouldn't do here.
+    def update(qc):
+        qc.activation_quantization_cfg.set_qc(quant_config)
+        qc.weights_quantization_cfg.set_qc(quant_config)
+        for attr_cfg in qc.weights_quantization_cfg.get_all_weight_attrs_configs().values():
+            attr_cfg.weights_error_method = quant_config.weights_error_method
+            attr_cfg.l_p_value = quant_config.l_p_value
+    for n in transformed_graph.nodes:
+        if not mixed_precision_enable:
+            n.quantization_cfg.candidates_quantization_cfg = [n.quantization_cfg.base_quantization_cfg]
+        n.quantization_cfg.update_all(update)
 
     ######################################
     # Channel equalization

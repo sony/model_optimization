@@ -39,6 +39,7 @@ from model_compression_toolkit.target_platform_capabilities.targetplatform2frame
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
     FrameworkQuantizationCapabilities
 
+
 def validate_graph_after_change(method: Callable) -> Callable:
     """
     Decorator for graph-mutating methods. After the decorated method executes,
@@ -120,28 +121,13 @@ class Graph(nx.MultiDiGraph, GraphSearches):
     def fusing_info(self, fusing_info: FusingInfo):
         self._fusing_info = fusing_info
 
-    def set_fqc(self,
-                fqc: FrameworkQuantizationCapabilities):
+    def set_fqc(self, fqc: FrameworkQuantizationCapabilities):
         """
         Set the graph's FQC.
         Args:
             fqc: FrameworkQuantizationCapabilities object.
         """
-        # validate graph nodes are either from the framework or a custom layer defined in the FQC
-        # Validate graph nodes are either built-in layers from the framework or custom layers defined in the FQC
-        fqc_layers = fqc.op_sets_to_layers.get_layers()
-        fqc_filtered_layers = [layer for layer in fqc_layers if isinstance(layer, LayerFilterParams)]
-        for n in self.nodes:
-            is_node_in_fqc = any([n.is_match_type(_type) for _type in fqc_layers]) or \
-                             any([n.is_match_filter_params(filtered_layer) for filtered_layer in fqc_filtered_layers])
-            if n.is_custom:
-                if not is_node_in_fqc:
-                    Logger.critical(f'MCT does not support optimizing Keras custom layers. Found a layer of type {n.type}. '
-                                    ' Please add the custom layer to Framework Quantization Capabilities (FQC), or file a feature '
-                                    'request or an issue if you believe this should be supported.')  # pragma: no cover
-                if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(fqc).quantization_configurations]):
-                    Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')  # pragma: no cover
-
+        # TODO irena: this is only passed for negative shift activation.
         self.fqc = fqc
 
     def get_topo_sorted_nodes(self):
@@ -578,7 +564,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
         """
         # configurability is only relevant for kernel attribute quantization
-        potential_conf_nodes = [n for n in list(self) if n.is_kernel_op]
+        potential_conf_nodes = [n for n in self.nodes if n.kernel_attr]
 
         def is_configurable(n):
             return n.is_configurable_weight(n.kernel_attr) and (not n.reuse or include_reused_nodes)
@@ -693,10 +679,8 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         Gets the final number of bits for quantization of each weights' configurable layer.
 
-        Args:
-            fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
-
-        Returns: A list of pairs of (node type, node's weights quantization bitwidth).
+        Returns:
+            A list of pairs of (node type, node's weights quantization bitwidth).
 
         """
         sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
@@ -876,32 +860,36 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return intermediate_nodes, next_node
 
+    # TODO irena move to load_fqc and clean up tests (currently tests_pytest/common_tests/unit_tests/core/graph/test_base_graph.py)
     def override_fused_node_activation_quantization_candidates(self):
         """
         Override fused node activation quantization candidates for all nodes in fused operations,
         except for the last node in each fused group.
         Update the value of quantization_config with the value of op_quaitization_cfg from FusingInfo.
         """
-        from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
-
         nodes_in_fln = self.fusing_info.get_inner_fln_nodes()
         for node in nodes_in_fln:
             fused_node_op_id = self.fusing_info.get_fused_op_id_for_node(node.name)
-            fusiong_op_quaitization_cfg = self.fusing_info.get_fused_op_quantization_config(fused_node_op_id)             
-            org_candidate = node.candidates_quantization_cfg[0]
-            if fusiong_op_quaitization_cfg is not None and fusiong_op_quaitization_cfg.enable_activation_quantization:
-                # Set ActivationQuantizationMode to FLN_QUANT and update the value of quantization_config
-                activation_quantization_cfg = NodeActivationQuantizationConfig(qc=org_candidate,
-                                                                               op_cfg=fusiong_op_quaitization_cfg,
-                                                                               activation_quantization_fn=org_candidate.activation_quantization_cfg.activation_quantization_fn,
-                                                                               activation_quantization_params_fn=org_candidate.activation_quantization_cfg.activation_quantization_params_fn)
-                activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
-                for qc in node.candidates_quantization_cfg:
-                    qc.activation_quantization_cfg = activation_quantization_cfg
+            fusing_op_quantization_cfg = self.fusing_info.get_fused_op_quantization_config(fused_node_op_id)
+            if fusing_op_quantization_cfg is not None and fusing_op_quantization_cfg.enable_activation_quantization:
+                def update(qc):
+                    qc.activation_quantization_cfg = NodeActivationQuantizationConfig(
+                        fusing_op_quantization_cfg,
+                        qc.activation_quantization_cfg.activation_quantization_fn,
+                        qc.activation_quantization_cfg.activation_quantization_params_fn
+                    )
+                    qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_QUANT
+                node.quantization_cfg.update_all(update)
+                node.quantization_cfg.remove_duplicates()
             else:
-                # Set ActivationQuantizationMode to FLN_NO_QUANT
+                node.quantization_cfg.update_activation_quantization_mode(ActivationQuantizationMode.FLN_NO_QUANT)
+                # Remove duplicate candidates. We cannot compare whole candidates since activation configs might not
+                # be identical, but we do want to treat them as such. So we only check duplication by weight configs.
+                uniq_qcs = []
                 for qc in node.candidates_quantization_cfg:
-                    qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.FLN_NO_QUANT
+                    if not any(qc.weights_quantization_cfg == uqc.weights_quantization_cfg for uqc in uniq_qcs):
+                        uniq_qcs.append(qc)
+                node.quantization_cfg.candidates_quantization_cfg = uniq_qcs
 
     def validate(self):
         """

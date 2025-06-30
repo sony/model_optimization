@@ -42,13 +42,12 @@ def apply_activation_bias_correction_to_graph(graph: Graph,
                 n.final_activation_quantization_cfg.activation_bias_correction_term is not None:
             # If activation bias correction is enabled in n.quantization_cfg, an activation bias correction term was
             # calculated during model preparation, and is used now in the node's bias term.
-            _apply_activation_bias_correction_to_node(n, fw_impl, core_config.quantization_config)
+            _apply_activation_bias_correction_to_node(n, fw_impl)
     return graph
 
 
 def _apply_activation_bias_correction_to_node(node: BaseNode,
-                                              fw_impl: FrameworkImplementation,
-                                              qc: QuantizationConfig):
+                                              fw_impl: FrameworkImplementation):
     """
     Set new bias to node using the activation bias correction term that is stored in the
     final activation quantization configuration.
@@ -56,7 +55,6 @@ def _apply_activation_bias_correction_to_node(node: BaseNode,
     Args:
         node: Node to set its corrected bias after activation bias correction.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        qc: QuantizationConfig containing parameters of how the model should be quantized.
 
     """
     correction = node.final_activation_quantization_cfg.activation_bias_correction_term
@@ -72,7 +70,6 @@ def _apply_activation_bias_correction_to_node(node: BaseNode,
         # Configure the quantization of the bias as disabled.
         node.final_weights_quantization_cfg.set_attr_config(fw_impl.constants.BIAS,
                                                             WeightsAttrQuantizationConfig(
-                                                                qc,
                                                                 AttributeQuantizationConfig(
                                                                     enable_weights_quantization=False)))
     else:

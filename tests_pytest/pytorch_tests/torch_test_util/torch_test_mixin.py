@@ -58,8 +58,10 @@ class TorchFwMixin:
         return layer.weights_quantizers[weight_name]
 
     @staticmethod
-    def fetch_model_layers_by_cls(model, cls):
+    def fetch_model_layers_by_cls(model, cls, named=False):
         """ Fetch layers from torch module by layer class type.  """
+        if named:
+            return {name: m for name, m in model.named_modules() if isinstance(m, cls)}
         return [m for m in model.modules() if isinstance(m, cls)]
 
 

@@ -17,22 +17,18 @@ import keras
 import unittest
 from tensorflow.keras.layers import Conv2D, ReLU, Input, InputLayer
 
-import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core import CustomOpsetLayers
-from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.common.framework_info import set_fw_info
 from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.quantization_preparation.load_fqc import load_fqc_configuration
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 from tests.common_tests.helpers.generate_test_tpc import generate_test_attr_configs, generate_test_op_qc
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
-
 
 
 def get_full_bitwidth_candidates():
@@ -53,14 +49,7 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     attach2keras = AttachTpcToKeras()
     fqc = attach2keras.attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
 
-    graph.set_fqc(fqc)
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=mct.core.QuantizationConfig(),
-                                                    mixed_precision_enable=True)
-
-    fusing_info = FusingInfoGenerator(fqc.get_fusing_patterns()).generate_fusing_info(graph)
-    graph.fusing_info = fusing_info
-    graph.override_fused_node_activation_quantization_candidates()
+    graph = load_fqc_configuration(graph, fqc)
 
     return graph
 

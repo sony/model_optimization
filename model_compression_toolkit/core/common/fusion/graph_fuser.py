@@ -14,12 +14,12 @@
 #  ==============================================================================
 
 import copy
-from typing import List, Tuple
+from typing import Tuple
 
 from model_compression_toolkit.core.common.fusion.fusing_info import FusingInfoGenerator
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
-from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import CandidateNodeQuantizationConfig
-from itertools import product
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
+    CandidateNodeQuantizationConfig, NodeQuantizationConfig
 
 
 class FusedLayerType:
@@ -29,6 +29,7 @@ class FusedLayerType:
     """
     def __init__(self):
         self.__name__ = 'FusedLayer'
+
 
 class GraphFuser:
     def apply_node_fusion(self, graph: Graph) -> Graph:
@@ -64,7 +65,6 @@ class GraphFuser:
 
         return graph_copy
 
-
     @staticmethod
     def _create_fused_node(fused_node_id: str, nodes: Tuple[BaseNode]) -> BaseNode:
         """
@@ -86,10 +86,15 @@ class GraphFuser:
                               weights={},
                               layer_class=FusedLayerType)
 
+        base_cfg = CandidateNodeQuantizationConfig(
+            activation_quantization_cfg=nodes[-1].quantization_cfg.base_quantization_cfg.activation_quantization_cfg,
+            weights_quantization_cfg=None
+        )
         activation_cfgs = [c.activation_quantization_cfg for c in nodes[-1].candidates_quantization_cfg]
-        fused_node.candidates_quantization_cfg = [
-            CandidateNodeQuantizationConfig(weights_quantization_cfg=None, activation_quantization_cfg=a) for a in
-            activation_cfgs]
+        candidates = [CandidateNodeQuantizationConfig(weights_quantization_cfg=None, activation_quantization_cfg=a)
+                      for a in activation_cfgs]
+        fused_node.quantization_cfg = NodeQuantizationConfig(base_quantization_cfg=base_cfg,
+                                                             candidates_quantization_cfg=candidates)
 
         # Keep the final configurations if they were set already.
         fused_node.final_weights_quantization_cfg = nodes[0].final_weights_quantization_cfg
@@ -158,5 +163,3 @@ class GraphFuser:
 
         # Finally, add the new fused node to the graph
         graph.add_node(fused_node)
-
-

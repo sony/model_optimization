@@ -118,7 +118,7 @@ def core_runner(in_model: Any,
     if core_config.is_mixed_precision_enabled:
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
-            filter_candidates_for_mixed_precision(graph, target_resource_utilization, fqc)
+            filter_candidates_for_mixed_precision(graph, target_resource_utilization)
             bit_widths_config = search_bit_width(tg,
                                                  fw_impl,
                                                  target_resource_utilization,

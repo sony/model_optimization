@@ -74,9 +74,8 @@ class TestComputeResourceUtilization:
         set_fw_info(fw_info_mock)
         fw_impl_mock.get_node_mac_operations = lambda n: 42 if n == n2 else 0    # for bops
         n1 = build_node('n1', qcs=[build_qc()], output_shape=(None, 5, 10))
-        n2 = build_node('n2', output_shape=(None, 10, 20, 3),
-                        canonical_weights={'foo': np.zeros((3, 14))},
-                        qcs=[build_qc(w_attr={'foo': (4, True)})])
+        n2 = build_node('n2', canonical_weights={'foo': np.zeros((3, 14))}, qcs=[build_qc(w_attr={'foo': (4, True)})],
+                        output_shape=(None, 10, 20, 3))
         n3 = build_node('n3', qcs=[build_qc(4)], output_shape=(None, 2, 71))
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
@@ -254,7 +253,8 @@ class TestActivationUtilizationMethods:
         {'qcs': [build_qc(42, w_attr={'foo': (4, True)}), build_qc(42, w_attr={'foo': (2, False)})]}
     ])
     def test_get_a_nbits_nonconfigurable(self, graph_mock, fw_impl_mock, node_params):
-        node = build_node(**node_params)
+        # disable validation to allow a mix of quantized and unquantized candidates
+        node = build_node(disable_node_qc_validation=True, **node_params)
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock)
         for bm in set(BitwidthMode) - {BM.Float}:
             assert ru_calc._get_activation_nbits(node, bm, None) == 42
@@ -342,9 +342,9 @@ class TestComputeActivationTensorsUtilization:
 
     """ Tests for activation tensors utilization public apis. """
     def test_compute_node_activation_tensor_utilization(self, graph_mock, fw_impl_mock):
-        mp_reuse = build_node('mp_reuse', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(16)], reuse=True)
-        qp = build_node('qp', output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False, q_preserving=True)])
-        noq = build_node('noq', output_shape=(None, 15, 9), qcs=[build_qc(a_enable=False)])
+        mp_reuse = build_node('mp_reuse', qcs=[build_qc(4), build_qc(16)], output_shape=(None, 3, 14), reuse=True)
+        qp = build_node('qp', qcs=[build_qc(a_enable=False, q_preserving=True)], output_shape=(None, 15, 9))
+        noq = build_node('noq', qcs=[build_qc(a_enable=False)], output_shape=(None, 15, 9))
         graph_mock.nodes = [mp_reuse, qp, noq]
         graph_mock.retrieve_preserved_quantization_node = lambda n: mp_reuse if n is qp else n
 
@@ -375,9 +375,9 @@ class TestComputeActivationTensorsUtilization:
             ru_calc.compute_node_activation_tensor_utilization(node, TIC.Any, bitmode, qc=build_qc())
 
     def test_compute_act_tensors_utilization(self, fw_impl_mock):
-        mp = build_node('mp', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(2)])
-        noq = build_node('noq', output_shape=(None, 2, 71), qcs=[build_qc(a_enable=False)])
-        sp = build_node('sp', output_shape=(None, 59), qcs=[build_qc()], reuse=True)
+        mp = build_node('mp', qcs=[build_qc(4), build_qc(2)], output_shape=(None, 3, 14))
+        noq = build_node('noq', qcs=[build_qc(a_enable=False)], output_shape=(None, 2, 71))
+        sp = build_node('sp', qcs=[build_qc()], output_shape=(None, 59), reuse=True)
 
         g = Graph('g', input_nodes=[mp], nodes=[noq], output_nodes=[sp],
                   edge_list=[Edge(mp, noq, 0, 0), Edge(noq, sp, 0, 0)])
@@ -444,8 +444,8 @@ class TestActivationMaxCutUtilization:
         """ Test integration with max cut computation. """
         # Test a simple linear dummy graph with the real max cut computation.
         n1 = build_node('n1', qcs=[build_qc()], input_shape=(None, 10, 20, 3), output_shape=(None, 10, 20, 3))
-        n1_qp = build_node('n1_qp', qcs=[build_qc(a_enable=False, q_preserving=True)],
-                           input_shape=(None, 10, 20, 3), output_shape=(None, 10, 20, 3))
+        n1_qp = build_node('n1_qp', qcs=[build_qc(a_enable=False, q_preserving=True)], input_shape=(None, 10, 20, 3),
+                           output_shape=(None, 10, 20, 3))
         n2 = build_node('n2', qcs=[build_qc()], input_shape=(None, 10, 20, 3), output_shape=(None, 5, 10))
         n3 = build_node('n3', qcs=[build_qc()], input_shape=(None, 5, 10), output_shape=(None, 5, 10))
         n4 = build_node('n4', qcs=[build_qc()], input_shape=(None, 5, 10, 32), output_shape=(None, 5, 10, 32))
@@ -557,8 +557,8 @@ class TestActivationMaxCutUtilization:
         for i, name in enumerate(node_names):
             output_shape = (None, random.randint(5, 10), random.randint(5, 10)) if i < num_nodes - 1 else input_shape
             layer_class = f"class_{i}"
-            node = build_node(name, layer_class=layer_class, qcs=[build_qc()],
-                              input_shape=input_shape, output_shape=output_shape)
+            node = build_node(name, qcs=[build_qc()], input_shape=input_shape, output_shape=output_shape,
+                              layer_class=layer_class)
             nodes.append(node)
             classes.append(layer_class)
             input_shape = output_shape
@@ -742,13 +742,12 @@ class TestWeightUtilizationMethods:
 
     def test_get_w_nbits(self, graph_mock, fw_impl_mock):
         ru_calc = ResourceUtilizationCalculator(graph_mock, fw_impl_mock)
-        node = build_node(canonical_weights={'mp': 1, 'sp': 2, 'noq': 3})
-        node.candidates_quantization_cfg = [
+        qcs = [
             build_qc(1, w_attr={'mp': (2, True), 'sp': (5, True), 'noq': (12, False)}, pos_attr=(6, True, [2])),
             build_qc(10, w_attr={'mp': (4, True), 'sp': (5, True), 'noq': (1, False)}, pos_attr=(6, True, [2])),
             build_qc(8, False, w_attr={'mp': (7, True), 'sp': (5, True), 'noq': (2, False)}, pos_attr=(6, True, [2]))
         ]
-
+        node = build_node(canonical_weights={'mp': 1, 'sp': 2, 'noq': 3}, qcs=qcs, disable_node_qc_validation=True)
         # configurable attr
         assert ru_calc._get_weight_nbits(node, 'mp', BM.Float, w_qc=None) == FLOAT_BITWIDTH
         assert ru_calc._get_weight_nbits(node, 'mp', BM.QMinBit, w_qc=None) == 2
@@ -1056,11 +1055,11 @@ class TestCalculatorMisc:
 
     def test_calculator_init(self, fw_impl_mock):
         n1 = build_node('n1', qcs=[build_qc(a_enable=False)], output_shape=(None, 5, 10))
-        n2 = build_node('n2', output_shape=(None, 2, 111, 3),
-                        canonical_weights={'foo': np.zeros((3, 14)),
-                                           'bar': np.zeros((15, 9, 2, 6)),
-                                           2: np.zeros((2, 71))},
-                        qcs=[build_qc(w_attr={'foo': (8, False), 'bar': (8, True)}, pos_attr=(8, True, [2]))])
+        n2 = build_node('n2', canonical_weights={'foo': np.zeros((3, 14)),
+                                                 'bar': np.zeros((15, 9, 2, 6)),
+                                                 2: np.zeros((2, 71))},
+                        qcs=[build_qc(w_attr={'foo': (8, False), 'bar': (8, True)}, pos_attr=(8, True, [2]))],
+                        output_shape=(None, 2, 111, 3))
         n3 = build_node('n3', qcs=[build_qc(4)], output_shape=(None, 17))
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
@@ -1150,9 +1149,8 @@ class TestBOPSAndVirtualGraph:
         fw_impl_mock.get_node_mac_operations = lambda n: 42 if n.name == 'n2' else 0
 
         n1 = build_node('n1', qcs=[build_qc(7)], output_shape=(None, 5, 10))
-        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
-                        canonical_weights={'foo': np.zeros((3, 14))},
-                        qcs=[build_qc(w_attr={'foo': (6, True)})])
+        n2 = build_node('n2', canonical_weights={'foo': np.zeros((3, 14))}, qcs=[build_qc(w_attr={'foo': (6, True)})],
+                        output_shape=(None, 2, 111, 3), layer_class=BOPNode)
         n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17))
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
@@ -1186,16 +1184,13 @@ class TestBOPSAndVirtualGraph:
         fw_info_mock.get_kernel_op_attribute = lambda node_type: {BOPNode: 'mp', BOPNode2: 'sp'}.get(node_type, None)
 
         n1 = build_node('n1', qcs=[build_qc(16, True)], output_shape=(None, 5, 10))
-        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
-                        canonical_weights={'mp': np.zeros((3, 14))},
-                        qcs=[
-                            build_qc(7, w_attr={'mp': (4, True)}),
-                            build_qc(7, w_attr={'mp': (2, True)})
-                        ])
+        n2 = build_node('n2', canonical_weights={'mp': np.zeros((3, 14))}, qcs=[
+            build_qc(7, w_attr={'mp': (4, True)}),
+            build_qc(7, w_attr={'mp': (2, True)})
+        ], output_shape=(None, 2, 111, 3), layer_class=BOPNode)
 
-        n3 = build_node('n3', layer_class=BOPNode2, output_shape=(None, 17),
-                        canonical_weights={'sp': np.zeros((3, 14, 15))},
-                        qcs=[build_qc(w_attr={'sp': (5, True)})])
+        n3 = build_node('n3', canonical_weights={'sp': np.zeros((3, 14, 15))}, qcs=[build_qc(w_attr={'sp': (5, True)})],
+                        output_shape=(None, 17), layer_class=BOPNode2)
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])
 
@@ -1223,14 +1218,12 @@ class TestBOPSAndVirtualGraph:
             return {BOPNode: 'foo'}.get(node_type, None)
         fw_info_mock.get_kernel_op_attribute = get_kernel_attr
         n_in = build_node('in', qcs=[build_qc()], output_shape=(None, 2, 3, 4))
-        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 44),
-                        canonical_weights={'foo': np.zeros((3, 14))},
-                        qcs=[
-                            build_qc(2, w_attr={'foo': (16, True)}),
-                            build_qc(3, w_attr={'foo': (10, True)}),
-                            build_qc(4, w_attr={'foo': (7, True)}),
-                            build_qc(5, w_attr={'foo': (6, True)}),
-                        ])
+        n2 = build_node('n2', canonical_weights={'foo': np.zeros((3, 14))}, qcs=[
+            build_qc(2, w_attr={'foo': (16, True)}),
+            build_qc(3, w_attr={'foo': (10, True)}),
+            build_qc(4, w_attr={'foo': (7, True)}),
+            build_qc(5, w_attr={'foo': (6, True)}),
+        ], output_shape=(None, 2, 44), layer_class=BOPNode)
         n_out = build_node('out', qcs=[build_qc()], output_shape=(None, 27))
         g = Graph('g', input_nodes=[n_in], nodes=[n2], output_nodes=[n_out],
                   edge_list=[Edge(n_in, n2, 0, 0), Edge(n_in, n_out, 0, 0)])
@@ -1242,13 +1235,11 @@ class TestBOPSAndVirtualGraph:
 
     def _build_regular_node_graph(self, enable_aq, enable_wq):
         n1 = build_node('n1', qcs=[build_qc(16, enable_aq), build_qc(7, enable_aq)], output_shape=(None, 5, 10))
-        n2 = build_node('n2', layer_class=BOPNode, output_shape=(None, 2, 111, 3),
-                        canonical_weights={'foo': np.zeros((3, 14)),
-                                           'bar': np.zeros((15, 9, 2, 6))},
-                        qcs=[
-                            build_qc(w_attr={'foo': (4, enable_wq), 'bar': (8, True)}),
-                            build_qc(w_attr={'foo': (2, enable_wq), 'bar': (8, True)})
-                        ])
+        n2 = build_node('n2', canonical_weights={'foo': np.zeros((3, 14)),
+                                                 'bar': np.zeros((15, 9, 2, 6))}, qcs=[
+            build_qc(w_attr={'foo': (4, enable_wq), 'bar': (8, True)}),
+            build_qc(w_attr={'foo': (2, enable_wq), 'bar': (8, True)})
+        ], output_shape=(None, 2, 111, 3), layer_class=BOPNode)
         n3 = build_node('n3', qcs=[build_qc()], output_shape=(None, 17))
         graph = Graph('g', input_nodes=[n1], nodes=[n2], output_nodes=[n3],
                       edge_list=[Edge(n1, n2, 0, 0), Edge(n2, n3, 0, 0)])

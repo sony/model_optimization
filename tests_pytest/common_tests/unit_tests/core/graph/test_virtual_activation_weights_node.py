@@ -37,20 +37,32 @@ class TestVirtualActivationWeightsNode:
         # All weights have different quantization.
         fw_info_mock.get_kernel_op_attribute = lambda nt: 'weight' if nt is DummyLayerWKernel else None
 
-        a_node = build_node('a', layer_class=DummyLayer,
-                            final_weights={'aaweightaa': np.ones((3, 14)), 'foo': np.ones(15),
-                                           1: np.ones(15), 2: np.ones((5, 9))},
-                            qcs=[build_nbits_qc(a_nbits=5,
-                                                w_attr={'aaweightaa': (2, True), 'foo': (3, True)},
-                                                pos_attr=(4, True, [1, 2]),
-                                                convert_canonical_attr=False)])
-        w_node = build_node('w', layer_class=DummyLayerWKernel,
-                            final_weights={'wwweightww': np.ones((2, 71)), 'bar': np.ones(8),
-                                           1: np.ones(28), 3: np.ones(18)},
-                            qcs=[build_nbits_qc(a_nbits=6,
-                                                w_attr={'wwweightww': (5, True), 'bar': (6, True)},
-                                                pos_attr=(7, True, [1, 3]),
-                                                convert_canonical_attr=False)])
+        a_node = build_node('a', final_weights={'aaweightaa': np.ones((3, 14)), 'foo': np.ones(15),
+                                                1: np.ones(15), 2: np.ones((5, 9))}, qcs=[build_nbits_qc(a_nbits=5,
+                                                                                                         w_attr={
+                                                                                                             'aaweightaa': (
+                                                                                                                 2,
+                                                                                                                 True),
+                                                                                                             'foo': (
+                                                                                                                 3,
+                                                                                                                 True)},
+                                                                                                         pos_attr=(
+                                                                                                             4, True,
+                                                                                                             [1, 2]),
+                                                                                                         convert_canonical_attr=False)],
+                            layer_class=DummyLayer)
+        w_node = build_node('w', final_weights={'wwweightww': np.ones((2, 71)), 'bar': np.ones(8),
+                                                1: np.ones(28), 3: np.ones(18)}, qcs=[build_nbits_qc(a_nbits=6,
+                                                                                                     w_attr={
+                                                                                                         'wwweightww': (
+                                                                                                             5, True),
+                                                                                                         'bar': (
+                                                                                                             6, True)},
+                                                                                                     pos_attr=(
+                                                                                                         7, True,
+                                                                                                         [1, 3]),
+                                                                                                     convert_canonical_attr=False)],
+                            layer_class=DummyLayerWKernel)
 
         v_node = VirtualActivationWeightsNode(a_node, w_node)
         assert len(v_node.weights) == 8
@@ -92,12 +104,10 @@ class TestVirtualActivationWeightsNode:
     def test_invalid_configurable_w_node_weight(self, fw_info_mock):
         fw_info_mock.get_kernel_op_attribute = lambda nt: 'kernel' if nt is DummyLayerWKernel else None
 
-        w_node = build_node('w', layer_class=DummyLayerWKernel,
-                            canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)},
-                            qcs=[
-                                build_nbits_qc(w_attr={'kernel': (8, True), 'foo': (8, True)}),
-                                build_nbits_qc(w_attr={'kernel': (8, True), 'foo': (4, True)})
-                            ])
+        w_node = build_node('w', canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)}, qcs=[
+            build_nbits_qc(w_attr={'kernel': (8, True), 'foo': (8, True)}),
+            build_nbits_qc(w_attr={'kernel': (8, True), 'foo': (4, True)})
+        ], layer_class=DummyLayerWKernel)
         a_node = build_node('a', qcs=[build_nbits_qc()])
 
         with pytest.raises(NotImplementedError, match='Only kernel weight can be configurable. Got configurable .*foo'):
@@ -106,25 +116,22 @@ class TestVirtualActivationWeightsNode:
     def test_invalid_a_node_configurable_weight(self, fw_info_mock):
         fw_info_mock.get_kernel_op_attribute = lambda nt: 'kernel' if nt is DummyLayerWKernel else None
 
-        w_node = build_node('w', layer_class=DummyLayerWKernel,
-                            canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)},
-                            qcs=[
-                                build_nbits_qc(w_attr={'kernel': (8, True), 'foo': (8, True)}),
-                                build_nbits_qc(w_attr={'kernel': (4, True), 'foo': (8, True)})
-                            ])
-        a_node = build_node('aaa', canonical_weights={'bar': np.ones(3), 'baz': np.ones(14)},
-                            qcs=[
-                                build_nbits_qc(w_attr={'bar': (8, True), 'baz': (8, True)}),
-                                build_nbits_qc(w_attr={'bar': (8, True), 'baz': (4, True)})
-                            ])
+        w_node = build_node('w', canonical_weights={'kernel': np.ones(3), 'foo': np.ones(14)}, qcs=[
+            build_nbits_qc(w_attr={'kernel': (8, True), 'foo': (8, True)}),
+            build_nbits_qc(w_attr={'kernel': (4, True), 'foo': (8, True)})
+        ], layer_class=DummyLayerWKernel)
+        a_node = build_node('aaa', canonical_weights={'bar': np.ones(3), 'baz': np.ones(14)}, qcs=[
+            build_nbits_qc(w_attr={'bar': (8, True), 'baz': (8, True)}),
+            build_nbits_qc(w_attr={'bar': (8, True), 'baz': (4, True)})
+        ])
         with pytest.raises(NotImplementedError, match='Node .*aaa with a configurable weight cannot be used as '
                                                       'activation for VirtualActivationWeightsNode'):
             VirtualActivationWeightsNode(a_node, w_node)
 
     def test_invalid_a_node_kernel(self, fw_info_mock):
         fw_info_mock.get_kernel_op_attribute = lambda nt: 'weight' if nt is DummyLayerWKernel else 'kernel'
-        w_node = build_node('w', layer_class=DummyLayerWKernel, canonical_weights={'weight': np.ones(3)},
-                            qcs=[build_nbits_qc(w_attr={'weight': (8, True)})])
+        w_node = build_node('w', canonical_weights={'weight': np.ones(3)},
+                            qcs=[build_nbits_qc(w_attr={'weight': (8, True)})], layer_class=DummyLayerWKernel)
         a_node = build_node('aaa', canonical_weights={'kernel': np.ones(3)},
                             qcs=[build_nbits_qc(w_attr={'kernel': (8, True)})])
 

@@ -18,7 +18,6 @@ from pydantic import ValidationError
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as current_schema
 import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema_v1
 import model_compression_toolkit.target_platform_capabilities.schema.v2 as schema_v2
-from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_compatability import ALL_SCHEMA_VERSIONS, \
     all_tpc_types, FUTURE_SCHEMA_VERSIONS, _schema_v1_to_v2
@@ -352,12 +351,6 @@ class TestQCOptions:
         current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC,))
         with pytest.raises(Exception, match="For multiple configurations, a 'base_config' is required for non-mixed-precision optimization."):
             current_schema.QuantizationConfigOptions(quantization_configurations=(TEST_QC, TEST_QC))
-
-    def test_get_qco_for_none_tpc(self):
-        """Tests that calling get_qco with None as FQC on a BaseNode raises an exception."""
-        mock_node = BaseNode(name="", framework_attr={}, input_shape=(), output_shape=(), weights={}, layer_class=None)
-        with pytest.raises(Exception, match="Can not retrieve QC options for None FQC"):
-            mock_node.get_qco(None)
 
 
 class TestFusing:

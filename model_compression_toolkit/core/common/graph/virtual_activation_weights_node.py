@@ -19,9 +19,8 @@ from model_compression_toolkit.constants import VIRTUAL_ACTIVATION_WEIGHTS_NODE_
     VIRTUAL_WEIGHTS_SUFFIX, VIRTUAL_ACTIVATION_SUFFIX, FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
-    CandidateNodeQuantizationConfig
+    CandidateNodeQuantizationConfig, NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import ActivationQuantizationMode
-from model_compression_toolkit.core.common.framework_info import DEFAULT_KERNEL_ATTRIBUTE
 
 
 class VirtualNode(BaseNode, abc.ABC):
@@ -76,8 +75,11 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
 
         self.name = origin_node.name + VIRTUAL_WEIGHTS_SUFFIX
 
-        self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates(kernel_attr)
-        for c in self.candidates_quantization_cfg:
+        self.quantization_cfg = NodeQuantizationConfig(
+            candidates_quantization_cfg=origin_node.get_unique_weights_candidates(kernel_attr),
+            base_quantization_cfg=None, validate=False
+        )
+        for c in self.quantization_cfg.candidates_quantization_cfg:
             c.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
             c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
 
@@ -106,10 +108,9 @@ class VirtualSplitActivationNode(VirtualSplitNode):
         self.weights = {}
         self.layer_class = activation_class
 
-        self.candidates_quantization_cfg = origin_node.get_unique_activation_candidates()
-        for c in self.candidates_quantization_cfg:
-            c.weights_quantization_cfg.enable_weights_quantization = False
-            c.weights_quantization_cfg.weights_n_bits = FLOAT_BITWIDTH
+        self.quantization_cfg = NodeQuantizationConfig(candidates_quantization_cfg=origin_node.get_unique_activation_candidates(),
+                                                       base_quantization_cfg=None, validate=False)
+        self.quantization_cfg.disable_weights_quantization()
 
 
 class VirtualActivationWeightsNode(VirtualNode):
@@ -143,7 +144,7 @@ class VirtualActivationWeightsNode(VirtualNode):
         weights = weights_node.weights.copy()
         act_node_w_rename = {}
         if act_node.weights:
-            if act_node.kernel_attr != DEFAULT_KERNEL_ATTRIBUTE:
+            if act_node.kernel_attr:
                 raise NotImplementedError(f'Node {act_node} with kernel cannot be used as activation for '
                                           f'VirtualActivationWeightsNode.')
             if act_node.has_any_configurable_weight():
@@ -200,4 +201,5 @@ class VirtualActivationWeightsNode(VirtualNode):
         v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(weights_node.kernel_attr).weights_n_bits,
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
-        self.candidates_quantization_cfg = v_candidates
+        self.quantization_cfg = NodeQuantizationConfig(candidates_quantization_cfg=v_candidates,
+                                                       base_quantization_cfg=None, validate=False)

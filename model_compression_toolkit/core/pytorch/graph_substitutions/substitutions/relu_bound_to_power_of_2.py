@@ -95,11 +95,11 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
             else:
                 return graph
         elif non_linear_node.is_match_type(hardtanh):
-            if (non_linear_node.framework_attr[HARDTANH_MIN_VAL] == 0.0) and not \
-                    (np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]).astype(int) -
-                     np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]) == 0):
-                scale_factor = non_linear_node.framework_attr[HARDTANH_MAX_VAL] / self.threshold
-                non_linear_node.functional_op.__defaults__ = (0.0, self.threshold, non_linear_node.framework_attr[INPLACE])
+            kwargs = non_linear_node.op_call_kwargs
+            if (kwargs[HARDTANH_MIN_VAL] == 0.0) and not \
+                    (np.log2(kwargs[HARDTANH_MAX_VAL]).astype(int) - np.log2(kwargs[HARDTANH_MAX_VAL]) == 0):
+                scale_factor = kwargs[HARDTANH_MAX_VAL] / self.threshold
+                non_linear_node.functional_op.__defaults__ = (0.0, self.threshold, kwargs[INPLACE])
             else:
                 return graph
         else:

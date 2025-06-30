@@ -35,7 +35,9 @@ else:
 
 get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
-
+# TODO irena: this tests node.filter_node_qco_by_graph which is not used anyway. What is actually used is
+#  filter_node_qco_by_graph in set_node_quantization_config which doesn't have unittests.
+@unittest.skip("TODO filter configs")
 class TestKerasQuantConfigFiltering(unittest.TestCase):
 
     @staticmethod

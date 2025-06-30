@@ -124,7 +124,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
 
         bn_node.prior_info = copy.deepcopy(source_node.prior_info)
 
-        bn_node.candidates_quantization_cfg = copy.deepcopy(source_node.candidates_quantization_cfg)
+        bn_node.quantization_cfg = copy.deepcopy(source_node.quantization_cfg)
 
         for qc in bn_node.candidates_quantization_cfg:
             qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
@@ -139,7 +139,6 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
                     #  reconstructed node BN attributes need to be quantized and how.
                     qc.weights_quantization_cfg.set_attr_config(attr,
                                                                 WeightsAttrQuantizationConfig(
-                                                                    QuantizationConfig(),
                                                                     AttributeQuantizationConfig(
                                                                         enable_weights_quantization=False)))
 

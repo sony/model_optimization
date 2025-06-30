@@ -29,10 +29,9 @@ from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.quantization_preparation.load_fqc import load_fqc_configuration
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
@@ -70,12 +69,16 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         fqc = AttachTpcToKeras().attach(tpc)
 
-        graph.set_fqc(fqc)
-        graph = set_quantization_configuration_to_graph(graph=graph,
-                                                        quant_config=core_config.quantization_config,
-                                                        mixed_precision_enable=True)
+        graph = load_fqc_configuration(graph=graph, fqc=fqc)
 
         for node in graph.nodes:
+            # TODO irena remove set_qc:
+            for c in node.quantization_cfg.candidates_quantization_cfg:
+                c.activation_quantization_cfg.set_qc(core_config.quantization_config)
+                c.weights_quantization_cfg.set_qc(core_config.quantization_config)
+                for attr_cfg in c.weights_quantization_cfg.get_all_weight_attrs_configs().values():
+                    attr_cfg.weights_error_method = core_config.quantization_config.weights_error_method
+
             node.prior_info = keras_impl.get_node_prior_info(node=node,
                                                              graph=graph)
 

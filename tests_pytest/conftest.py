@@ -55,6 +55,11 @@ def fw_info_mock():
 
 
 @fixture
+def patch_fw_info(fw_info_mock, mocker):
+    return mocker.patch('model_compression_toolkit.core.common.framework_info._current_framework_info', fw_info_mock)
+
+
+@fixture
 def quant_config_mock():
     """ Basic QuantizationConfig mock. """
     return Mock(spec=QuantizationConfig, weights_error_method=QuantizationErrorMethod.NOCLIPPING,

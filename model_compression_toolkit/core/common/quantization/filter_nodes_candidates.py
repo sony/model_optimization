@@ -33,7 +33,7 @@ def filter_nodes_candidates(graph: Graph):
     """
     nodes = list(graph.nodes)
     for n in nodes:
-        n.candidates_quantization_cfg = filter_node_candidates(node=n)
+        n.quantization_cfg.candidates_quantization_cfg = filter_node_candidates(node=n)
 
     return graph
 

@@ -14,69 +14,25 @@
 # ==============================================================================
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
-from model_compression_toolkit.core.common.framework_info import set_fw_info
+from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_candidates_filter import \
     filter_candidates_for_mixed_precision
-
-
-@pytest.fixture
-def setup_mocks(fw_info_mock):
-    """
-    Set up mock objects for testing the filtering of mixed precision candidates.
-
-    Mocks the behavior of a graph containing activation and weight-configurable nodes
-    with multiple quantization candidates. The test will check whether the correct candidates
-    are filtered based on given constraints.
-    """
-    tru = MagicMock()
-    graph = MagicMock()
-    set_fw_info(fw_info_mock)
-    fw_info = MagicMock()
-    fqc = MagicMock()
-
-    # Activation-configurable node with candidates
-    act_node = MagicMock()
-    act_candidate1 = MagicMock()
-    act_candidate1.activation_quantization_cfg = MagicMock(enable_activation_quantization=True, activation_n_bits=8)
-    act_candidate2 = MagicMock()
-    act_candidate2.activation_quantization_cfg = MagicMock(enable_activation_quantization=True, activation_n_bits=4)
-    act_node.candidates_quantization_cfg = [act_candidate1, act_candidate2]
-    act_node.get_qco.return_value = MagicMock(base_config=MagicMock(activation_n_bits=8))
-
-    # Weights-configurable node with candidates
-    weight_node = MagicMock()
-    weight_candidate1 = MagicMock()
-    weight_candidate1.weights_quantization_cfg = MagicMock()
-    weight_candidate1.weights_quantization_cfg.get_attr_config = lambda attr: MagicMock(
-        enable_weights_quantization=True, weights_n_bits=8) if attr == 'kernel' else None
-    weight_candidate2 = MagicMock()
-    weight_candidate2.weights_quantization_cfg = MagicMock()
-    weight_candidate2.weights_quantization_cfg.get_attr_config = lambda attr: MagicMock(
-        enable_weights_quantization=True, weights_n_bits=4) if attr == 'kernel' else None
-    weight_node.candidates_quantization_cfg = [weight_candidate1, weight_candidate2]
-    weight_node.kernel_attr = 'kernel'
-    weight_node.get_qco.return_value = MagicMock(
-        base_config=MagicMock(attr_weights_configs_mapping={'kernel': MagicMock(weights_n_bits=8)}))
-
-    graph.get_activation_configurable_nodes.return_value = [act_node]
-    graph.get_weights_configurable_nodes.return_value = [weight_node]
-    fw_info.get_kernel_op_attribute = MagicMock()
-    fw_info.get_kernel_op_attribute.return_value = 'kernel'
-
-    return tru, graph, fqc, act_node, weight_node
+from model_compression_toolkit.target_platform_capabilities import QuantizationConfigOptions
+from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc
 
 
 @pytest.mark.parametrize(
-    "weight_restricted, activation_restricted, expected_act_candidates, expected_weight_candidates", [
-        (True, False, 1, 2),  # Only weights restricted
-        (False, True, 2, 1),  # Only activations restricted
-        (True, True, 2, 2),  # Both restricted
-        (False, False, 2, 2),  # Neither restricted
+    "tru, expected_act_candidates, expected_weight_candidates", [
+        (ResourceUtilization(weights_memory=1), 1, 2),  # Only weights restricted
+        (ResourceUtilization(activation_memory=1), 2, 1),  # Only activations restricted
+        (ResourceUtilization(weights_memory=1, activation_memory=1), 2, 2),  # Both restricted
+        (ResourceUtilization(), 2, 2),  # Neither restricted
+        (ResourceUtilization(total_memory=1), 2, 2),  # Total memory restricted
+        (ResourceUtilization(bops=1), 2, 2),  # BOPS restricted
     ])
-def test_filtering(setup_mocks, weight_restricted, activation_restricted, expected_act_candidates,
-                   expected_weight_candidates):
+def test_filtering(graph_mock, tru, expected_act_candidates, expected_weight_candidates, patch_fw_info):
     """
     Test candidate filtering based on weight and activation restrictions.
 
@@ -86,44 +42,22 @@ def test_filtering(setup_mocks, weight_restricted, activation_restricted, expect
     - When both restrictions are applied, filtering occurs on both activations and weights.
     - When no restrictions are applied, all candidates remain.
     """
-    tru, graph, fqc, act_node, weight_node = setup_mocks
+    patch_fw_info.get_kernel_op_attribute = Mock(return_value='kernel')
 
-    tru.total_mem_restricted.return_value = False
-    tru.bops_restricted.return_value = False
-    tru.weight_restricted.return_value = weight_restricted
-    tru.activation_restricted.return_value = activation_restricted
+    act_node = build_node(qcs=[build_nbits_qc(8), build_nbits_qc(4)])
+    act_node.get_qco = Mock(return_value=Mock(spec=QuantizationConfigOptions, base_config=Mock(activation_n_bits=8)))
 
-    filter_candidates_for_mixed_precision(graph, tru, fqc)
+    # Weights-configurable node with candidates
+    weight_node = build_node(qcs=[build_nbits_qc(w_attr={'kernel': (8, True)}),
+                                  build_nbits_qc(w_attr={'kernel': (4, True)})])
+    qco = Mock(spec=QuantizationConfigOptions,
+               base_config=MagicMock(attr_weights_configs_mapping={'kernel': MagicMock(weights_n_bits=8)}))
+    weight_node.get_qco = Mock(return_value=qco)
+
+    graph_mock.get_activation_configurable_nodes.return_value = [act_node]
+    graph_mock.get_weights_configurable_nodes.return_value = [weight_node]
+
+    filter_candidates_for_mixed_precision(graph_mock, tru)
 
     assert len(act_node.candidates_quantization_cfg) == expected_act_candidates
     assert len(weight_node.candidates_quantization_cfg) == expected_weight_candidates
-
-
-@pytest.mark.parametrize("total_mem_restricted, bops_restricted", [
-    (True, False),  # Total memory restricted
-    (False, True),  # BOPS restricted
-])
-def test_early_return(setup_mocks, total_mem_restricted, bops_restricted):
-    """
-    Test early return condition when total memory or BOPS restrictions are applied.
-
-    This test verifies that if total memory or BOPS restrictions are applied, the filtering function
-    returns early without filtering candidates.
-
-    Expected behavior:
-    - No filtering occurs when total memory or BOPS constraints are enabled.
-    - The number of candidates remains unchanged (2 for both activations and weights).
-    """
-    tru, graph, fqc, act_node, weight_node = setup_mocks
-
-    tru.total_mem_restricted.return_value = total_mem_restricted
-    tru.bops_restricted.return_value = bops_restricted
-    tru.weight_restricted.return_value = True
-    tru.activation_restricted.return_value = True
-
-    filter_candidates_for_mixed_precision(graph, tru, fqc)
-
-    assert len(act_node.candidates_quantization_cfg) == 2  # No filtering
-    assert len(weight_node.candidates_quantization_cfg) == 2  # No filtering
-
-

@@ -12,22 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
-
 import unittest
+
+import keras
+import numpy as np
+
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.pruning.memory_calculator import MemoryCalculator
 from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 
-import keras
-
+from model_compression_toolkit.quantization_preparation.load_fqc import load_fqc_configuration
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
 layers = keras.layers
-import numpy as np
 
 
 class TestParameterCounter(unittest.TestCase):
@@ -51,20 +50,17 @@ class TestParameterCounter(unittest.TestCase):
         fw_impl = PruningKerasImplementation()
         tpc = mct.get_target_platform_capabilities('tensorflow', 'imx500')
 
-        tpc = AttachTpcToKeras().attach(tpc)
+        fqc = AttachTpcToKeras().attach(tpc)
 
         # Convert the original Keras model to an internal graph representation.
         float_graph = read_model_to_graph(model,
                                           self.representative_dataset,
-                                          tpc,
+                                          fqc,
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
         # as it prepares the graph for the pruning process.
-        float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
-                                                                                      quant_config=mct.core.DEFAULTCONFIG,
-                                                                                      mixed_precision_enable=False)
-
+        float_graph_with_compression_config = load_fqc_configuration(float_graph, fqc)
 
         self.memory_calculator = MemoryCalculator(graph=float_graph_with_compression_config,
                                                   fw_impl=fw_impl)
@@ -84,5 +80,3 @@ class TestParameterCounter(unittest.TestCase):
         # Calculate expected number of parameters
         expected_params = out_channels * (in_channels * kernel_size * kernel_size + int(use_bias))
         self.assertEqual(counted_params, expected_params)
-
-

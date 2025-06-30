@@ -20,6 +20,7 @@ from keras.applications.mobilenet_v2 import MobileNetV2
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_eval.metric_calculators import \
     DistanceMetricCalculator
+from model_compression_toolkit.quantization_preparation.load_fqc import load_fqc_configuration
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
@@ -35,9 +36,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MpDistanceWeighting
-from model_compression_toolkit.core import DEFAULTCONFIG, CustomOpsetLayers
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
+from model_compression_toolkit.core import CustomOpsetLayers
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
@@ -67,10 +66,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
 
     fqc = AttachTpcToKeras().attach(tpc, custom_opset2layer={"Input": CustomOpsetLayers([InputLayer])})
 
-    graph.set_fqc(fqc)
-    graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=DEFAULTCONFIG,
-                                                    mixed_precision_enable=True)
+    graph = load_fqc_configuration(graph, fqc)
 
     ips = DistanceMetricCalculator.get_mp_interest_points(
         graph=graph,
@@ -90,7 +86,6 @@ def softmax_model(input_shape):
     outputs = tf.keras.layers.Reshape((-1,))(x)
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     return model
-
 
 
 class TestSensitivityMetricInterestPoints(unittest.TestCase):

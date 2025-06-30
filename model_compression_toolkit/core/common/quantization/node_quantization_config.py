@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
-from typing import Callable, Any, List, Tuple, Union, Dict, TYPE_CHECKING
+from typing import Callable, Any, List, Dict, TYPE_CHECKING
 from enum import Enum, auto
 import numpy as np
 
@@ -22,11 +20,10 @@ from model_compression_toolkit.core.common.framework_info import ChannelAxisMapp
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_activation_quantization_params_fn, get_weights_quantization_params_fn
+    get_weights_quantization_params_fn
 
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
-    QuantizationErrorMethod
-from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import \
     AttributeQuantizationConfig, \
     OpQuantizationConfig
@@ -87,7 +84,6 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
     Attributes for configuring the quantization of the activations of a node.
     """
     def __init__(self,
-                 qc: QuantizationConfig,
                  op_cfg: OpQuantizationConfig,
                  activation_quantization_fn: Callable,
                  activation_quantization_params_fn: Callable
@@ -95,7 +91,6 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         """
 
         Args:
-            qc: QuantizationConfig to create the node's config from.
             op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
             activation_quantization_fn: Function to use when quantizing the node's activations.
             activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
@@ -103,11 +98,10 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
 
         self.activation_quantization_fn = activation_quantization_fn
         self.activation_quantization_params_fn = activation_quantization_params_fn
-        self.activation_quantization_params = {}
         self.activation_quantization_method = op_cfg.activation_quantization_method
-        self.activation_error_method = qc.activation_error_method
         self.activation_n_bits = op_cfg.activation_n_bits
-        self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
+        self.activation_quantization_params = {}
+        # TODO irena: computed by compute_activation_bias_correction. shouldnt really be here
         self.activation_bias_correction_term = None
         if op_cfg.enable_activation_quantization and op_cfg.quantization_preserving:
             raise ValueError("An OpQuantizationConfig can't have both enable_activation_quantization and quantization_preserving enabled.")
@@ -118,6 +112,25 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         else:
             self.quant_mode = ActivationQuantizationMode.NO_QUANT
         self.signedness = op_cfg.signedness
+
+        # TODO irena remove along with set_qc. Keeping for eq and hash to work without set_qc being called
+        self.activation_error_method = None
+        self.relu_bound_to_power_of_2 = None
+        self.activation_channel_equalization = None
+        self.input_scaling = None
+        self.min_threshold = None
+        self.l_p_value = None
+        self.shift_negative_activation_correction = None
+        self.z_threshold = None
+        self.shift_negative_ratio = None
+        self.shift_negative_threshold_recalculation = None
+        self.concat_threshold_update = None
+
+    def set_qc(self, qc: QuantizationConfig):
+        """ TODO irena: temporary keep all the attributes as before not to break all code at once.
+             Eventually all of them should be removed from here. """
+        self.activation_error_method = qc.activation_error_method
+        self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
         self.activation_channel_equalization = qc.activation_channel_equalization
         self.input_scaling = qc.input_scaling
         self.min_threshold = qc.min_threshold
@@ -158,25 +171,6 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                 "Layer is intended to be quantized, but the fake_quant function is None.")  # pragma: no cover
 
         return fake_quant(tensors)
-
-    @property
-    def activation_error_method(self) -> QuantizationErrorMethod:
-        """
-        activation_error_method getter.
-        """
-        return self._activation_error_method
-
-    @activation_error_method.setter
-    def activation_error_method(self, value: QuantizationErrorMethod):
-        """
-        activation_error_method setter.
-
-        Args:
-            value: New activation_error_method to set to the node activation configuration.
-
-        """
-        self._activation_error_method = value
-        self.activation_quantization_params_fn = get_activation_quantization_params_fn(activation_quantization_method=self.activation_quantization_method)
 
     def set_activation_quantization_fn(self, activation_quantization_fn: Callable):
         """
@@ -261,49 +255,35 @@ class WeightsAttrQuantizationConfig:
     Configuration for quantizing a weights attribute of a node.
     """
     def __init__(self,
-                 qc: QuantizationConfig,
                  weights_attr_cfg: AttributeQuantizationConfig,
                  weights_channels_axis: ChannelAxisMapping = None):
         """
 
         Args:
-            qc: QuantizationConfig to create the node's config from.
             weights_attr_cfg: AttributeQuantizationConfig with parameters to use when creating the node's attribute quantization config.
             weights_channels_axis: Axis to quantize a node's attribute when quantizing per-channel (if not quantizing per-channel than expecting None).
         """
         self.weights_quantization_fn = get_weights_quantization_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_channels_axis = weights_channels_axis
-        self.weights_quantization_params = {}
         self.weights_quantization_method = weights_attr_cfg.weights_quantization_method
-        self.weights_error_method = qc.weights_error_method
         self.weights_n_bits = weights_attr_cfg.weights_n_bits
         self.weights_per_channel_threshold = weights_attr_cfg.weights_per_channel_threshold
         self.enable_weights_quantization = weights_attr_cfg.enable_weights_quantization
+        self.weights_quantization_params = {}
+
+        # TODO irena remove along with set_qc. Keeping for eq and hash to work without set_qc being called
+        self.weights_error_method = None
+        self.l_p_value = None
+
+    def set_qc(self, qc: QuantizationConfig):
+        # TODO irena: temporary keep the fields to not break everything at once.
+        self.weights_error_method = qc.weights_error_method
         self.l_p_value = qc.l_p_value
 
-    @property
-    def weights_error_method(self) -> QuantizationErrorMethod:
+    def override_weights_quantization_fn(self, weights_quantization_fn: Callable):
         """
-        weights_error_method getter.
-        """
-        return self._weights_error_method
-
-    @weights_error_method.setter
-    def weights_error_method(self, value: QuantizationErrorMethod):
-        """
-        weights_error_method setter.
-
-        Args:
-            value: New weights_error_method to set to the node weights configuration.
-
-        """
-        self._weights_error_method = value
-        self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_quantization_method=self.weights_quantization_method)
-
-    def set_weights_quantization_fn(self, weights_quantization_fn: Callable):
-        """
-        Sets weights quantization function for the node.
+        Override weights quantization function for the node.
 
         Args:
             weights_quantization_fn: Function for quantazing the weights.
@@ -311,9 +291,9 @@ class WeightsAttrQuantizationConfig:
         """
         self.weights_quantization_fn = weights_quantization_fn
 
-    def set_weights_quantization_params_fn(self, weights_quantization_params_fn: Callable):
+    def override_weights_quantization_params_fn(self, weights_quantization_params_fn: Callable):
         """
-        Sets weights params function for the node.
+        Override weights params function for the node.
 
         Args:
             weights_quantization_params_fn: Function for calculating the weights params.
@@ -375,11 +355,11 @@ class WeightsAttrQuantizationConfig:
         return self.weights_quantization_fn == other.weights_quantization_fn and \
                self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
                self.weights_channels_axis == other.weights_channels_axis and \
-               self.weights_error_method == other.weights_error_method and \
                self.weights_quantization_method == other.weights_quantization_method and \
                self.weights_n_bits == other.weights_n_bits and \
                self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
                self.enable_weights_quantization == other.enable_weights_quantization and \
+               self.weights_error_method == other.weights_error_method and \
                self.l_p_value == other.l_p_value
 
     def __hash__(self):
@@ -399,23 +379,19 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
     Holding a mapping between the node's weights attributes and their quantization configurations,
     in addition to quantization parameters that are global for all attributes of the represented node.
     """
-    def __init__(self, qc: QuantizationConfig,
+    def __init__(self,
                  op_cfg: OpQuantizationConfig,
                  weights_channels_axis: ChannelAxisMapping,
                  node_attrs_list: List[str]):
         """
 
         Args:
-            qc: QuantizationConfig to create the node's config from.
             op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
             weights_channels_axis: Axis to quantize a node's weights attribute when quantizing per-channel.
             node_attrs_list: A list of the node's weights attributes names.
 
         """
-        self.min_threshold = qc.min_threshold
         self.simd_size = op_cfg.simd_size
-        self.weights_second_moment_correction = qc.weights_second_moment_correction
-        self.weights_bias_correction = qc.weights_bias_correction
 
         # Initialize a quantization configuration for each of the node's attributes
         self.attributes_config_mapping = {}
@@ -427,7 +403,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 # POS_ATTR string. If none are found, it indicates that no specific quantization config is defined for
                 # positional weights, so the default config will be used instead.
                 attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if
-                                          POS_ATTR in k}
+                                          POSITIONAL_ATTR in k}
 
                 if len(attrs_included_in_name) > 1:  # pragma: no cover
                     raise ValueError(f"Found multiple attribute in FQC OpConfig that are contained "
@@ -443,8 +419,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                     attr_cfg = list(attrs_included_in_name.values())[0]
 
                 # Register this attribute under the positional attributes config mapping.
-                self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
-                                                                                         weights_attr_cfg=attr_cfg,
+                self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(weights_attr_cfg=attr_cfg,
                                                                                          weights_channels_axis=
                                                                                          weights_channels_axis)
             else:
@@ -461,9 +436,18 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 else:
                     attr_cfg = list(attrs_included_in_name.values())[0]
 
-                self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
-                                                                                     weights_attr_cfg=attr_cfg,
+                self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(weights_attr_cfg=attr_cfg,
                                                                                      weights_channels_axis=weights_channels_axis)
+        # TODO irena remove along with set_qc. Keeping for eq and hash to work without set_qc being called
+        self.min_threshold = None
+        self.weights_second_moment_correction = None
+        self.weights_bias_correction = None
+
+    def set_qc(self, qc: QuantizationConfig):
+        # TODO irena: temporary keep the fields to not break everything at once.
+        self.min_threshold = qc.min_threshold
+        self.weights_second_moment_correction = qc.weights_second_moment_correction
+        self.weights_bias_correction = qc.weights_bias_correction
 
     def get_attr_config(self, attr_name: 'WeightAttrT') -> WeightsAttrQuantizationConfig:
         """

@@ -21,7 +21,7 @@ from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeWeightsQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities import Signedness, OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.constants import POS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import POSITIONAL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig
 
 
@@ -94,16 +94,15 @@ class TestPositionalWeightsAttrQuantizationConfig:
         # Ensure the configs have different weights bit widths.
         assert def_weight_attr_config.weights_n_bits != pos_weight_attr_config.weights_n_bits
 
-        op_cfg = self._create_node_weights_op_cfg(pos_weight_attr=[POS_ATTR],
+        op_cfg = self._create_node_weights_op_cfg(pos_weight_attr=[POSITIONAL_ATTR],
                                                   pos_weight_attr_config=[pos_weight_attr_config],
                                                   def_weight_attr_config=def_weight_attr_config)
 
         # Check that positional weights attribute config differs from default config.
         assert op_cfg.default_weight_attr_config.weights_n_bits != op_cfg.attr_weights_configs_mapping[
-            POS_ATTR].weights_n_bits
+            POSITIONAL_ATTR].weights_n_bits
 
-        weights_quant_cfg = NodeWeightsQuantizationConfig(qc=Mock(),
-                                                          op_cfg=op_cfg,
+        weights_quant_cfg = NodeWeightsQuantizationConfig(op_cfg=op_cfg,
                                                           weights_channels_axis=Mock(),
                                                           node_attrs_list=[positional_weight_attr])
 
@@ -123,8 +122,7 @@ class TestPositionalWeightsAttrQuantizationConfig:
         assert op_cfg.default_weight_attr_config.weights_n_bits != op_cfg.attr_weights_configs_mapping[
             str(positional_weight_attr)].weights_n_bits
 
-        weights_quant_cfg = NodeWeightsQuantizationConfig(qc=Mock(),
-                                                          op_cfg=op_cfg,
+        weights_quant_cfg = NodeWeightsQuantizationConfig(op_cfg=op_cfg,
                                                           weights_channels_axis=Mock(),
                                                           node_attrs_list=[positional_weight_attr])
 
@@ -134,7 +132,7 @@ class TestPositionalWeightsAttrQuantizationConfig:
                    positional_weight_attr].weights_n_bits == def_weight_attr_config.weights_n_bits
 
         # Add a second positional attribute with a different config.
-        second_positional_weight_attr = POS_ATTR + '_1'
+        second_positional_weight_attr = POSITIONAL_ATTR + '_1'
         second_pos_weights_n_bits = 32
         second_pos_weight_attr_config = self._create_weights_attr_quantization_config(second_pos_weights_n_bits)
 
@@ -142,25 +140,23 @@ class TestPositionalWeightsAttrQuantizationConfig:
         assert pos_weight_attr_config.weights_n_bits != second_pos_weight_attr_config.weights_n_bits
 
         # Create op config with two positional attribute keys and their respective configs.
-        op_cfg = self._create_node_weights_op_cfg(pos_weight_attr=[POS_ATTR, second_positional_weight_attr],
+        op_cfg = self._create_node_weights_op_cfg(pos_weight_attr=[POSITIONAL_ATTR, second_positional_weight_attr],
                                                   pos_weight_attr_config=[pos_weight_attr_config,
                                                                           second_pos_weight_attr_config],
                                                   def_weight_attr_config=def_weight_attr_config)
 
         # Check the configs are correctly set and distinct from each other and from the default.
         assert op_cfg.default_weight_attr_config.weights_n_bits != op_cfg.attr_weights_configs_mapping[
-            str(POS_ATTR)].weights_n_bits
+            str(POSITIONAL_ATTR)].weights_n_bits
         assert op_cfg.default_weight_attr_config.weights_n_bits != op_cfg.attr_weights_configs_mapping[
             str(second_positional_weight_attr)].weights_n_bits
         assert op_cfg.attr_weights_configs_mapping[
-                   str(POS_ATTR)].weights_n_bits != op_cfg.attr_weights_configs_mapping[
+                   str(POSITIONAL_ATTR)].weights_n_bits != op_cfg.attr_weights_configs_mapping[
                    str(second_positional_weight_attr)].weights_n_bits
 
         # Expect ValueError: multiple matching keys found for positional weights attribute.
         with pytest.raises(ValueError, match='Found multiple attribute in FQC OpConfig that are contained in the '
                                              'attribute name \'0\'.Please fix the FQC attribute names mapping such '
                                              'that each operator\'s attribute would have a unique matching name.'):
-            weights_quant_cfg = NodeWeightsQuantizationConfig(qc=Mock(),
-                                                              op_cfg=op_cfg,
-                                                              weights_channels_axis=Mock(),
-                                                              node_attrs_list=[positional_weight_attr])
+            NodeWeightsQuantizationConfig(op_cfg=op_cfg, weights_channels_axis=Mock(),
+                                          node_attrs_list=[positional_weight_attr])

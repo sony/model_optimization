@@ -207,7 +207,7 @@ class TensorboardWriter(object):
             attr = dict()
             if n.final_activation_quantization_cfg is not None:
                 attr.update(n.final_activation_quantization_cfg.__dict__)
-            elif n.candidates_quantization_cfg is not None:
+            elif n.quantization_cfg is not None:
                 attr.update(n.get_unified_activation_candidates_dict())
             return attr
 
@@ -229,7 +229,7 @@ class TensorboardWriter(object):
             attr = dict()
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
-            elif n.candidates_quantization_cfg is not None:
+            elif n.quantization_cfg is not None:
                 attr.update(n.get_unified_weights_candidates_dict())
             return attr
 
@@ -529,8 +529,6 @@ def init_tensorboard_writer() -> TensorboardWriter:
     """
     Create a TensorBoardWriter object initialized with the logger dir path if it was set,
     or None otherwise.
-
-    Args:
 
     Returns:
         A TensorBoardWriter object.

@@ -91,7 +91,7 @@ class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
             for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
 
                 # Check if the target node's layer type is supported.
-                if not ipt_node.is_kernel_op:
+                if not ipt_node.kernel_attr:
                     Logger.critical(f"Hessian information with respect to weights is not supported for "
                                     f"{ipt_node.type} layers.")  # pragma: no cover
 

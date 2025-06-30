@@ -205,13 +205,13 @@ class TestModelCollectorInit:
         fw_info_mock.get_kernel_op_attribute.return_value = 'kernel'
 
         # Set up nodes with quantization configurations for both activations and weights.
-        node1 = build_node('node1', output_shape=(None, 3, 14), qcs=[build_qc(4), build_qc(2)])
+        node1 = build_node('node1', qcs=[build_qc(4), build_qc(2)], output_shape=(None, 3, 14))
         node1.is_activation_quantization_enabled = Mock(return_value=True)
         node1.is_weights_quantization_enabled = Mock(return_value=True)
-        node2 = build_node('node2', output_shape=(None, 2, 71), qcs=[build_qc(4), build_qc(2)])
+        node2 = build_node('node2', qcs=[build_qc(4), build_qc(2)], output_shape=(None, 2, 71))
         node2.is_activation_quantization_enabled = Mock(return_value=True)
         node2.is_weights_quantization_enabled = Mock(return_value=True)
-        node3 = build_node('node3', output_shape=(None, 59), qcs=[build_qc(4), build_qc(2)])
+        node3 = build_node('node3', qcs=[build_qc(4), build_qc(2)], output_shape=(None, 59))
         node3.is_activation_quantization_enabled = Mock(return_value=True)
         node3.is_weights_quantization_enabled = Mock(return_value=False)
 
@@ -301,13 +301,13 @@ class TestModelCollectorInfer:
         fw_info_mock.get_out_channel_axis.return_value = 1
 
         input_shape = (1, 3, 14)
-        self.node1 = build_node('node1', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])
+        self.node1 = build_node('node1', qcs=[build_qc(4), build_qc(2)], output_shape=input_shape)
         self.node1.is_activation_quantization_enabled = Mock(return_value=True)
         self.node1.is_weights_quantization_enabled = Mock(return_value=True)
-        self.node2 = build_node('node2', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])
+        self.node2 = build_node('node2', qcs=[build_qc(4), build_qc(2)], output_shape=input_shape)
         self.node2.is_activation_quantization_enabled = Mock(return_value=True)
         self.node2.is_weights_quantization_enabled = Mock(return_value=True)
-        self.node3 = build_node('node3', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])
+        self.node3 = build_node('node3', qcs=[build_qc(4), build_qc(2)], output_shape=input_shape)
         self.node3.is_activation_quantization_enabled = Mock(return_value=True)
         self.node3.is_weights_quantization_enabled = Mock(return_value=False)
 
@@ -403,22 +403,22 @@ class TestFLNModelCollectorInfer:
         fw_info_mock.get_kernel_op_attribute.return_value = None
 
         input_shape = (1, 3, 14)
-        self.node1 = build_node('node1', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])
+        self.node1 = build_node('node1', qcs=[build_qc(4), build_qc(2)], output_shape=input_shape)
         self.node1.is_activation_quantization_enabled = Mock(return_value=True)
         self.node1.is_weights_quantization_enabled = Mock(return_value=True)
         self.node1.is_fln_quantization = Mock(return_value=False)
         
-        self.node2 = build_node('node2', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])
+        self.node2 = build_node('node2', qcs=[build_qc(4), build_qc(2)], output_shape=input_shape)
         self.node2.is_activation_quantization_enabled = Mock(return_value=True)
         self.node2.is_weights_quantization_enabled = Mock(return_value=True)
         self.node2.is_fln_quantization = Mock(return_value=False)
         
-        self.node3 = build_node('node3', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])
+        self.node3 = build_node('node3', qcs=[build_qc(4), build_qc(2)], output_shape=input_shape)
         self.node3.is_activation_quantization_enabled = Mock(return_value=True)
         self.node3.is_weights_quantization_enabled = Mock(return_value=False)
         self.node3.is_fln_quantization = Mock(return_value=False)
         
-        self.node4 = build_node('node4', output_shape=input_shape, qcs=[build_qc(4), build_qc(2)])
+        self.node4 = build_node('node4', qcs=[build_qc(4), build_qc(2)], output_shape=input_shape)
         self.node4.is_activation_quantization_enabled = Mock(return_value=False)
         self.node4.is_weights_quantization_enabled = Mock(return_value=False)
         self.node4.is_fln_quantization = Mock(return_value=True)

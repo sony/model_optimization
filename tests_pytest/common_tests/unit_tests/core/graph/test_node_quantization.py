@@ -18,10 +18,10 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.graph.edge import Edge
 
 from unittest.mock import Mock
-from tests_pytest._test_util.graph_builder_utils import build_node, build_nbits_qc, DummyLayer
+
+from model_compression_toolkit.quantization_preparation.load_fqc import set_quantization_configs_to_node
+from tests_pytest._test_util.graph_builder_utils import build_node, DummyLayer
 from model_compression_toolkit.core.common.framework_info import set_fw_info
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configs_to_node
-from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
     OpQuantizationConfig, AttributeQuantizationConfig, Signedness
 from mct_quantizers import QuantizationMethod
@@ -78,9 +78,8 @@ class TestSetNodeQuantizationConfig:
                     PreservingNode: QuantizationConfigOptions(quantization_configurations=[self._get_op_config(**qp_op_config_kwargs)])}
         fqc = Mock(filterlayer2qco=_filters, layer2qco=_filters)
 
-        qc = QuantizationConfig()
         for n in graph.get_topo_sorted_nodes():
-            set_quantization_configs_to_node(n, graph, qc, fqc)
+            set_quantization_configs_to_node(n, graph, fqc)
         assert not n3.is_quantization_preserving() and not n3.is_activation_quantization_enabled()
         assert not n4.is_quantization_preserving() and not n4.is_activation_quantization_enabled()
         assert qp3.is_quantization_preserving()
@@ -121,10 +120,9 @@ class TestSetNodeQuantizationConfig:
         }
 
         fqc = Mock(filterlayer2qco=_filters, layer2qco=_filters)
-        quantization_config = QuantizationConfig()
-        set_quantization_configs_to_node(first_node, graph, quantization_config, fqc)
-        set_quantization_configs_to_node(preserving_node, graph, quantization_config, fqc)
-        set_quantization_configs_to_node(no_quant_node, graph, quantization_config, fqc)
+        set_quantization_configs_to_node(first_node, graph, fqc)
+        set_quantization_configs_to_node(preserving_node, graph, fqc)
+        set_quantization_configs_to_node(no_quant_node, graph, fqc)
 
         assert not first_node.is_quantization_preserving() and first_node.is_activation_quantization_enabled()
         assert preserving_node.is_quantization_preserving() and not preserving_node.is_activation_quantization_enabled()

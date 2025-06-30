@@ -13,28 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 from unittest.mock import Mock
-import numpy as np
-import pytest
 
+import pytest
 from mct_quantizers import QuantizationMethod
-from model_compression_toolkit.core import QuantizationErrorMethod, QuantizationConfig
-from model_compression_toolkit.core.common.collectors.statistics_collector import StatsCollector
-from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
+
 from model_compression_toolkit.core.common.quantization.node_quantization_config import \
     NodeActivationQuantizationConfig, ActivationQuantizationMode
-from model_compression_toolkit.core.common.quantization.quantization_params_generation import (
-    power_of_two_no_clipping_selection_min_max,
-    symmetric_no_clipping_selection_min_max,
-    uniform_no_clipping_selection_min_max
-)
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation import (
-    get_histogram_data,
-    determine_signedness,
-    update_activation_quantization_params_fn,
-    get_activations_qparams
-)
-from model_compression_toolkit.target_platform_capabilities import Signedness, OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities import OpQuantizationConfig
 
 
 class TestActivationQParams:
@@ -53,13 +38,12 @@ class TestActivationQParams:
                     simd_size=32,
                     signedness=None)
 
-    def test_quantization_mode(self, quant_config_mock):
+    def test_quantization_mode(self):
         with pytest.raises(ValueError):
-            NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(True, True),
-                                             lambda x: 0, lambda x: 0)
-        assert NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, False),
+            NodeActivationQuantizationConfig(self._get_op_config(True, True), lambda x: 0, lambda x: 0)
+        assert NodeActivationQuantizationConfig(self._get_op_config(False, False),
                                                 lambda x: 0, lambda x: 0).quant_mode == ActivationQuantizationMode.NO_QUANT
-        assert NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(True, False),
+        assert NodeActivationQuantizationConfig(self._get_op_config(True, False),
                                                 lambda x: 0, lambda x: 0).quant_mode == ActivationQuantizationMode.QUANT
-        assert NodeActivationQuantizationConfig(quant_config_mock, self._get_op_config(False, True),
+        assert NodeActivationQuantizationConfig(self._get_op_config(False, True),
                                                 lambda x: 0, lambda x: 0).quant_mode == ActivationQuantizationMode.PRESERVE_QUANT

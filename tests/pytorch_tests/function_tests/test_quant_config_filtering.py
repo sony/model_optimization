@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import unittest
+
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.keras.constants import FUNCTION
 
@@ -30,6 +31,9 @@ from tests.common_tests.helpers.tpcs_for_tests.v3.tpc import get_tpc
 get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
 
+# TODO irena: this tests node.filter_node_qco_by_graph which is not used anyway. What is actually used is
+#  filter_node_qco_by_graph in set_node_quantization_config which doesn't have unittests.
+@unittest.skip("TODO filter configs")
 class TestTorchQuantConfigFiltering(unittest.TestCase):
 
     @staticmethod

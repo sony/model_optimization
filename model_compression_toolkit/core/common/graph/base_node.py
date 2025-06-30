@@ -21,15 +21,11 @@ import numpy as np
 from model_compression_toolkit.core.common.framework_info import get_fw_info, ChannelAxisMapping
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import NodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
-    OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.framework_quantization_capabilities import \
-    FrameworkQuantizationCapabilities
 
 
 WeightAttrT = Union[str, int]
@@ -43,7 +39,6 @@ class NodeFrameworkInfo(NamedTuple):
     out_channel_axis: int
     minmax: Tuple[float, float]
     kernel_attr: str
-    is_kernel_op: bool
 
 
 class BaseNode:
@@ -95,7 +90,7 @@ class BaseNode:
         self.inputs_as_list = inputs_as_list
         self.final_weights_quantization_cfg = None
         self.final_activation_quantization_cfg = None
-        self.candidates_quantization_cfg = None
+        self.quantization_cfg: NodeQuantizationConfig = None
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
@@ -108,7 +103,6 @@ class BaseNode:
             fw_info.get_out_channel_axis(node_type),
             fw_info.get_layer_min_max(node_type, framework_attr),
             fw_info.get_kernel_op_attribute(node_type),
-            fw_info.is_kernel_op(node_type)
         )
 
     def _assert_fw_info_exists(self):
@@ -162,15 +156,9 @@ class BaseNode:
         return self.node_fw_info.kernel_attr
 
     @property
-    def is_kernel_op(self) -> bool:
-        """
-        Check if kernel exists for the node.
-
-        Returns:
-            Whether the node has a kernel or not.
-        """
-        self._assert_fw_info_exists()
-        return self.node_fw_info.is_kernel_op
+    def candidates_quantization_cfg(self):
+        assert self.quantization_cfg
+        return self.quantization_cfg.candidates_quantization_cfg
 
     @property
     def type(self):
@@ -180,15 +168,6 @@ class BaseNode:
             the node's layer_class
         """
         return self.layer_class
-
-    def get_has_activation(self):
-        """
-        Returns has_activation attribute.
-
-        Returns: Whether the node has activation to quantize.
-
-        """
-        return self.has_activation
 
     @property
     def has_positional_weights(self):
@@ -646,8 +625,9 @@ class BaseNode:
         Returns: True if the node has at list one quantization configuration candidate with activation quantization enabled.
         """
 
-        return len(self.candidates_quantization_cfg) > 0 and \
-            any([c.activation_quantization_cfg.enable_activation_quantization for c in self.candidates_quantization_cfg])
+        return (len(self.candidates_quantization_cfg) > 0 and
+                any([c.activation_quantization_cfg.enable_activation_quantization
+                     for c in self.candidates_quantization_cfg]))
 
     def get_all_weights_attr_candidates(self, attr: str) -> List[WeightsAttrQuantizationConfig]:
         """
@@ -662,79 +642,6 @@ class BaseNode:
         # note that if the given attribute name does not exist in the node's attributes mapping,
         # the inner method would log an exception.
         return [c.weights_quantization_cfg.get_attr_config(attr) for c in self.candidates_quantization_cfg]
-
-    def get_qco(self, fqc: FrameworkQuantizationCapabilities) -> QuantizationConfigOptions:
-        """
-        Get the QuantizationConfigOptions of the node according
-        to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformCapabilities.
-
-        Args:
-            fqc: FQC to extract the QuantizationConfigOptions for the node.
-
-        Returns:
-            QuantizationConfigOptions of the node.
-        """
-
-        if fqc is None:
-            Logger.critical(f'Can not retrieve QC options for None FQC')  # pragma: no cover
-
-        for fl, qco in fqc.filterlayer2qco.items():
-            if self.is_match_filter_params(fl):
-                return qco
-        # Extract qco with is_match_type to overcome mismatch of function types in TF 2.15
-        matching_qcos = [_qco for _type, _qco in fqc.layer2qco.items() if self.is_match_type(_type)]
-        if matching_qcos:
-            if all([_qco == matching_qcos[0] for _qco in matching_qcos]):
-                return matching_qcos[0]
-            else:
-                Logger.critical(f"Found duplicate qco types for node '{self.name}' of type '{self.type}'!")  # pragma: no cover
-        return fqc.tpc.default_qco
-
-    def filter_node_qco_by_graph(self, fqc: FrameworkQuantizationCapabilities,
-                                 next_nodes: List, node_qc_options: QuantizationConfigOptions
-                                 ) -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
-        """
-        Filter quantization config options that don't match the graph.
-        A node may have several quantization config options with 'activation_n_bits' values, and
-        the next nodes in the graph may support different bit-width as input activation. This function
-        filters out quantization config that don't comply to these attributes.
-
-        Args:
-            fqc: FQC to extract the QuantizationConfigOptions for the next nodes.
-            next_nodes: Output nodes of current node.
-            node_qc_options: Node's QuantizationConfigOptions.
-
-        Returns:
-
-        """
-        # Filter quantization config options that don't match the graph.
-        _base_config = node_qc_options.base_config
-        _node_qc_options = node_qc_options.quantization_configurations
-        if len(next_nodes):
-            next_nodes_qc_options = [_node.get_qco(fqc) for _node in next_nodes]
-            next_nodes_supported_input_bitwidth = min([max_input_activation_n_bits(op_cfg)
-                                                       for qc_opts in next_nodes_qc_options
-                                                       for op_cfg in qc_opts.quantization_configurations])
-
-            # Filter node's QC options that match next nodes input bit-width.
-            _node_qc_options = [_option for _option in _node_qc_options
-                                if _option.activation_n_bits <= next_nodes_supported_input_bitwidth]
-            if len(_node_qc_options) == 0:
-                Logger.critical(f"Graph doesn't match FQC bit configurations: {self} -> {next_nodes}.")  # pragma: no cover
-
-            # Verify base config match
-            if any([node_qc_options.base_config.activation_n_bits > max_input_activation_n_bits(qc_opt.base_config)
-                    for qc_opt in next_nodes_qc_options]):
-                # base_config activation bits doesn't match next node supported input bit-width -> replace with
-                # a qco from quantization_configurations with maximum activation bit-width.
-                if len(_node_qc_options) > 0:
-                    output_act_bitwidth = {qco.activation_n_bits: i for i, qco in enumerate(_node_qc_options)}
-                    _base_config = _node_qc_options[output_act_bitwidth[max(output_act_bitwidth)]]
-                    Logger.warning(f"Node {self} base quantization config changed to match Graph and FQC configuration.\nCause: {self} -> {next_nodes}.")
-                else:
-                    Logger.critical(f"Graph doesn't match FQC bit configurations: {self} -> {next_nodes}.")  # pragma: no cover
-
-        return _base_config, _node_qc_options
 
     def is_match_type(self, _type: Type) -> bool:
         """
@@ -768,7 +675,7 @@ class BaseNode:
             return False
 
         # Get attributes from node to filter
-        layer_config = self.framework_attr
+        layer_config = self.framework_attr.copy()
         if hasattr(self, "op_call_kwargs"):
             layer_config.update(self.op_call_kwargs)
 
@@ -812,11 +719,11 @@ class BaseNode:
             the candidates in descending order.
         The operation is done inplace.
         """
-        if self.candidates_quantization_cfg is not None:
+        if self.quantization_cfg.candidates_quantization_cfg is not None:
             if self.kernel_attr is not None:
-                self.candidates_quantization_cfg.sort(
+                self.quantization_cfg.candidates_quantization_cfg.sort(
                     key=lambda c: (c.weights_quantization_cfg.get_attr_config(self.kernel_attr).weights_n_bits,
                                    c.activation_quantization_cfg.activation_n_bits), reverse=True)
             else:
-                self.candidates_quantization_cfg.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,
-                                                      reverse=True)
+                self.quantization_cfg.candidates_quantization_cfg.sort(
+                    key=lambda c: c.activation_quantization_cfg.activation_n_bits, reverse=True)

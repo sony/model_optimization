@@ -29,11 +29,9 @@ def test_find_min_max_candidate_index(fw_info_mock):
                                               w_attr={'foo': (fb, True), 'bar': (bb, True)},
                                               pos_attr=(pb, True, [2])))
 
-    n = build_node('n',
-                   canonical_weights={'foo': np.random.random((5, 5)),
-                                      'bar': np.random.random((6, 6)),
-                                       2: np.random.random((6, 5))},
-                   qcs=qcs)
+    n = build_node('n', canonical_weights={'foo': np.random.random((5, 5)),
+                                           'bar': np.random.random((6, 6)),
+                                           2: np.random.random((6, 5))}, qcs=qcs)
 
     max_ind = n.find_max_candidate_index()
     max_qc = n.candidates_quantization_cfg[max_ind]

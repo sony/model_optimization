@@ -13,11 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+from unittest.mock import patch
+
 import tensorflow as tf
 import keras
 import unittest
 
 from model_compression_toolkit.core.common.quantization.quantization_config import CustomOpsetLayers
+from model_compression_toolkit.core.keras.default_framework_info import KerasInfo
 from model_compression_toolkit.target_platform_capabilities.targetplatform2framework.attach2keras import \
     AttachTpcToKeras
 
@@ -84,21 +87,22 @@ def get_tpc(mixed_precision_candidates_list):
 
 
 def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
-    graph = prepare_graph_with_configs(in_model, keras_impl, representative_dataset,
-                                       lambda name, _tp: get_tpc(mixed_precision_candidates_list),
-                                       mixed_precision_enabled=True,
-                                       attach2fw=AttachTpcToKeras(),
-                                       qc=QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])}))
+    with patch('model_compression_toolkit.core.common.framework_info._current_framework_info', KerasInfo):
+        graph = prepare_graph_with_configs(in_model, keras_impl, representative_dataset,
+                                           lambda name, _tp: get_tpc(mixed_precision_candidates_list),
+                                           mixed_precision_enabled=True,
+                                           attach2fw=AttachTpcToKeras(),
+                                           qc=QuantizationConfig(custom_tpc_opset_to_layer={"Input": CustomOpsetLayers([InputLayer])}))
 
-    # Validation is skipped because fusing information is not relevant for the virtual graph.
-    # Therefore, validation checks are disabled before the virtual graph substitution and
-    # re-enabled once it completes.
-    graph.skip_validation_check = True
+        # Validation is skipped because fusing information is not relevant for the virtual graph.
+        # Therefore, validation checks are disabled before the virtual graph substitution and
+        # re-enabled once it completes.
+        graph.skip_validation_check = True
 
-    # Split graph substitution
-    split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
+        # Split graph substitution
+        split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
 
-    graph.skip_validation_check = False
+        graph.skip_validation_check = False
 
     return graph, split_graph
 
@@ -123,8 +127,7 @@ class TestWeightsActivationSplit(unittest.TestCase):
         self.assertTrue(not any([c.activation_quantization_cfg.enable_activation_quantization
                                  for c in split_weights_node.candidates_quantization_cfg]),
                         "All weights node's candidates activation quantization should be disabled.")
-        self.assertTrue(not any([c.weights_quantization_cfg.enable_weights_quantization
-                                 for c in split_activation_node.candidates_quantization_cfg]),
+        self.assertFalse(split_activation_node.has_any_weight_attr_to_quantize(),
                         "All activation node's candidates weights quantization should be disabled.")
 
         origin_conv = graph.get_topo_sorted_nodes()[1]
@@ -175,8 +178,7 @@ class TestWeightsActivationSplit(unittest.TestCase):
             if isinstance(n, VirtualSplitActivationNode):
                 self.assertTrue(len(n.candidates_quantization_cfg) == 3,
                                 "The activation split node should have only activation configurable candidates.")
-                self.assertTrue(not any([c.weights_quantization_cfg.enable_weights_quantization
-                                         for c in n.candidates_quantization_cfg]),
+                self.assertTrue(not any(n.has_any_weight_attr_to_quantize() for c in n.candidates_quantization_cfg),
                                 "All activation node's candidates weights quantization should be disabled.")
 
     def test_non_composite_candidates_config(self):

@@ -16,21 +16,20 @@ import copy
 import numpy as np
 from typing import List, Tuple, Any, Callable
 
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig, \
     ActivationQuantizationMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import create_node_activation_qc, \
-    set_quantization_configs_to_node
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     _mse_error_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation import z_score_filter
+from model_compression_toolkit.quantization_preparation.load_fqc import set_quantization_configs_to_node, \
+    fetch_qc_options_for_node
 from model_compression_toolkit.target_platform_capabilities import QuantizationMethod, AttributeQuantizationConfig
 
 """
@@ -67,8 +66,7 @@ def op2d_bias_correction(op2d_node: BaseNode,
         # Add an attribute quantization configuration to the newly added bias attribute, with disabled quantization
         for qc in op2d_node.candidates_quantization_cfg:
             qc.weights_quantization_cfg.set_attr_config(bias_flag_str,
-                                                        WeightsAttrQuantizationConfig(QuantizationConfig(),
-                                                                                      AttributeQuantizationConfig(
+                                                        WeightsAttrQuantizationConfig(AttributeQuantizationConfig(
                                                                                           enable_weights_quantization=False)))
 
     # Each node adds a different noise due to the shifting. It depends on the
@@ -395,9 +393,7 @@ def shift_negative_function(graph: Graph,
 
     set_quantization_configs_to_node(node=add_node,
                                      graph=graph,
-                                     quant_config=core_config.quantization_config,
-                                     fqc=graph.fqc,
-                                     mixed_precision_enable=core_config.is_mixed_precision_enabled)
+                                     fqc=graph.fqc)
 
     update_fused_op_with_add(graph=graph,
                              non_linear_node=non_linear_node,
@@ -421,9 +417,7 @@ def shift_negative_function(graph: Graph,
         # Set quantization configuration to node, even though we do not quantize it:
         set_quantization_configs_to_node(node=pad_node,
                                          graph=graph,
-                                         quant_config=core_config.quantization_config,
-                                         fqc=graph.fqc,
-                                         mixed_precision_enable=core_config.is_mixed_precision_enabled)
+                                         fqc=graph.fqc)
 
         for candidate_qc in pad_node.candidates_quantization_cfg:
             candidate_qc.activation_quantization_cfg.quant_mode = ActivationQuantizationMode.NO_QUANT
@@ -448,7 +442,7 @@ def shift_negative_function(graph: Graph,
                     bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    add_node_qco = add_node.get_qco(graph.fqc).quantization_configurations
+    add_node_qco = fetch_qc_options_for_node(add_node, graph.fqc).quantization_configurations
     add_supported_bitwidths = [c.activation_n_bits for c in add_node_qco]
     if original_non_linear_activation_nbits not in add_supported_bitwidths:
         raise ValueError(
@@ -456,18 +450,16 @@ def shift_negative_function(graph: Graph,
             f"bitwidth is {original_non_linear_activation_nbits}. Consider adapting the TPC so 'Add' will support the "
             f"same bitwidth as {non_linear_node.type} or disable shift negative correction.")
 
-    for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
-        for attr in add_node.get_node_weights_attributes():
-            # TODO: do we not quantize the weights of this 'add' on purpose?
-            candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
+    set_quantization_configs_to_node(add_node, graph, graph.fqc)
+    # TODO: do we not quantize the weights of this 'add' on purpose?
+    add_node.quantization_cfg.disable_weights_quantization()
 
-        candidate_qc.activation_quantization_cfg = create_node_activation_qc(core_config.quantization_config,
-                                                                             add_node_qco[op_qc_idx])
+    def update(c):
+        c.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
+        c.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
+                                                                         SIGNED: False})
 
-        candidate_qc.activation_quantization_cfg.set_activation_quantization_param({THRESHOLD: activation_threshold,
-                                                                                    SIGNED: False})
-
-        candidate_qc.activation_quantization_cfg.activation_n_bits = original_non_linear_activation_nbits
+    add_node.quantization_cfg.update_all(update)
 
     # Add the new padding node to a fused op with the op2d.
     if pad_node:
@@ -601,9 +593,8 @@ def apply_shift_negative_correction(graph: Graph,
     nodes = list(graph.nodes())
     for n in nodes:
         # Skip substitution if QuantizationMethod is uniform.
-        node_qco = n.get_qco(graph.fqc)
-        if any([op_qc.activation_quantization_method is QuantizationMethod.UNIFORM
-                for op_qc in node_qco.quantization_configurations]):
+        if any(aqc.activation_quantization_cfg.activation_quantization_method == QuantizationMethod.UNIFORM
+               for aqc in n.candidates_quantization_cfg):
             continue
 
         if snc_node_types.apply(n):
