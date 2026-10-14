@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from types import SimpleNamespace
+
 import numpy as np
+import pulp
 import pytest
 
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
@@ -238,6 +241,33 @@ class TestMixedPrecisionIntegerLPSolver:
         }
 
         self._run_test(sensitivity, ru, ru_constraints, {'n1': 2, 'n2': 0})
+
+    @pytest.mark.skipif(not hasattr(pulp, 'LpSolveStatus'), reason='Requires PuLP 4.0 solve results')
+    @pytest.mark.parametrize('status_name', ['TimeLimit', 'GapLimit'])
+    @pytest.mark.parametrize('has_solution', [True, False], ids=['with_solution', 'without_solution'])
+    def test_run_with_solver_limit(self, mocker, status_name, has_solution):
+        """Accept feasible solutions at time or gap limits, but reject limits without a solution."""
+        ilp_solver = MixedPrecisionIntegerLPSolver(
+            {'n1': [np.nan, 0.2, 0.1]},
+            {RUTarget.WEIGHTS: np.array([[10], [2], [1]])},
+            {RUTarget.WEIGHTS: np.array([2])},
+        )
+
+        def solve_with_limit(lp_problem, solver):
+            if has_solution:
+                variables = lp_problem.variablesDict()
+                variables['layer_0_0'].varValue = 0.0
+                variables['layer_0_1'].varValue = 1.0
+            return SimpleNamespace(status=getattr(pulp.LpSolveStatus, status_name), has_solution=has_solution)
+
+        mocker.patch.object(pulp.LpProblem, 'solve', autospec=True, side_effect=solve_with_limit)
+
+        if has_solution:
+            assert ilp_solver.run() == {'n1': 2}
+        else:
+            with pytest.raises(RuntimeError, match='No solution was found for the LP problem'):
+                ilp_solver.run()
+            assert all(v.varValue is None for v in ilp_solver.layer_to_indicator_vars['n1'])
 
     def _run_test(self, sensitivity, ru, ru_constraints, exp_res):
         solver = MixedPrecisionIntegerLPSolver(sensitivity, ru, ru_constraints)

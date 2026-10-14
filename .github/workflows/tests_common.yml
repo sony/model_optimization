@@ -11,19 +11,24 @@ concurrency:
 
 jobs:
   build:
-    #  Regression testing for Numpy 2.4.
-    #  It was performed on combinations of Python 3.11 and NumPy (<2.4 or 2.4) versions.
+    # Run common tests across Python 3.10, 3.11, and 3.12.
+    # Verify PuLP 3.x compatibility on Python 3.10/3.11 and PuLP 4.x compatibility on Python 3.12.
+    # Include NumPy regression tests, excluding NumPy 2.4 on Python 3.10.
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        python-version: [ "3.10", "3.11", "3.12" ]
         np_ver: [ "<2.4", "2.4" ]
+        exclude:
+          - python-version: "3.10"
+            np_ver: "2.4"  # Numpy 2.4 is not supported on Python 3.10
     steps:
       - uses: actions/checkout@v4
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -32,7 +37,7 @@ jobs:
             pip install numpy 'numpy<2.4'
           fi
           pip install pytest pytest-mock
-          pip list | grep numpy
+          pip list | grep -i -e numpy -e pulp
           pip check
 
       - name: Run unittests

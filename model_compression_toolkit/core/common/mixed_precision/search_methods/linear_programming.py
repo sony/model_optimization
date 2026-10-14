@@ -13,9 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 from collections import defaultdict
+import itertools
 
 import numpy as np
-from pulp import *
+import pulp
+from pulp import LpInteger, LpProblem, LpVariable, lpSum
 from typing import Dict, Tuple, Any, List
 
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget
@@ -42,8 +44,6 @@ class MixedPrecisionIntegerLPSolver:
                                     = self._filter_non_finite_candidates(layer_to_sensitivity_mapping, candidates_ru)
         self.ru_constraints = ru_constraints
 
-        self.layer_to_indicator_vars, self.objective_vars = self._init_problem_vars(self.layer_to_sensitivity_mapping)
-
     def run(self) -> Dict[Any, int]:
         """
         Build and solve an ILP optimization problem.
@@ -54,12 +54,25 @@ class MixedPrecisionIntegerLPSolver:
         # Add all equations and inequalities that define the problem.
         lp_problem = self._formalize_problem()
 
-        # Use default PULP solver. Limit runtime in seconds
-        solver = PULP_CBC_CMD(timeLimit=SOLVER_TIME_LIMIT)
-        lp_problem.solve(solver=solver)  # Try to solve the problem.
+        # Use CBC and limit runtime in seconds.
+        if hasattr(pulp, 'LpSolveStatus'):
+            solver = pulp.COIN_CMD(timeLimit=SOLVER_TIME_LIMIT)
+            stats = lp_problem.solve(solver=solver)
+            status = stats.status
+            # Preserve PuLP 3.x acceptance of solutions within gap tolerance or at the time limit.
+            acceptable = stats.has_solution and status in (
+                pulp.LpSolveStatus.Optimal,
+                pulp.LpSolveStatus.TimeLimit,
+                pulp.LpSolveStatus.GapLimit,
+            )
+        else:
+            solver = pulp.PULP_CBC_CMD(timeLimit=SOLVER_TIME_LIMIT)
+            lp_problem.solve(solver=solver)
+            status = lp_problem.status
+            acceptable = status == pulp.LpStatusOptimal
 
-        if lp_problem.status != LpStatusOptimal:
-            raise RuntimeError(f'No solution was found for the LP problem, with status {lp_problem.status}')
+        if not acceptable:
+            raise RuntimeError(f'No solution was found for the LP problem, with status {status}')
 
         # Take the bitwidth index only if its corresponding indicator is one.
         solver_mp_config = {
@@ -129,13 +142,15 @@ class MixedPrecisionIntegerLPSolver:
         return filtered_sensitivity, filtered_candidates_ru, solver_to_original_candidate_indices
 
     @staticmethod
-    def _init_problem_vars(layer_to_metrics_mapping: Dict[Any, List[float]]) -> Tuple[Dict[Any, List[LpVariable]],
-                                                                                      List[LpVariable]]:
+    def _init_problem_vars(lp_problem: LpProblem,
+                           layer_to_metrics_mapping: Dict[Any, List[float]]) -> Tuple[Dict[Any, List[LpVariable]],
+                                                                                     List[LpVariable]]:
         """
         Initialize the LP problem variables: Variable for each layer as to the index of the bitwidth it should use,
         and a variable for each indicator for whether we use the former variable or not.
 
         Args:
+            lp_problem: The LP problem that owns the variables.
             layer_to_metrics_mapping: Mapping from each layer's index (in the model) to a dictionary that maps the
             bitwidth index to the observed sensitivity of the model.
 
@@ -149,11 +164,11 @@ class MixedPrecisionIntegerLPSolver:
 
         for layer_idx, (layer, bitwidth_metrics) in enumerate(layer_to_metrics_mapping.items()):
             layer_to_indicator_vars[layer] = [
-                LpVariable(f"layer_{layer_idx}_{qc_idx}", lowBound=0, upBound=1, cat=LpInteger)
+                lp_problem.add_variable(f"layer_{layer_idx}_{qc_idx}", lowBound=0, upBound=1, cat=LpInteger)
                 for qc_idx, _ in enumerate(bitwidth_metrics)
             ]
 
-            objective_vars.append(LpVariable(f"s_{layer_idx}", 0))
+            objective_vars.append(lp_problem.add_variable(f"s_{layer_idx}", 0))
 
         return layer_to_indicator_vars, objective_vars
 
@@ -166,6 +181,8 @@ class MixedPrecisionIntegerLPSolver:
         """
 
         lp_problem = LpProblem()  # minimization problem by default
+        self.layer_to_indicator_vars, self.objective_vars = self._init_problem_vars(
+            lp_problem, self.layer_to_sensitivity_mapping)
         lp_problem += lpSum(self.objective_vars)
 
         for layer_sensitivity, layer_indicator_vars, obj_var in zip(self.layer_to_sensitivity_mapping.values(),
@@ -207,4 +224,4 @@ class MixedPrecisionIntegerLPSolver:
             # is added for each memory element (each element < target => max element < target).
             assert len(ru_vec) == len(self.ru_constraints[target])
             for v, c in zip(ru_vec, self.ru_constraints[target]):
-                lp_problem += v <= c
+                lp_problem += v <= float(c)
